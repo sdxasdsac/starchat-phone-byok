@@ -24,7 +24,13 @@ export function AccessGate({ onUnlock }: { onUnlock: () => void }) {
       onUnlock();
       return;
     }
-    setError(result.reason === 'used' ? '这个密钥已经在本机使用过' : '密钥不正确，请核对后再试');
+    setError(
+      result.reason === 'used'
+        ? '这个密钥已经被其他设备激活过'
+        : result.reason === 'network'
+          ? '密钥服务暂时不可用，请联网后重试'
+          : '密钥不正确，请核对后再试',
+    );
   };
 
   return (

@@ -1,6 +1,10 @@
 'use client';
 
 import { claimKey, isClaimed } from './claim-db';
+import { getDeviceId } from './device-id';
+
+// 一次性密钥校验服务（部署在 starchat 服务器上的小接口）
+const ACCESS_API = process.env.NEXT_PUBLIC_ACCESS_API || 'https://www.xingnian.site/api/access-key';
 
 // 每人一个专属访问密钥：XN-XXXX-XXXX-CCCC
 // 前两段随机，最后一段是校验码。密钥由 scripts/gen-keys.mjs 批量生成。
@@ -59,12 +63,30 @@ export function isUnlocked(): boolean {
   return Boolean(key && isValidKey(key));
 }
 
-export type UnlockResult = { ok: true } | { ok: false; reason: 'invalid' | 'used' };
+export type UnlockResult = { ok: true } | { ok: false; reason: 'invalid' | 'used' | 'network' };
 
-/** 本机一次性：同一台设备激活过的密钥不能再次激活 */
+/** 云端一次性校验 + 本机兜底：同一密钥被别的设备激活过就拒绝 */
 export async function tryUnlock(input: string): Promise<UnlockResult> {
   const key = normalizeKey(input);
   if (!isValidKey(key)) return { ok: false, reason: 'invalid' };
+
+  const device = await getDeviceId();
+  try {
+    const res = await fetch(ACCESS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, device }),
+      cache: 'no-store',
+    });
+    const data = (await res.json().catch(() => ({}))) as { ok?: boolean; reason?: string };
+    if (!res.ok || !data.ok) {
+      if (data.reason === 'used') return { ok: false, reason: 'used' };
+      if (data.reason === 'invalid') return { ok: false, reason: 'invalid' };
+      return { ok: false, reason: 'network' };
+    }
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
 
   const hash = keyHash(key);
   const stored = getStoredKey();
