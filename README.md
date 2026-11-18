@@ -2,7 +2,9 @@
 
 自带 API Key 的 AI 虚拟小手机。玻璃拟态桌面来自 StarChat 的 float-phone 外壳，聊天/人设/本地存储逻辑参考 missy-phone，接口协议与生图/PWA 能力参考 AI Virtual Phone。
 
-**不内置任何模型额度，也没有账号、激活码、付费墙。** 每个用户点一次 Deploy，得到自己的 Vercel 网址，然后填自己的 API Key 就能用。
+**不内置任何模型额度，也没有账号和付费墙。** 每个用户点一次 Deploy，得到自己的 Vercel 网址，然后填自己的 API Key 就能用。
+
+首次打开还需要输入站长提供的访问密钥（默认 `XINGNIAN-2026`，在 `src/lib/access.ts` 里改），验证一次后本机记住，之后不再询问。
 
 - 文字：OpenAI 兼容 `/chat/completions`（DeepSeek、OpenAI、各类中转站）
 - 语音合成：火山引擎豆包语音合成 2.0 / MiniMax / OpenAI 兼容 / 浏览器自带朗读
@@ -22,7 +24,7 @@ npm run dev
 
 打开 <http://localhost:3000>。
 
-首次进入点桌面上的「设置」，填文字模型（Base URL + Key + 模型名），保存后即可聊天。语音和生图可以之后再配。
+首次进入先输入访问密钥，再点桌面上的「设置」，填文字模型（Base URL + Key + 模型名），保存后即可聊天。语音和生图可以之后再配。
 
 ---
 

@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FloatPhoneShell } from '@/components/phone/FloatPhoneShell';
 import { FloatPhoneDesktop } from '@/components/phone/FloatPhoneDesktop';
-import { PAGE_1_DEFAULT, type IconId } from '@/components/phone/float-phone-icons';
+import { PAGE_1_DEFAULT, PAGE_DAILY_DEFAULT, type IconId } from '@/components/phone/float-phone-icons';
 import { PhoneProvider, usePhone } from './PhoneContext';
+import { AccessGate } from './AccessGate';
+import { isUnlocked } from '@/lib/access';
 import { ChatApp, LineApp, WeChatApp } from './apps/ChatApps';
 import { PersonaApp } from './apps/PersonaApp';
 import { SettingsApp } from './apps/SettingsApp';
@@ -12,6 +14,11 @@ import { ThemeApp } from './apps/ThemeApp';
 import { MomentsApp } from './apps/MomentsApp';
 import { XhsApp } from './apps/XhsApp';
 import { PluginMarketApp } from './apps/PluginMarketApp';
+import { MusicApp } from './apps/MusicApp';
+import { DiaryApp } from './apps/DiaryApp';
+import { ReadingApp } from './apps/ReadingApp';
+import { AnniversaryApp } from './apps/AnniversaryApp';
+import { AlbumApp } from './apps/AlbumApp';
 import { PhoneCalendarApp } from '@/components/phone/apps/calendar/PhoneCalendarApp';
 import { ICONS, Mdi, Screen } from './ui';
 
@@ -26,6 +33,11 @@ type AppId =
   | 'theme'
   | 'calendar'
   | 'plugins'
+  | 'music'
+  | 'diary'
+  | 'reading'
+  | 'anniversary'
+  | 'album'
   | 'unknown';
 
 const ICON_TO_APP: Partial<Record<IconId, AppId>> = {
@@ -39,6 +51,11 @@ const ICON_TO_APP: Partial<Record<IconId, AppId>> = {
   theme: 'theme',
   calendar: 'calendar',
   appmarket: 'plugins',
+  music: 'music',
+  diary: 'diary',
+  reading: 'reading',
+  anniversary: 'anniversary',
+  album: 'album',
 };
 
 export function PhoneOS() {
@@ -52,8 +69,13 @@ export function PhoneOS() {
 function PhoneShell() {
   const { ready, settings, personas } = usePhone();
   const [app, setApp] = useState<AppId | null>(null);
+  const [unlocked, setUnlocked] = useState<boolean | null>(null);
   const [displayMode, setDisplayMode] = useState<string | undefined>(undefined);
   const rootRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setUnlocked(isUnlocked());
+  }, []);
 
   const calendarOwners = useMemo(
     () => [
@@ -115,7 +137,11 @@ function PhoneShell() {
     <div className="fp-root os-root" data-pwa-display-mode={displayMode} ref={rootRef}>
       <main className="app-root">
         <FloatPhoneShell>
-          <FloatPhoneDesktop pages={[PAGE_1_DEFAULT]} onOpen={open} />
+          {unlocked === null ? null : !unlocked ? (
+            <AccessGate onUnlock={() => setUnlocked(true)} />
+          ) : (
+            <>
+          <FloatPhoneDesktop pages={[PAGE_1_DEFAULT, PAGE_DAILY_DEFAULT]} onOpen={open} />
 
           {ready && !settings.text.apiKey.trim() && !app ? (
             <button type="button" className="setup-banner" onClick={() => setApp('settings')}>
@@ -141,6 +167,11 @@ function PhoneShell() {
               {app === 'settings' ? <SettingsApp onClose={close} /> : null}
               {app === 'theme' ? <ThemeApp onClose={close} /> : null}
               {app === 'plugins' ? <PluginMarketApp onClose={close} /> : null}
+              {app === 'music' ? <MusicApp onClose={close} /> : null}
+              {app === 'diary' ? <DiaryApp onClose={close} /> : null}
+              {app === 'reading' ? <ReadingApp onClose={close} /> : null}
+              {app === 'anniversary' ? <AnniversaryApp onClose={close} /> : null}
+              {app === 'album' ? <AlbumApp onClose={close} /> : null}
               {app === 'calendar' ? (
                 <PhoneCalendarApp
                   onClose={close}
@@ -159,6 +190,8 @@ function PhoneShell() {
               ) : null}
             </div>
           ) : null}
+            </>
+          )}
         </FloatPhoneShell>
       </main>
     </div>

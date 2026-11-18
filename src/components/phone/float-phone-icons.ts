@@ -63,6 +63,9 @@ export type IconMeta = {
 
 export const PAGE_1_DEFAULT: IconId[] = ['wechat', 'qq', 'moments', 'xiaohongshu', 'appmarket', 'calendar'];
 
+/** 第二页：本地生活类应用（音乐/日记/阅读/纪念日/相册） */
+export const PAGE_DAILY_DEFAULT: IconId[] = ['music', 'diary', 'reading', 'anniversary', 'album'];
+
 export const PAGE_2_DEFAULT: IconId[] = [
   'cocreate',
   'game',
