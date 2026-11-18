@@ -345,19 +345,21 @@ export function ChatRoom({
     <section className={`chat-room ${variant}`}>
       <header className="chat-head">
         <button type="button" className="app-back" onClick={onBack} aria-label="返回">
-          <Mdi path={ICONS.close} size={20} />
+          {variant === 'wechat' ? <span className="wechat-chevron">‹</span> : <Mdi path={ICONS.close} size={20} />}
         </button>
         <div className="chat-head-main">
           <Avatar persona={persona} size={34} />
           <div>
-            <div className="chat-head-name">{persona.name}</div>
+            <div className="chat-head-name">
+              {variant === 'wechat' && sending ? '对方正在输入…' : persona.name}
+            </div>
             <div className="chat-head-status">
               {sending ? '对方正在输入…' : listening ? '正在听你说…' : '在线'}
             </div>
           </div>
         </div>
         <button type="button" className="icon-btn-plain" onClick={clearChat} aria-label="清空聊天">
-          <Mdi path={ICONS.trash} size={18} />
+          {variant === 'wechat' ? <span className="wechat-more">⋯</span> : <Mdi path={ICONS.trash} size={18} />}
         </button>
       </header>
 

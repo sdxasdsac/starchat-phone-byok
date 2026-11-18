@@ -46,6 +46,7 @@ export const DEFAULT_SETTINGS: Settings = {
   user: { name: '我', bio: '' },
   autoRead: true,
   apiMode: 'proxy',
+  presetEnabled: false,
 };
 
 export function createDefaultPersona(): Persona {

@@ -1904,3 +1904,406 @@ select {
   height: 100%;
   object-fit: contain;
 }
+
+/* ══════════════════════════════════════════════════════════
+   真机微信皮肤（聊天 + 朋友圈）
+   参考：uwu 仿微信 CSS / iOS 微信截图
+   ══════════════════════════════════════════════════════════ */
+
+/* ── 微信聊天 ── */
+.chat-room.wechat {
+  background: #ededed;
+}
+.chat-room.wechat .chat-head {
+  position: relative;
+  height: 56px;
+  padding: 0 10px;
+  background: #ededed;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: none;
+}
+.chat-room.wechat .chat-head-main {
+  justify-content: center;
+  gap: 0;
+}
+.chat-room.wechat .chat-head-main > .avatar {
+  display: none;
+}
+.chat-room.wechat .chat-head-main > div {
+  text-align: center;
+  max-width: 100%;
+}
+.chat-room.wechat .chat-head-name {
+  font-size: 17px;
+  font-weight: 500;
+  color: #111;
+}
+.chat-room.wechat .chat-head-status {
+  display: none;
+}
+.chat-room.wechat .app-back,
+.chat-room.wechat .icon-btn-plain {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  color: #111;
+  border-radius: 0;
+}
+.chat-room.wechat .app-back svg {
+  display: none;
+}
+.wechat-chevron {
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 300;
+  margin-top: -5px;
+}
+.wechat-more {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  transform: translateY(-3px);
+}
+.chat-room.wechat .chat-messages {
+  gap: 16px;
+  padding: 14px 12px 18px;
+}
+.chat-room.wechat .msg-row {
+  gap: 9px;
+}
+.chat-room.wechat .msg-row > .avatar {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 4px !important;
+  font-size: 16px !important;
+}
+.chat-room.wechat .msg-main {
+  max-width: 74%;
+}
+.chat-room.wechat .bubble {
+  position: relative;
+  padding: 9px 11px;
+  border-radius: 4px;
+  background: #fff;
+  color: #191919;
+  font-size: 15px;
+  line-height: 1.45;
+  box-shadow: none;
+}
+.chat-room.wechat .msg-row.assistant .bubble::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 13px;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 6px solid #fff;
+}
+.chat-room.wechat .msg-row.user .bubble {
+  background: #95ec69;
+  color: #191919;
+  border-radius: 4px;
+}
+.chat-room.wechat .msg-row.user .bubble::after {
+  content: '';
+  position: absolute;
+  right: -5px;
+  top: 13px;
+  width: 0;
+  height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 6px solid #95ec69;
+}
+.chat-room.wechat .msg-row.failed .bubble {
+  background: #fdecec;
+  color: #b83b3b;
+}
+.chat-room.wechat .tts-btn {
+  display: none;
+}
+.chat-room.wechat .chat-composer {
+  background: #f6f6f6;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: none;
+}
+.chat-room.wechat .composer-tools {
+  gap: 14px;
+  margin-bottom: 6px;
+}
+.chat-room.wechat .tool-btn {
+  width: auto;
+  height: 30px;
+  background: transparent;
+  color: #181818;
+  border-radius: 0;
+}
+.chat-room.wechat .tool-btn.on {
+  color: #07c160;
+  background: transparent;
+}
+.chat-room.wechat .composer-input textarea {
+  background: #fff;
+  border: 0;
+  border-radius: 4px;
+  padding: 8px 10px;
+  min-height: 38px;
+  font-size: 15px;
+}
+.chat-room.wechat .composer-input textarea:focus {
+  background: #fff;
+  border-color: transparent;
+}
+.chat-room.wechat .send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  background: #07c160;
+  box-shadow: none;
+}
+.chat-room.wechat .send-btn:disabled {
+  background: #07c160;
+  opacity: 0.45;
+}
+.chat-room.wechat .sticker-panel {
+  background: #f6f6f6;
+  border-color: rgba(0, 0, 0, 0.06);
+  border-radius: 4px;
+}
+.chat-room.wechat .sticker-cell {
+  border-radius: 4px;
+}
+
+/* ── 微信朋友圈 ── */
+.moments-screen {
+  background: #fff;
+}
+.moments-screen .app-header {
+  background: #ededed;
+}
+.moments-cover {
+  height: 260px;
+  border-radius: 0;
+  margin: -12px -14px 0;
+  padding: 0;
+  align-items: flex-end;
+  background: linear-gradient(160deg, #343a44 0%, #1b1f25 55%, #0d1013 100%);
+}
+.moments-cover-deco {
+  background:
+    radial-gradient(circle at 76% 18%, rgba(255, 255, 255, 0.22), transparent 40%),
+    radial-gradient(circle at 18% 86%, rgba(255, 255, 255, 0.12), transparent 46%);
+}
+.moments-me {
+  position: absolute;
+  right: 14px;
+  bottom: -30px;
+  flex-direction: row-reverse;
+  align-items: flex-end;
+  gap: 10px;
+  color: #fff;
+}
+.moments-me .avatar {
+  width: 64px !important;
+  height: 64px !important;
+  border: 2px solid #fff;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+  font-size: 26px !important;
+}
+.moments-me-name {
+  font-size: 16px;
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+.moments-me-bio {
+  display: none;
+}
+.moments-toolbar {
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 38px 2px 8px;
+  border-bottom: 0.5px solid #eee;
+}
+.moments-toolbar .soft-btn {
+  padding: 0;
+  background: transparent;
+  color: #576b95;
+  font-size: 13px;
+}
+.compose-card {
+  border-radius: 4px;
+  box-shadow: none;
+  background: #f7f7f7;
+}
+.moment-list {
+  gap: 0;
+}
+.moment-card {
+  gap: 10px;
+  padding: 14px 2px;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+  border-bottom: 0.5px solid #f0f0f0;
+}
+.moment-card > .avatar {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 4px !important;
+  font-size: 17px !important;
+}
+.moment-author {
+  color: #576b95;
+  font-size: 15px;
+  font-weight: 600;
+}
+.moment-text {
+  margin: 3px 0 8px;
+  color: #191919;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.moment-images {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  max-width: 300px;
+  margin-bottom: 8px;
+}
+.moment-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 2px;
+  font-size: 30px;
+  box-shadow: none;
+}
+.moment-meta {
+  color: #b2b2b2;
+  font-size: 12px;
+}
+.moment-actions button {
+  background: transparent;
+  color: #576b95;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+.moment-actions button.on {
+  background: transparent;
+  color: #576b95;
+}
+.moment-likes,
+.moment-comments {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-radius: 3px;
+  background: #f7f7f7;
+  color: #576b95;
+  font-size: 13px;
+}
+.moment-likes {
+  margin-bottom: 0;
+}
+.moment-comments {
+  margin-top: 0;
+  line-height: 1.65;
+}
+.moment-comments strong {
+  color: #576b95;
+}
+.moment-comment-input input {
+  background: #f7f7f7;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* ── 预设世界书 ── */
+.worldbook-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.worldbook-btn {
+  justify-content: space-between;
+  text-align: left;
+}
+.worldbook-meta {
+  margin-left: 8px;
+  color: #8b99a8;
+  font-size: 10px;
+}
+
+/* ── 微信会话列表 ── */
+.wechat-list-screen {
+  background: #fff;
+}
+.wechat-list-screen .app-header {
+  background: #ededed;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+.wechat-list-screen .wechat-search {
+  margin: 8px 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: #f7f7f7;
+  color: #8a8a8a;
+  font-size: 13px;
+  text-align: center;
+}
+.wechat-list-screen .conv-list {
+  background: #fff;
+}
+.wechat-list-screen .conv-row {
+  padding: 10px 12px;
+  border-bottom: 0.5px solid #f0f0f0;
+}
+.wechat-list-screen .conv-row .avatar {
+  border-radius: 4px !important;
+}
+.wechat-list-screen .conv-name {
+  color: #191919;
+  font-size: 16px;
+  font-weight: 500;
+}
+.wechat-list-screen .conv-time {
+  color: #b2b2b2;
+  font-size: 11px;
+}
+.wechat-list-screen .conv-preview {
+  color: #9a9a9a;
+  font-size: 13px;
+}
+.wechat-list-screen .list-foot {
+  display: none;
+}
+
+/* ── 微信皮肤细节修正 ── */
+.wechat-list-screen .app-body {
+  padding: 0 0 calc(20px + env(safe-area-inset-bottom, 0px));
+}
+.wechat-list-screen .app-back {
+  background: transparent;
+}
+.wechat-list-screen .conv-list {
+  border-radius: 0;
+  box-shadow: none;
+}
+.wechat-list-screen .conv-row {
+  padding: 10px 16px;
+  border-bottom: 0.5px solid #f0f0f0;
+}
+.wechat-list-screen .conv-row:last-child {
+  border-bottom: 0.5px solid #f0f0f0;
+}
+.moments-screen .app-back {
+  background: transparent;
+}
+.moments-screen .app-title-wrap p {
+  display: none;
+}
+.moments-cover {
+  overflow: visible;
+}

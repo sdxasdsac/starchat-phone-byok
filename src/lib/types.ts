@@ -95,6 +95,8 @@ export interface Settings {
   user: UserPersona;
   autoRead: boolean;
   apiMode: 'proxy' | 'direct';
+  /** 启用 starchat 的内置 MUFY 剧情预设（默认关闭） */
+  presetEnabled?: boolean;
   activePersonaId?: Id;
 }
 

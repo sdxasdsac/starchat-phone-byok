@@ -141,6 +141,22 @@ export function SettingsApp({ onClose }: { onClose: () => void }) {
         <input ref={avatarRef} type="file" accept="image/*" hidden onChange={(e) => void onAvatar(e)} />
       </section>
 
+      <details className="settings-group">
+        <summary>剧情预设</summary>
+        <Field
+          label="MUFY 剧情预设"
+          hint="从 starchat 复制过来的内置预设，约 2 万字；开启后每次请求都会附带，token 消耗会明显增加。"
+        >
+          <button
+            type="button"
+            className={draft.presetEnabled ? 'primary-btn' : 'soft-btn'}
+            onClick={() => set({ presetEnabled: !draft.presetEnabled })}
+          >
+            {draft.presetEnabled ? '已启用（点击关闭）' : '启用预设'}
+          </button>
+        </Field>
+      </details>
+
       <details className="settings-group" open>
         <summary>文字模型</summary>
         <Field label="Base URL" hint="OpenAI 兼容地址，例如 https://api.deepseek.com/v1">

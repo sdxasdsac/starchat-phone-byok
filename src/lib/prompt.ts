@@ -1,4 +1,5 @@
 import type { ChatMessage, Persona, Settings } from './types';
+import { MUFY_PRESET_SYSTEM } from './builtin-preset';
 import { stickerNames } from './nannan-stickers';
 
 /**
@@ -11,6 +12,7 @@ export function buildSystemPrompt(persona: Persona, settings: Settings): string 
     text.replaceAll('{{char}}', persona.name).replaceAll('{{user}}', user.name || '我');
 
   const parts = [
+    settings.presetEnabled ? MUFY_PRESET_SYSTEM : '',
     `你现在扮演「${persona.name}」，正在和「${user.name || '我'}」用手机聊天。`,
     persona.tagline ? `一句话定位：${persona.tagline}` : '',
     persona.description ? `【角色设定】\n${replace(persona.description)}` : '',

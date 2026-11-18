@@ -6,6 +6,7 @@ import { usePhone } from '../PhoneContext';
 import { parseCardFile } from '@/lib/card-import';
 import { compressImage, dataUrlToBlob } from '@/lib/image-utils';
 import { VOICE_PRESETS } from '@/lib/defaults';
+import { BUILTIN_WORLDBOOKS } from '@/lib/builtin-worldbooks';
 import { uid } from '@/lib/store';
 import { Avatar, ErrorNote, Field, ICONS, Mdi, Screen, Spinner } from '../ui';
 
@@ -248,6 +249,24 @@ function PersonaEditor({
       </Field>
       <Field label="对话示例" hint="用 {{char}} / {{user}} 指代角色和你">
         <textarea className="textarea" rows={3} value={persona.example ?? ''} onChange={(e) => set({ example: e.target.value })} />
+      </Field>
+      <Field label="预设世界书" hint="从 starchat 复制过来的世界书，点一下载入当前角色（会覆盖下面的内容）">
+        <div className="worldbook-picker">
+          {BUILTIN_WORLDBOOKS.map((book) => (
+            <button
+              key={book.id}
+              type="button"
+              className="soft-btn worldbook-btn"
+              onClick={() => {
+                if (persona.worldbook?.trim() && !window.confirm('当前世界书会被覆盖，继续？')) return;
+                set({ worldbook: book.text });
+              }}
+            >
+              <span>{book.name}</span>
+              <span className="worldbook-meta">{book.description}</span>
+            </button>
+          ))}
+        </div>
       </Field>
       <Field label="世界书 / 背景">
         <textarea className="textarea" rows={3} value={persona.worldbook ?? ''} onChange={(e) => set({ worldbook: e.target.value })} />
