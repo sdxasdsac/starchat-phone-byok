@@ -4,7 +4,15 @@
 
 **不内置任何模型额度，也没有账号和付费墙。** 每个用户点一次 Deploy，得到自己的 Vercel 网址，然后填自己的 API Key 就能用。
 
-首次打开还需要输入站长提供的访问密钥（默认 `XINGNIAN-2026`，在 `src/lib/access.ts` 里改），验证一次后本机记住，之后不再询问。
+首次打开还需要输入专属访问密钥（格式 `XN-XXXX-XXXX-CCCC`，一人一个），验证一次后本机记住，之后不再询问。
+
+批量生成密钥：
+
+```bash
+node scripts/gen-keys.mjs 100
+```
+
+会生成 100 个互不相同的密钥并写入 `小手机密钥.txt`。密钥由前端校验；换密钥规则时要同时修改 `src/lib/access.ts` 和 `scripts/gen-keys.mjs` 里的 `SALT`。
 
 - 文字：OpenAI 兼容 `/chat/completions`（DeepSeek、OpenAI、各类中转站）
 - 语音合成：火山引擎豆包语音合成 2.0 / MiniMax / OpenAI 兼容 / 浏览器自带朗读

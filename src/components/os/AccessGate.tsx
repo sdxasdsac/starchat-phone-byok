@@ -25,7 +25,7 @@ export function AccessGate({ onUnlock }: { onUnlock: () => void }) {
           <Mdi path={mdiLockOutline} size={30} />
         </div>
         <h1>小手机</h1>
-        <p className="access-sub">首次使用需要输入站长提供的密钥</p>
+        <p className="access-sub">请输入你的专属密钥（一人一个）</p>
         <input
           className="access-input"
           value={value}
@@ -42,7 +42,7 @@ export function AccessGate({ onUnlock }: { onUnlock: () => void }) {
         <button type="submit" className="access-btn">
           进入小手机
         </button>
-        <p className="access-hint">验证一次后会记住，以后打开不用再输。</p>
+        <p className="access-hint">验证一次后会记住，以后打开不用再输。没有密钥请联系站长。</p>
       </form>
     </div>
   );
