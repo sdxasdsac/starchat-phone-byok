@@ -187,7 +187,7 @@ export function ChatRoom({
 
       const history = [...messages, userMessage];
       try {
-        const full = await chatComplete(settings, toApiMessages(persona, settings, history), (_delta, all) => {
+        const full = await chatComplete(settings, toApiMessages(persona, settings, history, channel), (_delta, all) => {
           setStreamText(all);
         });
         const finalText = full.trim();

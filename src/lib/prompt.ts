@@ -1,6 +1,7 @@
-import type { ChatMessage, Persona, Settings } from './types';
+import type { ChatMessage, Channel, Persona, Settings } from './types';
 import { MUFY_PRESET_SYSTEM } from './builtin-preset';
 import { stickerNames } from './nannan-stickers';
+import { buildWechatPreset } from './wechat-preset';
 
 /**
  * 把角色卡字段拼成系统提示词。
@@ -36,9 +37,17 @@ export function buildSystemPrompt(persona: Persona, settings: Settings): string 
   return parts.filter(Boolean).join('\n\n');
 }
 
-export function toApiMessages(persona: Persona, settings: Settings, history: ChatMessage[]) {
+export function toApiMessages(
+  persona: Persona,
+  settings: Settings,
+  history: ChatMessage[],
+  channel?: Channel,
+) {
+  const system = [buildSystemPrompt(persona, settings), channel === 'wechat' ? buildWechatPreset() : '']
+    .filter(Boolean)
+    .join('\n\n');
   const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
-    { role: 'system', content: buildSystemPrompt(persona, settings) },
+    { role: 'system', content: system },
   ];
   // 只带最近 40 条，避免长会话把上下文撑爆
   for (const m of history.slice(-40)) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type ChangeEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import type { Persona } from '@/lib/types';
 import { usePhone } from '../PhoneContext';
 import { parseCardFile } from '@/lib/card-import';
@@ -200,6 +200,35 @@ function PersonaEditor({
   children?: ReactNode;
 }) {
   const set = (patch: Partial<Persona>) => onChange({ ...persona, ...patch });
+  const [presetBooks, setPresetBooks] = useState<{ id: string; name: string; text: string }[]>([]);
+
+  // starchat 的 public/phone-assets/worldbooks*.json：运行时读取，避免把 200KB 打进入口包
+  useEffect(() => {
+    let alive = true;
+    Promise.all(
+      ['/worldbooks/worldbooks.json', '/worldbooks/worldbooks-lianzong.json'].map((url) =>
+        fetch(url)
+          .then((res) => (res.ok ? res.json() : []))
+          .catch(() => []),
+      ),
+    ).then((lists) => {
+      if (!alive) return;
+      const seen = new Set<string>();
+      const merged: { id: string; name: string; text: string }[] = [];
+      for (const list of lists) {
+        if (!Array.isArray(list)) continue;
+        for (const book of list as { id?: string; name?: string; text?: string }[]) {
+          if (!book?.id || !book.text || seen.has(book.id)) continue;
+          seen.add(book.id);
+          merged.push({ id: book.id, name: book.name || book.id, text: book.text });
+        }
+      }
+      setPresetBooks(merged);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <Screen
@@ -266,6 +295,23 @@ function PersonaEditor({
               <span className="worldbook-meta">{book.description}</span>
             </button>
           ))}
+          <select
+            className="input"
+            value=""
+            onChange={(e) => {
+              const book = presetBooks.find((b) => b.id === e.target.value);
+              if (!book) return;
+              if (persona.worldbook?.trim() && !window.confirm('当前世界书会被覆盖，继续？')) return;
+              set({ worldbook: book.text });
+            }}
+          >
+            <option value="">从 starchat 预设世界书里选一本（{presetBooks.length} 本）…</option>
+            {presetBooks.map((book) => (
+              <option key={book.id} value={book.id}>
+                {book.name}
+              </option>
+            ))}
+          </select>
         </div>
       </Field>
       <Field label="世界书 / 背景">
