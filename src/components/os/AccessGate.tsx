@@ -8,14 +8,23 @@ import { Mdi } from './ui';
 export function AccessGate({ onUnlock }: { onUnlock: () => void }) {
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (tryUnlock(value)) {
+    if (busy) return;
+    if (!value.trim()) {
+      setError('请先输入密钥');
+      return;
+    }
+    setBusy(true);
+    const result = await tryUnlock(value);
+    setBusy(false);
+    if (result.ok) {
       onUnlock();
       return;
     }
-    setError(value.trim() ? '密钥不正确，请核对后再试' : '请先输入密钥');
+    setError(result.reason === 'used' ? '这个密钥已经在本机使用过' : '密钥不正确，请核对后再试');
   };
 
   return (
@@ -39,8 +48,8 @@ export function AccessGate({ onUnlock }: { onUnlock: () => void }) {
           spellCheck={false}
         />
         {error ? <p className="access-error">{error}</p> : null}
-        <button type="submit" className="access-btn">
-          进入小手机
+        <button type="submit" className="access-btn" disabled={busy}>
+          {busy ? '验证中…' : '进入小手机'}
         </button>
         <p className="access-hint">验证一次后会记住，以后打开不用再输。没有密钥请联系站长。</p>
       </form>

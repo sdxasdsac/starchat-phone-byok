@@ -1,5 +1,7 @@
 'use client';
 
+import { claimKey, isClaimed } from './claim-db';
+
 // 每人一个专属访问密钥：XN-XXXX-XXXX-CCCC
 // 前两段随机，最后一段是校验码。密钥由 scripts/gen-keys.mjs 批量生成。
 // 注意：这是前端门槛，能挡住普通用户；如果需要“一钥一人、不可伪造”，必须加服务端校验。
@@ -43,16 +45,35 @@ export function getStoredKey(): string | null {
   return window.localStorage.getItem(STORAGE_KEY);
 }
 
+function keyHash(key: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < key.length; i += 1) {
+    hash ^= key.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
 export function isUnlocked(): boolean {
   const key = getStoredKey();
   return Boolean(key && isValidKey(key));
 }
 
-export function tryUnlock(input: string): boolean {
+export type UnlockResult = { ok: true } | { ok: false; reason: 'invalid' | 'used' };
+
+/** 本机一次性：同一台设备激活过的密钥不能再次激活 */
+export async function tryUnlock(input: string): Promise<UnlockResult> {
   const key = normalizeKey(input);
-  if (!isValidKey(key)) return false;
+  if (!isValidKey(key)) return { ok: false, reason: 'invalid' };
+
+  const hash = keyHash(key);
+  const stored = getStoredKey();
+  const claimed = await isClaimed(hash);
+  if (claimed && stored !== key) return { ok: false, reason: 'used' };
+
+  if (!claimed) await claimKey(hash);
   window.localStorage.setItem(STORAGE_KEY, key);
-  return true;
+  return { ok: true };
 }
 
 export function lockAgain(): void {
