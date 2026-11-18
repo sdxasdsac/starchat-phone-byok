@@ -4,6 +4,10 @@
 
 **不内置任何模型额度，也没有账号和付费墙。** 每个用户点一次 Deploy，得到自己的 Vercel 网址，然后填自己的 API Key 就能用。
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/sdxasdsac/starchat-phone-byok&project-name=starchat-phone-byok)
+
+点上面的按钮：GitHub 登录 Vercel → 自动 fork 到你自己的账号 → 自动构建 → 拿到 `https://xxx.vercel.app`。打开网址输入密钥，进「设置」填 API Key 即可使用。
+
 首次打开需要输入专属访问密钥（格式 `XN-XXXX-XXXX-CCCC`，一人一个）。第一次激活会请求 `https://www.xingnian.site/api/access-key`，服务器把这个密钥标记为已用；第二台设备再用同一个密钥会被拒绝。激活成功后本机记住，之后打开不再询问。
 
 校验接口可以用 `NEXT_PUBLIC_ACCESS_API` 覆盖；服务端代码在 `starchat-app/src/app/api/access-key/route.ts`，只把“密钥 → 已用设备”记在 `data/access-keys.json`，不依赖数据库。
