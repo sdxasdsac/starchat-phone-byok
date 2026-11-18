@@ -1,0 +1,19 @@
+{
+  "id": "app.richman",
+  "name": "大富翁",
+  "version": "1.0.0",
+  "sdkVersion": "1.0",
+  "author": "小坊",
+  "description": "经典大富翁地产大亨！支持单人对决与多人乱斗，5级地产升级，神明附身与道具互害，与手机AI角色实时战局互动！",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "ai.generate",
+    "user.profile.read",
+    "ui.toast"
+  ],
+  "primaryTags": []
+}

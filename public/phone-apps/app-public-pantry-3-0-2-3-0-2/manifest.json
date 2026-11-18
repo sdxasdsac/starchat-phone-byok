@@ -1,0 +1,25 @@
+{
+  "id": "custom-app",
+  "name": "公共储物架",
+  "version": "3.0.2",
+  "description": "公共储物架与壹集市合体版：随时存取生活好物，畅享美学精选市集与AI进货。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "chat.read",
+    "chat.read.background",
+    "chat.sendCard",
+    "chat.write",
+    "chat.requestReply",
+    "ai.generate",
+    "ai.chat",
+    "ui.toast",
+    "wallet.read",
+    "wallet.pay"
+  ],
+  "primaryTags": []
+}

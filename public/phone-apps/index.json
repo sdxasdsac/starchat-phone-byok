@@ -1,0 +1,423 @@
+[
+    {
+        "folder": "cat-pet-1-0-0",
+        "name": "像素猫咪",
+        "version": "1.0.0",
+        "description": "AI 灵魂像素猫咪：喂食、玩耍、陪伴，数据存在本机。",
+        "icon": "/phone-apps/cat-pet-1-0-0/icon.jpg",
+        "entry": "/phone-apps/cat-pet-1-0-0/index.html",
+        "tags": [
+            "宠物",
+            "养成",
+            "像素"
+        ]
+    },
+    {
+        "folder": "tolerance-test-1-0-0",
+        "name": "异性容忍度测试",
+        "version": "1.0.0",
+        "description": "10 道边界测试，看看你和 TA 能接受到哪一步。",
+        "icon": "/phone-apps/tolerance-test-1-0-0/icon.png",
+        "entry": "/phone-apps/tolerance-test-1-0-0/index.html",
+        "tags": [
+            "测试",
+            "情感",
+            "小游戏"
+        ]
+    },
+    {
+        "folder": "app-dream-1-0-0",
+        "name": "梦境",
+        "version": "1.0.0",
+        "description": "模拟角色的梦境，探索潜意识的回响。",
+        "icon": "/phone-apps/app-dream-1-0-0/IMG_9578.jpeg",
+        "entry": "/phone-apps/app-dream-1-0-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "app-public-pantry-3-0-2-3-0-2",
+        "name": "公共储物架",
+        "version": "3.0.2",
+        "description": "公共储物架与壹集市合体版：随时存取生活好物，畅享美学精选市集与AI进货。",
+        "icon": "",
+        "entry": "/phone-apps/app-public-pantry-3-0-2-3-0-2/index.html",
+        "tags": []
+    },
+    {
+        "folder": "app-richman-1-0-0",
+        "name": "大富翁",
+        "version": "1.0.0",
+        "description": "经典大富翁地产大亨！支持单人对决与多人乱斗，5级地产升级，神明附身与道具互害，与手机AI角色实时战局互动！",
+        "icon": "",
+        "entry": "/phone-apps/app-richman-1-0-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "avalon-board-game-3-0-21",
+        "name": "阿瓦隆",
+        "version": "3.0.21",
+        "description": "经典桌游阿瓦隆，支持5-10人局。从你的角色列表中选择AI玩家，与他们一起进行身份推理、组队出征、刺杀梅林的策略对决。",
+        "icon": "",
+        "entry": "/phone-apps/avalon-board-game-3-0-21/index.html",
+        "tags": []
+    },
+    {
+        "folder": "bond-diary-3-1-0",
+        "name": "不要拉黑",
+        "version": "3.1.0",
+        "description": "🔮 此系统正在静默监控所有羁绊波动...当某条线断裂到极限时，TA 会亲自来找你。请三思而后行。",
+        "icon": "/phone-apps/bond-diary-3-1-0/IMG_20260916_215131.jpg",
+        "entry": "/phone-apps/bond-diary-3-1-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "comet-app-1-3-0",
+        "name": "Comet",
+        "version": "1.3.0",
+        "description": "以TA的助理身份运营TA的社交媒体账号",
+        "icon": "/phone-apps/comet-app-1-3-0/icon.png",
+        "entry": "/phone-apps/comet-app-1-3-0/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "custom-app-1-0-0-3-1-0-0",
+        "name": "时光放映馆",
+        "version": "1.0.0",
+        "description": "深棕丝绒剧院质感的时光观影机。在大银幕上演绎过去、虚构同人与未来的番外剧情，并同步捕捉AI角色的实时观影体反应与情绪起伏。",
+        "icon": "/phone-apps/custom-app-1-0-0-3-1-0-0/1000055294.jpg",
+        "entry": "/phone-apps/custom-app-1-0-0-3-1-0-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "custom-app-3-4-0-3-4-0",
+        "name": "秘档",
+        "version": "3.4.0",
+        "description": "极简空气感白底黑字机密档案。支持第一人称自述、卡片SVG编辑、角色自主输出指令、系统提示条透出、全能力联动。",
+        "icon": "",
+        "entry": "/phone-apps/custom-app-3-4-0-3-4-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "empathy-doll-1-1-0",
+        "name": "共感",
+        "version": "1.1.0",
+        "description": "连接char的共感APP，触碰部位同步生成说出口的话与内心独白，可弹窗探听当下的真实想法。",
+        "icon": "",
+        "entry": "/phone-apps/empathy-doll-1-1-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "float-tv-1-17-1",
+        "name": "噼里啪啦",
+        "version": "1.17.1",
+        "description": "噼里啪啦 1.17.1：内容图可一键加入视频——按分镜顺序成为播放画面，进度条走到第几帧就显示第几张；舞台支持图片帧与视频片段混排，按钮上实时显示「已含 N 帧」。",
+        "icon": "/phone-apps/float-tv-1-17-1/icon.png",
+        "entry": "/phone-apps/float-tv-1-17-1/index.html",
+        "tags": [
+            "视频",
+            "直播",
+            "AI",
+            "娱乐"
+        ]
+    },
+    {
+        "folder": "float-meituan-2-0-0",
+        "name": "美团",
+        "version": "2.0.0",
+        "description": "深度仿美团App的高保真虚拟手机生活服务中心。涵盖外卖美食、特惠团购、酒店民宿、电影演出等板块，支持双向投喂、消费扣减全局钱包，以美食、电影、酒店等多维玩法激发AI主动聊天。",
+        "icon": "/phone-apps/float-meituan-2-0-0/IMG_5095.jpeg",
+        "entry": "/phone-apps/float-meituan-2-0-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "guide-relationship-1-1-0",
+        "name": "攻略系统",
+        "version": "1.1.0",
+        "description": "读取角色关系与全部记忆，推演你现在能做的关系推进任务，以及接下来可以发生什么（线上/线下）。支持多角色同选与面具指定。",
+        "icon": "",
+        "entry": "/phone-apps/guide-relationship-1-1-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "honor-canyon-companion-2-2-0",
+        "name": "你抢谁蓝呢",
+        "version": "2.2.0",
+        "description": "荣耀峡谷 AI 伴玩模拟器：好友档案、排位冲星、点券充值、AI 生图、荣耀水晶抽取、七日签到、好友亲密度、开黑邀请卡片（富媒体指令 + 后台语义兜底）。",
+        "icon": "/phone-apps/honor-canyon-companion-2-2-0/icon.svg",
+        "entry": "/phone-apps/honor-canyon-companion-2-2-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "moonhowl-werewolf-crossplay-1-1-1",
+        "name": "月夜狼杀·互通测试版",
+        "version": "1.1.1",
+        "description": "【联机互通测试版,可与原版并存】沉浸式深色文游风狼人杀。联机走独立驿站:官方链接版与自部署版可跨站同桌,开房生成 4 位邀请码,断线自动重连、掉线人偶代打、回来无缝回桌。单机可携多位角色开局、人偶自动补位;支持语音开麦、发言轮次与全场记录。守卫/预言家/女巫/猎人齐备,支持自拟板子。测试稳定后功能将并入正式版。",
+        "icon": "/phone-apps/moonhowl-werewolf-crossplay-1-1-1/icon.png",
+        "entry": "/phone-apps/moonhowl-werewolf-crossplay-1-1-1/index.html",
+        "tags": []
+    },
+    {
+        "folder": "onlyfans-clone-1-0-1",
+        "name": "OnlyFans",
+        "version": "1.0.1",
+        "description": "高仿 OF 社区：支持 AI 随机生成创作者动态、选择角色生成专属动态、用户自己发文、私信与主页编辑。",
+        "icon": "",
+        "entry": "/phone-apps/onlyfans-clone-1-0-1/index.html",
+        "tags": []
+    },
+    {
+        "folder": "potato-theater-1-1-0",
+        "name": "土豆放映室",
+        "version": "1.1.0",
+        "description": "和角色一起看本地视频，边看边聊，看完还能把这场的观影记忆发到主聊天。",
+        "icon": "",
+        "entry": "/phone-apps/potato-theater-1-1-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "quick-delivery-box-1-0-0",
+        "name": "极速达",
+        "version": "1.0.0",
+        "description": "万物极速签收与拆箱管家。自动识别聊天与购物记录中的礼物，智能为角色注入不可磨灭的真实使用记忆并即刻唤起试用反馈。",
+        "icon": "",
+        "entry": "/phone-apps/quick-delivery-box-1-0-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "secret-phone-inspector-1-2-0",
+        "name": "TA的手机",
+        "version": "1.2.0",
+        "description": "沉浸式查手机：动态锁屏密码，9大隐私模块（备忘录、草稿、搜索、心愿单、相册、语音备忘、秘密文件、追剧、看书），内容累加留存，一键发聊天质问。",
+        "icon": "",
+        "entry": "/phone-apps/secret-phone-inspector-1-2-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "shuraba-truth-dare-1-1-0",
+        "name": "修罗场",
+        "version": "1.1.0",
+        "description": "和角色们来一场线下的修罗场聚会吧，几个人面对面坐在一起，挖掘内心的真实想法和想做的事。",
+        "icon": "",
+        "entry": "/phone-apps/shuraba-truth-dare-1-1-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "app-sqzcinema-pro18-1-8-0",
+        "name": "SQZcinema 1.8",
+        "version": "1.8.0",
+        "description": "开发版 1.8.0：联机观影、多角色同台吐槽、内置浏览器解析直链、AI视觉吐槽。主标签 sqzcinema18，可与 1.7.1 并存。",
+        "icon": "/phone-apps/app-sqzcinema-pro18-1-8-0/icon.png",
+        "entry": "/phone-apps/app-sqzcinema-pro18-1-8-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "theqoo-float-forum-1-1-2",
+        "name": "theqoo",
+        "version": "1.1.2",
+        "description": "韩式匿名论坛模拟 App。支持世界书、可选日历关联、中文论坛/中韩翻译模式、匿名楼主回复、延迟评论生态、配图与 Chat 分享。",
+        "icon": "/phone-apps/theqoo-float-forum-1-1-2/icon.png",
+        "entry": "/phone-apps/theqoo-float-forum-1-1-2/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "velvet-darkroom-1-0-0",
+        "name": "Velvet 丝绒暗室",
+        "version": "1.0.0",
+        "description": "一个主打两性私密、暗室情感探讨、随机匹配信道与风控裁决庭的独立 App。",
+        "icon": "/phone-apps/velvet-darkroom-1-0-0/icon.png",
+        "entry": "/phone-apps/velvet-darkroom-1-0-0/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "waimai-demo-2-0-0",
+        "name": "外卖",
+        "version": "2.0.0",
+        "description": "仿真外卖APP，支持给自己/角色点外卖、角色请客付款、聊天室卡片联动、角色主动点外卖。",
+        "icon": "",
+        "entry": "/phone-apps/waimai-demo-2-0-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "nox-weibo-0-9-25",
+        "name": "微博",
+        "version": "0.9.25",
+        "description": "仿真微博：刷首页、看评论楼中楼、发微博等角色和路人来互动、逛角色主页。按用户身份分开，角色会记得你们在微博上的互动。",
+        "icon": "/phone-apps/nox-weibo-0-9-25/icon.png",
+        "entry": "/phone-apps/nox-weibo-0-9-25/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "ear-whisper-6-2-1",
+        "name": "Whisper",
+        "version": "6.2.1",
+        "description": "与你亲密的TA共度一段私密语音时光。刷一批专属片单,点进去是配图+配音的沉浸演绎;支持单人/多人模式(最多3位角色同场、各用自己的音色)、拖动进度、单句/整段重新配音、收藏与下载、导入自己的剧本和封面、叠加环境音。",
+        "icon": "/phone-apps/ear-whisper-6-2-1/icon.png",
+        "entry": "/phone-apps/ear-whisper-6-2-1/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "float-x-ai-social-1-9-8",
+        "name": "X",
+        "version": "1.9.8",
+        "description": "X 风格的虚构 AI 社交空间：角色与 NPC 时间线、评论、私信、关注与生图。",
+        "icon": "/phone-apps/float-x-ai-social-1-9-8/icon.png",
+        "entry": "/phone-apps/float-x-ai-social-1-9-8/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "moss-milk-home-3-11-2",
+        "name": "共筑小窝",
+        "version": "3.11.2",
+        "description": "粉白蓝黄的小家。和角色一起建造、换装、散步，在家具旁分享日常。",
+        "icon": "/phone-apps/moss-milk-home-3-11-2/icon.png",
+        "entry": "/phone-apps/moss-milk-home-3-11-2/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "dango-diary-1-3-2",
+        "name": "团子共养日记",
+        "version": "1.3.2",
+        "description": "24种柔和小动物与物种专属自然毛色、6套清新主题。为每个角色匹配宠物性格，一起照顾、聊天、读爪爪日记与角色悄悄话，还能调用生图API绘制专属画像。",
+        "icon": "/phone-apps/dango-diary-1-3-2/icon.png",
+        "entry": "/phone-apps/dango-diary-1-3-2/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "mood-calendar-1-2-0",
+        "name": "心情记录",
+        "version": "1.2.0",
+        "description": "和 AI 角色共同记录心情、便签、备忘录与日记。日历标记心情、节日与纪念事项，备忘录双方共同维护待办，日记支持 AI 批注与总结。",
+        "icon": "/phone-apps/mood-calendar-1-2-0/icon.svg",
+        "entry": "/phone-apps/mood-calendar-1-2-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "fish-douyin-virtual-1-2-0",
+        "name": "抖音",
+        "version": "1.2.0",
+        "description": "高度还原的虚拟抖音：竖屏推荐流、实时热榜、GPS 同城、评论楼中楼、角色会主动点赞评论 @你 私信分享、火花与小火人、抖音商城与团购、钱包订单到货提醒，深浅色跟随系统。",
+        "icon": "/phone-apps/fish-douyin-virtual-1-2-0/icon.jpg",
+        "entry": "/phone-apps/fish-douyin-virtual-1-2-0/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "cozy-kitchen-duo-1-0-0",
+        "name": "暖心小灶",
+        "version": "1.0.0",
+        "description": "双人与多人合力下厨料理管家。支持自由分配主厨、备菜、品尝分工，完成后为所有参与角色同步注入真实厨房记忆并端上聊天室餐桌。",
+        "icon": "",
+        "entry": "/phone-apps/cozy-kitchen-duo-1-0-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "bigar-couple-space-2-0-0",
+        "name": "织梦纪事",
+        "version": "2.0.0",
+        "description": "与伴侣共筑织梦：支持双层自由装修、全屋29+自主生活动线、小院祈愿古树拾笺阁、地下迷宫暗巷追逐、书桌终端全景档案、双人食记、浮生小景与跨次元触梦手札，愿越过屏幕微隙与流转时序，在一屋灯火里织就你我的朝夕",
+        "icon": "/phone-apps/bigar-couple-space-2-0-0/icon.png",
+        "entry": "/phone-apps/bigar-couple-space-2-0-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "live-onair-1-9-0",
+        "name": "粒粒bo",
+        "version": "1.9.0",
+        "description": "沉浸式模拟直播间小玩具：可以看Ta开播，弹幕互动、送礼、听语音回应；也可以自己开播，被围观、被刷礼物。除了内置礼物，还有可自己上传图片/GIF做的自定义礼物（头像框礼物/定制礼物），支持七档价值分级和盲盒抽奖，头像框点亮次数永久累计。个人主页能查看钱包、管理粉丝群，私信还能戴上\"面具\"匿名试探。应用字体、主页壁纸、头像框都可以自由个性化。",
+        "icon": "/phone-apps/live-onair-1-9-0/icon.jpg",
+        "entry": "/phone-apps/live-onair-1-9-0/index.html",
+        "tags": [
+            null
+        ]
+    },
+    {
+        "folder": "shopping-approval-1-0-2",
+        "name": "购物审批",
+        "version": "1.0.2",
+        "description": "提交一个想买但犹豫的东西，让 TA 来决定你能不能买。",
+        "icon": "/phone-apps/shopping-approval-1-0-2/icon.svg",
+        "entry": "/phone-apps/shopping-approval-1-0-2/index.html",
+        "tags": []
+    },
+    {
+        "folder": "who-is-undercover-ai-1-0-0",
+        "name": "谁是卧底（角色局）",
+        "version": "1.0.0",
+        "description": "选 3~5 位角色开一局谁是卧底：角色由 AI 扮演，描述、投票、复盘都按各自人设走。",
+        "icon": "",
+        "entry": "/phone-apps/who-is-undercover-ai-1-0-0/index.html",
+        "tags": [
+            "游戏",
+            "角色局"
+        ]
+    },
+    {
+        "folder": "xiaoe-wanwu-1-0-0",
+        "name": "小饿万物",
+        "version": "1.0.0",
+        "description": "外卖点单小应用：分类挑吃的、加购物车、结算时可以选角色代付，还能用「AI 造物」生成专属商品。",
+        "icon": "",
+        "entry": "/phone-apps/xiaoe-wanwu-1-0-0/index.html",
+        "tags": [
+            "生活",
+            "点单"
+        ]
+    },
+    {
+        "folder": "soul-meet-app-1-1-4",
+        "name": "Soul",
+        "version": "1.1.4",
+        "description": "匿名匹配交友：广场动态、私聊互动、线下约会、角色查岗、交友群聊。",
+        "icon": "/phone-apps/soul-meet-app-1-1-4/1787221090224_edit_241613405522934.png",
+        "entry": "/phone-apps/soul-meet-app-1-1-4/Soul3.html",
+        "tags": [
+            "社交"
+        ]
+    },
+    {
+        "folder": "draw-guess-app-1-1-1",
+        "name": "你画我猜",
+        "version": "1.1.1",
+        "description": "双向绘画猜谜：你画时角色看图来猜，角色画时你在三次机会里找答案。",
+        "icon": "/phone-apps/draw-guess-app-1-1-1/icon.svg",
+        "entry": "/phone-apps/draw-guess-app-1-1-1/index.html",
+        "tags": [
+            "游戏"
+        ]
+    },
+    {
+        "folder": "who-is-undercover-1-0-0",
+        "name": "谁是卧底",
+        "version": "1.0.0",
+        "description": "手绘可爱画风的「谁是卧底」派对游戏！支持 4~12 人局，可拉上小手机里的 AI 角色一起玩，人数不足自动补齐 NPC。",
+        "icon": "/phone-apps/who-is-undercover-1-0-0/assets/icon.svg",
+        "entry": "/phone-apps/who-is-undercover-1-0-0/index.html",
+        "tags": []
+    },
+    {
+        "folder": "workshop-radio-drama-1-0-0",
+        "name": "广播剧",
+        "version": "1.0.0",
+        "description": "使用已导入角色创作、编辑、配音与导出沉浸式广播剧。",
+        "icon": "",
+        "entry": "/phone-apps/workshop-radio-drama-1-0-0/index.html",
+        "tags": []
+    }
+]

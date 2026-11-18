@@ -1,0 +1,42 @@
+{
+  "id": "float-tv",
+  "name": "噼里啪啦",
+  "version": "1.17.1",
+  "sdkVersion": "1.0",
+  "author": "星年小手机 · 自制",
+  "description": "噼里啪啦 1.17.1：内容图可一键加入视频——按分镜顺序成为播放画面，进度条走到第几帧就显示第几张；舞台支持图片帧与视频片段混排，按钮上实时显示「已含 N 帧」。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "primaryTags": [
+    "视频",
+    "直播",
+    "AI",
+    "娱乐"
+  ],
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "ai.chat",
+    "ai.generateImage",
+    "voice.tts",
+    "voice.readProfiles",
+    "world.read",
+    "world.write",
+    "characters.read",
+    "network.fetch",
+    "media.save",
+    "ui.toast",
+    "chat.sendCard",
+    "chat.sendMessage"
+  ],
+  "network": {
+    "allowedDomains": [
+      "api.minimaxi.com",
+      "*.minimaxi.com",
+      "*.supabase.co",
+      "*.trycloudflare.com",
+      "scoring-opposite-shorthand.ngrok-free.dev"
+    ],
+    "mode": "direct"
+  }
+}

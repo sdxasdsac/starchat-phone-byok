@@ -1,0 +1,22 @@
+{
+  "id": "draw_guess.app",
+  "name": "你画我猜",
+  "version": "1.1.1",
+  "sdkVersion": "2.0",
+  "author": "with31outfear",
+  "description": "双向绘画猜谜游戏：你画时角色真正看图来猜，角色画时由你在三次机会里寻找答案。",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "permissions": [
+    "ai.generate",
+    "characters.read",
+    "app.data.read",
+    "app.data.write",
+    "memory.write",
+    "chat.sendCard",
+    "ui.toast"
+  ],
+  "resources": {"presets":[],"regexes":[],"worldBooks":[],"bindings":[],"tools":[],"voices":[],"assets":[]},
+  "primaryTags": ["drawing-guess", "vision-game"],
+  "extensions": {"chat":{"plusActions":[{"id":"open-draw-guess","label":"你画我猜","description":"和当前角色轮流画画、轮流猜题。","entry":"index.html","presentation":"app","tags":["drawing-guess","vision-game"]}]}}
+}

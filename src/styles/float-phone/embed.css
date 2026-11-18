@@ -1,0 +1,35 @@
+/* 接入专用：把 1:1 外壳铺满真实小手机的容器。
+   不改源样式值，只覆盖尺寸 / 圆角 / 外边距（源项目在 PWA 全屏时也是同样做法）。
+   注意：源外壳用 display:grid 包裹，百分比宽度在自动轨道里会退化成 max-content
+   （三页并排撑到 ~972px），接入模式改成 block 链并显式给 100% 宽高。 */
+
+.fp-root.fp-embed {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--c-page-body-bg);
+}
+
+.fp-root.fp-embed .phone-shell-wrap {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.fp-root.fp-embed .phone-case {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.fp-root.fp-embed .phone-frame {
+  width: 100%;
+  height: 100%;
+}
+
+.fp-root.fp-embed .phone-shell {
+  border-radius: 0;
+}

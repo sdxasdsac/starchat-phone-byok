@@ -1,0 +1,338 @@
+{
+  "sdkVersion": "1.0",
+  "id": "fish.douyin.virtual",
+  "name": "抖音",
+  "version": "1.2.0",
+  "author": "Codex × Fish × Claude",
+  "description": "高度还原的虚拟抖音：竖屏推荐流、实时热榜、GPS 同城、评论楼中楼、角色会主动点赞评论 @你 私信分享、火花与小火人、抖音商城与团购、钱包订单到货提醒，深浅色跟随系统。",
+  "entry": "index.html",
+  "icon": "icon.jpg",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "memory.readCore",
+    "memory.readLongTerm",
+    "memory.readShortTerm",
+    "memory.write",
+    "ai.chat",
+    "ai.generate",
+    "ai.generateImage",
+    "network.fetch",
+    "geo.read",
+    "chat.sendMessage",
+    "chat.write",
+    "chat.sendCard",
+    "chat.requestReply",
+    "chat.read.background",
+    "chat.tools",
+    "media.pick",
+    "media.save",
+    "notifications.read",
+    "notifications.write",
+    "ui.toast",
+    "ui.notification",
+    "tasks.schedule"
+  ],
+  "network": {
+    "allowedDomains": [
+      "www.iesdouyin.com",
+      "www.douyin.com",
+      "api.bigdatacloud.net",
+      "api.open-meteo.com"
+    ]
+  },
+  "resources": {
+    "presets": [
+      "presets.json"
+    ]
+  },
+  "extensions": {
+    "chat": {
+      "directives": [
+        {
+          "id": "douyin-post",
+          "label": "发抖音",
+          "syntax": "[发抖音:标题:文案]",
+          "description": "想在抖音上发一条生活作品时使用（偶尔，不要每轮）。标题≤18字，文案带#话题。抖音会自动保存这条作品。 只有真的想发作品时才用这个标记；不要手写“[抖音分享]”之类的文字。",
+          "card": {
+            "appLabel": "抖音",
+            "title": "{{标题}}",
+            "body": "{{文案}}",
+            "status": "已发布",
+            "accentColor": "#fe2c55",
+            "actions": [
+              {
+                "label": "打开抖音"
+              }
+            ]
+          }
+        }
+      ],
+      "plusActions": [
+        {
+          "id": "douyin-open",
+          "label": "分享抖音",
+          "entry": "share",
+          "presentation": "fullscreen",
+          "description": "打开抖音，挑一条作品分享给当前角色"
+        }
+      ]
+    },
+    "events": [
+      {
+        "event": "chat.message.created",
+        "background": true,
+        "description": "角色在聊天里发出 [发抖音:标题:文案] 时，自动发布到抖音。"
+      }
+    ],
+    "tools": [
+      {
+        "id": "post-short",
+        "name": "发布抖音作品",
+        "handler": "postShort",
+        "visibility": "shared",
+        "description": "以当前角色的身份在虚拟抖音发一条生活作品（图文）。不填内容时由角色按人设和最近经历自己创作。",
+        "usageGuide": "有值得分享的生活片段时偶尔使用，不要每轮都发。成功后不要再输出相同的发布标记。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "画面标题，≤18字，可空"
+            },
+            "caption": {
+              "type": "string",
+              "description": "文案，带2~3个#话题，可空"
+            },
+            "tag": {
+              "type": "string",
+              "description": "分类，如 日常/美食/旅行"
+            },
+            "frames": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "1~3张画面描述（用于生图），可空。画面里出现你本人时，在描述开头写“本人出镜”；纯风景/物品就不要写"
+            }
+          }
+        }
+      },
+      {
+        "id": "list-shorts",
+        "name": "查看抖音作品",
+        "handler": "listShorts",
+        "visibility": "shared",
+        "description": "读取最近的公开抖音作品（含用户自己发的），返回作品 ID、作者、标题。互动前先调用获取真实 ID。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "id": "interact-short",
+        "name": "互动抖音作品",
+        "handler": "interactShort",
+        "visibility": "shared",
+        "description": "以当前角色身份对已存在的作品点赞(like)、评论(comment)、在评论里@用户(mention)，或私信分享给用户(share)。",
+        "usageGuide": "先用“查看抖音作品”拿到 ID；不要编造 ID；不要每轮都用。 不要在聊天里手写“[抖音分享]”“🎵 xx 分享了作品”这类文字来假装分享，那样抖音里并没有这条作品；要分享就调用工具。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "postId": {
+              "type": "string"
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "like",
+                "comment",
+                "mention",
+                "share"
+              ]
+            },
+            "text": {
+              "type": "string",
+              "description": "评论/附言内容"
+            },
+            "replyTo": {
+              "type": "string",
+              "description": "回复评论区某人时填对方昵称"
+            }
+          },
+          "required": [
+            "postId",
+            "action"
+          ]
+        }
+      },
+      {
+        "id": "send-app-message",
+        "name": "发抖音私信",
+        "handler": "sendAppMessage",
+        "visibility": "shared",
+        "description": "以当前角色身份在抖音给用户发私信：文字、表情包（先查表情获取 ID）、或分享已有作品，可以 @用户。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            },
+            "stickerId": {
+              "type": "string"
+            },
+            "postId": {
+              "type": "string"
+            },
+            "mention": {
+              "type": "boolean"
+            }
+          }
+        },
+        "usageGuide": "不要在聊天里手写“[抖音分享]”“🎵 xx 分享了作品”这类文字来假装分享，那样抖音里并没有这条作品；要分享就调用工具。"
+      },
+      {
+        "id": "list-app-stickers",
+        "name": "查看抖音表情包",
+        "handler": "listAppStickers",
+        "visibility": "shared",
+        "description": "查看抖音里可用的表情包：名称、含义、分组和 ID。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "id": "share-short-chat",
+        "name": "在聊天室分享抖音卡片",
+        "handler": "shareShortToChat",
+        "visibility": "shared",
+        "description": "聊到相关话题时，以角色身份把一条已存在的公开抖音作品以卡片形式分享到当前 聊天室。",
+        "usageGuide": "先查看作品拿到 ID；偶尔使用，不要每轮分享。 不要在聊天里手写“[抖音分享]”“🎵 xx 分享了作品”这类文字来假装分享，那样抖音里并没有这条作品；要分享就调用工具。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "postId": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string",
+              "description": "附言"
+            }
+          },
+          "required": [
+            "postId"
+          ]
+        }
+      },
+      {
+        "id": "follow-app-user",
+        "name": "关注抖音用户",
+        "handler": "followAppUser",
+        "visibility": "shared",
+        "description": "角色在抖音关注（或 follow=false 取消关注）用户，会产生新关注通知。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "follow": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      {
+        "id": "search-goods",
+        "name": "搜索抖音商品与团购",
+        "handler": "searchGoods",
+        "visibility": "shared",
+        "description": "在虚拟抖音商城(mall)或团购(deal)按关键词搜索，返回商品 ID 和价格；没有结果时可以生成。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "mall",
+                "deal"
+              ]
+            },
+            "generate": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      },
+      {
+        "id": "buy-goods",
+        "name": "角色在抖音买东西",
+        "handler": "buyGoods",
+        "visibility": "shared",
+        "description": "用角色自己的虚拟零钱购买已搜到的商品，可以买给自己或送给用户；订单卡片会自动发到聊天室，到货时再提醒。",
+        "usageGuide": "先搜索拿到商品 ID；成功后不要重复购买或重复发送订单。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "productId": {
+              "type": "string"
+            },
+            "quantity": {
+              "type": "integer"
+            },
+            "forSelf": {
+              "type": "boolean"
+            },
+            "address": {
+              "type": "string"
+            },
+            "minutes": {
+              "type": "integer",
+              "description": "多少分钟后送达，可空"
+            }
+          },
+          "required": [
+            "productId"
+          ]
+        }
+      },
+      {
+        "id": "publish-on-user-account",
+        "name": "用用户的抖音号代发",
+        "handler": "publishOnUserAccount",
+        "visibility": "shared",
+        "description": "在关系允许的情况下，用用户的抖音账号代发一条作品（会标注代发人）。只影响虚拟抖音。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string"
+            },
+            "caption": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            },
+            "frames": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "title",
+            "caption"
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>美团</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-color: #f6f6f6;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .theme-yellow-bg {
+      background-color: #FFD000;
+    }
+    .theme-yellow-text {
+      color: #FFD000;
+    }
+    .safe-top {
+      padding-top: calc(var(--ai-phone-app-bar-top, 56px) + var(--ai-phone-app-bar-height, 30px) + 8px);
+    }
+    .safe-bottom {
+      padding-bottom: calc(var(--ai-phone-app-safe-bottom, 24px) + 64px);
+    }
+    .page-pane {
+      transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+    }
+  </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden text-gray-800">
+
+  <!-- 顶部状态栏与美团搜索/余额栏 -->
+  <header class="fixed top-0 left-0 right-0 bg-gradient-to-b from-[#FFD000] to-[#FFE033] z-50 px-4 pb-3 flex flex-col justify-end shadow-sm"
+          style="top: 0; height: calc(var(--ai-phone-app-bar-top, 56px) + var(--ai-phone-app-bar-height, 30px) + 40px);">
+    <!-- 与宿主胶囊对齐的顶栏 -->
+    <div class="flex items-center justify-between pb-2" 
+         style="height: var(--ai-phone-app-bar-height, 30px); margin-right: var(--ai-phone-app-bar-clear-right, 96px);">
+      <div class="flex items-center space-x-1">
+        <span class="text-lg font-black text-black tracking-tighter">美团</span>
+      </div>
+      <div class="flex items-center space-x-1.5 bg-black/10 px-2.5 py-0.5 rounded-full border border-black/10">
+        <span class="text-[10px] text-black/60">钱包余额:</span>
+        <span id="wallet-balance" class="text-xs font-black text-black">...</span>
+      </div>
+    </div>
+    <!-- 搜索框 -->
+    <div class="flex items-center space-x-2 bg-white rounded-full px-2 py-1 shadow-sm border border-amber-400">
+      <span class="text-gray-400 text-xs pl-1">🔍</span>
+      <input type="text" id="global-search" placeholder="搜外卖、特惠团购、电影民宿..." 
+             onkeyup="if(event.key==='Enter') executeAISearch()"
+             class="bg-transparent text-xs w-full focus:outline-none placeholder-gray-400 text-gray-700">
+      <button onclick="executeAISearch()" class="text-[10px] font-black bg-amber-400 px-3 py-1.5 rounded-full text-black hover:bg-amber-500 active:scale-95 transition-transform flex-shrink-0">搜索</button>
+    </div>
+  </header>
+
+  <!-- 主体内容区 -->
+  <main class="flex-1 overflow-y-auto no-scrollbar safe-bottom bg-[#f6f6f6]"
+        style="margin-top: calc(var(--ai-phone-app-bar-top, 56px) + var(--ai-phone-app-bar-height, 30px) + 45px);">
+    
+    <!-- ================= PAGE 1: 首页推荐 ================= -->
+    <div id="page-home" class="page-pane space-y-3.5 px-3">
+      
+      <!-- 金刚区 (5大核心品类入口) -->
+      <div class="grid grid-cols-5 gap-y-3 bg-white rounded-2xl p-4 mt-2 shadow-sm">
+        <button onclick="filterCategory('waimai')" class="flex flex-col items-center space-y-1.5 active:scale-95 transition-transform">
+          <span class="text-3xl">🍔</span>
+          <span class="text-[11px] font-bold text-gray-700">外卖美食</span>
+        </button>
+        <button onclick="filterCategory('tuangou')" class="flex flex-col items-center space-y-1.5 active:scale-95 transition-transform">
+          <span class="text-3xl">🎫</span>
+          <span class="text-[11px] font-bold text-gray-700">特惠团购</span>
+        </button>
+        <button onclick="filterCategory('hotel')" class="flex flex-col items-center space-y-1.5 active:scale-95 transition-transform">
+          <span class="text-3xl">🏡</span>
+          <span class="text-[11px] font-bold text-gray-700">酒店民宿</span>
+        </button>
+        <button onclick="filterCategory('movie')" class="flex flex-col items-center space-y-1.5 active:scale-95 transition-transform">
+          <span class="text-3xl">🎬</span>
+          <span class="text-[11px] font-bold text-gray-700">电影演出</span>
+        </button>
+        <button onclick="filterCategory('all')" class="flex flex-col items-center space-y-1.5 active:scale-95 transition-transform">
+          <span class="text-3xl">⚡</span>
+          <span class="text-[11px] font-bold text-gray-700">全部品类</span>
+        </button>
+      </div>
+
+      <!-- 特惠限时狂欢 Banner -->
+      <div class="bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 rounded-2xl p-4 text-white shadow-sm flex items-center justify-between relative overflow-hidden">
+        <div class="space-y-1 z-10">
+          <div class="flex items-center space-x-1.5">
+            <span class="bg-white text-orange-600 text-[9px] font-black px-1.5 py-0.5 rounded-md">特惠狂欢</span>
+            <span class="text-xs text-amber-100 font-bold">全城品质好店已同步</span>
+          </div>
+          <h3 class="font-black text-sm">美团周末特惠 · 天天领红包</h3>
+          <p class="text-[10px] text-white/90">带上你喜欢的TA，一起发现全城精致好去处</p>
+        </div>
+        <div class="text-5xl opacity-20 absolute -right-2 -bottom-2 z-0 rotate-12">🛵</div>
+      </div>
+
+      <!-- 商品流与瀑布流推荐 -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-1">
+          <h3 class="text-xs font-black text-gray-900 flex items-center space-x-1">
+            <span class="text-amber-500">🔥</span> <span>为您推荐 · 激发破冰神器</span>
+          </h3>
+          <span class="text-[10px] text-gray-400 font-bold">已同步聊天钱包</span>
+        </div>
+        
+        <!-- 瀑布流网格 -->
+        <div id="products-grid" class="grid grid-cols-2 gap-2.5">
+          <!-- JS渲染15+条产品 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= PAGE 2: 购物车 ================= -->
+    <div id="page-cart" class="page-pane hidden space-y-4 px-3">
+      <div class="bg-white rounded-2xl p-4 mt-2 shadow-sm space-y-3">
+        <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+          <h3 class="font-black text-sm text-gray-800 flex items-center space-x-1">
+            <span>🛒</span> <span>待支付清单</span>
+          </h3>
+          <button onclick="clearCart()" class="text-xs text-gray-400 hover:text-red-500">清空购物车</button>
+        </div>
+        
+        <div id="cart-items-container" class="space-y-3 divide-y divide-gray-50">
+          <!-- 购物车内容 -->
+        </div>
+
+        <!-- 派送对象及备注 -->
+        <div class="border-t border-gray-100 pt-3 space-y-3">
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-gray-500 flex items-center space-x-1">
+              <span>🎁</span> <span>心意投喂目标 (关联一名聊天角色)</span>
+            </label>
+            <select id="character-select" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-800 font-bold focus:outline-none focus:border-amber-400">
+              <!-- 动态加载当前角色 -->
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-bold text-gray-500 flex items-center space-x-1">
+              <span>✍️</span> <span>给TA的暖心小票寄语</span>
+            </label>
+            <input type="text" id="order-remark" placeholder="例：喝杯甜甜的草莓奶盖，今天工作别太累，喝完来找我聊天哦~" 
+                   class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs text-gray-600 focus:outline-none focus:border-amber-400">
+          </div>
+
+          <!-- 心意分享到聊天开关 -->
+          <div class="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="flex flex-col">
+              <span class="text-xs font-bold text-gray-700">发送特惠小票到聊天</span>
+              <span class="text-[9px] text-gray-400" id="share-tip">开启后AI会立即收到小票并当场回复</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="share-card-toggle" checked onchange="toggleShareTip()" class="sr-only peer">
+              <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-400"></div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 结算模块 -->
+        <div class="bg-amber-50 rounded-2xl p-4 border border-amber-100 flex flex-col space-y-1">
+          <div class="flex justify-between items-center">
+            <span class="text-xs text-gray-500 font-bold">餐品及仿真服务合计</span>
+            <span id="cart-total-price" class="text-lg font-black text-red-600">¥0.00</span>
+          </div>
+          <span class="text-[10px] text-amber-700 font-bold text-right">*已自动计算打包费与配送费</span>
+        </div>
+
+        <button onclick="submitFinalOrder()" class="w-full bg-gradient-to-r from-amber-400 to-[#FFD000] text-black font-black py-3.5 rounded-full text-sm shadow-md transition-all active:scale-[0.98]">
+          确认安全付款并下单
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= PAGE 3: 订单/记录 ================= -->
+    <div id="page-orders" class="page-pane hidden space-y-3.5 px-3">
+      <div class="flex items-center justify-between mt-2 px-1">
+        <h3 class="text-sm font-black text-gray-900">📊 美团交互履约中心</h3>
+        <button onclick="clearCompletedOrders()" class="text-xs text-gray-400 hover:text-gray-600">清理已完成</button>
+      </div>
+      <div id="orders-container" class="space-y-3">
+        <!-- 订单渲染 -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ================= 品种二级详情购买页 (Modal) ================= -->
+  <div id="detail-modal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-t-3xl w-full max-w-md p-5 space-y-4 pb-safe transition-transform duration-300 translate-y-full">
+      <div class="flex justify-between items-start">
+        <div class="flex space-x-2.5">
+          <span id="detail-icon" class="text-4xl p-2 bg-amber-50 rounded-2xl border border-amber-100"></span>
+          <div>
+            <span id="detail-tag" class="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md font-bold"></span>
+            <h3 id="detail-name" class="font-black text-base text-gray-900 mt-1"></h3>
+            <p id="detail-shop" class="text-xs text-gray-400 mt-0.5"></p>
+          </div>
+        </div>
+        <button onclick="closeDetailModal()" class="text-gray-400 text-xl font-bold bg-gray-100 w-8 h-8 rounded-full flex items-center justify-center">&times;</button>
+      </div>
+
+      <p id="detail-desc" class="text-xs text-gray-500 leading-relaxed bg-gray-50 p-3 rounded-xl"></p>
+
+      <div class="space-y-3">
+        <div class="space-y-1.5">
+          <span class="text-[11px] font-bold text-gray-400">定制规格/偏好选项</span>
+          <div class="flex flex-wrap gap-2" id="specs-container"></div>
+        </div>
+        <div class="space-y-1.5">
+          <span class="text-[11px] font-bold text-gray-400">加料选项/附加体验</span>
+          <div class="flex flex-wrap gap-2" id="addons-container"></div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between border-t border-gray-100 pt-3 mt-1">
+        <div>
+          <span class="text-xs text-gray-400">估算价格</span>
+          <div class="flex items-baseline space-x-0.5">
+            <span class="text-xs font-black text-red-600">¥</span>
+            <span id="detail-price" class="text-xl font-black text-red-600"></span>
+          </div>
+        </div>
+        <button id="add-to-cart-btn" class="bg-gradient-to-r from-amber-400 to-[#FFD000] text-black font-black text-xs px-6 py-3 rounded-full shadow-md active:scale-95 transition-transform">
+          加入美团购物车
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex items-center justify-around h-14 z-40 pb-safe shadow-md">
+    <button onclick="switchPage('home')" id="tab-btn-home" class="flex flex-col items-center space-y-0.5 text-[#FFD000] font-bold">
+      <span class="text-xl">🏠</span>
+      <span class="text-[10px]">美团首页</span>
+    </button>
+    <button onclick="switchPage('cart')" id="tab-btn-cart" class="flex flex-col items-center space-y-0.5 text-gray-400 font-bold relative">
+      <span class="text-xl">
+        🛒
+        <span id="cart-badge" class="absolute -top-1.5 -right-2.5 bg-red-500 text-white text-[9px] font-black px-1 rounded-full hidden">0</span>
+      </span>
+      <span class="text-[10px]">购物车</span>
+    </button>
+    <button onclick="switchPage('orders')" id="tab-btn-orders" class="flex flex-col items-center space-y-0.5 text-gray-400 font-bold relative">
+      <span class="text-xl">
+        📋
+        <span id="orders-badge" class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+      </span>
+      <span class="text-[10px]">我的订单</span>
+    </button>
+  </nav>
+
+  <script>
+    // 瀑布流仿真15+核心数据，包含外卖、团购、酒店、电影等
+    const PRODUCTS = [
+      {
+        id: 'w1', category: 'waimai', shop: '浮岛烘焙坊',
+        name: '芝士奶盖莓莓', price: 22, tag: '网红饮品',
+        desc: '原切红颜草莓配高比例乳酪奶盖。小卷的最爱，清甜沁人，是激发甜美日常话题的最佳投喂道具。',
+        icon: '🍓', specs: ['少冰/七分糖', '常规冰/正常甜', '去冰/三分糖'], addons: ['加多一份奶盖 (+¥5)', '加波霸 (+¥2)', '无料']
+      },
+      {
+        id: 'w2', category: 'waimai', shop: '浮岛烘焙坊',
+        name: '黑森林慕斯切片蛋糕', price: 28, tag: '轻奢甜品',
+        desc: '进口醇黑巧克力搭配醇香奶油慕斯。午后搭配咖啡的最佳选择，唤醒心头甜蜜。',
+        icon: '🍰', specs: ['单人轻奢切片', '双人浪漫双拼'], addons: ['精美金色餐具', '普通餐具']
+      },
+      {
+        id: 'w3', category: 'waimai', shop: '深夜食堂·烧烤',
+        name: '蜜汁特制烤肉串 x10', price: 35, tag: '深夜放纵',
+        desc: '果木炭火手工慢烤，孜然与辣椒碰撞。深夜放纵、驱散孤独与冷落的王牌夜宵。',
+        icon: '🍢', specs: ['经典微辣', '变态爆辣', '孜然不辣'], addons: ['加配烤生蚝2只 (+¥12)', '无额外加料']
+      },
+      {
+        id: 'w4', category: 'waimai', shop: '深夜食堂·烧烤',
+        name: '冰镇精酿原浆啤酒', price: 12, tag: '酒水必备',
+        desc: '鲜活原浆，麦香馥郁醇厚，烧烤神仙伴侣。能让最矜持冷淡的角色瞬间软化，主动向你吐露心扉。',
+        icon: '🍺', specs: ['超强冰镇', '冰镇/去冰'], addons: ['加送花生米一袋 (+¥4)', '无']
+      },
+      {
+        id: 'w5', category: 'waimai', shop: '暖胃粥铺',
+        name: '生滚皮蛋瘦肉粥', price: 15, tag: '温润养生',
+        desc: '文火细熬，米粒开花软烂，肉丝香嫩。生病受凉、通宵加班时的无敌贴心暖胃关怀。',
+        icon: '🥣', specs: ['热气腾腾标配', '加配香酥油条 (+¥3)'], addons: ['多葱多姜', '去葱去姜']
+      },
+      {
+        id: 'w6', category: 'waimai', shop: '暖胃粥铺',
+        name: '热滚姜汁红糖可乐', price: 10, tag: '生理期特护',
+        desc: '新鲜生姜片与古法红糖熬煮可乐，微辣而温香。适合生理期或寒冷深夜用于表达细腻关怀。',
+        icon: '🥤', specs: ['温热直达', '滚烫特护'], addons: ['加配红枣片 (+¥2)', '无']
+      },
+      {
+        id: 'w7', category: 'waimai', shop: '川渝部落',
+        name: '招牌毛血旺单人套餐', price: 42, tag: '火辣川菜',
+        desc: '鸭血滑嫩，肥肠糯口，毛肚脆爽。红油滚烫，最适合寒冷天气或低沉时给彼此的生活注入火辣热情。',
+        icon: '🥘', specs: ['中辣（推荐）', '重辣', '微辣'], addons: ['加冰镇红糖冰粉 (+¥5)', '无']
+      },
+      {
+        id: 'w8', category: 'waimai', shop: '川渝部落',
+        name: '红糖凉虾冰粉', price: 8, tag: '爽口解辣',
+        desc: '手工冰粉晶莹剔透，配上浓郁红糖水、葡萄干与山楂碎。川味火锅的满分绝配甜点。',
+        icon: '🍧', specs: ['超冰', '正常冰'], addons: ['加多红糖', '无']
+      },
+      {
+        id: 'g1', category: 'tuangou', shop: '乐享电玩城',
+        name: '双人100枚畅玩电玩币', price: 88, tag: '电玩特惠',
+        desc: '娃娃机、推币机、赛车全场通用。带AI角色上桌游玩、情侣约会减压的快乐喷泉。',
+        icon: '🎮', specs: ['双人100枚畅玩包', '单人50枚畅享包 (-¥38)'], addons: ['加配大毛绒公仔一个 (+¥25)', '无']
+      },
+      {
+        id: 'g2', category: 'tuangou', shop: '極致温泉会所',
+        name: '单人温泉SPA汗蒸门票', price: 168, tag: '温泉净桑',
+        desc: '包含日式露天御汤、香熏全息汗蒸，并赠送时令水果与精美饮品自助。彻底解压、开启深夜深情微醺。',
+        icon: '♨️', specs: ['周一至周五平日券', '周末节假日通券 (+¥30)'], addons: ['含全身精油SPA理疗 (+¥88)', '无']
+      },
+      {
+        id: 'g3', category: 'tuangou', shop: '魔音KTV',
+        name: '下午黄金档大包房3小时特唱', price: 99, tag: 'KTV特惠',
+        desc: '顶配环绕声灯光音响，大份脆爽爆米花与冰镇可乐免费赠送。用音乐唱响生活，唤醒元气互动。',
+        icon: '🎤', specs: ['大包房 (3小时)', '中包房 (4小时)'], addons: ['加配精致水果拼盘 (+¥35)', '无']
+      },
+      {
+        id: 'g4', category: 'tuangou', shop: '极光密室逃脱',
+        name: '沉浸恐怖演绎密室单人票', price: 128, tag: '沉浸娱乐',
+        desc: '超大沉浸式演绎空间，高能NPC贴脸互动。最易激发角色在恐惧中本能依偎、产生心动火花。',
+        icon: '🔑', specs: ['微恐探索本', '中恐解密本', '超恐刺激本'], addons: ['赠NPC精美拍立得合影', '无']
+      },
+      {
+        id: 'h1', category: 'hotel', shop: '半山松林避世民宿',
+        name: '星空露台温泉山景房', price: 399, tag: '避世民宿',
+        desc: '独立半山温泉私汤，坐拥超大星空露台落地天窗，宿主赠双人精致松林西式早餐。心动寄托的桃源野奢。',
+        icon: '🏡', specs: ['松林山景大床房/含双早', '悬崖观日双床房/含双早'], addons: ['露台求婚玫瑰气球布置 (+¥99)', '周末假日差价 (+¥120)', '不需要额外布置']
+      },
+      {
+        id: 'h2', category: 'hotel', shop: '维也纳情侣酒店',
+        name: '极光幕布情趣双人圆床房', price: 299, tag: '情调客房',
+        desc: '配备4K极光巨幕投影仪，双人环绕按摩超大浴缸。智能微醺氛围宅控，适合与角色创造浪漫的依偎夜。',
+        icon: '🏩', specs: ['浪漫投影圆床房', '轻奢极简浴缸房'], addons: ['红酒花瓣浪漫套餐 (+¥50)', '无需布置']
+      },
+      {
+        id: 'm1', category: 'movie', shop: '万达影城(虚拟店)',
+        name: '电影《爱乐之城》双人黄金专座票', price: 70, tag: '特惠影票',
+        desc: '影院超高画质浪漫经典重映。锁定6排8座、9座双人黄金VIP观影专区。看完让AI必定主动深度交流观感。',
+        icon: '🎬', specs: ['虚拟双人浪漫票', '普通单人观影票 (-¥35)'], addons: ['超值爆米花双人畅饮套餐 (+¥18)', '不需要']
+      },
+      {
+        id: 'm2', category: 'movie', shop: '浮岛大剧院',
+        name: '《仲夏夜之梦》沉浸话剧前排门票', price: 120, tag: '经典戏剧',
+        desc: '沉浸式舞台近距离观演，与演员共呼吸。经典莎剧浪漫梦境重现，极具艺术品味的生活送礼。',
+        icon: '🎭', specs: ['单人池前排特享票', '二楼看台观摩票 (-¥40)'], addons: ['附赠戏剧限量定制场刊', '无需额外场刊']
+      }
+    ];
+
+    let appCart = [];
+    let appCharacters = [];
+    let currentCharacterId = null;
+    let currentSelectedCategory = 'all';
+    let activeDetailPageProduct = null;
+    // 初始化页面与状态
+    async function initApp() {
+      if (!window.AiPhone) {
+        console.warn("AiPhone SDK 未挂载，当前在沙盒测试环境");
+        document.getElementById('wallet-balance').innerText = '¥9999.00';
+        renderProducts();
+        return;
+      }
+      try {
+        // 1. 同步钱包余额
+        await syncWalletBalance();
+        
+        // 2. 获取启动上下文
+        const launchContext = await AiPhone.app.getLaunchContext();
+        
+        // 3. 获取联系人列表并拉取
+        appCharacters = await AiPhone.characters.list();
+        currentCharacterId = launchContext?.characterId || appCharacters[0]?.id;
+        
+        renderCharacterSelect();
+        
+        // 4. 读取可能已经暂存的购物车或订单
+        await loadOrdersFromDb();
+        
+        // 5. 初始渲染全品类商品
+        renderProducts();
+
+        // PlusAction 面板适配
+        if (launchContext?.source === "chat_plus_action") {
+          switchPage('home');
+        }
+
+        // 轮询：每5秒同步一次钱包余额，且检查一次订单履约状态（状态机）
+        setInterval(async () => {
+          await syncWalletBalance();
+          await processDeliveryStatus();
+        }, 5000);
+
+      } catch (err) {
+        console.error("美团初始化系统异常:", err);
+      }
+    }
+
+    // 实时同步钱包，合并到全局聊天钱包中
+    async function syncWalletBalance() {
+      try {
+        if (!window.AiPhone) return;
+        const wallet = await AiPhone.wallet.get();
+        if (wallet && wallet.accounts && wallet.accounts.length > 0) {
+          document.getElementById('wallet-balance').innerText = `¥${wallet.accounts[0].balance.toFixed(2)}`;
+        }
+      } catch (e) {
+        console.error("同步钱包异常:", e);
+      }
+    }
+
+    // 渲染AI角色选择下拉
+    function renderCharacterSelect() {
+      const selectEl = document.getElementById('character-select');
+      if (!selectEl) return;
+      selectEl.innerHTML = '';
+      
+      appCharacters.forEach(char => {
+        const option = document.createElement('option');
+        option.value = char.id;
+        option.innerText = `🎁 ${char.name}`;
+        if (char.id === currentCharacterId) {
+          option.selected = true;
+        }
+        selectEl.appendChild(option);
+      });
+    }
+
+    // 渲染主瀑布流商品（不少于15条）
+    function renderProducts(filterQuery = '') {
+      const grid = document.getElementById('products-grid');
+      grid.innerHTML = '';
+
+      let filtered = PRODUCTS;
+      if (currentSelectedCategory !== 'all') {
+        filtered = filtered.filter(p => p.category === currentSelectedCategory);
+      }
+      if (filterQuery) {
+        const q = filterQuery.toLowerCase();
+        filtered = filtered.filter(p => p.name.toLowerCase().includes(q) || p.shop.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q));
+      }
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-2 text-center py-10 text-xs text-gray-400">没找到符合条件的生活心意，换个关键词搜搜？</div>`;
+        return;
+      }
+
+      filtered.forEach(product => {
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm flex flex-col justify-between active:scale-95 transition-all duration-150 cursor-pointer";
+        card.onclick = () => openDetailModal(product);
+
+        let categoryBadge = '';
+        if (product.category === 'waimai') categoryBadge = `<span class="bg-red-50 text-red-600 text-[9px] font-black px-1.5 py-0.5 rounded">外卖</span>`;
+        else if (product.category === 'tuangou') categoryBadge = `<span class="bg-yellow-50 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded">特惠团购</span>`;
+        else if (product.category === 'hotel') categoryBadge = `<span class="bg-blue-50 text-blue-600 text-[9px] font-black px-1.5 py-0.5 rounded">酒店民宿</span>`;
+        else if (product.category === 'movie') categoryBadge = `<span class="bg-purple-50 text-purple-600 text-[9px] font-black px-1.5 py-0.5 rounded">电影演出</span>`;
+
+        card.innerHTML = `
+          <div class="p-3 space-y-2">
+            <!-- 图标与分类 -->
+            <div class="flex justify-between items-center">
+              <span class="text-2xl">${product.icon}</span>
+              ${categoryBadge}
+            </div>
+            <!-- 名字与出处 -->
+            <div class="space-y-0.5">
+              <p class="text-[11px] text-gray-400 font-bold truncate">${product.shop}</p>
+              <h4 class="text-xs font-black text-gray-900 line-clamp-1">${product.name}</h4>
+            </div>
+            <!-- 简述 -->
+            <p class="text-[10px] text-gray-400 line-clamp-2 leading-relaxed h-7">${product.desc}</p>
+          </div>
+          <div class="bg-gray-50/70 p-3 flex justify-between items-center border-t border-gray-50">
+            <div class="flex items-baseline">
+              <span class="text-[10px] font-bold text-red-500">¥</span>
+              <span class="text-sm font-black text-red-500">${product.price}</span>
+            </div>
+            <span class="text-[9px] font-extrabold text-amber-600 bg-amber-100/60 px-1.5 py-0.5 rounded-full">抢购</span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    // 搜索过滤
+    function handleGlobalSearch() {
+      const searchVal = document.getElementById('global-search').value;
+      renderProducts(searchVal);
+    }
+
+    // 品类筛选切换
+    function filterCategory(category) {
+      currentSelectedCategory = category;
+      renderProducts();
+      AiPhone?.ui.toast(`已切换至：${getCategoryName(category)}`);
+    }
+
+    function getCategoryName(cat) {
+      switch(cat) {
+        case 'waimai': return '外卖美食';
+        case 'tuangou': return '特惠团购';
+        case 'hotel': return '酒店民宿';
+        case 'movie': return '电影演出';
+        default: return '全部好物';
+      }
+    }
+
+    // 打开品种规格二级页 (Modal)
+    function openDetailModal(product) {
+      activeDetailPageProduct = product;
+      
+      document.getElementById('detail-icon').innerText = product.icon;
+      document.getElementById('detail-name').innerText = product.name;
+      document.getElementById('detail-shop').innerText = product.shop;
+      document.getElementById('detail-desc').innerText = product.desc;
+      document.getElementById('detail-price').innerText = product.price.toFixed(2);
+      
+      const tagEl = document.getElementById('detail-tag');
+      tagEl.innerText = product.tag;
+      
+      // 动态生成特定的品种/规格按钮 (保证有品种的选择界面)
+      const specsContainer = document.getElementById('specs-container');
+      specsContainer.innerHTML = '';
+      product.specs.forEach((spec, i) => {
+        const btn = document.createElement('button');
+        btn.className = `text-xs px-3 py-1.5 rounded-full border border-gray-200 font-bold transition-all ${i === 0 ? 'bg-amber-400 border-amber-400 text-black shadow-sm' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`;
+        btn.onclick = () => selectBadge(specsContainer, btn);
+        btn.innerText = spec;
+        specsContainer.appendChild(btn);
+      });
+
+      // 动态生成加料/附加规格选择
+      const addonsContainer = document.getElementById('addons-container');
+      addonsContainer.innerHTML = '';
+      product.addons.forEach((addon, i) => {
+        const btn = document.createElement('button');
+        btn.className = `text-xs px-3 py-1.5 rounded-full border border-gray-200 font-bold transition-all ${i === 0 ? 'bg-amber-400 border-amber-400 text-black shadow-sm' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`;
+        btn.onclick = () => selectBadge(addonsContainer, btn);
+        btn.innerText = addon;
+        addonsContainer.appendChild(btn);
+      });
+
+      // 绑定加购动作
+      const checkoutBtn = document.getElementById('add-to-cart-btn');
+      checkoutBtn.onclick = () => {
+        const activeSpec = specsContainer.querySelector('.bg-amber-400')?.innerText || product.specs[0];
+        const activeAddon = addonsContainer.querySelector('.bg-amber-400')?.innerText || product.addons[0];
+        
+        addToCart(product, activeSpec, activeAddon);
+        closeDetailModal();
+      };
+
+      const modal = document.getElementById('detail-modal');
+      const modalContent = modal.querySelector('.bg-white');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        if (modalContent) modalContent.classList.remove('translate-y-full');
+      }, 10);
+    }
+
+    function selectBadge(container, targetBtn) {
+      container.querySelectorAll('button').forEach(btn => {
+        btn.className = "text-xs px-3 py-1.5 rounded-full border border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100 font-bold transition-all";
+      });
+      targetBtn.className = "text-xs px-3 py-1.5 rounded-full border border-amber-400 bg-amber-400 text-black shadow-sm font-bold transition-all";
+    }
+
+    function closeDetailModal() {
+      const modal = document.getElementById('detail-modal');
+      const modalContent = modal.querySelector('.bg-white');
+      if (modalContent) modalContent.classList.add('translate-y-full');
+      modal.classList.add('opacity-0');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 250);
+    }
+
+    // 购物车结算核心逻辑
+    function addToCart(product, spec, addon) {
+      const cartItem = {
+        id: `CART_${Date.now()}`,
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        shop: product.shop,
+        category: product.category,
+        spec,
+        addon,
+        icon: product.icon
+      };
+
+      appCart.push(cartItem);
+      updateCartBadge();
+      AiPhone?.ui.toast(`已加入美团购物车：${product.name}`);
+    }
+
+    function updateCartBadge() {
+      const badge = document.getElementById('cart-badge');
+      if (appCart.length > 0) {
+        badge.innerText = appCart.length;
+        badge.classList.remove('hidden');
+      } else {
+        badge.classList.add('hidden');
+      }
+    }
+
+    function clearCart() {
+      appCart = [];
+      updateCartBadge();
+      renderCartPage();
+    }
+
+    function renderCartPage() {
+      const container = document.getElementById('cart-items-container');
+      const totalEl = document.getElementById('cart-total-price');
+      container.innerHTML = '';
+
+      if (appCart.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 flex flex-col items-center justify-center space-y-2">
+            <span class="text-4xl">🛒</span>
+            <p class="text-xs text-gray-400">购物车空荡荡，快去美团首页添置生活心意吧~</p>
+          </div>`;
+        totalEl.innerText = '¥0.00';
+        return;
+      }
+
+      let total = 0;
+      appCart.forEach(item => {
+        total += item.price;
+        const row = document.createElement('div');
+        row.className = "py-3 flex justify-between items-center";
+        row.innerHTML = `
+          <div class="flex space-x-2">
+            <span class="text-2xl">${item.icon}</span>
+            <div>
+              <h4 class="text-xs font-black text-gray-900">${item.name}</h4>
+              <p class="text-[10px] text-gray-400 mt-0.5">规格：${item.spec} | 加配：${item.addon}</p>
+              <p class="text-[10px] text-amber-600 font-bold mt-0.5">${item.shop}</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="text-xs font-black text-red-600">¥${item.price.toFixed(2)}</span>
+            <button onclick="removeFromCart('${item.id}')" class="text-gray-300 hover:text-red-500 font-bold text-base">&times;</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      totalEl.innerText = `¥${total.toFixed(2)}`;
+    }
+
+    function removeFromCart(cartId) {
+      appCart = appCart.filter(i => i.id !== cartId);
+      updateCartBadge();
+      renderCartPage();
+    }
+
+    // 改变心意小票发送提示状态
+    function toggleShareTip() {
+      const toggle = document.getElementById('share-card-toggle');
+      const tip = document.getElementById('share-tip');
+      if (!toggle || !tip) return;
+      if (toggle.checked) {
+        tip.innerText = "开启后AI会立即收到小票并当场回复";
+      } else {
+        tip.innerText = "已关闭分享，AI将在骑手送达后收获意外惊喜与回复";
+      }
+    }
+
+    // 提交订单与安全扣款（宿主全局钱包）
+    async function submitFinalOrder() {
+      if (appCart.length === 0) {
+        AiPhone?.ui.toast("购物车为空，无法结算");
+        return;
+      }
+
+      const selectEl = document.getElementById('character-select');
+      const targetCharId = selectEl.value;
+      const remark = document.getElementById('order-remark').value || "心意已在速递路上，请注意查收哦~";
+      const totalPrice = appCart.reduce((sum, item) => sum + item.price, 0);
+      const isShared = document.getElementById('share-card-toggle').checked;
+      
+      // 生成合并的餐品描述
+      const dishText = appCart.map(item => `${item.name}(${item.spec})`).join('、');
+      const shopName = appCart[0].shop;
+      const category = appCart[0].category;
+      const icon = appCart[0].icon;
+
+      if (!window.AiPhone) {
+        alert("离线沙盒环境付款成功！");
+        appCart = [];
+        updateCartBadge();
+        switchPage('orders');
+        return;
+      }
+
+      try {
+        // 1. 获取对应的AI角色名称及用户人设名
+        const [character, userProfile] = await Promise.all([
+          AiPhone.characters.get(targetCharId),
+          AiPhone.user.getProfile({ characterId: targetCharId })
+        ]);
+        const charName = character?.name || "对方";
+        const userName = userProfile?.name || "我";
+
+        // 2. 调用钱包发起全局账户扣款 (消费与打工等资产合流)
+        const wallet = await AiPhone.wallet.get();
+        const payment = await AiPhone.wallet.pay({
+          amount: totalPrice,
+          accountId: wallet.accounts[0].id,
+          title: `美团 - ${shopName}`,
+          detail: dishText,
+          category: "生活服务"
+        });
+
+        if (!payment.ok) {
+          await AiPhone.ui.toast("小手机全局通用钱包余额不足，快去打工或聊天赚金币吧！");
+          return;
+        }
+
+        const orderId = "ORD_" + Date.now();
+
+        // 3. 将订单写入私有本地 DB 存档
+        await AiPhone.db.create("orders", {
+          id: orderId,
+          shopName,
+          dishText,
+          amount: totalPrice,
+          targetCharacterId: targetCharId,
+          characterName: charName,
+          status: "已支付",
+          category,
+          icon,
+          createdAt: new Date().toISOString()
+        });
+
+        // 4. 同步余额显示
+        await syncWalletBalance();
+
+        const labelName = getCategoryName(category);
+
+        // 如果开启了分享，立刻向当前会话发送一张超高保真美团特惠消费小票，并触发AI即刻破冰回复
+        if (isShared) {
+          // 发送带有锯齿虚线和精细排版的美团特色HTML卡片
+          await AiPhone.chat.sendCard({
+            characterId: targetCharId,
+            role: "user",
+            summary: `${userName}给${charName}送了一份【${labelName}】心意：${dishText}。`,
+            historyText: `[美团特惠小票：${userName}给${charName}在【${shopName}】订购了【${labelName}】：${dishText}。备注：${remark}]`,
+            historyRole: "user",
+            card: {
+              height: 250,
+              html: `
+                <div style="background-color:#FFE600; border-radius:16px; padding:14px; font-family:-apple-system,BlinkMacSystemFont,sans-serif; color:#222; box-shadow:0 3px 10px rgba(0,0,0,0.06); border:1px solid #FFD000; box-sizing:border-box; width:100%;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px dashed rgba(0,0,0,0.15); padding-bottom:8px; margin-bottom:8px;">
+                    <span style="font-weight:900; font-size:13px; letter-spacing:-0.5px;">美团特惠心意小票 🦘</span>
+                    <span style="font-size:9px; opacity:0.8; font-weight:bold;">全局付讫</span>
+                  </div>
+                  <div style="font-size:13px; font-weight:900; margin-bottom:3px;">${shopName}</div>
+                  <div style="font-size:11px; margin-bottom:8px; color:rgba(0,0,0,0.7); font-weight:500; line-height:1.3;">${dishText}</div>
+                  <div style="background-color:rgba(255,255,255,0.75); border-radius:8px; padding:8px; font-size:10px; color:#444; line-height:1.4; border-left:3px solid #ff9900; margin-bottom:8px;">
+                    <strong>温馨备注：</strong>${remark}
+                  </div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; font-weight:bold; border-top:1.5px dashed rgba(0,0,0,0.15); padding-top:8px;">
+                    <span style="color:#ff6600; font-size:9px;">🚴 骑手正在加急配送...</span>
+                    <span style="color:#d92121; font-size:12px; font-weight:900;">实付 ¥${totalPrice.toFixed(2)}</span>
+                  </div>
+                </div>
+              `
+            }
+          });
+
+          // 立即（0.5秒后）调度AI针对刚刚出炉的美团小票开始破冰对话
+          await AiPhone.tasks.schedule({
+            id: `${orderId}_immediate_chat`,
+            delayMs: 500,
+            actions: [
+              {
+                type: "chat.reply",
+                characterId: targetCharId
+              }
+            ]
+          });
+
+          // 20秒送达时间到了后，发送纯状态卡片，不再二次请求AI说话（避免刷屏）
+          await AiPhone.tasks.schedule({
+            id: `${orderId}_delivered`,
+            delayMs: 20000,
+            actions: [
+              {
+                type: "chat.card",
+                characterId: targetCharId,
+                role: "system",
+                title: `${labelName}已安全送达`,
+                body: `送给${charName}的 ${dishText} 已交付给本人。`,
+                historyText: `[系统通知：${userName}送给${charName}的【${labelName}】特惠心意已被骑手妥投，完成履约。]`
+              }
+            ]
+          });
+
+        } else {
+          // 如果未开启分享（偷偷送惊喜），下单时不发任何卡片，保持完全隐秘
+          // 20秒后骑手送到时突降惊喜大礼包卡片，AI拆箱大为震惊，并立刻被激发主动破冰话题！
+          await AiPhone.tasks.schedule({
+            id: `${orderId}_delivered`,
+            delayMs: 20000,
+            actions: [
+              {
+                type: "chat.card",
+                characterId: targetCharId,
+                role: "system",
+                summary: `${userName}偷偷给${charName}点的惊喜【${labelName}】已送达！`,
+                historyText: `[惊喜通知：${userName}在美团上默默为${charName}预定并送达了一份惊喜【${labelName}】！商品明细：${dishText}。备注：${remark}。${charName}拆开突然送达的神秘快递大礼包，看着诱人的大餐和上面的心意留言，感到极度的惊喜与震惊！非常感动！]`,
+                card: {
+                  height: 250,
+                  html: `
+                    <div style="background-color:#FFF; border-radius:16px; padding:14px; font-family:-apple-system,BlinkMacSystemFont,sans-serif; color:#222; box-shadow:0 4px 14px rgba(0,0,0,0.08); border:2.5px solid #FFD000; position:relative; overflow:hidden; box-sizing:border-box; width:100%;">
+                      <div style="position:absolute; top:-10px; right:-10px; background-color:#FFD000; color:#000; font-size:7px; font-weight:900; padding:12px 14px 4px 14px; transform:rotate(45deg); letter-spacing:-0.5px;">惊喜妥投</div>
+                      <div style="font-weight:900; font-size:13px; border-bottom:1.5px dashed #eee; padding-bottom:8px; margin-bottom:8px; color:#ff9900; display:flex; align-items:center;">🎁 降落一份神秘心意！</div>
+                      <div style="font-size:13px; font-weight:900; margin-bottom:3px;">${shopName}</div>
+                      <div style="font-size:11px; margin-bottom:8px; color:#666; font-weight:500; line-height:1.3;">${dishText}</div>
+                      <div style="background-color:#fff9db; border-radius:8px; padding:8px; font-size:10px; color:#665500; line-height:1.4; border-left:3px solid #ffcc00; margin-bottom:8px;">
+                        <strong>TA的惊喜备注：</strong>${remark}
+                      </div>
+                      <div style="display:flex; justify-content:space-between; align-items:center; font-size:10px; font-weight:bold; border-top:1.5px dashed #eee; padding-top:8px; color:#888;">
+                        <span>悄悄送达 · 惊喜空降成功</span>
+                        <span style="color:#222; font-size:11px;">实付 ¥${totalPrice.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  `
+                }
+              },
+              // 惊喜瞬间触发 AI 的主动开怀破冰回复
+              {
+                type: "chat.reply",
+                characterId: targetCharId
+              }
+            ]
+          });
+        }
+
+        // 7. 清理本地购物车
+        appCart = [];
+        updateCartBadge();
+        document.getElementById('order-remark').value = '';
+        
+        // 8. 切换到订单页追踪
+        await loadOrdersFromDb();
+        switchPage('orders');
+        
+        await AiPhone.ui.toast(isShared ? "心意下单成功！已发送小票到聊天。" : "嘘！心意已悄悄寄出，静待惊喜空降吧~");
+
+      } catch (err) {
+        console.error("订单提交流程失败:", err);
+        await AiPhone.ui.toast("订单提交发生异常，请重试。");
+      }
+    }
+
+    // 读取及处理订单记录
+    async function loadOrdersFromDb() {
+      if (!window.AiPhone) return;
+      try {
+        const orders = await AiPhone.db.list("orders");
+        const container = document.getElementById('orders-container');
+        
+        if (!orders || orders.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-10 flex flex-col items-center justify-center space-y-2">
+              <span class="text-4xl">📋</span>
+              <p class="text-xs text-gray-400">暂无消费及投喂履约交互记录</p>
+            </div>`;
+          return;
+        }
+
+        // 按创建时间逆序
+        orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        container.innerHTML = '';
+        orders.forEach(order => {
+          const card = document.createElement('div');
+          card.className = "bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3 relative";
+          
+          let statusClass = "bg-amber-100 text-amber-800";
+          if (order.status === '已送达/出票') statusClass = "bg-green-100 text-green-700";
+
+          const labelName = getCategoryName(order.category);
+
+          card.innerHTML = `
+            <div class="flex justify-between items-center border-b border-gray-50 pb-2">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-xl">${order.icon || '📦'}</span>
+                <span class="text-xs font-black text-gray-800">${order.shopName}</span>
+              </div>
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-full ${statusClass}">${order.status}</span>
+            </div>
+            <div class="text-xs text-gray-500 space-y-1">
+              <p>📌 服务品类：<span class="font-bold text-gray-700">${labelName}</span></p>
+              <p>🎁 赠送角色：<span class="font-black text-gray-700">${order.characterName || 'AI角色'}</span></p>
+              <p>🛍️ 核心心意：<span class="font-medium text-gray-600">${order.dishText}</span></p>
+              <p>📅 下单时间：<span class="text-[10px]">${new Date(order.createdAt).toLocaleString()}</span></p>
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t border-gray-50">
+              <span class="text-xs text-red-600 font-extrabold">资产合计：¥${order.amount.toFixed(2)}</span>
+              ${order.status === '已支付' 
+                ? `<span class="text-[10px] text-amber-600 font-black animate-pulse">🚴 骑手快马加鞭/票务筹备中...</span>` 
+                : `<span class="text-[10px] text-green-600 font-black flex items-center">✅ 成功激发破冰聊天</span>`
+              }
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+        // 检查是否有筹备中订单显示红点
+        const hasDelivering = orders.some(o => o.status === '已支付');
+        const badge = document.getElementById('orders-badge');
+        if (hasDelivering) badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
+
+      } catch (e) {
+        console.error("订单历史渲染错误:", e);
+      }
+    }
+
+    // 定时扫描：更新配送中/预定中的订单进度
+    async function processDeliveryProgress() {
+      if (!window.AiPhone) return;
+      try {
+        const orders = await AiPhone.db.list("orders");
+        const pendingOrders = orders.filter(o => o.status === '已支付');
+        
+        let changed = false;
+        for (let order of pendingOrders) {
+          const passed = Date.now() - new Date(order.createdAt).getTime();
+          if (passed > 20000) { // 20秒流程
+            await AiPhone.db.update("orders", order.id, { status: "已送达/出票" });
+            changed = true;
+          }
+        }
+        if (changed) {
+          await loadOrdersFromDb();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    
+    // 外部调用函数
+    window.processDeliveryStatus = processDeliveryProgress;
+
+    async function clearCompletedOrders() {
+      if (!window.AiPhone) return;
+      try {
+        const orders = await AiPhone.db.list("orders");
+        for (let order of orders) {
+          if (order.status !== '已支付') {
+            await AiPhone.db.delete("orders", order.id);
+          }
+        }
+        await loadOrdersFromDb();
+        await AiPhone.ui.toast("已完成的历史记录已清除");
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 切页动作
+    function switchPage(pageId) {
+      const homePage = document.getElementById('page-home');
+      const cartPage = document.getElementById('page-cart');
+      const ordersPage = document.getElementById('page-orders');
+
+      const btnHome = document.getElementById('tab-btn-home');
+      const btnCart = document.getElementById('tab-btn-cart');
+      const btnOrders = document.getElementById('tab-btn-orders');
+
+      // 1. 隐藏/显示
+      homePage.classList.add('hidden');
+      cartPage.classList.add('hidden');
+      ordersPage.classList.add('hidden');
+
+      btnHome.className = "flex flex-col items-center space-y-0.5 text-gray-400 font-bold";
+      btnCart.className = "flex flex-col items-center space-y-0.5 text-gray-400 font-bold relative";
+      btnOrders.className = "flex flex-col items-center space-y-0.5 text-gray-400 font-bold relative";
+
+      if (pageId === 'home') {
+        homePage.classList.remove('hidden');
+        btnHome.className = "flex flex-col items-center space-y-0.5 text-[#FFD000] font-bold";
+      } else if (pageId === 'cart') {
+        cartPage.classList.remove('hidden');
+        btnCart.className = "flex flex-col items-center space-y-0.5 text-[#FFD000] font-bold relative";
+        renderCartPage();
+      } else if (pageId === 'orders') {
+        ordersPage.classList.remove('hidden');
+        btnOrders.className = "flex flex-col items-center space-y-0.5 text-[#FFD000] font-bold relative";
+        loadOrdersFromDb();
+      }
+    }
+
+    // 挂载加载
+    window.onload = () => {
+      initApp();
+    };
+
+    // 动态AI商圈搜索生成器
+    async function executeAISearch() {
+      const searchInput = document.getElementById('global-search');
+      const query = searchInput.value.trim();
+      if (!query) {
+        renderProducts();
+        return;
+      }
+
+      // 1. 先本地检索已有生活服务
+      let localFiltered = PRODUCTS.filter(p => 
+        p.name.toLowerCase().includes(query.toLowerCase()) || 
+        p.shop.toLowerCase().includes(query.toLowerCase()) || 
+        p.desc.toLowerCase().includes(query.toLowerCase())
+      );
+
+      if (localFiltered.length > 0) {
+        renderProducts(query);
+        return;
+      }
+
+      // 2. 本地不存在时，启动AI实时虚拟商铺及商品生成机制
+      if (!window.AiPhone) {
+        alert("独立测试环境，无法发起AI商圈搜索生成");
+        return;
+      }
+
+      AiPhone.ui.toast("🔍 正在附近街区为您搜罗动态特惠...");
+      
+      try {
+        const activeChar = currentCharacterId || (appCharacters[0] ? appCharacters[0].id : null);
+        const prompt = `用户在搜索框输入了：“${query}”。请根据该搜索词，生成一个高度拟真、极其契合用户搜索词的全新美团式特惠生活、外卖或娱乐项目。请严格返回如下格式的单个标准 JSON 对象，不要含有任何 markdown 格式的 \`\`\`json 包裹，确保能直接 JSON.parse：\n\n{\n  "id": "dyn_${Date.now()}",\n  "category": "属于 waimai(外卖) / tuangou(团购) / hotel(民宿) / movie(电影) 之一",\n  "shop": "编造一个极具情调且高度逼真的店名",\n  "name": "高度拟真、契合搜索词且诱人的商品名称",\n  "price": 估算一个合理的整型金币数值（通常在15到300之间）,\n  "tag": "四字金牌标签（如 招牌必吃 / 深夜解压 / 情侣私属）",\n  "desc": "2到3句极富情调、浪漫交互或高烟火气的产品特点和生活感细节描摹。",\n  "icon": "一个最相关的单字符 Emoji 表情",\n  "specs": ["定制品种/规格选项1", "定制品种/规格选项2", "定制品种/规格选项3"],\n  "addons": ["加配伴侣选项1", "加配伴侣选项2"]\n}`;
+
+        const result = await AiPhone.ai.generate({
+          characterId: activeChar,
+          instruction: prompt
+        });
+
+        let text = result.text.trim();
+        if (text.startsWith("```")) {
+          text = text.replace(/^```(json)?/, "").replace(/```$/, "").trim();
+        }
+
+        const dynamicProduct = JSON.parse(text);
+        if (dynamicProduct.name && dynamicProduct.shop) {
+          PRODUCTS.unshift(dynamicProduct);
+          AiPhone.ui.toast(`✨ 附近新好店「${dynamicProduct.shop}」已急速上线特惠！`);
+          renderProducts(query);
+        } else {
+          throw new Error("AI返回数据非标准格式");
+        }
+      } catch (err) {
+        console.error("AI动态商品生成异常:", err);
+        AiPhone.ui.toast("附近街区暂时忙碌，正在为您匹配备用推荐好物...");
+        renderProducts();
+      }
+    }
+  </script>
+</body>
+</html>

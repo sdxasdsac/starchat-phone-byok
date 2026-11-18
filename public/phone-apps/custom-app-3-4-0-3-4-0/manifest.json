@@ -1,0 +1,235 @@
+{
+  "id": "custom-app",
+  "name": "秘档",
+  "version": "3.4.0",
+  "sdkVersion": "1.0",
+  "description": "极简空气感白底黑字机密档案。支持第一人称自述、卡片SVG编辑、角色自主输出指令、系统提示条透出、全能力联动。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "app.manifest.read",
+    "characters.read",
+    "characters.state.read",
+    "characters.relations.read",
+    "user.profile.read",
+    "user.persona.read",
+    "user.preferences.read",
+    "chat.read",
+    "chat.write",
+    "chat.sendCard",
+    "chat.requestReply",
+    "ai.generate",
+    "world.read",
+    "calendar.read",
+    "wallet.read",
+    "memory.write",
+    "memory.search",
+    "memory.readCore",
+    "memory.readLongTerm",
+    "notifications.write",
+    "tasks.schedule",
+    "ui.toast",
+    "ui.notification"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "directives": [
+        {
+          "id": "confidential-archive-auto",
+          "label": "生成秘档",
+          "syntax": "[生成秘档:氛围:偏好姿势:敏感禁区:羁绊寄语]",
+          "description": "当角色想主动向用户交付或生成一份私密档案卡片时使用。",
+          "card": {
+            "appLabel": "CONFIDENTIAL · 秘档",
+            "title": "【绝密】私密档案已递送",
+            "subtitle": "TOP SECRET DOSSIER",
+            "status": "已解密",
+            "accentColor": "#09090b",
+            "sections": [
+              {
+                "title": "档案摘要 (EXTRACT)",
+                "rows": [
+                  {
+                    "label": "氛围倾向",
+                    "value": "{{氛围}}"
+                  },
+                  {
+                    "label": "偏好动态",
+                    "value": "{{偏好姿势}}"
+                  },
+                  {
+                    "label": "敏感禁区",
+                    "value": "{{敏感禁区}}"
+                  },
+                  {
+                    "label": "亲密寄语",
+                    "value": "{{羁绊寄语}}"
+                  }
+                ]
+              }
+            ],
+            "actions": [
+              {
+                "label": "调取完整秘档"
+              }
+            ]
+          },
+          "tags": []
+        }
+      ],
+      "plusActions": [
+        {
+          "id": "secret-archive-main-action",
+          "label": "生成秘档",
+          "description": "从聊天工具栏调出秘档面板，让当前角色实时生成第一人称档案并直接发送卡片。",
+          "entry": "panel",
+          "presentation": "panel",
+          "panelHeight": "78vh",
+          "tags": []
+        }
+      ]
+    },
+    "events": [
+      {
+        "event": "chat.message.created",
+        "entry": "events",
+        "background": true,
+        "description": "监听角色是否在聊天中主动输出了 [生成秘档:...] 指令，自动同步归档到数据库并记录长期记忆。"
+      }
+    ]
+  },
+  "events": [
+    {
+      "event": "chat.message.created",
+      "entry": "events",
+      "background": true,
+      "description": "监听角色是否在聊天中主动输出了 [生成秘档:...] 指令，自动同步归档到数据库并记录长期记忆。"
+    }
+  ],
+  "chatDirectives": [
+    {
+      "id": "confidential-archive-auto",
+      "label": "生成秘档",
+      "syntax": "[生成秘档:氛围:偏好姿势:敏感禁区:羁绊寄语]",
+      "description": "当角色想主动向用户交付或生成一份私密档案卡片时使用。",
+      "card": {
+        "appLabel": "CONFIDENTIAL · 秘档",
+        "title": "【绝密】私密档案已递送",
+        "subtitle": "TOP SECRET DOSSIER",
+        "status": "已解密",
+        "accentColor": "#09090b",
+        "sections": [
+          {
+            "title": "档案摘要 (EXTRACT)",
+            "rows": [
+              {
+                "label": "氛围倾向",
+                "value": "{{氛围}}"
+              },
+              {
+                "label": "偏好动态",
+                "value": "{{偏好姿势}}"
+              },
+              {
+                "label": "敏感禁区",
+                "value": "{{敏感禁区}}"
+              },
+              {
+                "label": "亲密寄语",
+                "value": "{{羁绊寄语}}"
+              }
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "label": "调取完整秘档"
+          }
+        ]
+      },
+      "tags": []
+    }
+  ],
+  "chatPlusActions": [
+    {
+      "id": "secret-archive-main-action",
+      "label": "生成秘档",
+      "description": "从聊天工具栏调出秘档面板，让当前角色实时生成第一人称档案并直接发送卡片。",
+      "entry": "panel",
+      "presentation": "panel",
+      "panelHeight": "78vh",
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "directives": [
+      {
+        "id": "confidential-archive-auto",
+        "label": "生成秘档",
+        "syntax": "[生成秘档:氛围:偏好姿势:敏感禁区:羁绊寄语]",
+        "description": "当角色想主动向用户交付或生成一份私密档案卡片时使用。",
+        "card": {
+          "appLabel": "CONFIDENTIAL · 秘档",
+          "title": "【绝密】私密档案已递送",
+          "subtitle": "TOP SECRET DOSSIER",
+          "status": "已解密",
+          "accentColor": "#09090b",
+          "sections": [
+            {
+              "title": "档案摘要 (EXTRACT)",
+              "rows": [
+                {
+                  "label": "氛围倾向",
+                  "value": "{{氛围}}"
+                },
+                {
+                  "label": "偏好动态",
+                  "value": "{{偏好姿势}}"
+                },
+                {
+                  "label": "敏感禁区",
+                  "value": "{{敏感禁区}}"
+                },
+                {
+                  "label": "亲密寄语",
+                  "value": "{{羁绊寄语}}"
+                }
+              ]
+            }
+          ],
+          "actions": [
+            {
+              "label": "调取完整秘档"
+            }
+          ]
+        },
+        "tags": []
+      }
+    ],
+    "plusActions": [
+      {
+        "id": "secret-archive-main-action",
+        "label": "生成秘档",
+        "description": "从聊天工具栏调出秘档面板，让当前角色实时生成第一人称档案并直接发送卡片。",
+        "entry": "panel",
+        "presentation": "panel",
+        "panelHeight": "78vh",
+        "tags": []
+      }
+    ]
+  }
+}

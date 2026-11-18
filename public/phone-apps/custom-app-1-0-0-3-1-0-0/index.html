@@ -1,0 +1,3175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>时光放映馆</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0b0507;
+      --velvet-red: #350c12;
+      --velvet-deep: #1d0608;
+      --gold-main: #dfb267;
+      --gold-light: #f7e1b5;
+      --gold-dark: #8c672b;
+      --gold-glow: rgba(223, 178, 103, 0.45);
+      --wood-dark: #190d09;
+      --text-main: #f5eedb;
+      --text-muted: #a6917f;
+      --app-font-serif: "ZCOOL XiaoWei", "Noto Serif SC", "Songti SC", "Source Han Serif SC", Georgia, serif;
+      --app-font-title: "Cinzel", "Noto Serif SC", serif;
+      --safe-top: var(--ai-phone-app-bar-top, 52px);
+      --safe-bottom: var(--ai-phone-app-safe-bottom, 24px);
+
+      /* 动态比例高度 */
+      --screen-flex-ratio: 70;
+
+      /* 光影动态色 (默认 past 暖黄) */
+      --cinema-ambient-glow: radial-gradient(circle at 50% 28%, rgba(240, 180, 70, 0.22) 0%, rgba(18, 7, 5, 0.96) 75%);
+      --cinema-beam: rgba(255, 215, 120, 0.14);
+      --cinema-border-accent: rgba(223, 178, 103, 0.65);
+      --screen-bg: rgba(24, 14, 11, 0.94);
+    }
+
+    body[data-theme="past"] {
+      --cinema-ambient-glow: radial-gradient(circle at 50% 25%, rgba(245, 170, 60, 0.24) 0%, rgba(22, 8, 5, 0.96) 75%);
+      --cinema-beam: rgba(255, 210, 100, 0.15);
+      --cinema-border-accent: rgba(230, 180, 80, 0.75);
+      --screen-bg: rgba(26, 15, 9, 0.94);
+    }
+    body[data-theme="fanfic"] {
+      --cinema-ambient-glow: radial-gradient(circle at 50% 25%, rgba(180, 70, 210, 0.22) 0%, rgba(12, 5, 18, 0.96) 75%);
+      --cinema-beam: rgba(210, 120, 255, 0.15);
+      --cinema-border-accent: rgba(190, 110, 240, 0.75);
+      --screen-bg: rgba(20, 10, 24, 0.94);
+    }
+    body[data-theme="future"] {
+      --cinema-ambient-glow: radial-gradient(circle at 50% 25%, rgba(60, 160, 240, 0.22) 0%, rgba(5, 10, 20, 0.96) 75%);
+      --cinema-beam: rgba(130, 210, 255, 0.15);
+      --cinema-border-accent: rgba(100, 190, 240, 0.75);
+      --screen-bg: rgba(8, 16, 26, 0.94);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--app-font-serif);
+      font-size: 15px;
+    }
+
+    /* 剧院背景与光束 */
+    .theater-bg {
+      position: absolute;
+      inset: 0;
+      background: var(--cinema-ambient-glow);
+      transition: background 0.8s ease;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .projector-beam {
+      position: absolute;
+      top: -40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 340px;
+      height: 520px;
+      background: conic-gradient(from 170deg at 50% 0%, transparent 0deg, var(--cinema-beam) 10deg, transparent 20deg);
+      filter: blur(18px);
+      opacity: 0.85;
+      pointer-events: none;
+      animation: flickerBeam 4s infinite alternate ease-in-out;
+    }
+    @keyframes flickerBeam {
+      0% { opacity: 0.7; filter: blur(16px); }
+      50% { opacity: 0.95; filter: blur(20px); }
+      100% { opacity: 0.8; filter: blur(17px); }
+    }
+    .theater-seats-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 140px;
+      background:
+        radial-gradient(ellipse at 50% 120%, rgba(95, 12, 22, 0.85) 0%, rgba(45, 6, 12, 0.8) 50%, transparent 100%),
+        repeating-linear-gradient(90deg, rgba(80, 10, 20, 0.45) 0px, rgba(40, 5, 10, 0.55) 24px, rgba(110, 18, 30, 0.35) 48px);
+      filter: blur(4px);
+      opacity: 0.75;
+      pointer-events: none;
+      z-index: 1;
+      border-top: 1px solid rgba(223, 178, 103, 0.15);
+    }
+    .curtain-drape-left, .curtain-drape-right {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 20px;
+      z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(35, 6, 9, 0.95), rgba(70, 12, 18, 0.6), transparent);
+      box-shadow: inset -2px 0 6px rgba(0, 0, 0, 0.8);
+    }
+    .curtain-drape-right { right: 0; transform: scaleX(-1); }
+
+    /* 顶栏 */
+    .topbar {
+      position: fixed;
+      top: var(--safe-top);
+      left: 16px;
+      right: var(--ai-phone-app-bar-clear-right, 96px);
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+    }
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-icon {
+      font-size: 18px;
+      filter: drop-shadow(0 0 6px var(--gold-glow));
+    }
+    .brand-title {
+      font-family: var(--app-font-title);
+      font-weight: 800;
+      font-size: 16.5px;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #fff3d6 0%, #dfb267 60%, #996e2a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+    .char-badge-btn {
+      background: rgba(35, 16, 12, 0.75);
+      border: 1px solid var(--gold-dark);
+      color: var(--gold-light);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(8px);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .char-badge-avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid var(--gold-main);
+    }
+
+    /* 主视口容器 */
+    .app-main {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    /* 视图切换 */
+    .view-panel {
+      position: absolute;
+      top: calc(var(--safe-top) + 42px);
+      bottom: calc(var(--safe-bottom) + 58px);
+      left: 0;
+      right: 0;
+      padding: 0 14px 10px 14px;
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transform: translateY(6px);
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .view-panel.active {
+      opacity: 1;
+      pointer-events: auto;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    /* ========== 界面1: 放映厅 ========== */
+    .cinema-theater-view {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* 宽幅大银幕 */
+    .screen-frame {
+      position: relative;
+      width: 100%;
+      height: calc(var(--screen-flex-ratio, 70) * 1%);
+      min-height: 140px;
+      background: var(--screen-bg);
+      border-radius: 14px;
+      border: 2px solid var(--cinema-border-accent);
+      box-shadow: 0 0 28px rgba(0,0,0,0.95), inset 0 0 40px rgba(0, 0, 0, 0.85), 0 0 16px var(--gold-glow);
+      display: flex;
+      flex-direction: column;
+      padding: 12px 14px 10px 14px;
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+      transition: height 0.05s ease-out;
+    }
+    .screen-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed rgba(223, 178, 103, 0.3);
+      padding-bottom: 6px;
+      margin-bottom: 6px;
+      flex-shrink: 0;
+    }
+    .film-tag {
+      font-size: 10.5px;
+      letter-spacing: 1.5px;
+      color: var(--gold-main);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .film-tag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ff4757;
+      box-shadow: 0 0 6px #ff4757;
+      animation: recBlink 1.5s infinite;
+    }
+    @keyframes recBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+    .film-progress {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--app-font-title);
+    }
+    .screen-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-bottom: 6px;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+    .screen-content-box {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 4px;
+      font-size: 14.5px;
+      line-height: 1.9;
+      color: var(--text-main);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+    }
+    .typed-text-area {
+      white-space: pre-wrap;
+      word-break: break-word;
+      text-align: justify;
+    }
+    .typewriter-cursor {
+      display: inline-block;
+      width: 3px;
+      height: 1.1em;
+      background: var(--gold-main);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: cursorBlink 0.8s infinite;
+    }
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .screen-generating-box {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-align: center;
+    }
+    .film-lens-spinner {
+      font-size: 40px;
+      filter: drop-shadow(0 0 14px var(--gold-glow));
+      animation: rotateLens 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    @keyframes rotateLens {
+      0% { transform: rotate(0deg) scale(0.95); }
+      50% { transform: rotate(180deg) scale(1.1); }
+      100% { transform: rotate(360deg) scale(0.95); }
+    }
+    .generating-film-tips {
+      font-size: 13.5px;
+      color: var(--gold-light);
+      letter-spacing: 1px;
+      animation: textPulse 1.8s infinite alternate;
+    }
+    @keyframes textPulse {
+      0% { opacity: 0.6; }
+      100% { opacity: 1; }
+    }
+
+    .tap-hint-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--gold-light);
+      opacity: 0.85;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(223, 178, 103, 0.2);
+      flex-shrink: 0;
+    }
+
+    .screen-empty-state {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--text-muted);
+      gap: 10px;
+    }
+    .empty-film-wheel {
+      font-size: 38px;
+      filter: drop-shadow(0 0 10px var(--gold-glow));
+      animation: rotateWheel 12s linear infinite;
+    }
+    @keyframes rotateWheel {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* 拖拽手柄 */
+    .theater-resizer-bar {
+      width: 100%;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: row-resize;
+      touch-action: none;
+      flex-shrink: 0;
+      margin: 2px 0;
+      position: relative;
+    }
+    .resizer-handle-pill {
+      width: 68px;
+      height: 5px;
+      background: linear-gradient(90deg, transparent, var(--gold-main), transparent);
+      border-radius: 4px;
+      box-shadow: 0 0 6px var(--gold-glow);
+      position: relative;
+    }
+    .resizer-handle-pill::after {
+      content: '↕';
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: var(--gold-light);
+      opacity: 0.7;
+    }
+
+    /* 角色座席区 */
+    .vip-audience-box {
+      flex: 1;
+      min-height: 60px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 12px;
+      background: linear-gradient(180deg, rgba(42, 14, 18, 0.92) 0%, rgba(22, 6, 9, 0.98) 100%);
+      border: 1px solid rgba(223, 178, 103, 0.45);
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.7);
+      position: relative;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .char-seat-wrapper {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+    .seat-silhouette-chair {
+      position: absolute;
+      bottom: -4px;
+      left: -4px;
+      right: -4px;
+      height: 30px;
+      background: radial-gradient(ellipse at center, #8a1726 0%, #460c14 70%, #200407 100%);
+      border-radius: 8px 8px 5px 5px;
+      border: 1px solid rgba(223, 178, 103, 0.4);
+      z-index: 1;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+    }
+    .char-avatar-head {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--gold-main);
+      z-index: 2;
+      background: #2a1410;
+      box-shadow: 0 0 12px rgba(0,0,0,0.8);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s ease;
+    }
+    .avatar-tap-hint {
+      position: absolute;
+      bottom: -3px;
+      right: -3px;
+      font-size: 10px;
+      background: #dfb267;
+      color: #1a0808;
+      border-radius: 50%;
+      width: 15px;
+      height: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+      box-shadow: 0 0 6px rgba(0,0,0,0.8);
+      animation: pulseGlow 1.8s infinite;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.18); box-shadow: 0 0 8px #f5d77f; }
+    }
+
+    /* 角色情绪微动效与分级抖动 (情绪越激烈抖动越剧烈，边框与光影随心情变色) */
+    .char-avatar-head.emotion-tilt { border-color: #f5d77f; transform: rotate(-12deg) scale(1.05); filter: drop-shadow(0 0 10px #f5d77f); animation: gentleTilt 2.5s infinite ease-in-out; }
+    .char-avatar-head.emotion-shake { border-color: #ff4757; animation: charVibrateViolent 0.22s ease-in-out infinite; filter: drop-shadow(0 0 18px #ff4757) brightness(1.15); }
+    .char-avatar-head.emotion-shock { border-color: #70a1ff; animation: shockJolt 0.35s ease-in-out infinite alternate; filter: drop-shadow(0 0 18px #70a1ff) brightness(1.25); }
+    .char-avatar-head.emotion-love { border-color: #ff78e3; animation: loveHeartBeat 0.75s ease-in-out infinite; filter: drop-shadow(0 0 20px #ff2a8d) brightness(1.15); }
+    .char-avatar-head.emotion-sweat { border-color: #74b9ff; animation: sweatNervous 0.28s ease-in-out infinite; filter: drop-shadow(0 0 14px #74b9ff); }
+    .char-avatar-head.emotion-shy { border-color: #ff7675; animation: shyTremble 1.2s infinite ease-in-out; filter: drop-shadow(0 0 16px #ff7675) sepia(0.25); }
+    .char-avatar-head.emotion-glow { border-color: #ffd32a; transform: scale(1.08); filter: drop-shadow(0 0 20px #ffd32a) brightness(1.18); animation: gentleGlowBreath 2s infinite ease-in-out; }
+    .char-avatar-head.emotion-startle { border-color: #ff6b81; animation: startleJolt 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1 forwards; filter: drop-shadow(0 0 16px #70a1ff); }
+    .char-avatar-head.emotion-calm { border-color: var(--gold-main); transform: scale(1); filter: drop-shadow(0 0 6px var(--gold-glow)); }
+
+    /* 极度剧烈震颤（心慌失措/极度激动/手忙脚乱） */
+    @keyframes charVibrateViolent {
+      0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1.06); }
+      20% { transform: translate(-3.5px, 2px) rotate(-5deg) scale(1.1); }
+      40% { transform: translate(3.5px, -2px) rotate(5deg) scale(1.1); }
+      60% { transform: translate(-2.5px, -2.5px) rotate(-4deg) scale(1.08); }
+      80% { transform: translate(2.5px, 2.5px) rotate(4deg) scale(1.08); }
+    }
+
+    /* 震惊/瞳孔地震 */
+    @keyframes shockJolt {
+      0% { transform: scale(1.05) translateY(-2px) rotate(-3deg); }
+      100% { transform: scale(1.2) translateY(-6px) rotate(3deg); }
+    }
+
+    /* 心动/冒爱心怦怦跳 */
+    @keyframes loveHeartBeat {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.18) rotate(-4deg); filter: drop-shadow(0 0 20px #ff2a8d); }
+      45% { transform: scale(1.08) rotate(2deg); }
+      65% { transform: scale(1.22) rotate(-3deg); filter: drop-shadow(0 0 24px #ff2a8d); }
+    }
+
+    /* 局促流汗小幅度高频颤抖 */
+    @keyframes sweatNervous {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(-1.8px, 1.2px) rotate(-2deg); }
+      75% { transform: translate(1.8px, -1.2px) rotate(2deg); }
+    }
+
+    /* 害羞低头轻颤 */
+    @keyframes shyTremble {
+      0%, 100% { transform: translateY(2px) rotate(4deg) scale(1); }
+      50% { transform: translateY(4px) rotate(2deg) scale(1.04); filter: drop-shadow(0 0 16px #ff7675); }
+    }
+
+    @keyframes gentleTilt {
+      0%, 100% { transform: rotate(-12deg) scale(1.05); }
+      50% { transform: rotate(-8deg) scale(1.08); }
+    }
+
+    @keyframes gentleGlowBreath {
+      0%, 100% { transform: scale(1.05); }
+      50% { transform: scale(1.12); filter: drop-shadow(0 0 20px #ffd32a); }
+    }
+
+    @keyframes startleJolt {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.24) translateY(-8px) rotate(-6deg); }
+      60% { transform: scale(1.12) translateY(-3px) rotate(3deg); }
+      100% { transform: scale(1.14) translateY(-4px) rotate(0deg); }
+    }
+
+    /* 角色座席浮动动态情绪 Emoji 粒子效果 */
+    .emotion-floating-particle {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      font-size: 16px;
+      pointer-events: none;
+      z-index: 20;
+      animation: floatEmojiParticle 1.4s ease-out forwards;
+      filter: drop-shadow(0 0 8px rgba(0,0,0,0.8));
+    }
+    @keyframes floatEmojiParticle {
+      0% { transform: translate(-50%, 0) scale(0.6); opacity: 0; }
+      25% { transform: translate(-50%, -10px) scale(1.3); opacity: 1; }
+      70% { transform: translate(calc(-50% + 6px), -24px) scale(1.1); opacity: 0.9; }
+      100% { transform: translate(calc(-50% + 12px), -36px) scale(0.8); opacity: 0; }
+    }
+
+    .char-seat-info {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      overflow: hidden;
+    }
+    .char-seat-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .char-seat-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+    .char-seat-tag {
+      font-size: 9.5px;
+      padding: 1px 5px;
+      background: rgba(223, 178, 103, 0.15);
+      border: 1px solid rgba(223, 178, 103, 0.4);
+      color: var(--gold-main);
+      border-radius: 10px;
+    }
+
+    .char-reaction-bubble {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      font-size: 12.5px;
+      line-height: 1.5;
+      color: #ffeaa7;
+      background: rgba(0, 0, 0, 0.6);
+      border-left: 3px solid var(--gold-main);
+      padding: 6px 10px;
+      border-radius: 0 8px 8px 0;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    /* ========== 界面2: 时光策源 ========== */
+    .create-theater-view {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .retro-card {
+      background: rgba(32, 14, 16, 0.8);
+      border: 1px solid rgba(223, 178, 103, 0.4);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      letter-spacing: 0.5px;
+    }
+
+    .theme-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .theme-card-option {
+      background: rgba(20, 8, 10, 0.6);
+      border: 1.5px solid rgba(223, 178, 103, 0.25);
+      border-radius: 10px;
+      padding: 10px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .theme-card-option.selected {
+      border-color: var(--gold-main);
+      background: linear-gradient(180deg, rgba(80, 20, 30, 0.85) 0%, rgba(35, 10, 15, 0.95) 100%);
+      box-shadow: 0 0 14px var(--gold-glow);
+      transform: translateY(-2px);
+    }
+    .theme-icon { font-size: 20px; }
+    .theme-label { font-size: 12px; font-weight: 700; color: var(--text-main); }
+    .theme-desc { font-size: 9.5px; color: var(--text-muted); line-height: 1.15; }
+
+    /* 文风流派选择 */
+    .style-picker-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    /* 字数篇幅选择 */
+    .word-count-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .word-count-chip {
+      background: rgba(20, 8, 10, 0.6);
+      border: 1px solid rgba(223, 178, 103, 0.3);
+      border-radius: 8px;
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .word-count-chip.selected {
+      border-color: var(--gold-main);
+      background: rgba(90, 25, 35, 0.85);
+      box-shadow: 0 0 8px var(--gold-glow);
+    }
+    .wc-title { font-size: 12px; font-weight: 700; color: var(--gold-light); }
+    .wc-desc { font-size: 9px; color: var(--text-muted); margin-top: 2px; }
+    .style-option-card {
+      background: rgba(20, 8, 10, 0.6);
+      border: 1.5px solid rgba(223, 178, 103, 0.25);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .style-option-card.selected {
+      border-color: var(--gold-main);
+      background: linear-gradient(90deg, rgba(90, 25, 35, 0.9) 0%, rgba(45, 12, 18, 0.9) 100%);
+      box-shadow: 0 0 10px var(--gold-glow);
+    }
+    .style-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .style-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .style-tag {
+      font-size: 10px;
+      color: var(--gold-main);
+      background: rgba(223, 178, 103, 0.15);
+      border: 1px solid rgba(223, 178, 103, 0.3);
+      padding: 1px 6px;
+      border-radius: 10px;
+    }
+    .style-quote {
+      font-size: 11.5px;
+      color: #ffeaa7;
+      line-height: 1.4;
+      font-style: italic;
+    }
+    .style-suit {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .mode-select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .mode-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: rgba(20, 8, 10, 0.6);
+      border: 1px solid rgba(223, 178, 103, 0.3);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-chip.selected {
+      border-color: var(--gold-main);
+      background: rgba(90, 25, 35, 0.85);
+      box-shadow: 0 0 8px var(--gold-glow);
+    }
+    .mode-chip-title { font-size: 12px; font-weight: 700; color: var(--gold-light); }
+    .mode-chip-desc { font-size: 9.5px; color: var(--text-muted); }
+
+    .prompt-textarea {
+      width: 100%;
+      height: 90px;
+      background: rgba(14, 6, 8, 0.7);
+      border: 1px solid rgba(223, 178, 103, 0.35);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #fff;
+      font-family: var(--app-font-serif);
+      font-size: 13.5px;
+      line-height: 1.55;
+      resize: none;
+      outline: none;
+    }
+    .prompt-textarea:focus {
+      border-color: var(--gold-main);
+      box-shadow: 0 0 10px var(--gold-glow);
+    }
+    .quick-tags-scroll {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-top: 6px;
+      padding-bottom: 2px;
+    }
+    .quick-tag-chip {
+      background: rgba(223, 178, 103, 0.1);
+      border: 1px solid rgba(223, 178, 103, 0.3);
+      color: var(--gold-light);
+      padding: 3px 8px;
+      border-radius: 14px;
+      font-size: 11px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .quick-tag-chip:active {
+      background: var(--gold-main);
+      color: #1a0808;
+    }
+
+    .cinema-btn-primary {
+      width: 100%;
+      height: 46px;
+      background: linear-gradient(135deg, #f7e1b5 0%, #dfb267 45%, #a67c2e 100%);
+      color: #240e06;
+      border: none;
+      border-radius: 24px;
+      font-family: var(--app-font-title);
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 12px var(--gold-glow);
+      transition: all 0.2s ease;
+    }
+    .cinema-btn-primary:active { transform: scale(0.98); filter: brightness(0.9); }
+    .cinema-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(0.6); }
+
+    /* ========== 界面3: 胶片档案 (角色分类文件夹) ========== */
+    .archive-theater-view {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .archive-stats-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: rgba(30, 10, 14, 0.6);
+      border-radius: 8px;
+      border: 1px solid rgba(223, 178, 103, 0.2);
+      font-size: 12px;
+      color: var(--gold-light);
+    }
+
+    /* 角色分类文件夹滑动栏 */
+    .archive-folder-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px 8px 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .archive-folder-chip {
+      background: rgba(36, 14, 18, 0.75);
+      border: 1.5px solid rgba(223, 178, 103, 0.3);
+      border-radius: 12px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.22s ease;
+      font-size: 12px;
+      color: var(--text-main);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+    .archive-folder-chip.selected {
+      background: linear-gradient(135deg, rgba(110, 30, 42, 0.9) 0%, rgba(45, 12, 18, 0.95) 100%);
+      border-color: var(--gold-main);
+      color: var(--gold-light);
+      box-shadow: 0 0 10px var(--gold-glow);
+      transform: translateY(-1px);
+    }
+    .folder-count-badge {
+      font-size: 10px;
+      background: rgba(223, 178, 103, 0.18);
+      color: var(--gold-main);
+      padding: 1px 6px;
+      border-radius: 10px;
+      border: 1px solid rgba(223, 178, 103, 0.35);
+    }
+    .archive-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .archive-film-card {
+      background: rgba(32, 12, 16, 0.85);
+      border: 1px solid rgba(223, 178, 103, 0.3);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+    .archive-film-card:active {
+      border-color: var(--gold-main);
+      transform: translateY(-1px);
+    }
+    .archive-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .archive-type-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .type-badge-past { background: rgba(245, 170, 60, 0.2); color: #f5aa3c; border: 1px solid rgba(245, 170, 60, 0.4); }
+    .type-badge-fanfic { background: rgba(180, 70, 210, 0.2); color: #c468e8; border: 1px solid rgba(180, 70, 210, 0.4); }
+    .type-badge-future { background: rgba(60, 160, 240, 0.2); color: #4fa8f6; border: 1px solid rgba(60, 160, 240, 0.4); }
+
+    .archive-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+    .archive-card-preview {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .archive-card-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--gold-dark);
+      border-top: 1px dashed rgba(223, 178, 103, 0.15);
+      padding-top: 6px;
+    }
+    
+    .archive-btn-del {
+      color: #ff6b81;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid rgba(255, 107, 129, 0.4);
+      background: rgba(255, 107, 129, 0.1);
+      cursor: pointer;
+    }
+    .archive-btn-del:active {
+      background: #ff4757;
+      color: #fff;
+    }
+
+    /* 角色内心与状态弹窗 */
+    .mind-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 4, 6, 0.82);
+      z-index: 95;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+      backdrop-filter: blur(8px);
+    }
+    .mind-modal.show {
+      display: flex;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .mind-card {
+      width: 100%;
+      max-width: 320px;
+      background: linear-gradient(180deg, #2b1116 0%, #150608 100%);
+      border: 2px solid var(--gold-main);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.9), 0 0 24px var(--gold-glow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: popMind 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popMind {
+      from { transform: scale(0.88) translateY(10px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .mind-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px dashed rgba(223, 178, 103, 0.3);
+      padding-bottom: 10px;
+    }
+    .mind-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--gold-main);
+      box-shadow: 0 0 10px var(--gold-glow);
+    }
+    .mind-title-box { flex: 1; }
+    .mind-tagline { font-size: 10px; color: var(--gold-main); letter-spacing: 1.5px; text-transform: uppercase; }
+    .mind-char-name { font-size: 15px; font-weight: 700; color: var(--gold-light); }
+    
+    .mind-status-section {
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(223, 178, 103, 0.25);
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mind-status-icon { font-size: 18px; filter: drop-shadow(0 0 6px #ff6b81); }
+    .mind-status-label { font-size: 11px; color: var(--gold-dark); font-weight: 700; }
+    .mind-status-val { font-size: 12.5px; color: #ff7675; font-weight: 600; }
+
+    .mind-monologue-section {
+      background: rgba(0, 0, 0, 0.55);
+      border-left: 3px solid var(--gold-main);
+      border-radius: 0 10px 10px 0;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .mind-monologue-label { font-size: 10.5px; color: var(--gold-main); font-weight: 700; letter-spacing: 0.5px; }
+    .mind-monologue-text {
+      font-size: 13px;
+      line-height: 1.75;
+      color: #fff4db;
+      font-style: italic;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .mind-btn-close {
+      width: 100%;
+      height: 36px;
+      background: linear-gradient(135deg, #dfb267 0%, #996e2a 100%);
+      color: #1a0808;
+      font-weight: 700;
+      border: none;
+      border-radius: 18px;
+      font-size: 12.5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    /* 散场后对话卡片 */
+    .aftertalk-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 4, 6, 0.85);
+      z-index: 90;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+      backdrop-filter: blur(8px);
+    }
+    .aftertalk-modal.show {
+      display: flex;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .aftertalk-card {
+      width: 100%;
+      max-width: 330px;
+      background: linear-gradient(180deg, #2c1217 0%, #17070a 100%);
+      border: 2px solid var(--gold-main);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.9), 0 0 20px var(--gold-glow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: popAftertalk 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popAftertalk {
+      from { transform: scale(0.85) translateY(12px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .aftertalk-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px dashed rgba(223, 178, 103, 0.3);
+      padding-bottom: 10px;
+    }
+    .aftertalk-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--gold-main);
+      box-shadow: 0 0 8px var(--gold-glow);
+    }
+    .aftertalk-title-box { flex: 1; }
+    .aftertalk-badge { font-size: 10.5px; color: var(--gold-main); letter-spacing: 1px; }
+    .aftertalk-char-name { font-size: 15px; font-weight: 700; color: var(--gold-light); }
+    .aftertalk-content {
+      font-size: 13.5px;
+      line-height: 1.8;
+      color: #fff2d8;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 240px;
+      overflow-y: auto;
+      padding: 4px 2px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+    .aftertalk-btn {
+      width: 100%;
+      height: 38px;
+      background: linear-gradient(135deg, #dfb267 0%, #996e2a 100%);
+      color: #1a0808;
+      font-weight: 700;
+      border: none;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    /* 底部导航 */
+    .cinema-navbar {
+      position: fixed;
+      bottom: var(--safe-bottom);
+      left: 16px;
+      right: 16px;
+      height: 52px;
+      background: linear-gradient(180deg, rgba(42, 16, 20, 0.95) 0%, rgba(20, 6, 8, 0.98) 100%);
+      border: 1.5px solid var(--gold-dark);
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 6px;
+      z-index: 30;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.8), inset 0 1px 2px rgba(247, 225, 181, 0.3);
+      backdrop-filter: blur(12px);
+    }
+    .nav-tab-btn {
+      flex: 1;
+      height: 40px;
+      background: transparent;
+      border: none;
+      border-radius: 22px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-family: var(--app-font-serif);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .nav-tab-btn .nav-icon { font-size: 17px; transition: transform 0.25s ease; }
+    .nav-tab-btn.active {
+      color: var(--gold-light);
+      background: radial-gradient(circle at center, rgba(140, 103, 43, 0.35) 0%, transparent 80%);
+      text-shadow: 0 0 8px var(--gold-glow);
+    }
+    .nav-tab-btn.active .nav-icon {
+      transform: scale(1.15) translateY(-1px);
+      filter: drop-shadow(0 0 6px var(--gold-glow));
+    }
+
+    /* 顶部红色错误通知横幅 */
+    .cinema-error-banner {
+      position: fixed;
+      top: calc(var(--safe-top) + 4px);
+      left: 14px;
+      right: 14px;
+      background: linear-gradient(135deg, rgba(140, 20, 30, 0.96) 0%, rgba(60, 10, 16, 0.98) 100%);
+      border: 1.5px solid #ff4757;
+      border-radius: 12px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.85), 0 0 16px rgba(255, 71, 87, 0.45);
+      z-index: 200;
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      backdrop-filter: blur(12px);
+      animation: slideDownBanner 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .cinema-error-banner.show {
+      display: flex;
+    }
+    @keyframes slideDownBanner {
+      from { transform: translateY(-30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .error-banner-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 6px #ff4757);
+    }
+    .error-banner-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .error-banner-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .error-banner-desc {
+      font-size: 11.5px;
+      color: #ffccd2;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .error-banner-close {
+      color: #ffd2d7;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255, 71, 87, 0.4);
+      flex-shrink: 0;
+    }
+
+    /* 角色选择弹窗 */
+    .char-select-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .char-select-modal.show {
+      display: flex;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .char-modal-card {
+      width: 100%;
+      max-width: 320px;
+      background: #1f0d11;
+      border: 2px solid var(--gold-main);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .char-list-scroll {
+      max-height: 220px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .char-item-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: rgba(45, 18, 22, 0.8);
+      border: 1px solid rgba(223, 178, 103, 0.3);
+      border-radius: 8px;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+    .char-item-btn.selected { border-color: var(--gold-main); background: rgba(80, 25, 35, 0.9); }
+  </style>
+</head>
+<body data-theme="past">
+
+  <div class="theater-bg"></div>
+  <div class="projector-beam"></div>
+  <div class="theater-seats-overlay"></div>
+  <div class="curtain-drape-left"></div>
+  <div class="curtain-drape-right"></div>
+
+  <!-- 顶部红色错误通知横幅 -->
+  <div class="cinema-error-banner" id="cinemaErrorBanner">
+    <span class="error-banner-icon">⚠️</span>
+    <div class="error-banner-content">
+      <div class="error-banner-title">放映机显影异常 · 模型中断</div>
+      <div class="error-banner-desc" id="errorBannerText">上一轮生成失败或网络连接中断，请检查 API 配置或重试。</div>
+    </div>
+    <span class="error-banner-close" id="btnCloseErrorBanner">✕</span>
+  </div>
+
+  <!-- 顶部栏 -->
+  <div class="topbar">
+    <div class="app-brand">
+      <span class="brand-icon">📽️</span>
+      <span class="brand-title">时光放映馆</span>
+    </div>
+    <div class="char-badge-btn" id="charSelectTrigger" title="切换陪伴角色">
+      <img id="topbarCharAvatar" class="char-badge-avatar" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='8' r='4' fill='%23dfb267'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6' fill='%23dfb267'/></svg>" alt="头像">
+      <span id="topbarCharName">伴影角色</span>
+    </div>
+  </div>
+
+  <main class="app-main">
+    
+    <!-- 界面 1: 放映厅 -->
+    <section class="view-panel active" id="viewScreen">
+      <div class="cinema-theater-view" id="cinemaTheaterContainer">
+        
+        <!-- 大银幕主体 -->
+        <div class="screen-frame" id="cinemaScreenFrame">
+          <div class="screen-header">
+            <div class="film-tag">
+              <span class="film-tag-dot"></span>
+              <span id="screenThemeTag">PAST REEL · 过去记忆</span>
+            </div>
+            <div class="film-progress" id="screenSegmentProgress">第 0 / 0 幕</div>
+          </div>
+
+          <div class="screen-title" id="screenFilmTitle">《等待载入胶片》</div>
+          
+          <div class="screen-content-box" id="screenScrollArea">
+            <div class="screen-empty-state" id="screenEmptyPrompt">
+              <div class="empty-film-wheel">🎞️</div>
+              <p>时光放映机已就绪<br><span style="font-size:12px; color:var(--gold-dark);">前往「时光策源」投入灵感，开启放映</span></p>
+            </div>
+
+            <div class="screen-generating-box" id="screenGeneratingBox" style="display:none;">
+              <div class="film-lens-spinner">📽️</div>
+              <div class="generating-film-tips" id="generatingStatusText">正在交织大银幕剧场与角色心绪...</div>
+              <div style="font-size:11.5px; color:var(--text-muted);">大银幕长镜头与座席观影反应正在逐幕显影</div>
+            </div>
+
+            <div class="typed-text-area" id="screenTypedContent" style="display:none;"></div>
+          </div>
+
+          <div class="tap-hint-bar" id="screenTapHint" style="display:none;">
+            <span id="screenTapHintText">👆 点击大银幕可加速显字 / 推进下一幕</span>
+            <span style="font-size:10px; color:var(--gold-dark); border:1px solid rgba(223,178,103,0.3); padding:1px 6px; border-radius:10px;">🎞️ 沉浸放映</span>
+          </div>
+        </div>
+
+        <!-- 银幕与座席拖拽手柄 -->
+        <div class="theater-resizer-bar" id="theaterResizerBar" title="上下拖动调节银幕与座席高度">
+          <div class="resizer-handle-pill"></div>
+        </div>
+
+        <!-- 角色观影座席区 -->
+        <div class="vip-audience-box" id="vipAudienceBox">
+          <div class="char-seat-wrapper" id="audienceAvatarSeatWrapper" title="点击窥探心声与实时状态">
+            <div class="seat-silhouette-chair"></div>
+            <img id="audienceCharAvatar" class="char-avatar-head emotion-calm" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='8' r='4' fill='%23dfb267'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6' fill='%23dfb267'/></svg>" alt="角色">
+            <div class="avatar-tap-hint">💭</div>
+          </div>
+          <div class="char-seat-info">
+            <div class="char-seat-name-row">
+              <span class="char-seat-name" id="audienceCharName">角色座席</span>
+              <span class="char-seat-tag" id="audienceEmotionTag">实时观影中</span>
+            </div>
+            <div class="char-reaction-bubble" id="audienceReactionText">
+              「...大银幕开始转动了，今天会放映什么呢？」
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 界面 2: 时光策源 (输入灵感与定制) -->
+    <section class="view-panel" id="viewCreate">
+      <div class="create-theater-view">
+        <div class="retro-card">
+          <div class="card-title">
+            <span>⏳ 1. 选择时光流向 (光影色调)</span>
+          </div>
+          
+          <div class="theme-picker-grid">
+            <div class="theme-card-option selected" data-type="past">
+              <span class="theme-icon">📜</span>
+              <span class="theme-label">过去·旧忆</span>
+              <span class="theme-desc">暖黄光泽·真实交集</span>
+            </div>
+            <div class="theme-card-option" data-type="fanfic">
+              <span class="theme-icon">🔮</span>
+              <span class="theme-label">同人·虚构</span>
+              <span class="theme-desc">绚丽流彩·平行奇想</span>
+            </div>
+            <div class="theme-card-option" data-type="future">
+              <span class="theme-icon">🌌</span>
+              <span class="theme-label">未来·遥瞻</span>
+              <span class="theme-desc">冷蓝银白·岁月远景</span>
+            </div>
+          </div>
+
+          <!-- 文风流派选择 -->
+          <div class="card-title">
+            <span>🖋️ 2. 文风叙事笔触 (Writing Style)</span>
+          </div>
+          <div class="style-picker-list" id="stylePickerList">
+            
+            <div class="style-option-card selected" data-style="fanfic">
+              <div class="style-top-row">
+                <span class="style-name">🔮 ① 灵动同人流派 (AU特调)</span>
+                <span class="style-tag">张力/镜头感/AU百搭</span>
+              </div>
+              <div class="style-quote">“镜头感极强，情感暗流涌动，自适应古风、西幻、现代等多元同人背景。”</div>
+              <div class="style-suit">适合：平行世界脑洞、古风权谋、西幻、青春与强张力互动</div>
+            </div>
+
+            <div class="style-option-card" data-style="wkw">
+              <div class="style-top-row">
+                <span class="style-name">🎬 ② 王家卫式暧昧</span>
+                <span class="style-tag">过去/遗憾/暧昧期</span>
+              </div>
+              <div class="style-quote">“碎片化独白，大量留白和抽帧感，雨水与车窗的倒影，欲说还休。”</div>
+              <div class="style-suit">适合：未言明的心事、久别重逢、遗憾与情绪暗潮</div>
+            </div>
+
+            <div class="style-option-card" data-style="koreeda">
+              <div class="style-top-row">
+                <span class="style-name">🍵 ③ 是枝裕和式日常</span>
+                <span class="style-tag">治愈/同居日常</span>
+              </div>
+              <div class="style-quote">“细腻的白描，像纪录片一样安静温和，深沉情绪藏在三餐细节里。”</div>
+              <div class="style-suit">适合：温馨同居、餐桌对谈、平淡岁月中的长久羁绊</div>
+            </div>
+
+            <div class="style-option-card" data-style="borges">
+              <div class="style-top-row">
+                <span class="style-name">⏳ ④ 博尔赫斯式哲学</span>
+                <span class="style-tag">宿命/时空交错</span>
+              </div>
+              <div class="style-quote">“带迷宫感和宿命感，叙述者像在回忆一件还没发生的未来之事。”</div>
+              <div class="style-suit">适合：平行时空、命运交错、时间尽头的誓约</div>
+            </div>
+
+            <div class="style-option-card" data-style="miyazaki">
+              <div class="style-top-row">
+                <span class="style-name">🌤️ ⑤ 童话/宫崎骏式</span>
+                <span class="style-tag">纯粹治愈/奇幻</span>
+              </div>
+              <div class="style-quote">“温柔明亮的语调，清风吹过草浪，像一场永不落幕的温柔美梦。”</div>
+              <div class="style-suit">适合：奇幻冒险、相互治愈、轻快纯粹的浪漫旅程</div>
+            </div>
+
+            <div class="style-option-card" data-style="cyber">
+              <div class="style-top-row">
+                <span class="style-name">🤖 ⑥ 冷峻赛博/极简</span>
+                <span class="style-tag">科幻未来/距离感</span>
+              </div>
+              <div class="style-quote">“短句，零度叙事，像机器在记录，但字缝深处偶尔泄露一丝炙热温度。”</div>
+              <div class="style-suit">适合：废土末世、仿生人与人类、克制内敛的深情</div>
+            </div>
+
+            <div class="style-option-card" data-style="desire">
+              <div class="style-top-row">
+                <span class="style-name">🔥 ⑦ 暧昧拉扯/高阶情欲</span>
+                <span class="style-tag">体温/呼吸/极致张力/隐喻</span>
+              </div>
+              <div class="style-quote">“潮湿微烫的气息，视线侵略与指尖战栗，在压抑与渴求的反复拉扯中将心跳推至极致。”</div>
+              <div class="style-suit">适合：禁忌拉扯、危险关系、强烈性张力与隐秘诱惑</div>
+            </div>
+
+          </div>
+
+          <div class="card-title">
+            <span>📜 3. 剧场篇幅字数 (Word Count)</span>
+          </div>
+          <div class="word-count-grid" id="wordCountGrid">
+            <div class="word-count-chip selected" data-wc="2000-4000" data-acts="4">
+              <div class="wc-title">2000-4000字</div>
+              <div class="wc-desc">中篇精雕 · 4幕</div>
+            </div>
+            <div class="word-count-chip" data-wc="4000-6000" data-acts="5-6">
+              <div class="wc-title">4000-6000字</div>
+              <div class="wc-desc">长篇巨幕 · 5~6幕</div>
+            </div>
+            <div class="word-count-chip" data-wc="6000-8000" data-acts="6-7">
+              <div class="wc-title">6000-8000字</div>
+              <div class="wc-desc">史诗长卷 · 6~7幕</div>
+            </div>
+          </div>
+
+          <div class="card-title">
+            <span>👥 4. 陪伴观看模式</span>
+          </div>
+          <div class="mode-select-grid">
+            <div class="mode-chip selected" id="modeWithUser" data-mode="together">
+              <span style="font-size:18px;">🛋️</span>
+              <div>
+                <div class="mode-chip-title">与TA并肩同看</div>
+                <div class="mode-chip-desc">两人共坐VIP席位</div>
+              </div>
+            </div>
+            <div class="mode-chip" id="modeSolo" data-mode="solo">
+              <span style="font-size:18px;">🚶</span>
+              <div>
+                <div class="mode-chip-title">让TA独自观看</div>
+                <div class="mode-chip-desc">散场后找到你小叙</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-title">
+            <span>✍️ 5. 剧场梗概与剧情细节 (Summary & Plot)</span>
+          </div>
+          <textarea class="prompt-textarea" id="promptInput" placeholder="输入你想在大银幕放映的剧情灵感梗概、情境细节或脑洞..."></textarea>
+          
+          <div class="quick-tags-scroll" id="quickTagsScroll"></div>
+        </div>
+
+        <button class="cinema-btn-primary" id="btnStartGenerate">
+          <span>📽️ 投入灵感 · 启动放映</span>
+        </button>
+
+        <div style="text-align: center; font-size: 11px; color: var(--gold-dark); line-height: 1.5; margin-top: 4px;">
+          放映机将自动读取角色人设与记忆，全程以纯正第三人称电影质感呈现
+        </div>
+      </div>
+    </section>
+
+    <!-- 界面 3: 胶片档案 (支持角色文件夹) -->
+    <section class="view-panel" id="viewArchive">
+      <div class="archive-theater-view">
+        <div class="archive-stats-bar">
+          <span>📼 已珍藏时光胶片: <strong id="archiveCountText" style="color:var(--gold-main);">0</strong> 卷</span>
+          <span style="font-size:11px; color:var(--text-muted);">点击重温 · 红标删除</span>
+        </div>
+
+        <!-- 角色文件夹分类选择 -->
+        <div class="archive-folder-scroll" id="archiveFolderScroll"></div>
+
+        <div class="archive-list" id="archiveListContainer"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 角色实时心声与状态弹窗 -->
+  <div class="mind-modal" id="mindModal">
+    <div class="mind-card">
+      <div class="mind-header">
+        <img id="mindAvatar" class="mind-avatar" src="" alt="头像">
+        <div class="mind-title-box">
+          <div class="mind-tagline">OBSERVATION & HEARTBEAT · 伴影心扉</div>
+          <div class="mind-char-name" id="mindCharName">角色名</div>
+        </div>
+      </div>
+      <div class="mind-status-section">
+        <span class="mind-status-icon" id="mindStatusIcon">💓</span>
+        <div>
+          <div class="mind-status-label">实时生理与情绪状态 (Status)</div>
+          <div class="mind-status-val" id="mindStatusVal">心率微升 · 专注凝视银幕 · 情绪起伏</div>
+        </div>
+      </div>
+      <div class="mind-monologue-section">
+        <div class="mind-monologue-label">💭 隐秘心声 (Unspoken Monologue)</div>
+        <div class="mind-monologue-text" id="mindMonologueText">「（银幕上的镜头让人有些移不开视线...千万不能被身边的人发现我现在的真实情绪。）」</div>
+      </div>
+      <button class="mind-btn-close" id="btnCloseMind">
+        <span>🤫 悄悄收回视线</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 散场后对话卡片 -->
+  <div class="aftertalk-modal" id="aftertalkModal">
+    <div class="aftertalk-card">
+      <div class="aftertalk-header">
+        <img id="aftertalkAvatar" class="aftertalk-avatar" src="" alt="头像">
+        <div class="aftertalk-title-box">
+          <div class="aftertalk-badge">AFTER THE DREAM · 散场余韵</div>
+          <div class="aftertalk-char-name" id="aftertalkCharName">角色名</div>
+        </div>
+      </div>
+      <div class="aftertalk-content" id="aftertalkContent"></div>
+      <button class="aftertalk-btn" id="btnCloseAftertalk">
+        <span>☕ 悄然落地 · 收藏余韵</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 底部三键导航 -->
+  <nav class="cinema-navbar">
+    <button class="nav-tab-btn active" data-target="viewScreen">
+      <span class="nav-icon">🎬</span>
+      <span>大银幕</span>
+    </button>
+    <button class="nav-tab-btn" data-target="viewCreate">
+      <span class="nav-icon">🕰️</span>
+      <span>时光策源</span>
+    </button>
+    <button class="nav-tab-btn" data-target="viewArchive">
+      <span class="nav-icon">🎞️</span>
+      <span>胶片档案</span>
+    </button>
+  </nav>
+
+  <!-- 角色选择弹窗 -->
+  <div class="char-select-modal" id="charSelectModal">
+    <div class="char-modal-card">
+      <div style="font-weight:700; color:var(--gold-light); display:flex; justify-content:space-between;">
+        <span>选择陪同观影角色</span>
+        <span id="closeCharModal" style="cursor:pointer; color:var(--gold-main);">✕</span>
+      </div>
+      <div class="char-list-scroll" id="charListScroll"></div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 状态管理
+    // ==========================================
+    const state = {
+      characters: [],
+      selectedCharId: null,
+      selectedChar: null,
+      userProfile: null,
+      userPersona: null,
+      selectedThemeType: "past",
+      selectedStyle: "fanfic",
+      targetWordCount: "2000-4000",
+      watchMode: "together",
+      currentFilm: null,
+      currentSegmentIndex: 0,
+      isTyping: false,
+      isGenerating: false,
+      typewriterTimer: null,
+      audioCtx: null,
+      archives: [],
+      selectedArchiveFolder: "all" // 当前档案选中的角色文件夹：'all' 或 指定 characterId
+    };
+
+    const stylePromptMap = {
+      fanfic: "【文风：灵动同人流派 (AU特调)】极具张力与镜头感，行文节奏紧凑，善于捕捉视线交错、呼吸节拍、言语拉扯与微小肢体接触的细腻质感，题材自适应古风、西幻、现代校园等，服务于角色的魅力与双方的化学反应。",
+      wkw: "【文风：王家卫式暧昧】碎片化独白，大量留白和抽帧感，雨水、车窗与烟蒂的倒影，时间点与保质期的意象，充满欲说还休的暧昧与遗憾暗潮。",
+      koreeda: "【文风：是枝裕和式日常】细腻平静的白描，像纪录片一样安静温和，深沉饱满的情绪全藏在三餐、洗漱、窗台落叶与日常对话的细碎细节里。",
+      borges: "【文风：博尔赫斯式哲学】带着迷宫感、镜像隐喻与宿命感，叙述者宛如在回忆一件还没有发生的未来之事，时空交叠，虚实莫辨。",
+      miyazaki: "【文风：童话/宫崎骏式】温柔明亮、纯粹干净的语调，清风拂过草浪，阳光洒满屋檐，像一场永不落幕且治愈人心的温暖美梦。",
+      cyber: "【文风：冷峻赛博/极简】短句，客观冷峻的零度叙事，宛如冰冷精密的记录仪在输出数据流，但字缝深处偶尔泄露一丝炙热的体温与心动。",
+      desire: "【文风：暧昧拉扯/高阶情欲】极致的情感与生理张力，精雕细琢潮湿发烫的气息、侵略性的视线聚焦、皮肤相贴的战栗温度与微小吞咽声。善用高级隐喻与克制而危险的拉扯，在理性坍塌与本能渴望的边缘游走，将心跳与荷尔蒙推向极致。"
+    };
+
+    const themeInspirations = {
+      past: [
+        {
+          tag: "🌧️ 初遇回溯",
+          text: "【世界背景与情境】：初相遇的那段青涩时光。\n【设定框架】：两人初识不久、彼此小心翼翼试探与克制心绪的旧日交集。请保持两人的原本性格人设，演绎一段在细微处暗潮汹涌的往事长镜头。"
+        },
+        {
+          tag: "🧸 不为人知的过往",
+          text: "【世界背景与情境】：一方独自经历的旧日岁月（如童年时光、未曾对人言说的孤独或成长经历）。\n【设定框架】：大银幕放映出另一方此前完全未曾知晓的真实过往，让座席上的角色以第一视角初次见证。"
+        },
+        {
+          tag: "🍜 琐碎日常旧忆",
+          text: "【世界背景与情境】：两人曾经共同度过的一个极具烟火气与生活感的平凡时刻。\n【设定框架】：以极其生活化的细腻笔触，展现两人在旧居、餐桌或漫步时的真实互动与未曾说出口的在乎。"
+        },
+        {
+          tag: "💌 未曾言明的心绪",
+          text: "【世界背景与情境】：过去某次看似平常但心绪翻涌的特殊节点。\n【设定框架】：大银幕以旁观长镜头还原当时彼此藏在平静表象下的真实心绪与情绪暗流。"
+        }
+      ],
+      fanfic: [
+        {
+          tag: "🎃 万圣妖怪镇",
+          text: "【世界背景与框架】：万圣节奇幻夜/妖怪城镇AU。\n【设定框架】：以不给糖就捣蛋的奇幻热闹小镇为舞台。一人身处妖怪/异族世界，另一人与之产生交集。无需设定固定的刻板属性，请完全保留两人原本的人设性格与互动模式，演绎一段在怪诞欢脱、烟花与南瓜灯光影下的趣事。"
+        },
+        {
+          tag: "🏰 反转童话篇",
+          text: "【世界背景与框架】：童话寓言AU（如森林、城堡、魔法与旅人）。\n【设定框架】：打破教条宿命的轻松童话情境框架。请完全遵循两人原本的性格、处事风格与相处口吻，在充满奇妙幻想的童话舞台上自然碰撞出属于他们自己的趣味故事。"
+        },
+        {
+          tag: "👻 老宅幽魂同居",
+          text: "【世界背景与框架】：老宅人鬼同居AU。\n【设定框架】：一方住进了空置许久的老宅，另一方是驻留在此但毫无怨气的游魂。抛弃阴郁沉重，以两人原本的人设性格为准，演绎同处一个屋檐下啼笑皆非、慢慢习惯彼此存在的真实日常。"
+        },
+        {
+          tag: "🔍 事务所探案",
+          text: "【世界背景与框架】：侦探事务所/探案搭档AU。\n【设定框架】：以调查城中奇特委托与悬疑事件为情境背景。两人作为并肩探案的搭档，全程遵循原本的性格特质与思维逻辑，展开充满智趣交锋与默契配合的探案日常。"
+        },
+        {
+          tag: "👰 中式志怪鬼新娘",
+          text: "【世界背景与框架】：中式民俗志怪与红烛喜轿AU。\n【设定框架】：红烛高照、唢呐声声的古老中式神秘情境。结合两人的原本人设性格与关系羁绊，在具有微恐与瑰丽交织的中式志怪背景下，展开一段宿命感与张力并存的故事。"
+        },
+        {
+          tag: "🍷 都会夜场名利",
+          text: "【世界背景与框架】：现代都市名利场AU。\n【设定框架】：浮华都会与夜色名利场的情境框架。严格保留两人的本真性格，演绎在社交试探与真实心意之间的微妙碰撞。"
+        },
+        {
+          tag: "🍰 Fork×Cake",
+          text: "【世界背景与框架】：Fork / Cake 设定世界观。\n【设定框架】：一方失去味觉唯独能被另一方的甘甜气息唤醒感官。请在保留两人原本人设性格的前提下，自然呈现生理渴望与理性自控之间的独特张力。"
+        },
+        {
+          tag: "⚔️ 潇洒快意江湖",
+          text: "【世界背景与框架】：武侠江湖与塞外纵马世界观。\n【设定框架】：长风烈马、快意恩仇的江湖情境。两人以各自原本的性格与行事作风闯荡其间，展现属于江湖儿女的肆意与痛快。"
+        },
+        {
+          tag: "🪄 魔法学院奇想",
+          text: "【世界背景与框架】：魔法学院AU。\n【设定框架】：魔法、魔杖与学院羁绊的世界观舞台。根据两人的原本性格特点自然适配与展开奇妙互动。"
+        }
+      ],
+      future: [
+        {
+          tag: "☕ 岁月远景",
+          text: "【世界背景与情境】：数十年后两人相伴已久的晚年/安稳生活图景。\n【设定框架】：大银幕展现遥远未来的静谧岁月，两人已沉淀下深厚默契。座席上未曾经历这一切的角色面对这份遥远宁静的归宿，感受真实的动容与震撼。"
+        },
+        {
+          tag: "💍 誓约节点",
+          text: "【世界背景与情境】：未来两人关系发生质变、迈入终身誓约的关键节点。\n【设定框架】：大银幕演绎未来某天两人坦露心迹或确认相守的场景。座席上不知情的角色直面未发生的情感跃迁，产生心跳失序与真实触动。"
+        },
+        {
+          tag: "🚀 深空远征",
+          text: "【世界背景与情境】：星际科幻纪元，飞向宇宙深空的远航背景。\n【设定框架】：在无垠星海与深空飞船中并肩共渡漫长光年，展现超越时间的坚定誓约与依存感。"
+        },
+        {
+          tag: "🏡 晨昏同居",
+          text: "【世界背景与情境】：数年后两人共同生活的一段寻常清晨或黄昏切片。\n【设定框架】：以纯粹的日常镜头呈现两人未来的同居烟火气，习惯彼此存在的生活细节。"
+        }
+      ]
+    };
+
+    // DOM 元素引用
+    const dom = {
+      themePickerOptions: document.querySelectorAll('.theme-card-option'),
+      styleOptions: document.querySelectorAll('.style-option-card'),
+      wordCountChips: document.querySelectorAll('.word-count-chip'),
+      modeChips: document.querySelectorAll('.mode-chip'),
+      navBtns: document.querySelectorAll('.nav-tab-btn'),
+      viewPanels: document.querySelectorAll('.view-panel'),
+      btnStartGenerate: document.getElementById('btnStartGenerate'),
+      promptInput: document.getElementById('promptInput'),
+      quickTagsScroll: document.getElementById('quickTagsScroll'),
+      
+      charSelectTrigger: document.getElementById('charSelectTrigger'),
+      charSelectModal: document.getElementById('charSelectModal'),
+      closeCharModal: document.getElementById('closeCharModal'),
+      charListScroll: document.getElementById('charListScroll'),
+      topbarCharAvatar: document.getElementById('topbarCharAvatar'),
+      topbarCharName: document.getElementById('topbarCharName'),
+      
+      cinemaTheaterContainer: document.getElementById('cinemaTheaterContainer'),
+      screenFrame: document.getElementById('cinemaScreenFrame'),
+      theaterResizerBar: document.getElementById('theaterResizerBar'),
+      vipAudienceBox: document.getElementById('vipAudienceBox'),
+      screenThemeTag: document.getElementById('screenThemeTag'),
+      screenSegmentProgress: document.getElementById('screenSegmentProgress'),
+      screenFilmTitle: document.getElementById('screenFilmTitle'),
+      screenScrollArea: document.getElementById('screenScrollArea'),
+      screenEmptyPrompt: document.getElementById('screenEmptyPrompt'),
+      screenGeneratingBox: document.getElementById('screenGeneratingBox'),
+      generatingStatusText: document.getElementById('generatingStatusText'),
+      screenTypedContent: document.getElementById('screenTypedContent'),
+      screenTapHint: document.getElementById('screenTapHint'),
+      screenTapHintText: document.getElementById('screenTapHintText'),
+      
+      audienceAvatarSeatWrapper: document.getElementById('audienceAvatarSeatWrapper'),
+      audienceCharAvatar: document.getElementById('audienceCharAvatar'),
+      audienceCharName: document.getElementById('audienceCharName'),
+      audienceEmotionTag: document.getElementById('audienceEmotionTag'),
+      audienceReactionText: document.getElementById('audienceReactionText'),
+
+      mindModal: document.getElementById('mindModal'),
+      mindAvatar: document.getElementById('mindAvatar'),
+      mindCharName: document.getElementById('mindCharName'),
+      mindStatusIcon: document.getElementById('mindStatusIcon'),
+      mindStatusVal: document.getElementById('mindStatusVal'),
+      mindMonologueText: document.getElementById('mindMonologueText'),
+      btnCloseMind: document.getElementById('btnCloseMind'),
+
+      aftertalkModal: document.getElementById('aftertalkModal'),
+      aftertalkAvatar: document.getElementById('aftertalkAvatar'),
+      aftertalkCharName: document.getElementById('aftertalkCharName'),
+      aftertalkContent: document.getElementById('aftertalkContent'),
+      btnCloseAftertalk: document.getElementById('btnCloseAftertalk'),
+
+      archiveFolderScroll: document.getElementById('archiveFolderScroll'),
+      archiveListContainer: document.getElementById('archiveListContainer'),
+      archiveCountText: document.getElementById('archiveCountText'),
+
+      cinemaErrorBanner: document.getElementById('cinemaErrorBanner'),
+      errorBannerText: document.getElementById('errorBannerText'),
+      btnCloseErrorBanner: document.getElementById('btnCloseErrorBanner')
+    };
+
+    // ==========================================
+    // 银幕与座席拖拽手柄
+    // ==========================================
+    let isDraggingResizer = false;
+
+    function initResizer() {
+      const container = dom.cinemaTheaterContainer;
+      const bar = dom.theaterResizerBar;
+
+      function onStart(e) {
+        isDraggingResizer = true;
+        document.body.style.cursor = 'row-resize';
+      }
+
+      function onMove(e) {
+        if (!isDraggingResizer) return;
+        const rect = container.getBoundingClientRect();
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const offsetY = clientY - rect.top;
+        const totalHeight = rect.height;
+        
+        let ratio = (offsetY / totalHeight) * 100;
+        ratio = Math.max(38, Math.min(84, ratio));
+        
+        document.documentElement.style.setProperty('--screen-flex-ratio', ratio);
+      }
+
+      function onEnd() {
+        if (isDraggingResizer) {
+          isDraggingResizer = false;
+          document.body.style.cursor = '';
+        }
+      }
+
+      bar.addEventListener('mousedown', onStart);
+      bar.addEventListener('touchstart', onStart, { passive: true });
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('touchmove', onMove, { passive: true });
+      window.addEventListener('mouseup', onEnd);
+      window.addEventListener('touchend', onEnd);
+    }
+
+    // ==========================================
+    // 打字机机械敲击音效
+    // ==========================================
+    function playTypewriterTick() {
+      try {
+        if (!state.audioCtx) {
+          state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (state.audioCtx.state === 'suspended') {
+          state.audioCtx.resume();
+        }
+        const osc = state.audioCtx.createOscillator();
+        const gain = state.audioCtx.createGain();
+        
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(680 + Math.random() * 320, state.audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(90, state.audioCtx.currentTime + 0.03);
+        
+        gain.gain.setValueAtTime(0.014, state.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, state.audioCtx.currentTime + 0.03);
+        
+        osc.connect(gain);
+        gain.connect(state.audioCtx.destination);
+        
+        osc.start();
+        osc.stop(state.audioCtx.currentTime + 0.035);
+      } catch (e) {}
+    }
+
+    // ==========================================
+    // 导航与模式
+    // ==========================================
+    function switchView(targetViewId) {
+      dom.navBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.target === targetViewId);
+      });
+      dom.viewPanels.forEach(panel => {
+        panel.classList.toggle('active', panel.id === targetViewId);
+      });
+      if (targetViewId === 'viewArchive') {
+        loadArchives();
+      }
+    }
+
+    dom.navBtns.forEach(btn => {
+      btn.addEventListener('click', () => switchView(btn.dataset.target));
+    });
+
+    function renderQuickInspirations(theme) {
+      if (!dom.quickTagsScroll) return;
+      const list = themeInspirations[theme] || themeInspirations.past;
+      dom.quickTagsScroll.innerHTML = '';
+      
+      list.forEach(item => {
+        const chip = document.createElement('div');
+        chip.className = 'quick-tag-chip';
+        chip.textContent = item.tag;
+        chip.onclick = () => {
+          dom.promptInput.value = item.text;
+          if (window.AiPhone?.ui) {
+            AiPhone.ui.toast(`已填入灵感：${item.tag}`);
+          }
+        };
+        dom.quickTagsScroll.appendChild(chip);
+      });
+    }
+
+    function setTheme(theme) {
+      state.selectedThemeType = theme;
+      document.body.setAttribute('data-theme', theme);
+      dom.themePickerOptions.forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.type === theme);
+      });
+      renderQuickInspirations(theme);
+    }
+
+    dom.themePickerOptions.forEach(opt => {
+      opt.addEventListener('click', () => setTheme(opt.dataset.type));
+    });
+
+    dom.styleOptions.forEach(card => {
+      card.addEventListener('click', () => {
+        dom.styleOptions.forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        state.selectedStyle = card.dataset.style;
+      });
+    });
+
+    dom.wordCountChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        dom.wordCountChips.forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        state.targetWordCount = chip.dataset.wc;
+      });
+    });
+
+    dom.modeChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        dom.modeChips.forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        state.watchMode = chip.dataset.mode;
+      });
+    });
+
+    // ==========================================
+    // 初始化
+    // ==========================================
+    async function initApp() {
+      try {
+        initResizer();
+        renderQuickInspirations(state.selectedThemeType);
+
+        if (!window.AiPhone) {
+          setupFallback();
+          return;
+        }
+
+        const [context, charList] = await Promise.all([
+          AiPhone.app.getLaunchContext().catch(() => null),
+          AiPhone.characters.list().catch(() => [])
+        ]);
+
+        state.characters = charList || [];
+
+        if (context?.characterId) {
+          state.selectedCharId = context.characterId;
+        } else if (state.characters.length > 0) {
+          state.selectedCharId = state.characters[0].id;
+        }
+
+        if (state.selectedCharId) {
+          await updateSelectedCharacter(state.selectedCharId);
+        }
+
+        await loadArchives();
+
+      } catch (err) {
+        console.error("初始化失败", err);
+      }
+    }
+
+    function setupFallback() {
+      state.characters = [
+        { id: "mock_1", name: "星见", avatar: "", persona: "温柔体贴、偶尔有些害羞吐槽的观测员" }
+      ];
+      state.selectedCharId = "mock_1";
+      updateSelectedCharacter("mock_1");
+    }
+
+    async function updateSelectedCharacter(charId) {
+      state.selectedCharId = charId;
+      if (window.AiPhone) {
+        try {
+          const [char, prof, persona] = await Promise.all([
+            AiPhone.characters.get(charId).catch(() => null),
+            AiPhone.user.getProfile({ characterId: charId }).catch(() => ({ name: "你" })),
+            AiPhone.user.getPersona({ characterId: charId }).catch(() => ({ text: "" }))
+          ]);
+          state.selectedChar = char || state.characters.find(c => c.id === charId);
+          state.userProfile = prof;
+          state.userPersona = persona;
+        } catch (e) {
+          state.selectedChar = state.characters.find(c => c.id === charId);
+        }
+      } else {
+        state.selectedChar = state.characters.find(c => c.id === charId);
+        state.userProfile = { name: "你" };
+      }
+
+      const name = state.selectedChar?.name || "伴影角色";
+      const avatar = state.selectedChar?.avatar || "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='8' r='4' fill='%23dfb267'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6' fill='%23dfb267'/></svg>";
+
+      dom.topbarCharName.textContent = name;
+      dom.topbarCharAvatar.src = avatar;
+      dom.audienceCharName.textContent = name;
+      dom.audienceCharAvatar.src = avatar;
+      dom.audienceReactionText.textContent = `「...大银幕准备就绪，放映马上开始。」`;
+    }
+
+    dom.charSelectTrigger.addEventListener('click', () => {
+      renderCharModalList();
+      dom.charSelectModal.classList.add('show');
+    });
+    dom.closeCharModal.addEventListener('click', () => {
+      dom.charSelectModal.classList.remove('show');
+    });
+
+    function renderCharModalList() {
+      dom.charListScroll.innerHTML = '';
+      if (!state.characters.length) {
+        dom.charListScroll.innerHTML = '<div style="color:var(--text-muted); padding:10px; text-align:center;">暂无可选角色</div>';
+        return;
+      }
+      state.characters.forEach(char => {
+        const item = document.createElement('div');
+        item.className = `char-item-btn ${char.id === state.selectedCharId ? 'selected' : ''}`;
+        item.innerHTML = `
+          <img src="${char.avatar || dom.topbarCharAvatar.src}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--gold-main);">
+          <span style="font-weight:600;">${escapeHtml(char.name)}</span>
+        `;
+        item.onclick = async () => {
+          await updateSelectedCharacter(char.id);
+          dom.charSelectModal.classList.remove('show');
+          if (window.AiPhone?.ui) AiPhone.ui.toast(`已切换伴影角色: ${char.name}`);
+        };
+        dom.charListScroll.appendChild(item);
+      });
+    }
+
+    // ==========================================
+    // 核心生成
+    // ==========================================
+    dom.btnStartGenerate.addEventListener('click', async () => {
+      const summaryText = dom.promptInput.value.trim();
+      if (!summaryText) {
+        if (window.AiPhone?.ui) AiPhone.ui.toast("请输入观影梗概或剧情细节哦");
+        else alert("请输入梗概与剧情");
+        return;
+      }
+      if (!state.selectedCharId) {
+        if (window.AiPhone?.ui) AiPhone.ui.toast("请先选择陪伴观影的角色");
+        return;
+      }
+
+      setTheme(state.selectedThemeType);
+      switchView('viewScreen');
+
+      state.isGenerating = true;
+      dom.screenEmptyPrompt.style.display = 'none';
+      dom.screenTypedContent.style.display = 'none';
+      dom.screenTapHint.style.display = 'none';
+      dom.screenGeneratingBox.style.display = 'flex';
+      
+      const themeLabelMap = { past: "PAST REEL · 过去旧忆", fanfic: "FANFIC REEL · 同人奇想", future: "FUTURE REEL · 未来遥瞻" };
+      dom.screenThemeTag.textContent = themeLabelMap[state.selectedThemeType];
+      dom.screenFilmTitle.textContent = `《放映机显影中...》`;
+      dom.screenSegmentProgress.textContent = `胶片准备中`;
+      
+      const charName = state.selectedChar?.name || "伴影角色";
+      const userName = state.userProfile?.name || "你";
+
+      if (state.watchMode === 'solo') {
+        dom.audienceReactionText.textContent = `「（独自在VIP席坐下，静静等待银幕亮起）...不知道大银幕会怎样演绎属于我们的故事。」`;
+        dom.audienceEmotionTag.textContent = "独自静候";
+      } else {
+        dom.audienceReactionText.textContent = `「（在${userName}身边坐近了些）放映机启动了，马上就要开演了吧？」`;
+        dom.audienceEmotionTag.textContent = "并肩期待";
+      }
+
+      dom.btnStartGenerate.disabled = true;
+
+      try {
+        let filmData = null;
+
+        if (window.AiPhone) {
+          const themeNameMap = { past: "过去·旧忆", fanfic: "同人·虚构奇想", future: "未来·岁月遥瞻" };
+          const themeTypeName = themeNameMap[state.selectedThemeType] || "时光番外";
+          
+          // 确保提取角色最完整的设定细节（人设、背景、招呼语、性格）
+          let charDetail = "";
+          if (state.selectedChar) {
+            const parts = [
+              state.selectedChar.systemPrompt,
+              state.selectedChar.persona,
+              state.selectedChar.description,
+              state.selectedChar.background,
+              state.selectedChar.greeting,
+              state.selectedChar.intro
+            ].filter(Boolean);
+            charDetail = parts.join("\n\n");
+          }
+          if (!charDetail) {
+            charDetail = `角色名为「${charName}」，性格立体且富有感情。`;
+          }
+
+          const userPersonaText = state.userPersona?.text || state.userProfile?.bio || "与角色有着深刻羁绊的用户";
+
+          let coreMemText = "";
+          let longMemText = "";
+          let chatRecentText = "";
+          let worldBookText = "";
+
+          try {
+            const [coreM, longM, worldList] = await Promise.all([
+              AiPhone.memory?.readCore ? AiPhone.memory.readCore({ characterId: state.selectedCharId }).catch(() => null) : null,
+              AiPhone.memory?.readLongTerm ? AiPhone.memory.readLongTerm({ characterId: state.selectedCharId, query: summaryText }).catch(() => null) : null,
+              AiPhone.world?.list ? AiPhone.world.list({ includeEntries: true }).catch(() => null) : null
+            ]);
+            
+            if (coreM) {
+              const items = coreM.items || coreM.memories || coreM.entries || [];
+              coreMemText = Array.isArray(items) ? items.map(m => typeof m === 'string' ? m : (m.content || m.text || '')).filter(Boolean).join('\n') : (typeof coreM === 'string' ? coreM : '');
+            }
+            if (longM) {
+              const items = longM.items || longM.memories || longM.entries || [];
+              longMemText = Array.isArray(items) ? items.map(m => typeof m === 'string' ? m : (m.content || m.text || '')).filter(Boolean).join('\n') : (typeof longM === 'string' ? longM : '');
+            }
+            if (worldList?.books && Array.isArray(worldList.books)) {
+              worldBookText = worldList.books.slice(0, 3).map(b => {
+                const ents = (b.entries || []).slice(0, 5).map(e => `[${e.key || '设定'}]: ${e.content || ''}`).join('; ');
+                return `《${b.name}》: ${b.description || ''} (${ents})`;
+              }).join('\n');
+            }
+
+            if (AiPhone.chat?.readHistory) {
+              const curSession = await AiPhone.chat.getCurrentSession().catch(() => null);
+              const historyRes = await AiPhone.chat.readHistory({ sessionId: curSession?.sessionId, limit: 12 }).catch(() => null);
+              const msgs = historyRes?.messages || (Array.isArray(historyRes) ? historyRes : []);
+              if (msgs.length > 0) {
+                chatRecentText = msgs.slice(-8).map(m => `${m.role === 'user' ? userName : charName}: ${m.content || ''}`).join('\n');
+              }
+            }
+          } catch (fetchContextErr) {
+            console.warn("读取记忆降级", fetchContextErr);
+          }
+
+          const styleInstruction = stylePromptMap[state.selectedStyle] || stylePromptMap.fanfic;
+
+          const soloContext = state.watchMode === 'solo' 
+            ? `【本场模式：角色独自观看 · 核心世界观认知】
+- 放映厅是一个完全独立的次元/空间。现实中的${userName}完全不知道${charName}经历了什么、看了什么，大银幕上的一切对${userName}而言是不存在的秘密。
+- 整场放映宛如一场只有${charName}一人知晓的大梦与奇遇。
+- 【散场小叙要求】：散场走出放映厅的那一瞬间，${charName}如同梦醒一般回到了原世界的现实之中，并在不知情的${userName}身边现身/找到${userName}。${charName}带着只有自己知晓的隐秘触动、心疼、依恋或复杂心绪与毫无察觉的${userName}展开极具生活感的小对话（可有微小的试探、注视、投喂或欲言又止的温柔），呈现出“唯我独知这场梦境”的独特余韵。`
+            : `【本场模式：两人并肩同看】两人在放映厅共同看完全片，散场后回到现实世界，展开心照不宣、自然温暖的对话互动。`;
+
+          const wcActMap = {
+            "2000-4000": { actCount: 4, label: "4幕", perActWords: "500-800字" },
+            "4000-6000": { actCount: 5, label: "5~6幕", perActWords: "800-1100字" },
+            "6000-8000": { actCount: 6, label: "6~7幕", perActWords: "1000-1300字" }
+          };
+          const targetConfig = wcActMap[state.targetWordCount] || { actCount: 4, label: "4幕", perActWords: "500-800字" };
+
+          const instruction = `
+【时光放映馆 · 大银幕电影与角色观影体生成总纲】
+【重要定位】：你不是在和用户直接聊天，你是「时光放映机剧场编剧」。你必须输出一部结构完整、逻辑严密、分幕清晰的宏大电影长卷，并同步捕捉角色在座席上的真实观影体反应。
+
+【角色档案（必须严格遵循此人设口吻与性格逻辑）】：
+- 角色姓名：${charName}
+- 角色核心设定与性格：
+${charDetail}
+
+【观众档案】：
+- 观众姓名：${userName}
+- 观众面具/身份：${userPersonaText}
+
+【流派与主线】：
+- 时光流向：${themeTypeName}
+- 篇幅字数要求：总篇幅【${state.targetWordCount}字】，必须完整展开【${targetConfig.label}】（每幕大银幕画面约 ${targetConfig.perActWords}，严禁一笔带过或戛然而止）。
+${styleInstruction}
+
+【剧场主线梗概与灵感（大银幕必须完全以此为核心演绎展开有头有尾的完整故事）】：
+${summaryText}
+
+${coreMemText ? `【角色核心记忆】：\n${coreMemText}\n` : `【角色记忆提示】：虽然此角色尚无既定历史档案，请严格根据其性格设定（${charName}）以及用户输入的剧情灵感，构建出高度自洽、连贯且充满深厚羁绊的剧情演绎。\n`}
+${chatRecentText ? `【相处口吻参考】：\n${chatRecentText}\n` : ''}
+${worldBookText ? `【世界书背景参考】：\n${worldBookText}\n` : ''}
+
+${soloContext}
+
+【严苛创作规范】：
+1. 【剧情张力与氛围塑造（因题材而异，拒绝千篇一律的生硬巨大冲突与悲壮模式）】：
+   - 【拒绝强行制造悲壮与狗血生死冲突】：剧情完全不需要刻意安排生死决战、狗血误会或毁天灭地的宏大冲突！
+   - 【自然契合题材的气氛美学】：
+     * 若为日常/治愈/暧昧流派：重在细腻温润的相处细节、欲言又止的心绪暗涌，平淡日常中亦有深沉回响；
+     * 若为江湖武侠流派：重在江湖儿女的肆意潇洒、刀光剑影中的快意恩仇与豪迈爽朗，无需刻意悲壮；
+     * 若涉及悲伤/暗黑/特殊设定（如Fork×Cake、吸血鬼等）：允许大胆展现血腥、啃食、本能撕扯、占有与疼痛美学，放手刻画其原始真实的张力，无需扭捏回避；
+     * 无论何种题材，起承转合自然流淌，遵循用户输入的灵感与设定本身。
+2. 【纯正第三人称电影质感】：【银幕画面】必须全篇使用细腻、沉浸的第三人称长镜头描写，融合光影流转、环境质感、肢体微动作与真实饱满的角色对白，镜头感极强。
+3. 【座席观影体反应（核心硬性指标，地位等同于大银幕剧场）】：
+   - 【杜绝脸谱化·深度人设驱动（严禁将所有人写成千篇一律的害羞/震惊模版）】：
+     * 每个人对同一剧情必须有截然不同的本色反应！请深度结合【${charName}】的完整设定、性格基调（如高冷克制、傲娇别扭、阳光坦率、腹黑戏谑、沉稳内敛或病娇偏执）与记忆羁绊展开。
+     * 例如：高冷角色会压低视线、下颌微紧、用极克制微讽却掩饰动容的短语；傲娇角色会嘴硬反驳“这算什么剧本”、却用身体小动作出卖慌乱；腹黑角色会轻笑出声、侧过头侵略性注视身边人并言语调侃；温柔角色会神色动容、自然体贴递水并眼波流转；粗线条/阳光角色会大声吐槽直球发问等。
+   - 【字数硬性底线】：每一幕的【角色反应】**必须不少于 200 字**！绝不可仅写一两句短语。
+   - 【多维度立体描写（严禁仅输出神态）】：必须全面包含**丰富的角色专属口吻对白**（契合其身份人设的即兴评价、调侃、反驳、追问或低语）、**生动连贯的肢体小动作**（如抚平衣角、手背青筋微显、后仰轻笑、抵唇沉思、战栗蜷指、靠近试探等）、以及**视线与呼吸节拍**。
+   - 观影体必须像生动的沉浸式舞台剧，真实反映【${charName}】独特的个性色彩与灵魂反应。
+4. 【头像弹窗·角色隐秘心声（深度个性化与口语内心戏）】：
+   - 【字数严格约束】：每一幕的【角色心声】**严格在 80 字 ~ 150 字之间**。
+   - 【拒绝千人一面·本色内心独白】：必须高度口语化，并完全符合【${charName}】本人的思维方式与心境反差。高冷者在内心克制隐忍与自我警惕；腹黑者在内心盘算与愉悦玩味；傲娇者在内心疯狂抓狂与自乱阵脚；深情者在内心深沉眷恋与患得患失。真实展现只有该角色才会出现的秘密独白。
+5. 【篇幅充实】：杜绝任何简略缩写的草稿！大银幕长镜头、座席观影体及隐秘心声均必须篇幅充实、细节饱满。
+
+【情绪动效每一幕必须严格轮换（严禁全篇重复同一种）】：
+- 可选情绪标识：love（心动怦怦跳/粉光）、shake（极度慌乱剧颤/赤红）、shock（瞳孔巨震/电光蓝）、sweat（局促流汗/水蓝）、shy（害羞面红轻颤/暖粉）、glow（眼神动容泛光/亮金）、startle（猝不及防猛震/深粉）、tilt（歪头探究）、calm（沉静凝视）。
+- 每一幕的 [角色反应:emotion] 必须根据剧情起伏切换为**完全不同**的情绪动效（例如第1幕 tilt/shy，第2幕 shake/shock，第3幕 sweat/tilt，第4幕 love/glow 等），保证每一幕观影体动作与心境截然不同、层层递进！
+
+请严格使用以下统一标记输出（必须写完所有幕次，不可简写，每幕角色反应不得少于200字，角色心声80~150字口语化内心戏）：
+
+[标题: 电影片名]
+
+[第1幕: 幕名]
+[银幕画面]
+（第三人称长镜头电影场景铺陈与对白，字数充实）
+[角色反应:emotion]
+（${charName}在座席上的第一段观影反应，字数必须不少于200字！必须包含大量具体的语言对白、肢体动作、视线躲闪与微表情，严禁只有神态。emotion必须每幕不同）
+[角色状态: 心率与生理状态，如：心率 98bpm · 局促抓紧扶手 · 耳根绯红]
+[角色心声: 80~150字，口语化、情绪充沛的真实内心独白碎碎念]
+[/第1幕]
+
+[第2幕: 幕名]
+[银幕画面]
+（第三人称剧情推进与深入对白）
+[角色反应:emotion]
+（${charName}在座席上的第二段观影反应）
+[角色状态: 实时状态]
+[角色心声: 隐秘心声]
+[/第2幕]
+
+[第3幕: 幕名]
+[银幕画面]
+（第三人称剧情深入与情感转折）
+[角色反应:emotion]
+（${charName}在座席上的第三段观影反应）
+[角色状态: 实时状态]
+[角色心声: 隐秘心声]
+[/第3幕]
+
+[第4幕: 幕名]
+[银幕画面]
+（第三人称高潮推进与意境收束）
+[角色反应:emotion]
+（${charName}在座席上的第四段观影反应）
+[角色状态: 实时状态]
+[角色心声: 隐秘心声]
+[/第4幕]
+
+${targetConfig.actCount >= 5 ? `
+[第5幕: 幕名]
+[银幕画面]
+（第三人称剧情深入与高潮）
+[角色反应:emotion]
+（${charName}在座席上的第五段观影反应）
+[角色状态: 实时状态]
+[角色心声: 隐秘心声]
+[/第5幕]
+` : ''}
+
+${targetConfig.actCount >= 6 ? `
+[第6幕: 幕名]
+[银幕画面]
+（第三人称史诗终幕定格）
+[角色反应:emotion]
+（${charName}在座席上的第六段观影反应）
+[角色状态: 实时状态]
+[角色心声: 隐秘心声]
+[/第6幕]
+` : ''}
+
+[散场小叙]
+（散场回到现实世界后，${charName}与${userName}展开的落地对话与余韵小叙）
+[/散场小叙]
+`;
+
+          let resultText = "";
+          
+          // 使用统一的系统提示词与用户指令，防止模型在新角色下退化为简略闲聊
+          const systemCinemaPrompt = `你是「时光放映馆」的专业电影编剧。你的职责是根据用户提供的主题梗概、指定角色的核心人设与指定文风，创作出气势恢宏、逻辑严密、分幕完整的长篇电影剧本与角色座席观影体。请全程严格按照标记格式输出，不简写，不跳幕，不打破第三人称长镜头描写。`;
+
+          try {
+            if (AiPhone.ai?.chat) {
+              const chatRes = await AiPhone.ai.chat({
+                messages: [
+                  { role: "system", content: systemCinemaPrompt },
+                  { role: "user", content: instruction }
+                ]
+              });
+              resultText = chatRes?.text || "";
+            }
+            if (!resultText && AiPhone.ai?.generate) {
+              const result = await AiPhone.ai.generate({
+                characterId: state.selectedCharId,
+                appTags: ["cinema", "timeline"],
+                instruction: `${systemCinemaPrompt}\n\n${instruction}`
+              });
+              resultText = result?.text || "";
+            }
+          } catch (generateErr) {
+            console.warn("AI 生成通道异常，尝试备用通道", generateErr);
+            if (AiPhone.ai?.generate) {
+              const genFallback = await AiPhone.ai.generate({
+                instruction: `${systemCinemaPrompt}\n\n${instruction}`
+              }).catch(() => null);
+              resultText = genFallback?.text || "";
+            }
+          }
+
+          if (!resultText || resultText.trim().length < 200) {
+            throw new Error("AI模型输出内容过短或格式异常");
+          }
+
+          filmData = parseMarkedFilmOutput(resultText, summaryText, state.selectedThemeType, state.watchMode, state.selectedStyle, charName, userName);
+        } else {
+          await new Promise(r => setTimeout(r, 1200));
+          filmData = generateDynamicMockFilm(summaryText, state.selectedThemeType, state.watchMode, state.selectedStyle, charName, userName);
+        }
+
+        await saveFilmToArchive(filmData);
+
+        dom.screenGeneratingBox.style.display = 'none';
+        state.isGenerating = false;
+        startPlayFilm(filmData);
+
+      } catch (err) {
+        console.error("生成失败", err);
+        dom.screenGeneratingBox.style.display = 'none';
+        state.isGenerating = false;
+
+        const errorMsg = err?.message || err?.toString() || "AI模型响应超时或网络异常中断";
+        showErrorBanner(`上一轮生成异常（${errorMsg}）。已为您根据当前角色与主题智能编织专属胶卷。`);
+
+        const fallbackFilm = generateDynamicMockFilm(summaryText, state.selectedThemeType, state.watchMode, state.selectedStyle, charName, userName);
+        startPlayFilm(fallbackFilm);
+      } finally {
+        dom.btnStartGenerate.disabled = false;
+      }
+    });
+
+    // ==========================================
+    // 鲁棒标记解析器 (多重正则与容错，绝不丢失任何一幕)
+    // ==========================================
+    function parseMarkedFilmOutput(rawText, userPrompt, fallbackTheme, watchMode, styleKey) {
+      let text = (rawText || "").trim();
+      text = text.replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '').trim();
+
+      let title = "";
+      const titleMatch = text.match(/\[标题[:：]\s*([^\]]+)\]/i);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
+      } else {
+        title = userPrompt.split('\n')[0].replace(/^梗概[:：]\s*/, '').slice(0, 16) || "时光投影录";
+      }
+
+      let aftertalk = "";
+      const aftertalkMatch = text.match(/\[散场小叙\]([\s\S]*?)(\[\/散场小叙\]|$)/i);
+      if (aftertalkMatch) {
+        aftertalk = cleanCleanTags(aftertalkMatch[1]);
+      }
+
+      const segments = [];
+      // 匹配 [第X幕...] 到 下一个 [第Y幕...] 或 [散场小叙] 或 [/第X幕] 或 结束
+      const segmentRegex = /\[第\s*(\d+|[一二三四五六七八九十]+)\s*幕(?:[:：]\s*([^\]]*))?\]([\s\S]*?)(?=(\[\/第\s*(?:\d+|[一二三四五六七八九十]+)\s*幕\]|\[第\s*(?:\d+|[一二三四五六七八九十]+)\s*幕|\[散场小叙\]|$))/gi;
+      let match;
+
+      while ((match = segmentRegex.exec(text)) !== null) {
+        const actName = match[2] ? match[2].trim() : `第${match[1]}幕`;
+        const segBody = match[3];
+
+        let screenText = "";
+        const screenMatch = segBody.match(/\[银幕画面\]([\s\S]*?)(?=(\[角色反应|\[角色状态|\[角色心声|\[\/第|$))/i);
+        if (screenMatch) {
+          screenText = screenMatch[1].trim();
+        }
+
+        let reactionText = "";
+        let emotion = "";
+        const reactionMatch = segBody.match(/\[角色反应(?::\s*([a-zA-Z]+))?\]([\s\S]*?)(?=(\[角色状态|\[角色心声|\[\/第|$))/i);
+        if (reactionMatch) {
+          emotion = reactionMatch[1] ? reactionMatch[1].trim().toLowerCase() : "";
+          reactionText = reactionMatch[2].trim();
+        }
+
+        let statusText = "";
+        const statusMatch = segBody.match(/\[角色状态[:：]\s*([^\]]+)\]/i);
+        if (statusMatch) {
+          statusText = statusMatch[1].trim();
+        }
+
+        let monologueText = "";
+        const monologueMatch = segBody.match(/\[角色心声[:：]\s*([\s\S]*?)(?=(\[\/第|$))/i);
+        if (monologueMatch) {
+          monologueText = monologueMatch[1].trim();
+        }
+
+        if (!screenText && segBody) {
+          screenText = segBody.replace(/\[\/?(角色反应[^\]]*|角色状态[^\]]*|角色心声[^\]]*)\]/gi, '').trim();
+        }
+        if (!reactionText) {
+          reactionText = "「...大银幕里的光影流转，让人不由自主沉浸其中。」";
+        }
+        if (!statusText) {
+          statusText = "心率微升 · 专注凝视银幕 · 情绪起伏";
+        }
+        if (!monologueText) {
+          monologueText = "「（银幕上的每一个镜头都历历在目...心跳完全不受控制了。）」";
+        }
+
+        if (screenText.length > 0) {
+          segments.push({
+            actName: actName,
+            screenText: cleanCleanTags(screenText),
+            reactionText: cleanCleanTags(reactionText),
+            emotion: validateEmotion(emotion),
+            statusText: cleanCleanTags(statusText),
+            monologueText: cleanCleanTags(monologueText)
+          });
+        }
+      }
+
+      // 如果完全没匹配出幕次，做段落智能降级切分
+      if (segments.length === 0) {
+        const cleanAll = text.replace(/\[\/?(标题|散场小叙)[^\]]*\]/gi, '').trim();
+        const paras = cleanAll.split(/\n\s*\n/).filter(p => p.trim().length > 30);
+        if (paras.length > 0) {
+          paras.slice(0, 4).forEach((para, idx) => {
+            segments.push({
+              actName: `第${idx + 1}幕`,
+              screenText: cleanCleanTags(para),
+              reactionText: idx === 0 ? "「...居然真的放映出来了，喂，别一直盯着我看啊。」" : "「...大银幕里的镜头发展，让人有些移不开视线。」",
+              emotion: idx === 0 ? "shy" : "glow",
+              statusText: "心率 96bpm · 专注凝视",
+              monologueText: "「（看着银幕里呈现的一切，心跳有点快。）"
+            });
+          });
+        }
+      }
+
+      if (!aftertalk) {
+        aftertalk = generateDefaultAftertalk(userPrompt, state.selectedChar?.name, state.userProfile?.name);
+      }
+
+      return {
+        id: 'film_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        title: title || "时光投影录",
+        themeType: fallbackTheme,
+        styleKey: styleKey || "fanfic",
+        watchMode: watchMode || "together",
+        userPrompt: userPrompt,
+        charId: state.selectedCharId,
+        charName: state.selectedChar?.name || "伴影角色",
+        segments: segments,
+        aftertalk: aftertalk,
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function cleanCleanTags(str) {
+      if (!str) return "";
+      return str
+        .replace(/\[\/?(第\d+幕[^\]]*|银幕画面|角色反应[^\]]*|角色状态[^\]]*|角色心声[^\]]*|散场小叙|标题[^\]]*)\]/gi, '')
+        .trim();
+    }
+
+    function validateEmotion(emo) {
+      const valid = ['tilt', 'shake', 'shock', 'love', 'sweat', 'glow', 'shy', 'startle', 'calm'];
+      return valid.includes(emo) ? emo : 'tilt';
+    }
+
+    function generateDefaultAftertalk(prompt, charName, userName) {
+      const cName = charName || "TA";
+      const uName = userName || "你";
+      const theme = state.selectedThemeType || "fanfic";
+      const isSolo = state.watchMode === 'solo';
+
+      if (!isSolo) {
+        if (theme === 'fanfic') {
+          return `放映厅的散场灯光柔和亮起，两人并肩走出长廊。\n\n${cName}转过头看着身边的${uName}，嘴角带着一抹心照不宣的笑意：「...刚才大银幕上演的那些平行世界画面，你全程都在看吧？不过说真的，如果真有那个世界……好像也还挺有趣的。走吧，电影看完了，该由我们自己继续了～」`;
+        } else if (theme === 'future') {
+          return `两人并肩走出放映厅，走廊里的暗金灯光将彼此的身影拉长交叠。\n\n刚才银幕上属于未来的画面让空气中多了一层微热的默契。${cName}转头注视着${uName}，语气轻柔而笃定：「...未来居然会被那样放映出来。不过如果未来的剧本真的是那样写的……我倒是一点都不介意。走吧，我们慢慢走过去。」`;
+        } else {
+          return `大银幕的光影渐渐暗下，两人一同走在散场的红毯走廊上。\n\n重温完刚才那些细腻深刻的往事，${cName}神色变得格外柔和：「...在银幕上看着从前的那些细节，才发现原来我们一起走过了这么长一段路啊。走吧，以后的每一幕我都陪着你。」`;
+        }
+      }
+
+      // 角色独自观影：放映厅为完全独立次元，角色梦醒回归现实，用户全然不知
+      if (theme === 'fanfic') {
+        return `大银幕的光影缓缓熄灭，放映厅厚重的绒布大门在身后无声阖上。一阵恍惚的眩晕感过后，四周的剧院景象如潮水般褪去——${cName}宛如从一场漫长而逼真的大梦中醒来，重新落回了原来的现实世界。\n\n不远处，${uName}正低头翻着手里的东西，对刚刚发生的一切毫无所知。${cName}放轻脚步走过去，在${uName}身旁安静坐下，眼底还残留着未散尽的隐秘波澜，语气看似随意却透着异样的专注：\n「...喂，如果我说，我刚才好像做了一个很长很荒诞的梦，在那个梦里……我们是完全不同的另一种身份。你会信吗？（停顿了片刻，轻轻摇了摇头笑笑）算了……没什么。只是突然觉得，现在的你，比梦里任何一个瞬间都要真实得多。」`;
+      } else if (theme === 'future') {
+        return `银幕上的光影定格在遥远岁月的最后一帧，放映厅的独立时空骤然消散。伴随着宛如梦醒般的真实心跳，${cName}回到了现实的原点。\n\n眼前的${uName}正随手倒着水，对那场跨越数十年的未来光影一无所知。${cName}走上前去，目光在${uName}脸上停留了很久，眼神深邃而温热：\n「...怎么这么看着你？没什么，只是刚才像恍惚走神了很久一样，突然很想看看你。（伸手接过水杯，指尖微微收拢）走吧，以后的每一天……慢慢走给我看。」`;
+      } else {
+        return `放映厅的暗金灯光彻底隐没，跨越独立次元的剧场大门关上的那一刹那，${cName}眼底带着尚未褪尽的触动，回到了属于你们的现实。\n\n屋内的${uName}正坐在窗边发呆，丝毫不知道${cName}刚刚经历了一场重温旧忆的震撼长梦。${cName}拉开椅子坐在身旁，伸手递过一杯温热的饮品，眼神格外柔软：\n「在发什么呆呢？没什么，只是刚刚突然想起来一些事情……不用多说什么，只要你需要，我一直都在这里。」`;
+      }
+    }
+
+    function parseMarkedFilmOutput(rawText, userPrompt, fallbackTheme, watchMode, styleKey, passedCharName, passedUserName) {
+      let text = (rawText || "").trim();
+      text = text.replace(/^```[a-z]*\s*/i, '').replace(/```\s*$/, '').trim();
+
+      const cName = passedCharName || state.selectedChar?.name || "伴影角色";
+      const uName = passedUserName || state.userProfile?.name || "你";
+
+      let title = "";
+      const titleMatch = text.match(/\[标题[:：]\s*([^\]]+)\]/i);
+      if (titleMatch) {
+        title = titleMatch[1].trim();
+      } else {
+        const cleanP = userPrompt.split('\n')[0].replace(/^【[^】]+】/, '').replace(/^梗概[:：]\s*/, '').trim();
+        title = cleanP.slice(0, 16) || "时光投影录";
+      }
+
+      let aftertalk = "";
+      const aftertalkMatch = text.match(/\[散场小叙\]([\s\S]*?)(\[\/散场小叙\]|$)/i);
+      if (aftertalkMatch) {
+        aftertalk = cleanCleanTags(aftertalkMatch[1]);
+      }
+
+      const segments = [];
+      const segmentRegex = /\[第\s*(\d+|[一二三四五六七八九十]+)\s*幕(?:[:：]\s*([^\]]*))?\]([\s\S]*?)(?=(\[\/第\s*(?:\d+|[一二三四五六七八九十]+)\s*幕\]|\[第\s*(?:\d+|[一二三四五六七八九十]+)\s*幕|\[散场小叙\]|$))/gi;
+      let match;
+
+      while ((match = segmentRegex.exec(text)) !== null) {
+        const actName = match[2] ? match[2].trim() : `第${match[1]}幕`;
+        const segBody = match[3];
+
+        let screenText = "";
+        const screenMatch = segBody.match(/\[银幕画面\]([\s\S]*?)(?=(\[角色反应|\[角色状态|\[角色心声|\[\/第|$))/i);
+        if (screenMatch) {
+          screenText = screenMatch[1].trim();
+        }
+
+        let reactionText = "";
+        let emotion = "";
+        const reactionMatch = segBody.match(/\[角色反应(?::\s*([a-zA-Z]+))?\]([\s\S]*?)(?=(\[角色状态|\[角色心声|\[\/第|$))/i);
+        if (reactionMatch) {
+          emotion = reactionMatch[1] ? reactionMatch[1].trim().toLowerCase() : "";
+          reactionText = reactionMatch[2].trim();
+        }
+
+        let statusText = "";
+        const statusMatch = segBody.match(/\[角色状态[:：]\s*([^\]]+)\]/i);
+        if (statusMatch) {
+          statusText = statusMatch[1].trim();
+        }
+
+        let monologueText = "";
+        const monologueMatch = segBody.match(/\[角色心声[:：]\s*([\s\S]*?)(?=(\[\/第|$))/i);
+        if (monologueMatch) {
+          monologueText = monologueMatch[1].trim();
+        }
+
+        if (!screenText && segBody) {
+          screenText = segBody.replace(/\[\/?(角色反应[^\]]*|角色状态[^\]]*|角色心声[^\]]*)\]/gi, '').trim();
+        }
+        if (!reactionText) {
+          reactionText = `「（座席上的${cName}专注凝视着银幕）...镜头里的每一个细节，都在牵动着呼吸。」`;
+        }
+        if (!statusText) {
+          statusText = "心率 94bpm · 专注凝视银幕 · 情绪起伏";
+        }
+        if (!monologueText) {
+          monologueText = `「（银幕上的画面清晰而深刻...心情完全无法平静下来。）」`;
+        }
+
+        if (screenText.length > 0) {
+          segments.push({
+            actName: actName,
+            screenText: cleanCleanTags(screenText),
+            reactionText: cleanCleanTags(reactionText),
+            emotion: validateEmotion(emotion),
+            statusText: cleanCleanTags(statusText),
+            monologueText: cleanCleanTags(monologueText)
+          });
+        }
+      }
+
+      // 降级兜底切分
+      if (segments.length === 0) {
+        const cleanAll = text.replace(/\[\/?(标题|散场小叙)[^\]]*\]/gi, '').trim();
+        const paras = cleanAll.split(/\n\s*\n/).filter(p => p.trim().length > 30);
+        if (paras.length > 0) {
+          paras.slice(0, 4).forEach((para, idx) => {
+            segments.push({
+              actName: `第${idx + 1}幕`,
+              screenText: cleanCleanTags(para),
+              reactionText: idx === 0 ? `「（${cName}在座席上有些不自在地轻咳一声）...喂，别一直盯着我看啊，看大银幕。」` : `「（${cName}眼神微微闪烁）...大银幕里的镜头发展，让人有些移不开视线。」`,
+              emotion: idx === 0 ? "shy" : "glow",
+              statusText: "心率 96bpm · 专注凝视",
+              monologueText: `「（看着银幕里呈现的一切，心跳有点快。）`
+            });
+          });
+        }
+      }
+
+      if (!aftertalk) {
+        aftertalk = generateDefaultAftertalk(userPrompt, cName, uName);
+      }
+
+      return {
+        id: 'film_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        title: title || "时光投影录",
+        themeType: fallbackTheme,
+        styleKey: styleKey || "fanfic",
+        watchMode: watchMode || "together",
+        userPrompt: userPrompt,
+        charId: state.selectedCharId,
+        charName: cName,
+        segments: segments,
+        aftertalk: aftertalk,
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function generateDynamicMockFilm(prompt, themeType, watchMode, styleKey, passedCharName, passedUserName) {
+      const cName = passedCharName || state.selectedChar?.name || "伴影角色";
+      const uName = passedUserName || state.userProfile?.name || "你";
+      const pText = prompt || "一段未曾言明的光阴长卷";
+
+      const titleClean = pText.split('\n')[0].replace(/^【[^】]+】/, '').replace(/^梗概[:：]\s*/, '').trim().slice(0, 14) || "星幕映光录";
+
+      return {
+        id: 'film_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        title: `《${titleClean}》`,
+        themeType: themeType,
+        styleKey: styleKey || "fanfic",
+        watchMode: watchMode || "together",
+        userPrompt: prompt,
+        charId: state.selectedCharId,
+        charName: cName,
+        segments: [
+          {
+            actName: "第一幕 · 幕起铺陈",
+            screenText: `大银幕的暗金光束倾泻而下，柔和的电影色调将周围的空气染上一层唯美的质感。\n\n长镜头缓缓推入，映出${uName}与${cName}并肩而立的身影。周遭的环境与气息被极其细致地勾勒出来——细微的风声掀动衣角，光影在两人的眉眼间流动。${cName}微微偏过头，目光在${uName}身上短暂停留，神态中带着独属于${cName}的克制与柔和。对白在空气中轻柔回荡，每一句话都暗藏着细腻的情感张力。\n\n故事在此刻悄然拉开序幕，光影的焦距将两人的羁绊清晰定格在银幕中央。`,
+            reactionText: `「（${cName}坐在座席上猛地直起身子，双手有些手足无措地攥紧了扶手，指节因为用力而微微泛白。整个人像触电一般下意识往旁边缩了半寸，又倏地转过头，眼睛睁得圆圆地瞪着大银幕）：\n“等、等一下！这台时光放映机未免也太离谱了吧？！为什么连我当初转头偷看你的微动作、甚至连睫毛颤动的频率都给放得这么一清二楚啊？！”\n（有些慌乱地抬起手，把衣领拉高遮住发烫的下半张脸，用极低的声音嘀咕着，余光却在银幕和${uName}之间飞快游移）：\n“……喂，你可千万别转过头来看我。咳，认认真真看大银幕上的剧情发展，听到没有？真是的……这种毫无防备被当众处刑的感觉到底是怎么回事啊……”」`,
+            emotion: "shy",
+            statusText: `心率 98bpm · 耳根绯红 · 局促抓紧扶手 · 视线慌乱`,
+            monologueText: `「（救命……心脏真的跳得快要从嗓子眼蹦出来了！这台放映机到底是怎么捕捉到那些细节的啊？！当初我自以为隐藏得天衣无缝的小心思，居然在大银幕上被全方位放大展示……千万不能被身边的这家伙看出我现在的耳根到底有多烫，太丢人了，但我又忍不住一直想看下去……）」`
+          },
+          {
+            actName: "第二幕 · 视线暗涌",
+            screenText: `随着镜头推移，情节向纵深发展。特写镜头给到了两人在关键情境下的互动与抉择。\n\n大银幕上，${uName}与${cName}之间的距离被无形的情绪拉近，空气中弥漫着欲说还休的氛围。${cName}的呼吸节拍微不可察地一滞，手指在身侧微微蜷紧，随后以极其符合自身性格的方式做出了回应——无论是傲娇的掩饰、温柔的包容还是克制的守护，都在长镜头下展现得淋漓尽致。\n\n台词简练却字字敲击在心口，银幕内外的光影在这一刻产生了奇妙的共振。`,
+            reactionText: `「（整个人在座席上不自觉地前倾，呼吸在这一瞬间彻底屏住，右手下意识抓起旁边的饮品杯，吸管在嘴边碰了两下却一口也没咽下去。喉结微动，脸上的慌乱渐渐被一种极度投入的动容所取代）：\n“……这个转折……居然会这样演出来。（把水杯重新放回托架，指尖有些微颤地抵住下巴，眼神一瞬不瞬地凝视着画面中两人的拉扯）……说实话，换作是我置身在那个情境下，哪怕明知道会把心事全暴露出来，大概也真的会做出完全一样的抉择吧。”\n（悄悄把身体往${uName}的方向挪近了一点点，语气里带着一丝不易察觉的依赖与软化）：\n“……喂，如果是你的话，当时心里的想法也会和银幕里演的一模一样吗？”」`,
+            emotion: "shake",
+            statusText: `心率 114bpm · 呼吸微促 · 身体前倾靠近 · 情绪深陷`,
+            monologueText: `「（呼吸完全乱套了……刚才那一瞬间，银幕里两人的眼神交汇简直就像直接撞在了我的心口上。明明知道只是剧场演绎，可为什么那种胸口发紧、想要紧紧抓住对方的冲动会这么真实啊？这家伙现在到底在想什么呢……我也好想知道他的答案啊。）」`
+          },
+          {
+            actName: "第三幕 · 羁绊升温",
+            screenText: `银幕的影调转入深邃的黄昏与夜色。大提琴的配乐在背景中缓缓流淌，长镜头捕捉着两人并肩漫步或促膝长谈的静谧时光。\n\n微弱的灯火映照着两人的脸颊，${uName}的声音与${cName}的低语交织在一起。此时大银幕展现出两人之间超越言语的默契——无需多余的解释，只需一个抬眸、一次呼吸的同频，便已知晓彼此心底最深处的挂念与温度。\n\n长镜头慢慢拉远，将这一份珍贵的依恋定格在辽阔的天地之间。`,
+            reactionText: `「（放映厅里暗淡的光影映在${cName}脸上，原本紧绷的双肩不知不觉彻底松弛了下来。整个人靠在柔软的深红丝绒椅背上，歪着头，眼眸深处泛着极其柔和而深邃的微光。长长地舒了一口气，唇角勾起一抹满足而释怀的弧度）：\n“……呼。真奇怪，刚才明明还觉得紧张得要命，现在看着他们并肩走在夜色里的背影，整颗心反而一下子安静下来了。”\n（缓缓伸出右手，指尖试探性地在扶手上轻轻碰了碰${uName}的手背，没有收回，而是轻轻覆了上去）：\n“这种把彼此之间不用言说的默契直接具象化在大银幕上的感觉……真的很不可思议。有些话平时可能真的不好意思当面说出口，但大银幕好像替我们全讲完了。”」`,
+            emotion: "glow",
+            statusText: `心率 86bpm · 眼神极尽柔和 · 指尖相触 · 依恋泛起`,
+            monologueText: `「（指尖传过来的温度好安心啊……原来不知不觉间，我们之间已经沉淀了这么深厚、连语言都显得多余的默契。看着银幕上夜色里的长镜头，突然觉得只要能一直像现在这样靠在一起，未来发生什么好像都无所谓了。真想让时间在这一刻慢一点走。）`
+          },
+          {
+            actName: "第四幕 · 终曲定格",
+            screenText: `破晓的晨光刺破云层，将整座大银幕照得一片明澈透亮。\n\n镜头缓缓上升化为壮丽的全景，${uName}与${cName}的身影在晨曦的光晕中渐渐重合，步伐坚定而温和地迈向远方。画面逐渐淡出，银幕正中央浮现出烫金的散场字幕：“无论时空如何流转，在此刻相遇的温度永不褪色。”\n\n大银幕缓缓暗下，留下满室悠长的余韵与久久回荡的宁静。`,
+            reactionText: `「（伴随着最后一段散场旋律在大厅回荡，${cName}定定地注视着暗下的银幕，久久没有说话。过了好一会儿，才慢慢转过身来，迎上${uName}的视线。眼眶里闪烁着极浅的晶莹，眉眼弯弯，脸上绽开一个无比明媚而认真的笑容）：\n“……电影落幕了啊。（收拢握着身旁人手掌的五指，轻轻捏了捏）虽然从头到尾都在被大银幕上的‘另一个自己’疯狂调侃，但不得不承认……这是一个让人挑不出任何遗憾的结局。”\n（微微倾过身，把额头轻轻抵在${uName}的肩侧靠了片刻，声音轻柔而笃定）：\n“电影散场了，不过没关系。银幕上的剧本演完了，但现实里属于我们的下一幕，我们要一起慢慢把它过完。”」`,
+            emotion: "love",
+            statusText: `心率 74bpm · 释怀动容 · 眉眼带笑 · 深情相握`,
+            monologueText: `「（大银幕暗下来了，心里却被填得满满当当的。真好啊，能在这个世界上遇到你、和你一起并肩看完这场电影。光影会落幕，但身边的你才是真真切切的归宿。哪怕走出这个放映厅，我也想牵着你的手，一幕一幕把属于我们俩的现实好好走下去。）`
+          }
+        ],
+        aftertalk: generateDefaultAftertalk(prompt, cName, uName),
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    // ==========================================
+    // 打字机与播放
+    // ==========================================
+    function startPlayFilm(film) {
+      state.currentFilm = film;
+      state.currentSegmentIndex = 0;
+      lastPlayedEmotion = null;
+      
+      const themeLabelMap = {
+        past: "PAST REEL · 过去旧忆",
+        fanfic: "FANFIC REEL · 同人奇想",
+        future: "FUTURE REEL · 未来遥瞻"
+      };
+      
+      dom.screenThemeTag.textContent = themeLabelMap[film.themeType] || "TIME REEL · 时光长卷";
+      dom.screenFilmTitle.textContent = `《${film.title}》`;
+      dom.screenEmptyPrompt.style.display = 'none';
+      dom.screenGeneratingBox.style.display = 'none';
+      dom.screenTypedContent.style.display = 'block';
+      dom.screenTapHint.style.display = 'flex';
+
+      playSegment(0);
+    }
+
+    function playSegment(index) {
+      if (!state.currentFilm || !state.currentFilm.segments[index]) return;
+      
+      state.currentSegmentIndex = index;
+      const seg = state.currentFilm.segments[index];
+      const total = state.currentFilm.segments.length;
+
+      const actTitle = seg.actName ? ` · ${seg.actName}` : "";
+      dom.screenSegmentProgress.textContent = `第 ${index + 1} / ${total} 幕${actTitle}`;
+
+      triggerAudienceReaction(seg.reactionText, seg.emotion, seg.statusText);
+      typewriterRender(seg.screenText);
+    }
+
+    function showMindModal() {
+      if (!state.currentFilm) {
+        if (window.AiPhone?.ui) AiPhone.ui.toast("放映尚未开始，静候片刻~");
+        return;
+      }
+      const seg = state.currentFilm.segments[state.currentSegmentIndex];
+      const char = state.selectedChar;
+      const cName = char?.name || "伴影角色";
+      const cAvatar = char?.avatar || dom.topbarCharAvatar.src;
+
+      dom.mindAvatar.src = cAvatar;
+      dom.mindCharName.textContent = cName;
+      
+      const statusText = seg?.statusText || "专注观影 · 心神荡漾 · 情绪起伏";
+      const monologueText = seg?.monologueText || `「（看着银幕里呈现的这一切，心跳完全慢不下来...）」` ;
+
+      dom.mindStatusVal.textContent = statusText;
+      dom.mindMonologueText.textContent = monologueText;
+
+      const iconMap = {
+        tilt: "👀",
+        shake: "💓",
+        shock: "⚡",
+        love: "💖",
+        sweat: "💦",
+        glow: "✨",
+        shy: "😳",
+        startle: "❗",
+        calm: "🕯️"
+      };
+      dom.mindStatusIcon.textContent = iconMap[seg?.emotion] || "💭";
+
+      dom.mindModal.classList.add('show');
+    }
+
+    dom.audienceAvatarSeatWrapper.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showMindModal();
+    });
+
+    dom.btnCloseMind.addEventListener('click', () => {
+      dom.mindModal.classList.remove('show');
+    });
+
+    let lastPlayedEmotion = null;
+
+    function triggerAudienceReaction(reactionText, rawEmotion, statusText) {
+      dom.audienceReactionText.style.opacity = '0';
+      dom.audienceReactionText.style.transform = 'translateY(4px)';
+      
+      setTimeout(() => {
+        dom.audienceReactionText.textContent = reactionText || "「...」";
+        dom.audienceReactionText.style.opacity = '1';
+        dom.audienceReactionText.style.transform = 'translateY(0)';
+      }, 120);
+
+      const avatarEl = dom.audienceCharAvatar;
+      avatarEl.className = 'char-avatar-head';
+      void avatarEl.offsetWidth;
+
+      const validEmotions = ['tilt', 'shake', 'shock', 'love', 'sweat', 'glow', 'shy', 'startle', 'calm'];
+      let currentEmotion = validEmotions.includes(rawEmotion) ? rawEmotion : null;
+
+      // 强制机制：每一幕出现都必须换一个动效，绝不与上一幕重复
+      if (!currentEmotion || currentEmotion === lastPlayedEmotion) {
+        const fallbackPool = [
+          ['shy', 'shake', 'tilt'],
+          ['shock', 'sweat', 'startle'],
+          ['glow', 'tilt', 'love'],
+          ['love', 'glow', 'shake']
+        ];
+        const segIdx = state.currentSegmentIndex || 0;
+        const candidateList = fallbackPool[segIdx % fallbackPool.length] || validEmotions;
+        const filtered = candidateList.filter(e => e !== lastPlayedEmotion);
+        currentEmotion = filtered[Math.floor(Math.random() * filtered.length)] || validEmotions.find(e => e !== lastPlayedEmotion) || 'glow';
+      }
+
+      lastPlayedEmotion = currentEmotion;
+      avatarEl.classList.add(`emotion-${currentEmotion}`);
+
+      // 头像右下角小悬浮气泡图标随心情动态变化
+      const avatarHintEmojiMap = {
+        tilt: "👀",
+        shake: "💓",
+        shock: "⚡",
+        love: "💖",
+        sweat: "💦",
+        glow: "✨",
+        shy: "😳",
+        startle: "❗",
+        calm: "🕯️"
+      };
+      const hintEl = dom.audienceAvatarSeatWrapper?.querySelector('.avatar-tap-hint');
+      if (hintEl) {
+        hintEl.textContent = avatarHintEmojiMap[currentEmotion] || "💭";
+      }
+
+      const emotionTextMap = {
+        tilt: "👀 歪头细看 · 💭 窥探心扉",
+        shake: "💓 极度慌乱 · 💭 窥探心扉",
+        shock: "⚡ 瞳孔巨震 · 💭 窥探心扉",
+        love: "💖 脸红心动 · 💭 窥探心扉",
+        sweat: "💦 局促冒汗 · 💭 窥探心扉",
+        glow: "✨ 眼神动容 · 💭 窥探心扉",
+        shy: "😳 面红耳赤 · 💭 窥探心扉",
+        startle: "❗ 猝不及防 · 💭 窥探心扉",
+        calm: "🕯️ 静静凝视 · 💭 窥探心扉"
+      };
+      dom.audienceEmotionTag.textContent = emotionTextMap[currentEmotion] || "🎬 实时观影中 · 💭 窥探心扉";
+
+      // 动态冒出对应的 Emoji 情绪粒子动画
+      spawnEmotionParticle(currentEmotion);
+    }
+
+    function spawnEmotionParticle(emo) {
+      if (!dom.audienceAvatarSeatWrapper) return;
+      const emojiMap = {
+        tilt: "💭",
+        shake: "💥",
+        shock: "⚡",
+        love: "💖",
+        sweat: "💦",
+        glow: "✨",
+        shy: "🌸",
+        startle: "❗",
+        calm: "🕯️"
+      };
+      const emoji = emojiMap[emo] || "💭";
+      const particle = document.createElement('div');
+      particle.className = 'emotion-floating-particle';
+      particle.textContent = emoji;
+      dom.audienceAvatarSeatWrapper.appendChild(particle);
+      setTimeout(() => particle.remove(), 1400);
+    }
+
+    function typewriterRender(fullText) {
+      if (state.typewriterTimer) {
+        clearInterval(state.typewriterTimer);
+        state.typewriterTimer = null;
+      }
+
+      state.isTyping = true;
+      let charIdx = 0;
+      dom.screenTypedContent.innerHTML = '<span class="typewriter-cursor"></span>';
+      dom.screenTapHintText.textContent = "👆 点击大银幕可加速显字 / 推进下一幕";
+      
+      state.typewriterTimer = setInterval(() => {
+        if (charIdx < fullText.length) {
+          charIdx++;
+          const currentSub = fullText.slice(0, charIdx);
+          dom.screenTypedContent.innerHTML = formatScreenText(currentSub) + '<span class="typewriter-cursor"></span>';
+          
+          if (charIdx % 2 === 0 && fullText[charIdx - 1] !== ' ' && fullText[charIdx - 1] !== '\n') {
+            playTypewriterTick();
+          }
+
+          dom.screenScrollArea.scrollTop = dom.screenScrollArea.scrollHeight;
+        } else {
+          finishTypewriter(fullText);
+        }
+      }, 55);
+    }
+
+    function showErrorBanner(msg) {
+      if (!dom.cinemaErrorBanner) return;
+      dom.errorBannerText.textContent = msg || "放映机上一轮执行中途失败，请检查模型连接与配置。";
+      dom.cinemaErrorBanner.classList.add('show');
+      
+      // 6秒后自动淡出
+      setTimeout(() => {
+        dom.cinemaErrorBanner.classList.remove('show');
+      }, 6000);
+    }
+
+    if (dom.btnCloseErrorBanner) {
+      dom.btnCloseErrorBanner.onclick = () => {
+        dom.cinemaErrorBanner.classList.remove('show');
+      };
+    }
+
+    function formatScreenText(text) {
+      const paras = text.split('\n');
+      return paras.map(p => {
+        if (!p.trim()) return '<div style="height:8px;"></div>';
+        return `<div>${escapeHtml(p)}</div>`;
+      }).join('');
+    }
+
+    function finishTypewriter(fullText) {
+      if (state.typewriterTimer) {
+        clearInterval(state.typewriterTimer);
+        state.typewriterTimer = null;
+      }
+      state.isTyping = false;
+      dom.screenTypedContent.innerHTML = formatScreenText(fullText);
+      
+      const total = state.currentFilm?.segments?.length || 1;
+      if (state.currentSegmentIndex + 1 < total) {
+        dom.screenTapHintText.textContent = "👆 点击大银幕推进至下一幕";
+      } else {
+        dom.screenTapHintText.textContent = "✨ 本卷胶片放映完毕 · 点击开启散场小叙";
+      }
+    }
+
+    dom.screenFrame.addEventListener('click', () => {
+      if (state.isGenerating) return;
+      if (!state.currentFilm) return;
+
+      const seg = state.currentFilm.segments[state.currentSegmentIndex];
+      if (!seg) return;
+
+      if (state.isTyping) {
+        finishTypewriter(seg.screenText);
+      } else {
+        if (state.currentSegmentIndex + 1 < state.currentFilm.segments.length) {
+          playSegment(state.currentSegmentIndex + 1);
+        } else {
+          showAftertalkModal(state.currentFilm);
+        }
+      }
+    });
+
+    function showAftertalkModal(film) {
+      const char = state.selectedChar;
+      dom.aftertalkAvatar.src = char?.avatar || dom.topbarCharAvatar.src;
+      dom.aftertalkCharName.textContent = char?.name || "伴影角色";
+      dom.aftertalkContent.textContent = film.aftertalk || generateDefaultAftertalk(film.userPrompt, char?.name, state.userProfile?.name);
+      dom.aftertalkModal.classList.add('show');
+    }
+
+    dom.btnCloseAftertalk.addEventListener('click', () => {
+      dom.aftertalkModal.classList.remove('show');
+      if (window.AiPhone?.ui) {
+        AiPhone.ui.toast("放映落幕，余韵已珍藏入册");
+      }
+      triggerAudienceReaction("「...只有我知晓方才的幻梦，而眼前的你才是最真实的温暖。」", "glow", "心绪平复 · 归于现实");
+    });
+
+    function escapeHtml(str) {
+      return (str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // ==========================================
+    // 胶片档案
+    // ==========================================
+    async function saveFilmToArchive(film) {
+      try {
+        if (window.AiPhone?.db) {
+          const created = await AiPhone.db.create("films", film).catch(() => null);
+          if (created && created.id) {
+            film.dbKey = created.id;
+          }
+        }
+        state.archives.unshift(film);
+        localStorage.setItem('local_cinema_films_v2', JSON.stringify(state.archives.slice(0, 50)));
+      } catch (e) {
+        console.warn("保存档案异常", e);
+      }
+    }
+
+    async function loadArchives() {
+      try {
+        let list = [];
+        if (window.AiPhone?.db) {
+          const dbList = await AiPhone.db.list("films", { limit: 50 }).catch(() => []);
+          if (dbList && dbList.length > 0) {
+            list = dbList.map(item => ({
+              ...item,
+              dbKey: item.id,
+              id: item.id || item.dbKey || ('film_' + Date.now())
+            }));
+          }
+        }
+
+        if (!list || list.length === 0) {
+          const raw = localStorage.getItem('local_cinema_films_v2') || localStorage.getItem('local_cinema_films');
+          list = raw ? JSON.parse(raw) : [];
+        }
+
+        list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        state.archives = list;
+        renderArchiveList(list);
+
+      } catch (err) {
+        console.error("读取档案失败", err);
+      }
+    }
+
+    function renderFolderChips(allList) {
+      if (!dom.archiveFolderScroll) return;
+      dom.archiveFolderScroll.innerHTML = '';
+
+      const charMap = {};
+      allList.forEach(film => {
+        const cId = film.charId || "unknown";
+        const cName = film.charName || "未知伴影";
+        if (!charMap[cId]) {
+          charMap[cId] = { id: cId, name: cName, count: 0 };
+        }
+        charMap[cId].count++;
+      });
+
+      const allChip = document.createElement('div');
+      allChip.className = `archive-folder-chip ${state.selectedArchiveFolder === 'all' ? 'selected' : ''}`;
+      allChip.innerHTML = `<span>📁 全部胶卷</span><span class="folder-count-badge">${allList.length}</span>`;
+      allChip.onclick = () => {
+        state.selectedArchiveFolder = 'all';
+        renderArchiveList(state.archives);
+      };
+      dom.archiveFolderScroll.appendChild(allChip);
+
+      Object.values(charMap).forEach(charObj => {
+        const chip = document.createElement('div');
+        chip.className = `archive-folder-chip ${state.selectedArchiveFolder === charObj.id ? 'selected' : ''}`;
+        chip.innerHTML = `<span>👤 ${escapeHtml(charObj.name)}</span><span class="folder-count-badge">${charObj.count}</span>`;
+        chip.onclick = () => {
+          state.selectedArchiveFolder = charObj.id;
+          renderArchiveList(state.archives);
+        };
+        dom.archiveFolderScroll.appendChild(chip);
+      });
+    }
+
+    function renderArchiveList(list) {
+      renderFolderChips(list);
+
+      let filteredList = list;
+      if (state.selectedArchiveFolder !== 'all') {
+        filteredList = list.filter(f => (f.charId || "unknown") === state.selectedArchiveFolder);
+      }
+
+      dom.archiveCountText.textContent = `${filteredList.length} / ${list.length}`;
+      dom.archiveListContainer.innerHTML = '';
+
+      if (!filteredList || filteredList.length === 0) {
+        dom.archiveListContainer.innerHTML = `
+          <div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:13px;">
+            <div style="font-size:32px; margin-bottom:8px;">🎞️</div>
+            该分类下暂无时光胶片<br><span style="font-size:11px;">前往「时光策源」开启专属放映</span>
+          </div>
+        `;
+        return;
+      }
+
+      const styleNameMap = { fanfic: "同人AU", wkw: "王家卫式", koreeda: "是枝裕和", borges: "博尔赫斯", miyazaki: "宫崎骏式", cyber: "冷峻赛博", desire: "高阶情欲" };
+
+      filteredList.forEach((film, index) => {
+        const card = document.createElement('div');
+        card.className = 'archive-film-card';
+        
+        const typeClassMap = { past: 'type-badge-past', fanfic: 'type-badge-fanfic', future: 'type-badge-future' };
+        const typeNameMap = { past: '过去·旧忆', fanfic: '同人·奇想', future: '未来·遥瞻' };
+
+        const firstSegText = film.segments?.[0]?.screenText || film.userPrompt || "精彩剧场记录";
+        const dateStr = film.createdAt ? new Date(film.createdAt).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : "时光中";
+        const modeBadge = film.watchMode === 'solo' ? '👤 独自' : '👥 并肩';
+        const styleBadge = film.styleKey ? ` · 🖋️ ${styleNameMap[film.styleKey] || '精选'}` : '';
+
+        card.innerHTML = `
+          <div class="archive-card-top">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="archive-type-badge ${typeClassMap[film.themeType] || 'type-badge-past'}">${typeNameMap[film.themeType] || '时光'}</span>
+              <span style="font-size:10px; color:var(--text-muted);">${modeBadge}${styleBadge}</span>
+            </div>
+            <button class="archive-btn-del" type="button">🗑️ 删除</button>
+          </div>
+          <div class="archive-card-title">《${escapeHtml(film.title || '无题放映')}》</div>
+          <div class="archive-card-preview">${escapeHtml(firstSegText)}</div>
+          <div class="archive-card-foot">
+            <span>📅 ${dateStr} · ${film.charName || '伴影'}</span>
+            <span style="color:var(--gold-main); font-weight:700;">重温放映 📽️</span>
+          </div>
+        `;
+
+        const delBtn = card.querySelector('.archive-btn-del');
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          
+          card.remove();
+          const targetId = film.id;
+          const targetDbKey = film.dbKey || film.id;
+          state.archives = state.archives.filter(f => f.id !== targetId && f.dbKey !== targetDbKey);
+          
+          renderFolderChips(state.archives);
+          dom.archiveCountText.textContent = `${state.archives.length} / ${state.archives.length}`;
+
+          try {
+            localStorage.setItem('local_cinema_films_v2', JSON.stringify(state.archives));
+          } catch (storageErr) {}
+
+          if (window.AiPhone?.db) {
+            AiPhone.db.delete("films", targetDbKey).catch(() => {});
+            if (targetId && targetId !== targetDbKey) {
+              AiPhone.db.delete("films", targetId).catch(() => {});
+            }
+          }
+
+          if (window.AiPhone?.ui) {
+            AiPhone.ui.toast("已删除胶片");
+          }
+
+          if (state.archives.length === 0) {
+            dom.archiveListContainer.innerHTML = `
+              <div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:13px;">
+                <div style="font-size:32px; margin-bottom:8px;">🎞️</div>
+                尚无胶片记录<br>前往「时光策源」开启你的第一部大银幕放映吧
+              </div>
+            `;
+          }
+        };
+
+        card.onclick = (e) => {
+          if (e.target.closest('.archive-btn-del')) return;
+          setTheme(film.themeType || 'past');
+          startPlayFilm(film);
+          switchView('viewScreen');
+        };
+
+        dom.archiveListContainer.appendChild(card);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initApp();
+    });
+  </script>
+</body>
+</html>

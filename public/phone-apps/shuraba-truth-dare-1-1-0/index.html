@@ -1,0 +1,3243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>修罗场</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --paper: #ffffff;
+    --paper-2: #f4f5f6;
+    --ink: #1f2124;
+    --ink-dim: #4b4f54;
+    --ink-light: #6b7075;
+    --line: #d7dadd;
+    --accent: #5b6168;
+    --accent-2: #9aa0a6;
+    --accent-dim: #c7cbd1;
+    --red: #a85842;
+    --red-soft: #d49282;
+    --shadow: 0 4px 20px rgba(30, 32, 34, 0.06);
+    --shadow-lift: 0 8px 32px rgba(30, 32, 34, 0.1);
+    --radius: 16px;
+    --serif: "Playfair Display", "Noto Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+    --text-glow: 0 1px 3px rgba(255,255,255,0.9), 0 0px 1px rgba(255,255,255,0.6);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--bg);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea, select {
+    font: inherit; color: inherit;
+    background: transparent; border: none; outline: none;
+  }
+  button { cursor: pointer; }
+
+  /* 背景层：铺满整个画布，图片 + 毛玻璃 */
+  .bg-layer {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    background-size: cover;
+    background-position: center;
+    z-index: 0;
+    transition: opacity 0.4s;
+  }
+  .bg-glass {
+    position: fixed; inset: 0;
+    backdrop-filter: blur(6px) saturate(1.05);
+    -webkit-backdrop-filter: blur(6px) saturate(1.05);
+    background: rgba(255, 255, 255, 0.12);
+    z-index: 1;
+    pointer-events: none;
+  }
+  /* 玻璃装饰：水珠 + 雪花，纯 CSS，随机分布，静静地挂在玻璃上 */
+  .glass-deco {
+    position: fixed; inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .snowflake {
+    position: absolute;
+    color: rgba(150,160,170,0.6);
+    font-size: 14px;
+    filter: drop-shadow(0 1px 2px rgba(60,60,60,0.1));
+    opacity: 0.7;
+    animation: snowDrift 9s ease-in-out infinite;
+  }
+  @keyframes snowDrift {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(6px) rotate(8deg); }
+  }
+  .app {
+    position: fixed; inset: 0;
+    z-index: 2;
+    display: flex; flex-direction: column;
+    padding-bottom: var(--ai-phone-app-safe-bottom, 20px);
+  }
+
+  /* 顶栏 */
+  .topbar {
+    position: fixed;
+    top: var(--ai-phone-app-bar-top, 12px);
+    left: 14px;
+    right: var(--ai-phone-app-bar-clear-right, 92px);
+    min-height: var(--ai-phone-app-bar-height, 36px);
+    display: flex; align-items: center; gap: 10px;
+    z-index: 50;
+    pointer-events: none;
+  }
+  .topbar > * { pointer-events: auto; }
+  .brand {
+    font-family: var(--serif);
+    font-size: 15px; font-weight: 500;
+    letter-spacing: 1.2px;
+    color: var(--ink);
+    text-shadow: var(--text-glow);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .brand .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 10px var(--accent-2);
+  }
+  .top-actions { margin-left: auto; display: flex; gap: 6px; }
+  .icon-btn {
+    width: 36px; height: 36px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: var(--ink);
+    transition: all 0.2s;
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.9); transform: scale(0.95); }
+  .icon-btn svg { width: 17px; height: 17px; }
+
+  /* 主内容 */
+  .main {
+    flex: 1;
+    padding-top: calc(var(--ai-phone-app-bar-top, 12px) + 48px);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+  .view {
+    flex: 1;
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+    animation: fadeIn 0.5s ease;
+  }
+  .view.active { display: flex; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============== 大厅 ============== */
+  #view-hall { padding: 4px 18px 24px; overflow-y: auto; }
+  .hall-intro {
+    background: rgba(255, 255, 255, 0.28);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: var(--radius);
+    padding: 20px 22px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .hall-intro h2 {
+    font-family: var(--serif);
+    font-size: 20px; font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    color: var(--ink);
+    text-shadow: var(--text-glow);
+  }
+  .hall-intro p {
+    font-size: 13px;
+    line-height: 1.9;
+    color: var(--ink-dim);
+    letter-spacing: 0.5px;
+    text-shadow: var(--text-glow);
+  }
+
+  .section-title {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 22px 2px 12px;
+  }
+  .section-title .label {
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--ink-dim);
+    text-shadow: var(--text-glow);
+  }
+  .section-title .count {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    text-shadow: var(--text-glow);
+  }
+  .section-title .count.err { color: var(--red); }
+
+  .char-list {
+    background: rgba(255,255,255,0.22);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: var(--radius);
+    padding: 6px;
+    box-shadow: var(--shadow);
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .char-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .char-item:active { background: rgba(140,144,150,0.08); }
+  .char-item.selected {
+    background: rgba(140,144,150,0.15);
+  }
+  .char-item.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .char-avatar {
+    width: 42px; height: 42px; flex: none;
+    border-radius: 50%;
+    background: var(--paper-2);
+    background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent);
+    font-family: var(--serif);
+    font-size: 16px;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+  .char-name {
+    flex: 1;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+  }
+  .char-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink-light);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .char-item.selected .char-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .char-check::after {
+    content: ''; width: 10px; height: 10px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/></svg>") center/contain no-repeat;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .char-item.selected .char-check::after { opacity: 1; }
+
+  .big-btn {
+    width: 100%;
+    height: 52px;
+    border-radius: 26px;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--serif);
+    font-size: 15px;
+    letter-spacing: 4px;
+    margin-top: 20px;
+    box-shadow: var(--shadow-lift);
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .big-btn:disabled {
+    background: var(--ink-light);
+    color: rgba(255,255,255,0.8);
+    box-shadow: none;
+  }
+  .big-btn:active:not(:disabled) { transform: scale(0.98); }
+  .ghost-btn {
+    background: transparent;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    box-shadow: none;
+  }
+  .ghost-btn:active:not(:disabled) { background: rgba(140,144,150,0.08); }
+
+  /* 用户头像设置行 */
+  .user-avatar-row {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 20px;
+  }
+  .user-avatar-preview {
+    width: 56px; height: 56px; flex: none;
+    border-radius: 50%;
+    background: var(--paper-2);
+    background-size: cover; background-position: center;
+    border: 2px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent);
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .user-avatar-preview:active { transform: scale(0.94); }
+  .user-avatar-preview::after {
+    content: '＋';
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.7);
+    color: var(--ink-dim);
+    font-size: 22px;
+    font-style: normal;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .user-avatar-preview:hover::after,
+  .user-avatar-preview:active::after { opacity: 1; }
+  .user-avatar-hint {
+    font-size: 12px;
+    color: var(--ink-dim);
+    line-height: 1.7;
+    letter-spacing: 0.3px;
+    text-shadow: var(--text-glow);
+  }
+
+  /* ============== 钟摆层 ============== */
+  #view-pendulum {
+    padding: 0 24px 24px;
+    align-items: center;
+    justify-content: center;
+  }
+  .pendulum-stage {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 36px;
+    width: 100%;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .pendulum-sub {
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: #333;
+    opacity: 0.85;
+    text-shadow: var(--text-glow);
+    text-align: center;
+  }
+  .clock-wrap {
+    position: relative;
+    width: 260px; height: 290px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .clock-face {
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow:
+      0 20px 40px rgba(0,0,0,0.05),
+      inset 0 1px 1px rgba(255,255,255,0.5);
+    position: absolute;
+    top: 20px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: visible;
+  }
+  .clock-face::before {
+    content: '';
+    position: absolute;
+    inset: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .clock-tick {
+    position: absolute;
+    width: 1px; height: 10px;
+    background: rgba(51,51,51,0.3);
+    top: 10px; left: 50%;
+    transform-origin: 50% 100px;
+    margin-left: -1px;
+  }
+  .clock-tick.small { height: 5px; background: rgba(51,51,51,0.18); }
+  .clock-labels {
+    position: absolute;
+    inset: 0;
+    display: flex; justify-content: space-between;
+    align-items: center;
+    padding: 0 22px;
+    pointer-events: none;
+  }
+  .clock-labels .lbl {
+    font-family: var(--serif);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: #333;
+    opacity: 0.75;
+    text-shadow: var(--text-glow);
+    text-align: center;
+    transition: all 0.4s;
+  }
+  .clock-labels .lbl.active {
+    color: #1f2124;
+    opacity: 1;
+    font-weight: 700;
+    transform: scale(1.08);
+  }
+  .pendulum-arm {
+    position: absolute;
+    top: 110px; left: 50%;
+    width: 1px;
+    height: 150px;
+    background: linear-gradient(180deg, rgba(51,51,51,0.75) 0%, rgba(150,150,150,0.5) 60%, rgba(200,200,200,0.3) 100%);
+    margin-left: 0;
+    transform-origin: 50% 0;
+    transform: rotate(0deg);
+    z-index: 2;
+  }
+  .pendulum-arm.swinging {
+    animation: swing 1.6s ease-in-out infinite;
+  }
+  .pendulum-arm.landing {
+    transition: transform 1.2s cubic-bezier(0.3, 1.6, 0.5, 1);
+  }
+  @keyframes swing {
+    0%, 100% { transform: rotate(-28deg); }
+    50% { transform: rotate(28deg); }
+  }
+  .pendulum-bob {
+    position: absolute;
+    bottom: -13px; left: 50%;
+    width: 26px; height: 26px;
+    margin-left: -13px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fdfdfd 0%, #d8dadd 45%, #9a9ea3 75%, #c7cbd1 100%);
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.12), inset 0 1px 1px rgba(255,255,255,0.8);
+  }
+  .clock-center {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e4e6e8, #9a9ea3);
+    border: 1px solid rgba(255,255,255,0.8);
+    top: 105px; left: 50%;
+    margin-left: -5px;
+    z-index: 3;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+  .pendulum-result {
+    font-family: var(--serif);
+    font-size: 22px;
+    letter-spacing: 0.3em;
+    color: #1f2124;
+    text-shadow: var(--text-glow);
+    font-weight: 700;
+    margin-top: -10px;
+    min-height: 32px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .pendulum-result.show { opacity: 1; }
+  .pendulum-actions {
+    display: flex; gap: 12px;
+    width: 100%;
+    max-width: 320px;
+  }
+  .pendulum-actions button {
+    flex: 1;
+    height: 48px;
+    border-radius: 24px;
+    font-family: var(--serif);
+    font-size: 14px;
+    letter-spacing: 3px;
+    transition: all 0.2s;
+  }
+  .pendulum-actions .start-btn {
+    background: var(--ink);
+    color: var(--paper);
+    box-shadow: var(--shadow);
+  }
+  .modal-actions .back-btn,
+  .pendulum-actions .back-btn {
+    background: transparent;
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+  }
+  .pendulum-actions button:active { transform: scale(0.96); }
+  .pendulum-actions button:disabled { opacity: 0.5; pointer-events: none; }
+
+  /* ============== 游戏桌层 ============== */
+  #view-game {
+    padding: 0;
+    display: none;
+    flex-direction: column;
+  }
+  #view-game.active { display: flex; }
+
+  .game-chat {
+    flex: 1;
+    display: flex; flex-direction: column;
+    margin: 0 14px 8px;
+    background: rgba(255,255,255,0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    min-height: 0;
+  }
+  .game-chat-head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--ink-dim);
+    text-shadow: var(--text-glow);
+    flex: none;
+  }
+  .game-chat-head .mode-pill {
+    font-family: var(--serif);
+    letter-spacing: 0.15em;
+    padding: 3px 10px;
+    border-radius: 10px;
+    background: rgba(140,144,150,0.14);
+    color: var(--ink-dim);
+    font-size: 11px;
+  }
+  .game-chat-head .round-info {
+    flex: 1;
+    letter-spacing: 1px;
+  }
+  .game-chat-head .end-btn {
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(168,88,66,0.1);
+    color: var(--red);
+    border: 1px solid rgba(168,88,66,0.3);
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+  .game-chat-head .end-btn:active { background: rgba(168,88,66,0.2); }
+
+  .messages {
+    flex: 1; overflow-y: auto;
+    padding: 14px 14px 10px;
+    display: flex; flex-direction: column; gap: 10px;
+    scroll-behavior: smooth;
+    min-height: 0;
+  }
+  .msg {
+    display: flex; gap: 8px;
+    max-width: 92%;
+    animation: msgIn 0.35s ease;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg.sys { align-self: center; max-width: 100%; }
+  .msg-avatar {
+    width: 32px; height: 32px; flex: none;
+    border-radius: 50%;
+    background: var(--paper-2);
+    background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent);
+    font-family: var(--serif);
+    font-size: 13px;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+  }
+  .msg-body { display: flex; flex-direction: column; gap: 3px; max-width: 100%; min-width: 0; }
+  .msg.user .msg-body { align-items: flex-end; }
+  .msg-name {
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 1px;
+    padding: 0 4px;
+    text-shadow: var(--text-glow);
+  }
+  .msg-bubble {
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.65;
+    letter-spacing: 0.3px;
+    background: rgba(255,255,255,0.55);
+    color: var(--ink);
+    word-break: break-word;
+    white-space: pre-wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    border: 1px solid rgba(255,255,255,0.45);
+  }
+  .msg.user .msg-bubble {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .msg-bubble .action {
+    display: block;
+    color: var(--ink-dim);
+    font-style: italic;
+    font-size: 12.5px;
+    margin: 2px 0;
+    letter-spacing: 0.5px;
+  }
+  .msg.sys .msg-bubble {
+    background: transparent;
+    color: var(--ink-dim);
+    font-size: 11.5px;
+    letter-spacing: 1.5px;
+    text-align: center;
+    padding: 4px 10px;
+    border: none;
+    box-shadow: none;
+    font-family: var(--serif);
+    text-shadow: var(--text-glow);
+  }
+  .msg-loading { display: inline-flex; gap: 4px; align-items: center; padding: 4px 2px; }
+  .msg-loading span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ink-light);
+    animation: dot 1.2s infinite;
+  }
+  .msg-loading span:nth-child(2) { animation-delay: 0.15s; }
+  .msg-loading span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dot { 0%,60%,100% { opacity: 0.3 } 30% { opacity: 1 } }
+
+  /* 圆桌区 */
+  .table-area {
+    position: relative;
+    margin: 0 14px 8px;
+    padding: 8px;
+    background: rgba(255,255,255,0.24);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    flex: none;
+    display: flex; align-items: center; justify-content: center;
+    /* 高度由内容（转盘）撑开，不裁剪 */
+  }
+  .table-circle {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,243,237,0.9) 0%, rgba(230,224,210,0.6) 70%, transparent 100%);
+    border: 1px dashed var(--accent-dim);
+  }
+  .seat {
+    position: absolute;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--paper);
+    background-size: cover; background-position: center;
+    border: 2px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent);
+    font-family: var(--serif);
+    font-size: 13px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    margin-left: -20px; margin-top: -20px;
+    z-index: 4;
+  }
+  .seat-label {
+    position: absolute;
+    top: 46px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--ink-dim);
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .seat.user { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+  .seat.winner {
+    border-color: #fff;
+    box-shadow: 0 0 0 3px #fff, 0 0 16px rgba(255,255,255,0.8), 0 3px 8px rgba(0,0,0,0.15);
+    transform: scale(1.12);
+  }
+  .seat.loser {
+    border-color: #6a635a;
+    box-shadow: 0 0 0 3px #6a635a, 0 0 16px rgba(106,99,90,0.6), 0 3px 8px rgba(0,0,0,0.15);
+    transform: scale(1.12);
+  }
+
+  /* 双针：白针（胜者）与灰针各自独立旋转，轴心都锚定圆心 */
+  .needle {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform-origin: 0 0;
+    transform: translate(0,0) rotate(0deg);
+    z-index: 5;
+    pointer-events: none;
+    transition: transform 1.6s cubic-bezier(0.15, 0.85, 0.25, 1);
+  }
+  .needle.spinning { transition: none; }
+  .needle::before {
+    content: '';
+    position: absolute;
+    top: -2px; left: 0;
+    width: var(--needle-len, 40px);
+    height: 4px;
+    border-radius: 2px;
+  }
+  .needle::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: var(--needle-len, 40px);
+    width: 0; height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+  }
+  .needle-white::before {
+    background: linear-gradient(90deg, rgba(255,255,255,0.35) 0%, #fff 100%);
+    box-shadow: 0 0 8px rgba(255,255,255,0.7);
+  }
+  .needle-white::after { border-left: 9px solid #fff; filter: drop-shadow(0 0 3px rgba(255,255,255,0.85)); }
+  .needle-grey::before { background: linear-gradient(90deg, rgba(106,99,90,0.35) 0%, #6a635a 100%); }
+  .needle-grey::after { border-left: 9px solid #6a635a; }
+
+  .pointer-pivot {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 2px solid var(--paper);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    z-index: 6;
+  }
+
+  .table-tools-left {
+    position: absolute;
+    bottom: 10px; left: 10px;
+    z-index: 10;
+  }
+  .table-tools {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    display: flex; gap: 6px;
+    z-index: 10;
+  }
+  .mini-btn {
+    padding: 5px 10px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid var(--line);
+    font-size: 10.5px;
+    letter-spacing: 1px;
+    color: var(--ink);
+    font-family: var(--serif);
+    transition: all 0.2s;
+  }
+  .mini-btn.primary {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .mini-btn:active { transform: scale(0.95); }
+  .mini-btn:disabled { opacity: 0.4; pointer-events: none; }
+
+  .pointer-badge {
+    position: absolute;
+    top: 10px; left: 10px;
+    font-family: var(--serif);
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: var(--ink-dim);
+    background: rgba(255,255,255,0.8);
+    padding: 4px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    font-weight: 600;
+    z-index: 10;
+    max-width: 70%;
+  }
+  .pointer-badge .winner-text { color: var(--ink); font-weight: 600; }
+  .pointer-badge .loser-text { color: var(--red); font-weight: 600; }
+
+  /* 输入条 */
+  .composer {
+    margin: 0 14px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    display: flex; align-items: flex-end; gap: 8px;
+    flex: none;
+  }
+  .composer textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 8px 4px;
+    resize: none;
+    max-height: 90px;
+    min-height: 24px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+  .composer textarea::placeholder { color: var(--ink-light); }
+  .send-btn {
+    width: 38px; height: 38px; flex: none; padding: 0;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 3px 10px rgba(42,38,33,0.25);
+  }
+  .send-btn:disabled {
+    background: var(--ink-light);
+    box-shadow: none;
+  }
+  .send-btn:active:not(:disabled) { transform: scale(0.92); }
+  .send-btn svg { width: 16px; height: 16px; }
+
+  .observe-btn {
+    width: 38px; height: 38px; flex: none; padding: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.55);
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 6px rgba(42,38,33,0.08);
+  }
+  .observe-btn:disabled { opacity: 0.35; pointer-events: none; }
+  .observe-btn:active:not(:disabled) { transform: scale(0.92); background: rgba(255,255,255,0.9); }
+  .observe-btn svg { width: 16px; height: 16px; }
+
+  .composer-hint {
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 1.5px;
+    padding: 4px 14px 2px;
+    font-family: var(--serif);
+    text-shadow: var(--text-glow);
+    flex: none;
+  }
+
+  /* ============== 弹窗 ============== */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 300;
+    padding: 24px;
+    animation: fadeIn 0.25s ease;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    width: 100%;
+    max-width: 360px;
+    background: var(--paper);
+    border-radius: 20px;
+    padding: 24px 22px 20px;
+    box-shadow: var(--shadow-lift);
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: modalIn 0.3s cubic-bezier(0.2, 1, 0.4, 1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal h3 {
+    font-family: var(--serif);
+    font-size: 17px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    color: var(--ink);
+  }
+  .modal p {
+    font-size: 13px;
+    line-height: 1.75;
+    color: var(--ink-dim);
+    margin-bottom: 14px;
+    letter-spacing: 0.5px;
+  }
+  .modal textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px 14px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink);
+    resize: vertical;
+    font-family: var(--sans);
+  }
+  .modal-actions {
+    display: flex; gap: 10px;
+    margin-top: 16px;
+  }
+  .modal-actions button {
+    flex: 1;
+    height: 44px;
+    border-radius: 22px;
+    font-family: var(--serif);
+    font-size: 13.5px;
+    letter-spacing: 2px;
+    background: var(--paper-2);
+    color: var(--ink);
+    transition: all 0.2s;
+  }
+  .modal-actions button.primary {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .modal-actions button.danger {
+    background: var(--red);
+    color: #fff;
+  }
+  .modal-actions button:active { transform: scale(0.97); }
+
+  .send-target-list {
+    display: flex; flex-direction: column; gap: 6px;
+    margin: 12px 0 4px;
+    max-height: 240px;
+    overflow-y: auto;
+  }
+  .send-target-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    background: var(--paper-2);
+    transition: all 0.2s;
+  }
+  .send-target-item.selected {
+    background: rgba(140,144,150,0.18);
+  }
+  .send-target-item .char-avatar { width: 36px; height: 36px; font-size: 14px; }
+  .send-target-item .char-name { font-size: 13.5px; }
+  .send-target-check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink-light);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .send-target-item.selected .send-target-check {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .send-target-check::after {
+    content: ''; width: 10px; height: 10px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/></svg>") center/contain no-repeat;
+    opacity: 0;
+  }
+  .send-target-item.selected .send-target-check::after { opacity: 1; }
+
+  .memory-preview {
+    background: var(--paper-2);
+    border-left: 3px solid var(--ink-light);
+    padding: 12px 14px;
+    border-radius: 0 10px 10px 0;
+    margin: 10px 0;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .memory-preview .mp-label {
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+    font-family: var(--serif);
+  }
+  .memory-preview .mp-row { margin-bottom: 10px; }
+  .memory-preview .mp-row:last-child { margin-bottom: 0; }
+  .memory-preview .mp-content {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--ink);
+    white-space: pre-wrap;
+  }
+  .memory-preview .mp-mood {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: rgba(140,144,150,0.16);
+    color: var(--ink-dim);
+    font-size: 11px;
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 13.5px;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  /* 消息长按菜单 */
+  .msg-menu {
+    position: fixed;
+    background: var(--paper);
+    border-radius: 12px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.14);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    z-index: 400;
+    min-width: 120px;
+    animation: modalIn 0.18s cubic-bezier(0.2,1,0.4,1);
+  }
+  .msg-menu-item {
+    padding: 12px 18px;
+    font-size: 13.5px;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--line);
+    transition: background 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .msg-menu-item:last-child { border-bottom: none; }
+  .msg-menu-item:active { background: var(--paper-2); }
+  .msg-menu-item.danger { color: var(--red); }
+  .msg-menu-item.disabled { opacity: 0.4; pointer-events: none; }
+  .msg-menu-backdrop {
+    position: fixed; inset: 0;
+    z-index: 399;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    left: 50%; top: 25%;
+    transform: translateX(-50%);
+    background: rgba(42,38,33,0.92);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 22px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+    max-width: 80%;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  /* 加载态 */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(140,144,150,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* 心声弹窗 */
+  .thought-popup {
+    position: fixed;
+    z-index: 450;
+    max-width: 260px;
+    padding: 14px 16px;
+    background: rgba(30, 28, 26, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 14px;
+    color: rgba(255,255,255,0.92);
+    font-size: 13px;
+    line-height: 1.7;
+    letter-spacing: 0.4px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.3);
+    animation: modalIn 0.2s cubic-bezier(0.2,1,0.4,1);
+    pointer-events: auto;
+  }
+  .thought-popup .tp-name {
+    font-family: var(--serif);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 6px;
+  }
+  .thought-popup-backdrop {
+    position: fixed; inset: 0;
+    z-index: 449;
+  }
+
+  /* 禁止横向滚动 */
+  * { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="bg-layer" id="bg-layer"></div>
+<div class="bg-glass"></div>
+<div class="glass-deco" id="glass-deco"></div>
+<input type="file" id="bg-input" accept="image/*" style="display:none;">
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>修罗场</div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btn-bg" title="更换背景图">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-oracle" title="神谕">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L15 8.5L22 9.3L17 14.2L18.2 21L12 17.8L5.8 21L7 14.2L2 9.3L9 8.5Z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- 第一层：大厅 -->
+    <div class="view active" id="view-hall">
+      <div class="hall-intro">
+        <h2>一场线下的修罗场</h2>
+        <p>和角色们来一场线下的修罗场聚会吧，几个人面对面坐在一起，挖掘内心的真实想法和想做的事。</p>
+      </div>
+      <div class="section-title" style="margin-top:0;margin-bottom:12px;">
+        <span class="label">我 的 头 像</span>
+        <span style="font-size:11px;color:var(--ink-light);text-shadow:var(--text-glow);">长按可重置</span>
+      </div>
+      <div class="user-avatar-row">
+        <div class="user-avatar-preview" id="user-avatar-preview" title="点击更换头像">
+          <span id="user-avatar-initial">你</span>
+        </div>
+        <div class="user-avatar-hint">点击更换你的游戏头像<br>会在转盘和对话中显示</div>
+      </div>
+      <input type="file" id="user-avatar-input" accept="image/*" style="display:none;">
+
+      <div class="section-title">
+        <span class="label">在 场 的 人</span>
+        <span class="count" id="count-label">需 3 ~ 7 位</span>
+      </div>
+      <div class="char-list" id="char-list">
+        <div style="padding:24px;text-align:center;color:var(--ink-light);font-size:12px;letter-spacing:2px;">加载角色中…</div>
+      </div>
+      <button class="big-btn" id="btn-enter" disabled>进 入 游 戏</button>
+    </div>
+
+    <!-- 第二层：钟摆 -->
+    <div class="view" id="view-pendulum">
+      <div class="pendulum-stage">
+        <div class="pendulum-sub">钟 摆 决 定 这 一 局 的 走 向</div>
+        <div class="clock-wrap">
+          <div class="clock-face" id="clock-face">
+            <div class="clock-labels">
+              <div class="lbl" id="lbl-truth">真 心 话</div>
+              <div class="lbl" id="lbl-dare">大 冒 险</div>
+            </div>
+            <div class="pendulum-arm" id="pendulum-arm">
+              <div class="pendulum-bob"></div>
+            </div>
+            <div class="clock-center"></div>
+          </div>
+        </div>
+        <div class="pendulum-result" id="pendulum-result"></div>
+        <div class="pendulum-actions">
+          <button class="back-btn" id="btn-pendulum-redo" disabled>回 溯</button>
+          <button class="start-btn" id="btn-pendulum-start">摇 一 摇</button>
+          <button class="start-btn" id="btn-pendulum-next" disabled style="display:none;">下 一 步</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 第三层：游戏桌 -->
+    <div class="view" id="view-game">
+      <div class="game-chat">
+        <div class="game-chat-head">
+          <span class="mode-pill" id="mode-pill">真心话</span>
+          <span class="round-info" id="round-info">第 1 轮</span>
+          <button class="end-btn" id="btn-end">结 束 本 局</button>
+        </div>
+        <div class="messages" id="messages"></div>
+      </div>
+
+      <div class="table-area" id="table-area">
+        <div class="pointer-badge" id="pointer-badge" style="display:none;">
+          <span class="winner-text" id="winner-text">—</span> → <span class="loser-text" id="loser-text">—</span>
+        </div>
+        <div class="table-circle" id="table-circle"></div>
+        <div class="table-tools-left" id="table-tools-left">
+          <button class="mini-btn" id="btn-spin-redo" disabled>回 溯</button>
+        </div>
+        <div class="table-tools" id="table-tools">
+          <button class="mini-btn primary" id="btn-spin">旋 转 指 针</button>
+          <button class="mini-btn primary" id="btn-spin-confirm" disabled style="display:none;">确 认 指 针</button>
+        </div>
+      </div>
+
+      <div class="composer-hint" id="composer-hint" style="display:none;">按 下 发 送 ， 推 动 这 场 修 罗 场</div>
+      <div class="composer" id="composer" style="display:none;">
+        <textarea id="input" rows="1" placeholder="输入你的发言或行动…"></textarea>
+        <button class="observe-btn" id="btn-observe" title="静观其变，让角色们继续发展">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="send-btn" id="btn-send" disabled>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 神谕弹窗 -->
+<div class="modal-backdrop" id="modal-oracle">
+  <div class="modal">
+    <h3>神 谕</h3>
+    <p>这是全场最高层的隐藏指令，只影响角色提问与反应的风格与倾向，不会被任何角色知晓。留空则由角色们自由发挥。</p>
+    <textarea id="oracle-text" placeholder="比如：问题风格酸涩虐心一点；或：问题要尖锐但不出格；或：让大家都忍不住八卦吃醋……"></textarea>
+    <div class="modal-actions">
+      <button id="oracle-cancel">取 消</button>
+      <button id="oracle-save" class="primary">保 存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 结束本局弹窗 -->
+<div class="modal-backdrop" id="modal-end">
+  <div class="modal">
+    <h3>这 一 局 到 此 为 止</h3>
+    <p>神谕、背景与所有情绪，都会保留到下一局——重来一局时，场上每个人还记得刚才发生过什么。</p>
+    <div class="modal-actions">
+      <button id="end-cancel">再 玩 会</button>
+      <button id="end-restart" class="primary">重 来 一 局</button>
+      <button id="end-summary" class="primary">总 结 记 忆</button>
+    </div>
+    <div class="modal-actions" style="margin-top:8px;">
+      <button id="end-clear" class="danger">清 空 所 有 记 录</button>
+    </div>
+  </div>
+</div>
+
+<!-- 记忆卡片生成/发送弹窗 -->
+<div class="modal-backdrop" id="modal-summary">
+  <div class="modal" id="modal-summary-inner">
+    <h3 id="summary-title">正 在 写 记 忆 卡 片</h3>
+    <p id="summary-status">角色们正在回味这一局，请稍等…<span class="spinner" style="margin-left:8px;"></span></p>
+    <div id="summary-body" style="display:none;"></div>
+    <div class="modal-actions" id="summary-actions" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========================================================================
+ *  真心话大冒险（修罗场） · 核心脚本
+ * ====================================================================== */
+(function () {
+  'use strict';
+
+  const AiPhone = window.AiPhone || window.AiPhoneApp;
+  if (!AiPhone) {
+    document.body.innerHTML = '<div style="padding:40px;color:#a85842;font-family:serif;letter-spacing:1px;">找不到 AiPhone SDK，此 APP 需要在小手机宿主里运行。</div>';
+    return;
+  }
+
+  /* ---------- 全局状态 ---------- */
+  const state = {
+    // 第一层
+    allCharacters: [],        // AiPhone.characters.list() 返回
+    selectedCharacterIds: [], // 大厅选中的 char id
+    userProfile: null,        // user 资料
+    oracle: '',               // 神谕文本
+    bgRef: null,              // 背景图 dataURL（存 db）
+    userAvatarRef: null,      // user 游戏头像 dataURL（存 db）
+    settingsId: null,         // 设置记录 id
+
+    // 第二层
+    mode: null,               // "真心话" | "大冒险"
+
+    // 第三层
+    phase: 'spinning',        // "spinning" | "spun" | "confirmed" | "playing" | "awaiting-user"
+    seats: [],                // [{id, kind:'user'|'char', characterId?, name, avatar?, angle}]
+    pointerAngle: 0,
+    winnerSeatId: null,       // 白箭头
+    loserSeatId: null,        // 灰箭头
+    roundNumber: 0,
+    firstRoundDone: false,
+    initialEventSummary: '',  // 本局首轮事件简要描述（用于后续轮 instruction）
+
+    // 消息与游戏内上下文
+    messages: [],             // 本局 UI 显示的消息
+    gameContext: [],          // 结构化上下文 [{role, name, action, speech, raw, createdAt}]
+    pastContext: [],          // 上一局保留下来的游戏内上下文（重来一局时）
+
+    // 其他
+    generating: false,
+    launchContext: null,
+    innerThoughts: {},  // { 角色名: '最新心声文本' }
+  };
+
+  /* ---------- 工具 ---------- */
+  const $ = (id) => document.getElementById(id);
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function toast(msg, ms = 1800) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => t.classList.remove('show'), ms);
+  }
+  function uid() { return 's_' + Math.random().toString(36).slice(2, 10); }
+
+  function switchView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    $('view-' + name).classList.add('active');
+  }
+
+  /* ---------- 持久化：设置（神谕/背景） ---------- */
+  async function loadSettings() {
+    try {
+      const list = await AiPhone.db.list('settings', { limit: 1 });
+      if (list && list[0]) {
+        state.settingsId = list[0].id;
+        state.oracle = list[0].oracle || '';
+        state.bgRef = list[0].bgDataUrl || null;
+        state.userAvatarRef = list[0].userAvatarRef || null;
+      }
+    } catch (e) { console.warn('loadSettings', e); }
+    applyBackground();
+    applyUserAvatar();
+  }
+  async function saveSettings() {
+    const payload = { oracle: state.oracle, bgDataUrl: state.bgRef, userAvatarRef: state.userAvatarRef };
+    try {
+      if (state.settingsId) {
+        await AiPhone.db.update('settings', state.settingsId, payload);
+      } else {
+        const rec = await AiPhone.db.create('settings', payload);
+        state.settingsId = rec.id;
+      }
+    } catch (e) { console.warn('saveSettings', e); }
+  }
+  function applyBackground() {
+    const el = $('bg-layer');
+    if (state.bgRef) {
+      el.style.backgroundImage = `url("${state.bgRef}")`;
+    } else {
+      el.style.backgroundImage = '';
+    }
+  }
+  function applyUserAvatar() {
+    const preview = $('user-avatar-preview');
+    const initial = $('user-avatar-initial');
+    if (!preview) return;
+    if (state.userAvatarRef) {
+      preview.style.backgroundImage = `url("${state.userAvatarRef}")`;
+      if (initial) initial.style.display = 'none';
+    } else {
+      preview.style.backgroundImage = '';
+      if (initial) {
+        initial.style.display = '';
+        initial.textContent = (state.userProfile?.name || '你').slice(0, 1);
+      }
+    }
+  }
+
+  /* ---------- 加载角色 ---------- */
+  async function loadCharacters() {
+    try {
+      state.allCharacters = await AiPhone.characters.list();
+    } catch (e) {
+      state.allCharacters = [];
+    }
+    try {
+      // 用户昵称（不依赖具体角色也能拿到；如果需要可传任意 characterId）
+      const cid = state.allCharacters[0]?.id;
+      if (cid) state.userProfile = await AiPhone.user.getProfile({ characterId: cid });
+    } catch (e) {
+      state.userProfile = null;
+    }
+    renderCharList();
+    applyUserAvatar(); // 拿到 userProfile 后刷新一次首字
+  }
+  function userName() { return state.userProfile?.name || '你'; }
+
+  function renderCharList() {
+    const box = $('char-list');
+    if (!state.allCharacters.length) {
+      box.innerHTML = '<div style="padding:24px;text-align:center;color:var(--ink-light);font-size:12px;letter-spacing:2px;">还没有角色，先去创建一个吧。</div>';
+      return;
+    }
+    const html = state.allCharacters.map(c => {
+      const selected = state.selectedCharacterIds.includes(c.id);
+      const atLimit = !selected && state.selectedCharacterIds.length >= 7;
+      const avatarStyle = c.avatar ? `background-image:url('${escapeHtml(c.avatar)}')` : '';
+      const initial = (c.name || '?').trim().slice(0, 1);
+      return `<div class="char-item ${selected ? 'selected' : ''} ${atLimit ? 'disabled' : ''}" data-id="${escapeHtml(c.id)}">
+        <div class="char-avatar" style="${avatarStyle}">${c.avatar ? '' : escapeHtml(initial)}</div>
+        <div class="char-name">${escapeHtml(c.name || '未命名')}</div>
+        <div class="char-check"></div>
+      </div>`;
+    }).join('');
+    box.innerHTML = html;
+    box.querySelectorAll('.char-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.dataset.id;
+        const idx = state.selectedCharacterIds.indexOf(id);
+        if (idx >= 0) state.selectedCharacterIds.splice(idx, 1);
+        else {
+          if (state.selectedCharacterIds.length >= 7) { toast('最多 7 位角色'); return; }
+          state.selectedCharacterIds.push(id);
+        }
+        renderCharList();
+        updateEnterBtn();
+      });
+    });
+    updateEnterBtn();
+  }
+  function updateEnterBtn() {
+    const n = state.selectedCharacterIds.length;
+    const label = $('count-label');
+    if (n < 3) {
+      label.textContent = `已选 ${n} 位 · 还需 ${3 - n} 位`;
+      label.classList.add('err');
+    } else if (n > 7) {
+      label.textContent = `已选 ${n} 位 · 超出 ${n - 7}`;
+      label.classList.add('err');
+    } else {
+      label.textContent = `已选 ${n} 位（含你共 ${n + 1} 人）`;
+      label.classList.remove('err');
+    }
+    $('btn-enter').disabled = n < 3 || n > 7;
+  }
+
+  /* ---------- 第一层：大厅操作 ---------- */
+  function bindHall() {
+    $('btn-bg').addEventListener('click', pickBackground);
+    $('btn-oracle').addEventListener('click', openOracle);
+    $('btn-enter').addEventListener('click', () => {
+      if (state.selectedCharacterIds.length < 3) return;
+      enterPendulum();
+    });
+
+    $('oracle-cancel').addEventListener('click', () => $('modal-oracle').classList.remove('show'));
+    $('oracle-save').addEventListener('click', async () => {
+      state.oracle = $('oracle-text').value.trim();
+      await saveSettings();
+      $('modal-oracle').classList.remove('show');
+      toast(state.oracle ? '神谕已记下' : '神谕已清空');
+    });
+
+    $('bg-input').addEventListener('change', onBgPick);
+
+    // 用户游戏头像
+    const avatarPreview = $('user-avatar-preview');
+    const avatarInput = $('user-avatar-input');
+    let pressTimer = null;
+    avatarPreview.addEventListener('click', () => avatarInput.click());
+    // 长按重置
+    avatarPreview.addEventListener('touchstart', () => {
+      pressTimer = setTimeout(async () => {
+        state.userAvatarRef = null;
+        await saveSettings();
+        applyUserAvatar();
+        toast('头像已重置');
+      }, 700);
+    }, { passive: true });
+    avatarPreview.addEventListener('touchend', () => clearTimeout(pressTimer));
+    avatarPreview.addEventListener('touchmove', () => clearTimeout(pressTimer), { passive: true });
+    avatarInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        state.userAvatarRef = reader.result;
+        await saveSettings();
+        applyUserAvatar();
+        toast('头像已更新');
+        e.target.value = '';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function openOracle() {
+    $('oracle-text').value = state.oracle || '';
+    $('modal-oracle').classList.add('show');
+    setTimeout(() => $('oracle-text').focus(), 100);
+  }
+
+  async function pickBackground() {
+    // 优先用 SDK media.pick，不行再回退到原生 input
+    try {
+      const picked = await AiPhone.media.pick({ accept: 'image/*' });
+      if (picked && picked.file && picked.file.dataUrl) {
+        state.bgRef = picked.file.dataUrl;
+        await saveSettings();
+        applyBackground();
+        toast('背景已更换');
+        return;
+      }
+    } catch (e) {
+      // 回退
+    }
+    $('bg-input').click();
+  }
+  function onBgPick(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      state.bgRef = reader.result;
+      await saveSettings();
+      applyBackground();
+      toast('背景已更换');
+      e.target.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ---------- 第二层：钟摆 ---------- */
+  function enterPendulum() {
+    switchView('pendulum');
+    // 重来一局时也走这里，但保留上下文
+    state.mode = null;
+    resetPendulumUI();
+  }
+  function resetPendulumUI() {
+    const arm = $('pendulum-arm');
+    arm.classList.remove('swinging', 'landing');
+    arm.style.transform = 'rotate(0deg)';
+    $('lbl-truth').classList.remove('active');
+    $('lbl-dare').classList.remove('active');
+    $('pendulum-result').textContent = '';
+    $('pendulum-result').classList.remove('show');
+    $('btn-pendulum-start').style.display = 'inline-block';
+    $('btn-pendulum-start').disabled = false;
+    $('btn-pendulum-start').textContent = '摇 一 摇';
+    $('btn-pendulum-next').style.display = 'none';
+    $('btn-pendulum-next').disabled = true;
+    $('btn-pendulum-redo').disabled = true;
+    $('btn-pendulum-redo').style.display = 'none';
+  }
+
+  function bindPendulum() {
+    $('btn-pendulum-start').addEventListener('click', spinPendulum);
+    $('btn-pendulum-redo').addEventListener('click', () => {
+      resetPendulumUI();
+    });
+    $('btn-pendulum-next').addEventListener('click', () => {
+      if (!state.mode) return;
+      enterGame();
+    });
+  }
+  function spinPendulum() {
+    const arm = $('pendulum-arm');
+    arm.classList.remove('landing');
+    arm.style.transform = 'rotate(0deg)';
+    void arm.offsetWidth; // reflow
+    arm.classList.add('swinging');
+    $('btn-pendulum-start').disabled = true;
+    $('btn-pendulum-redo').disabled = true;
+    $('btn-pendulum-next').style.display = 'none';
+    $('pendulum-result').classList.remove('show');
+    $('lbl-truth').classList.remove('active');
+    $('lbl-dare').classList.remove('active');
+
+    const result = Math.random() < 0.5 ? '真心话' : '大冒险';
+    const stopAngle = result === '真心话' ? 32 : -32;
+
+    const spinMs = 2000 + Math.random() * 1500;
+    setTimeout(() => {
+      arm.classList.remove('swinging');
+      arm.classList.add('landing');
+      arm.style.transform = `rotate(${stopAngle}deg)`;
+      setTimeout(() => {
+        state.mode = result;
+        $('pendulum-result').textContent = result;
+        $('pendulum-result').classList.add('show');
+        $('lbl-' + (result === '真心话' ? 'truth' : 'dare')).classList.add('active');
+        $('btn-pendulum-start').style.display = 'none';
+        $('btn-pendulum-redo').disabled = false;
+        $('btn-pendulum-redo').style.display = 'inline-block';
+        $('btn-pendulum-next').style.display = 'inline-block';
+        $('btn-pendulum-next').disabled = false;
+      }, 1300);
+    }, spinMs);
+  }
+
+  /* ---------- 第三层：进入游戏，建座位 ---------- */
+  async function enterGame() {
+    switchView('game');
+    buildSeats();
+    renderSeats();
+    renderGameHead();
+    // 重置本局指针（指针/身份每局都要重转，但聊天记录只在首次进入本 app 时清空）
+    state.phase = 'spinning';
+    state.winnerSeatId = null;
+    state.loserSeatId = null;
+    state.pointerAngle = 0;
+    state.roundNumber = 0;
+    state.firstRoundDone = false;
+    state.initialEventSummary = '';
+    const isFirstEntry = !state.hasEnteredGameOnce;
+    state.hasEnteredGameOnce = true;
+    if (isFirstEntry) {
+      state.messages = [];
+      state.gameContext = [];
+    }
+    $('pointer-badge').style.display = 'none';
+    $('btn-spin').style.display = 'inline-block';
+    $('btn-spin').disabled = false;
+    $('btn-spin-redo').disabled = true;
+    $('btn-spin-redo').style.display = 'inline-block';
+    $('btn-spin-confirm').style.display = 'none';
+    $('composer').style.display = 'none';
+    $('composer-hint').style.display = 'none';
+    renderPointer();
+    renderMessages();
+
+    // 首次进入打开场白；重来一局（非首次）则提示情绪延续，聊天记录本身不清空
+    if (!isFirstEntry) {
+      pushSysMsg(`—— 大家重新围坐。空气里还残留着上一场的情绪。 ——`);
+    } else {
+      pushSysMsg(`—— ${state.mode} · 真心话大冒险 开场 ——`);
+    }
+  }
+
+  function buildSeats() {
+    // user + 选中的 char，按角度围成一圈
+    const chars = state.selectedCharacterIds
+      .map(id => state.allCharacters.find(c => c.id === id))
+      .filter(Boolean);
+    const total = chars.length + 1;
+    const participants = [
+      { id: 'user', kind: 'user', name: userName(), avatar: state.userAvatarRef || state.userProfile?.avatar || '', characterId: null },
+      ...chars.map(c => ({ id: 'c_' + c.id, kind: 'char', name: c.name || '未命名', avatar: c.avatar || '', characterId: c.id }))
+    ];
+    // 均匀分布角度：从 -90°（最上）开始
+    for (let i = 0; i < total; i++) {
+      const angle = (360 / total) * i - 90;
+      participants[i].angle = angle;
+    }
+    state.seats = participants;
+  }
+
+  function renderSeats() {
+    const circle = $('table-circle');
+    // 清空除指针/轴心之外的
+    circle.querySelectorAll('.seat, .seat-label-wrap').forEach(el => el.remove());
+    // 转盘几何：按当前实际渲染尺寸算半径（支持 min(80vw,350px) 的响应式尺寸）
+    const rect = circle.getBoundingClientRect();
+    const size = rect.width || 220;
+    const center = size / 2;
+    const seatR = size * 0.4; // 头像圆心离转盘中心的半径
+
+    // 确保轴心存在
+    let pivot = circle.querySelector('.pointer-pivot');
+    if (!pivot) {
+      pivot = document.createElement('div');
+      pivot.className = 'pointer-pivot';
+      circle.appendChild(pivot);
+    }
+    // 确保双针存在
+    ensureNeedle(circle, 'needle-white', seatR * 0.78);
+    ensureNeedle(circle, 'needle-grey', seatR * 0.62);
+
+    state.seats.forEach(s => {
+      const rad = s.angle * Math.PI / 180;
+      const x = center + seatR * Math.cos(rad);
+      const y = center + seatR * Math.sin(rad);
+      const seatEl = document.createElement('div');
+      seatEl.className = 'seat' + (s.kind === 'user' ? ' user' : '');
+      seatEl.dataset.id = s.id;
+      seatEl.style.left = x + 'px';
+      seatEl.style.top = y + 'px';
+      if (s.avatar) seatEl.style.backgroundImage = `url('${s.avatar.replace(/'/g, "\\'")}')`;
+      else seatEl.textContent = (s.name || '?').slice(0, 1);
+      // 高亮
+      if (s.id === state.winnerSeatId) seatEl.classList.add('winner');
+      if (s.id === state.loserSeatId) seatEl.classList.add('loser');
+      // 名字：固定在头像正下方 22px，用 translateX(-50%) 居中
+      const lblWrap = document.createElement('div');
+      lblWrap.className = 'seat-label-wrap';
+      lblWrap.style.position = 'absolute';
+      lblWrap.style.left = x + 'px';
+      lblWrap.style.top = (y + 22) + 'px';
+      lblWrap.style.transform = 'translateX(-50%)';
+      lblWrap.style.fontSize = '10px';
+      lblWrap.style.color = 'var(--ink-dim)';
+      lblWrap.style.whiteSpace = 'nowrap';
+      lblWrap.style.letterSpacing = '0.3px';
+      lblWrap.style.pointerEvents = 'none';
+      lblWrap.style.textShadow = '0 1px 3px rgba(255,255,255,0.95), 0 0 1px rgba(255,255,255,0.8)';
+      lblWrap.style.fontWeight = '600';
+      lblWrap.textContent = s.name;
+      circle.appendChild(seatEl);
+      circle.appendChild(lblWrap);
+    });
+  }
+
+  function ensureNeedle(circle, cls, lenPx) {
+    let el = circle.querySelector('.' + cls);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'needle ' + cls;
+      circle.appendChild(el);
+    }
+    el.style.setProperty('--needle-len', lenPx + 'px');
+    return el;
+  }
+
+  function renderPointer() {
+    // 兼容旧调用：双针初始都指向 0 度，不旋转
+    const circle = $('table-circle');
+    if (!circle) return;
+    const white = circle.querySelector('.needle-white');
+    const grey = circle.querySelector('.needle-grey');
+    if (white) { white.style.transition = 'none'; white.style.transform = 'translate(0,0) rotate(0deg)'; }
+    if (grey) { grey.style.transition = 'none'; grey.style.transform = 'translate(0,0) rotate(0deg)'; }
+  }
+
+  function renderGameHead() {
+    $('mode-pill').textContent = state.mode || '真心话';
+    $('round-info').textContent = state.roundNumber ? `第 ${state.roundNumber} 轮` : '准备中';
+  }
+
+  /* ---------- 指针旋转（整局唯一一次） ---------- */
+  function bindGame() {
+    $('btn-spin').addEventListener('click', spinPointer);
+    $('btn-spin-redo').addEventListener('click', () => {
+      if (state.phase !== 'spun') return;
+      state.winnerSeatId = null;
+      state.loserSeatId = null;
+      state.phase = 'spinning';
+      $('pointer-badge').style.display = 'none';
+      $('btn-spin').style.display = 'inline-block';
+      $('btn-spin').disabled = false;
+      $('btn-spin-confirm').style.display = 'none';
+      renderSeats();
+    });
+    $('btn-spin-confirm').addEventListener('click', confirmPointer);
+    $('btn-end').addEventListener('click', openEndModal);
+    $('btn-send').addEventListener('click', onUserSend);
+    $('btn-observe').addEventListener('click', onUserObserve);
+    const inputEl = $('input');
+    inputEl.addEventListener('input', (e) => {
+      e.target.style.height = 'auto';
+      e.target.style.height = Math.min(90, e.target.scrollHeight) + 'px';
+      $('btn-send').disabled = state.generating || !e.target.value.trim();
+    });
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+        e.preventDefault();
+        if (!$('btn-send').disabled) onUserSend();
+      }
+    });
+
+    $('end-cancel').addEventListener('click', () => $('modal-end').classList.remove('show'));
+    $('end-restart').addEventListener('click', onRestart);
+    $('end-summary').addEventListener('click', onSummarize);
+    $('end-clear').addEventListener('click', async () => {
+      closeEndModal();
+      await clearGameState();
+      switchView('hall');
+      renderCharList();
+      toast('所有记录已清空');
+    });
+
+    // 消息长按菜单
+    bindMsgLongPress();
+
+    // 头像点击 → 心声弹窗（事件委托）
+    $('messages').addEventListener('click', (e) => {
+      const avatarEl = e.target.closest('.msg-avatar[data-char-name]');
+      if (!avatarEl) return;
+      e.stopPropagation();
+      const name = avatarEl.dataset.charName;
+      if (!name) return;
+      showThoughtPopup(name, avatarEl);
+    });
+  }
+
+  function showThoughtPopup(name, anchorEl) {
+    closeThoughtPopup();
+    const text = state.innerThoughts[name] || '对方看起来心事重重，没有更多可说的了。';
+    // 遮罩
+    const backdrop = document.createElement('div');
+    backdrop.className = 'thought-popup-backdrop';
+    backdrop.addEventListener('click', closeThoughtPopup);
+    document.body.appendChild(backdrop);
+    // 弹窗
+    const popup = document.createElement('div');
+    popup.className = 'thought-popup';
+    popup.id = 'thought-popup';
+    popup.innerHTML = `<div class="tp-name">${escapeHtml(name)} · 心声</div>${escapeHtml(text)}`;
+    document.body.appendChild(popup);
+    // 定位：贴着头像右侧或下方
+    const rect = anchorEl.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let left = rect.right + 8;
+    let top = rect.top;
+    // 超出右边界就放左边
+    if (left + 260 > vw) left = Math.max(8, rect.left - 268);
+    // 超出下边界就上移
+    if (top + 120 > vh) top = Math.max(8, vh - 140);
+    popup.style.left = left + 'px';
+    popup.style.top = top + 'px';
+  }
+
+  function closeThoughtPopup() {
+    const p = document.getElementById('thought-popup');
+    if (p) p.remove();
+    document.querySelectorAll('.thought-popup-backdrop').forEach(el => el.remove());
+  }
+
+  function bindMsgLongPress() {
+    const box = $('messages');
+    let pressTimer = null;
+    let pressTarget = null;
+
+    function getMsgEl(el) {
+      while (el && el !== box) {
+        if (el.dataset && el.dataset.msgIdx !== undefined) return el;
+        el = el.parentElement;
+      }
+      return null;
+    }
+
+    function showMsgMenu(msgEl, clientX, clientY) {
+      closeMsgMenu();
+      const idx = parseInt(msgEl.dataset.msgIdx, 10);
+      if (isNaN(idx)) return;
+      const m = state.messages[idx];
+      if (!m || m.role === 'loading') return;
+
+      // 遮罩（点外部关闭）
+      const backdrop = document.createElement('div');
+      backdrop.className = 'msg-menu-backdrop';
+      backdrop.addEventListener('click', closeMsgMenu);
+      document.body.appendChild(backdrop);
+
+      // 菜单
+      const menu = document.createElement('div');
+      menu.className = 'msg-menu';
+      menu.id = 'msg-menu';
+
+      // 选项：删除这条
+      const delItem = document.createElement('div');
+      delItem.className = 'msg-menu-item danger';
+      delItem.innerHTML = '🗑 删除这条';
+      delItem.addEventListener('click', () => {
+        closeMsgMenu();
+        deleteMsg(idx);
+      });
+      menu.appendChild(delItem);
+
+      // 选项：删除此条及之后所有（相当于"从这里重来"）
+      const delAfterItem = document.createElement('div');
+      delAfterItem.className = 'msg-menu-item danger';
+      delAfterItem.innerHTML = '✂️ 删除此条及之后';
+      delAfterItem.addEventListener('click', () => {
+        closeMsgMenu();
+        deleteMsgFrom(idx);
+      });
+      menu.appendChild(delAfterItem);
+
+      // 选项：重回（仅对 char 回复 / sys 报错类型显示）
+      if (m.role === 'char' || (m.role === 'sys' && m.content && m.content.startsWith('出错了'))) {
+        const regenItem = document.createElement('div');
+        regenItem.className = 'msg-menu-item' + (state.generating ? ' disabled' : '');
+        regenItem.innerHTML = '🔄 重回（重新生成此轮）';
+        if (!state.generating) {
+          regenItem.addEventListener('click', () => {
+            closeMsgMenu();
+            regenFrom(idx);
+          });
+        }
+        menu.appendChild(regenItem);
+      }
+
+      document.body.appendChild(menu);
+
+      // 定位：在点击位置附近，防止超出屏幕
+      const mw = 160, mh = 100;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      let left = Math.min(clientX, vw - mw - 8);
+      let top = Math.min(clientY + 8, vh - mh - 8);
+      if (top < 8) top = 8;
+      menu.style.left = left + 'px';
+      menu.style.top = top + 'px';
+    }
+
+    function closeMsgMenu() {
+      const menu = document.getElementById('msg-menu');
+      if (menu) menu.remove();
+      document.querySelectorAll('.msg-menu-backdrop').forEach(el => el.remove());
+    }
+
+    // 触摸长按
+    box.addEventListener('touchstart', (e) => {
+      const msgEl = getMsgEl(e.target);
+      if (!msgEl) return;
+      pressTarget = msgEl;
+      pressTimer = setTimeout(() => {
+        const touch = e.touches[0];
+        showMsgMenu(msgEl, touch.clientX, touch.clientY);
+      }, 600);
+    }, { passive: true });
+    box.addEventListener('touchend', () => { clearTimeout(pressTimer); pressTarget = null; }, { passive: true });
+    box.addEventListener('touchmove', () => { clearTimeout(pressTimer); pressTarget = null; }, { passive: true });
+
+    // 鼠标右键（桌面调试用）
+    box.addEventListener('contextmenu', (e) => {
+      const msgEl = getMsgEl(e.target);
+      if (!msgEl) return;
+      e.preventDefault();
+      showMsgMenu(msgEl, e.clientX, e.clientY);
+    });
+  }
+
+  function deleteMsg(idx) {
+    // 删除 messages 里指定条目，同时从 gameContext 里删除对应条目
+    const m = state.messages[idx];
+    if (!m) return;
+    state.messages.splice(idx, 1);
+    // 同步删 gameContext（按 createdAt 匹配）
+    if (m.createdAt && m.role !== 'sys') {
+      const ci = state.gameContext.findIndex(c => c.createdAt === m.createdAt);
+      if (ci >= 0) state.gameContext.splice(ci, 1);
+    }
+    renderMessages();
+    saveGameState();
+    toast('已删除');
+  }
+
+  function deleteMsgFrom(idx) {
+    const removed = state.messages.splice(idx);
+    // 同步删 gameContext
+    const removedTimes = new Set(removed.map(m => m.createdAt).filter(Boolean));
+    state.gameContext = state.gameContext.filter(c => !removedTimes.has(c.createdAt));
+    renderMessages();
+    saveGameState();
+    toast(`已删除 ${removed.length} 条`);
+  }
+
+  async function regenFrom(idx) {
+    if (state.generating) { toast('正在生成中，请等等…'); return; }
+    // 1. 删掉这条及之后的所有消息（包括 gameContext 同步）
+    deleteMsgFrom(idx);
+
+    // 2. 找上一条 user 消息（作为这一轮的触发来源）
+    const lastUserMsg = [...state.messages].reverse().find(m => m.role === 'user');
+
+    // 3. 判断当前所处阶段并重新触发对应 AI 调用
+    const winner = seat(state.winnerSeatId);
+    const loser = seat(state.loserSeatId);
+
+    if (!winner || !loser) {
+      toast('找不到指针信息，请用「回溯」重转');
+      return;
+    }
+
+    if (!state.firstRoundDone) {
+      // 第一轮尚未完成时
+      if (winner.kind === 'char' && loser.kind === 'user') {
+        if (lastUserMsg) {
+          // 用户已经回答过，重跑 reactions
+          await runRoundReactionsToUser(winner);
+        } else {
+          // 用户还没回答，重跑 char asks user
+          await runRoundCharAsksUser(winner);
+        }
+      } else if (winner.kind === 'user' && loser.kind === 'char') {
+        if (lastUserMsg) {
+          await runRoundUserAsksChar(loser);
+        } else {
+          toast('第一轮用户还未发题，请在输入框直接输入');
+        }
+      } else {
+        // winner/loser 都是 char
+        await runRoundAllChar(winner, loser);
+      }
+    } else {
+      // 后续轮：用上一条 user 消息重跑 followup
+      if (lastUserMsg) {
+        // 确保 gameContext 里有这条 user 消息（deleteMsgFrom 可能已一并删掉）
+        const alreadyInCtx = state.gameContext.some(c => c.role === 'user' && c.createdAt === lastUserMsg.createdAt);
+        if (!alreadyInCtx) {
+          state.gameContext.push({
+            role: 'user',
+            name: userName(),
+            action: '',
+            speech: lastUserMsg.content,
+            raw: lastUserMsg.content,
+            createdAt: lastUserMsg.createdAt,
+          });
+        }
+        await runRoundFollowup();
+      } else {
+        toast('找不到上一条发言，请重新输入再发送');
+        enableFollowupInput();
+      }
+    }
+  }
+
+  function seatClockAngle(s) {
+    // s.angle: -90 = 顶部（数学坐标系）。转成 "0=最上, 顺时针为正" 的刻度角
+    return ((s.angle + 90) % 360 + 360) % 360;
+  }
+  function nearestSeatByClockAngle(clockAngle, excludeId) {
+    let best = null, bestDiff = Infinity;
+    for (const s of state.seats) {
+      if (excludeId && s.id === excludeId) continue;
+      let diff = Math.abs(seatClockAngle(s) - clockAngle);
+      if (diff > 180) diff = 360 - diff;
+      if (diff < bestDiff) { bestDiff = diff; best = s; }
+    }
+    return best;
+  }
+
+  function spinPointer() {
+    if (state.phase !== 'spinning') return;
+    const n = state.seats.length;
+    if (n < 4) { toast('至少需要 4 人（含你）'); return; }
+
+    // 双针独立随机：白针角度、灰针角度各自在 0~360° 随机
+    // 指向判定：needle 的 CSS rotate(0deg) 默认指向 3 点钟方向（刻度 90°），
+    // 所以要让 needle 指向刻度角 clockAngle，需要 rotate(clockAngle - 90) 度
+    let whiteClockAngle = Math.random() * 360;
+    let whiteSeat = nearestSeatByClockAngle(whiteClockAngle, null);
+
+    let greyClockAngle = Math.random() * 360;
+    let greySeat = nearestSeatByClockAngle(greyClockAngle, null);
+
+    // 强制防重合：如果两针指向同一个人，让灰针重新随机角度，
+    // 直到指向不同的人；为避免极端情况卡死，限制重试次数，
+    // 超过次数后强制把灰针角度加半圈再找一次
+    let guard = 0;
+    while (whiteSeat.id === greySeat.id && guard < 30) {
+      greyClockAngle = Math.random() * 360;
+      greySeat = nearestSeatByClockAngle(greyClockAngle, null);
+      guard++;
+    }
+    if (whiteSeat.id === greySeat.id) {
+      // 兜底：直接让灰针转到白针对面附近，再找离那个方向最近的"另一个人"
+      greyClockAngle = (whiteClockAngle + 180) % 360;
+      greySeat = nearestSeatByClockAngle(greyClockAngle, whiteSeat.id);
+    }
+
+    const winner = whiteSeat;
+    const loser = greySeat;
+
+    // 两根针各自要转到的目标角（CSS rotate 角度 = 目标刻度角 - 90）
+    const whiteTarget = seatClockAngle(winner) - 90;
+    const greyTarget = seatClockAngle(loser) - 90;
+
+    // 两针各自随机转动圈数，制造狂野的独立旋转感，且转速/圈数都不同
+    const whiteSpins = 4 + Math.floor(Math.random() * 4); // 4~7圈
+    const greySpins = 4 + Math.floor(Math.random() * 4);
+    const whiteFinal = whiteSpins * 360 + whiteTarget + (Math.random() * 6 - 3);
+    const greyFinalAngle = (Math.random() < 0.5 ? greySpins : -greySpins) * 360 + greyTarget + (Math.random() * 6 - 3);
+
+    $('btn-spin').disabled = true;
+    $('btn-spin-redo').disabled = true;
+
+    const circle = $('table-circle');
+    const whiteEl = circle.querySelector('.needle-white');
+    const greyEl = circle.querySelector('.needle-grey');
+
+    // 重置到 0 度后快速启动独立旋转动画
+    [whiteEl, greyEl].forEach(el => {
+      el.classList.add('spinning');
+      el.style.transition = 'none';
+      el.style.transform = 'translate(0,0) rotate(0deg)';
+    });
+    void circle.offsetWidth;
+    whiteEl.classList.remove('spinning');
+    greyEl.classList.remove('spinning');
+    // 白针转速稍快、灰针稍慢，两针动画时长略有差异，避免机械同步感
+    whiteEl.style.transition = 'transform 2.4s cubic-bezier(0.12, 0.85, 0.2, 1)';
+    greyEl.style.transition = 'transform 2.8s cubic-bezier(0.1, 0.8, 0.22, 1)';
+    whiteEl.style.transform = `translate(0,0) rotate(${whiteFinal}deg)`;
+    greyEl.style.transform = `translate(0,0) rotate(${greyFinalAngle}deg)`;
+
+    setTimeout(() => {
+      state.winnerSeatId = winner.id;
+      state.loserSeatId = loser.id;
+      state.phase = 'spun';
+      renderSeats();
+      // renderSeats 会重建针元素并清零 transform，这里重新把针摆正到最终静止角度
+      const circle2 = $('table-circle');
+      const w2 = circle2.querySelector('.needle-white');
+      const g2 = circle2.querySelector('.needle-grey');
+      w2.style.transition = 'none';
+      w2.style.transform = `translate(0,0) rotate(${whiteTarget}deg)`;
+      g2.style.transition = 'none';
+      g2.style.transform = `translate(0,0) rotate(${greyTarget}deg)`;
+      $('pointer-badge').style.display = 'inline-block';
+      $('winner-text').textContent = winner.name + (winner.kind === 'user' ? '（你）' : '');
+      $('loser-text').textContent = loser.name + (loser.kind === 'user' ? '（你）' : '');
+      $('btn-spin').style.display = 'none';
+      $('btn-spin-redo').disabled = false;
+      $('btn-spin-confirm').style.display = 'inline-block';
+      $('btn-spin-confirm').disabled = false;
+    }, 2900);
+  }
+
+  async function confirmPointer() {
+    if (state.phase !== 'spun') return;
+    state.phase = 'confirmed';
+    $('btn-spin-confirm').style.display = 'none';
+    $('btn-spin-redo').style.display = 'none';
+    // 收起整个 table-tools 后，提示本局指针已锁定
+    const winner = seat(state.winnerSeatId);
+    const loser = seat(state.loserSeatId);
+    pushSysMsg(`指针落定：${winner.name} → ${loser.name}（本局不再重转）`);
+    saveGameState();
+    // 开始第一轮
+    await startFirstRound();
+  }
+
+  function seat(id) { return state.seats.find(s => s.id === id); }
+  function charSeatsExcept(ids) {
+    // 返回所有 char 座位（排除指定 id）
+    return state.seats.filter(s => s.kind === 'char' && !ids.includes(s.id));
+  }
+  function allCharSeats() { return state.seats.filter(s => s.kind === 'char'); }
+
+
+  /* ---------- 消息渲染 ---------- */
+  function pushSysMsg(text) {
+    state.messages.push({ role: 'sys', content: text, createdAt: new Date().toISOString() });
+    renderMessages();
+    saveGameState();
+  }
+  function pushUserMsg(text) {
+    const ts = new Date().toISOString(); // 同一时间戳，保证 messages 和 gameContext 完全一致
+    state.messages.push({ role: 'user', name: userName(), content: text, createdAt: ts });
+    renderMessages();
+    // 同步进 gameContext
+    state.gameContext.push({ role: 'user', name: userName(), action: '', speech: text, raw: text, createdAt: ts });
+    saveGameState(); // 消息变化后持久化
+  }
+  function pushCharMsg(name, action, speech, raw) {
+    const char = state.seats.find(s => s.kind === 'char' && s.name === name);
+    const ts = new Date().toISOString();
+    state.messages.push({
+      role: 'char',
+      name,
+      action: action || '',
+      speech: speech || '',
+      avatar: char?.avatar || '',
+      createdAt: ts,
+    });
+    state.gameContext.push({
+      role: 'assistant',
+      name,
+      action: action || '',
+      speech: speech || '',
+      raw: raw || `${action ? '（' + action + '）' : ''}${speech || ''}`,
+      createdAt: ts,
+    });
+    renderMessages();
+    saveGameState();
+  }
+  function pushLoading() {
+    const id = uid();
+    state.messages.push({ role: 'loading', id, createdAt: new Date().toISOString() });
+    renderMessages();
+    return id;
+  }
+  function removeLoading(id) {
+    const i = state.messages.findIndex(m => m.role === 'loading' && m.id === id);
+    if (i >= 0) state.messages.splice(i, 1);
+    renderMessages();
+  }
+
+  function renderMessages() {
+    const box = $('messages');
+    const html = state.messages.map((m, idx) => {
+      if (m.role === 'loading') {
+        return `<div class="msg"><div class="msg-avatar">…</div><div class="msg-body"><div class="msg-bubble"><span class="msg-loading"><span></span><span></span><span></span></span></div></div></div>`;
+      }
+      const attr = `data-msg-idx="${idx}"`;
+      if (m.role === 'sys') {
+        return `<div class="msg sys" ${attr}><div class="msg-bubble">${escapeHtml(m.content)}</div></div>`;
+      }
+      if (m.role === 'user') {
+        const avatar = state.userAvatarRef || state.userProfile?.avatar;
+        const initial = escapeHtml((m.name || '?').slice(0, 1));
+        const avatarHtml = avatar
+          ? `<div class="msg-avatar" style="background-image:url('${avatar.replace(/'/g,"\\'")}')"></div>`
+          : `<div class="msg-avatar">${initial}</div>`;
+        return `<div class="msg user" ${attr}>${avatarHtml}<div class="msg-body"><div class="msg-name">${escapeHtml(m.name)}</div><div class="msg-bubble">${escapeHtml(m.content)}</div></div></div>`;
+      }
+      // char
+      const initial = escapeHtml((m.name || '?').slice(0, 1));
+      const charNameAttr = `data-char-name="${escapeHtml(m.name)}"`;
+      const avatarHtml = m.avatar
+        ? `<div class="msg-avatar" ${charNameAttr} style="background-image:url('${m.avatar.replace(/'/g,"\\'")}');cursor:pointer;"></div>`
+        : `<div class="msg-avatar" ${charNameAttr} style="cursor:pointer;">${initial}</div>`;
+      const actionHtml = m.action ? `<span class="action">（${escapeHtml(m.action)}）</span>` : '';
+      const speechHtml = m.speech ? escapeHtml(m.speech) : '';
+      return `<div class="msg" ${attr}>${avatarHtml}<div class="msg-body"><div class="msg-name">${escapeHtml(m.name)}</div><div class="msg-bubble">${actionHtml}${speechHtml}</div></div></div>`;
+    }).join('');
+    box.innerHTML = html;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  /* ---------- 解析 AI 输出：每行【角色名】正文 ---------- */
+  function parseAiOutput(text) {
+    if (!text) return [];
+    const lines = text.split(/\r?\n+/).map(s => s.trim()).filter(Boolean);
+    const results = [];
+    // 兼容：有时模型会用 "角色名："开头而不是【】；我们优先匹配【】
+    for (const line of lines) {
+      // 优先匹配心声行：【角色名-心声】内容 或 【角色名－心声】内容
+      const thoughtMatch = line.match(/^[【\[]\s*([^\]】\-－—]+?)\s*[-－—]\s*心声\s*[\]】][\s::]*(.*)$/);
+      if (thoughtMatch) {
+        const tName = thoughtMatch[1].trim();
+        const tBody = (thoughtMatch[2] || '').trim();
+        if (isValidCharName(tName) && tBody.length > 0) {
+          state.innerThoughts[tName] = tBody;
+        }
+        continue; // 不进气泡
+      }
+      let m = line.match(/^[【\[]([^\]】]+)[\]】][\s::]*(.*)$/);
+      if (!m) {
+        // 尝试 "角色名: ..." 形式（必须是本局角色之一）
+        const colon = line.match(/^([^：:]{1,16})[:：]\s*(.*)$/);
+        if (colon && isValidCharName(colon[1].trim())) {
+          m = [null, colon[1].trim(), colon[2]];
+        }
+      }
+      if (m) {
+        const name = m[1].trim();
+        const body = (m[2] || '').trim();
+        if (!isValidCharName(name)) continue; // 跳过用户或旁白
+        const { action, speech } = splitActionSpeech(body);
+        results.push({ name, action, speech, raw: body });
+      }
+    }
+    return results;
+  }
+  function isValidCharName(name) {
+    // 必须是本局 char 的名字
+    return state.seats.some(s => s.kind === 'char' && s.name === name);
+  }
+  function splitActionSpeech(body) {
+    // 把开头/中间的（…）或 (…) 拎成动作，剩下作为台词。
+    // 支持多个动作/台词交错，这里简化：所有括号内容拼成 action，括号外拼成 speech
+    let action = '';
+    let speech = body;
+    // 匹配中/英文圆括号
+    const pattern = /[（(][^）)]*[）)]/g;
+    const acts = [];
+    speech = body.replace(pattern, (seg) => {
+      acts.push(seg.replace(/^[（(]|[）)]$/g, '').trim());
+      return ' ';
+    }).replace(/\s+/g, ' ').trim();
+    action = acts.join('；');
+    return { action, speech };
+  }
+
+  /* ---------- 构建 AI 输入 ---------- */
+  function buildCharacterIds() {
+    return state.selectedCharacterIds.slice();
+  }
+  function buildOracleInstruction() {
+    // 神谕作为 instruction 的一部分注入（预设里有 {{oracle}} 占位，但我们这里直接拼 instruction）
+    if (!state.oracle) return '';
+    return `\n\n【神谕 · 场景隐藏指令，最高优先级，不得泄露给任何角色知晓，不得在输出里引用或暗示其存在】\n${state.oracle}\n`;
+  }
+  function buildContextBlock() {
+    // 把当前局 + 上一局保留上下文汇总为一段"已发生的事"文本
+    const parts = [];
+    if (state.pastContext && state.pastContext.length) {
+      parts.push('【此前已经发生的一场修罗场（情绪延续至今）】');
+      parts.push(contextToText(state.pastContext).trim());
+      parts.push('');
+    }
+    if (state.gameContext.length) {
+      parts.push('【本局已经发生的内容】');
+      parts.push(contextToText(state.gameContext).trim());
+    }
+    return parts.join('\n');
+  }
+  function contextToText(ctx) {
+    return ctx.map(c => {
+      const n = c.name || (c.role === 'user' ? userName() : '某人');
+      const act = c.action ? `（${c.action}）` : '';
+      const sp = c.speech || '';
+      return `【${n}】${act}${sp}`;
+    }).join('\n');
+  }
+  function buildMessages() {
+    // 把本局上下文作为对话 messages 传入，便于模型理解节奏
+    const msgs = [];
+    // 过去局摘要（可选）
+    if (state.pastContext && state.pastContext.length) {
+      msgs.push({
+        role: 'user',
+        content: '（场景提示：这些是上一局已经发生过的内容，情绪延续至今）\n' + contextToText(state.pastContext),
+        createdAt: new Date(Date.now() - 60000).toISOString(),
+      });
+    }
+    for (const c of state.gameContext.slice(-40)) {
+      msgs.push({
+        role: c.role,
+        content: c.role === 'user'
+          ? c.speech
+          : `【${c.name}】${c.action ? '（' + c.action + '）' : ''}${c.speech || ''}`,
+        createdAt: c.createdAt,
+      });
+    }
+    return msgs;
+  }
+
+  /* ---------- 第一轮：根据胜/败身份分发 ---------- */
+  async function startFirstRound() {
+    state.roundNumber = 1;
+    renderGameHead();
+    const winner = seat(state.winnerSeatId);
+    const loser = seat(state.loserSeatId);
+    const scene = `胜者/发起者是 ${winner.name}（${winner.kind === 'user' ? '用户' : '角色'}），败者/承受者是 ${loser.name}（${loser.kind === 'user' ? '用户' : '角色'}）。模式：${state.mode}。`;
+    pushSysMsg(`第 1 轮 · ${state.mode}：${winner.name} → ${loser.name}`);
+
+    if (winner.kind === 'char' && loser.kind === 'char') {
+      // 情况 A
+      await runRoundAllChar(winner, loser);
+    } else if (winner.kind === 'char' && loser.kind === 'user') {
+      // 情况 B · 第一步：胜者 char 向 user 发题
+      await runRoundCharAsksUser(winner);
+      // 等待用户回答（phase=awaiting-user），回答后触发第二步
+    } else if (winner.kind === 'user' && loser.kind === 'char') {
+      // 情况 C · 等待用户出题
+      state.phase = 'awaiting-user';
+      $('composer').style.display = 'flex';
+      $('composer-hint').style.display = 'block';
+      $('composer-hint').textContent = `你是胜者，向 ${loser.name} 发起「${state.mode}」`;
+      $('input').placeholder = state.mode === '真心话'
+        ? `问 ${loser.name} 一个真心话…`
+        : `给 ${loser.name} 一个大冒险指令…`;
+      setTimeout(() => $('input').focus(), 100);
+    }
+    // D 不存在
+  }
+
+  async function runRoundAllChar(winner, loser) {
+    const loadingId = pushLoading();
+    try {
+      const instruction = buildRoundInstruction('round-all-char', { winner, loser }) + buildOracleInstruction() + '\n\n' + buildContextBlock();
+      const result = await AiPhone.ai.generate({
+        characterIds: buildCharacterIds(),
+        appTags: ['shuraba', 'round-all-char'],
+        messages: buildMessages(),
+        instruction,
+      });
+      removeLoading(loadingId);
+      const parsed = parseAiOutput(result && result.text || '');
+      if (!parsed.length) {
+        pushSysMsg('（AI 没有产生有效内容，请检查预设或 API 配置）');
+        return;
+      }
+      // 保留模型输出的原始因果时间线顺序，不再按角色身份重排
+      await renderAiBatchSequential(parsed);
+      // 生成初始事件摘要
+      state.initialEventSummary = buildInitialEventSummary(winner, loser, parsed);
+      state.firstRoundDone = true;
+      enableFollowupInput();
+    } catch (e) {
+      removeLoading(loadingId);
+      pushSysMsg('出错了：' + (e && e.message || e));
+    }
+  }
+
+  function reorderForFirstRound(parsed, winnerName, loserName) {
+    const w = parsed.filter(p => p.name === winnerName);
+    const l = parsed.filter(p => p.name === loserName);
+    const rest = parsed.filter(p => p.name !== winnerName && p.name !== loserName);
+    return [...w, ...l, ...rest];
+  }
+
+  function buildInitialEventSummary(winner, loser, parsed) {
+    // 用第一条 winner 发言 + 第一条 loser 回应作为初始事件简要
+    const wLine = parsed.find(p => p.name === winner.name);
+    const lLine = parsed.find(p => p.name === loser.name);
+    const wText = wLine ? ((wLine.action ? '（' + wLine.action + '）' : '') + (wLine.speech || '')) : '';
+    const lText = lLine ? ((lLine.action ? '（' + lLine.action + '）' : '') + (lLine.speech || '')) : '';
+    const parts = [`模式：${state.mode}`, `发起者 ${winner.name} → 承受者 ${loser.name}`];
+    if (wText) parts.push(`${winner.name} 开场：${wText}`);
+    if (lText) parts.push(`${loser.name} 回应：${lText}`);
+    return parts.join('；');
+  }
+
+  async function renderAiBatchSequential(items) {
+    // 依次把 AI 产出显示出来，稍带节奏感
+    for (const it of items) {
+      pushCharMsg(it.name, it.action, it.speech, it.raw);
+      await sleep(220);
+    }
+  }
+
+  async function runRoundCharAsksUser(winner) {
+    const loadingId = pushLoading();
+    try {
+      const loser = { kind: 'user', name: userName() };
+      const instruction = buildRoundInstruction('round-char-asks-user', { winner, loser }) + buildOracleInstruction() + '\n\n' + buildContextBlock();
+      const result = await AiPhone.ai.generate({
+        characterIds: buildCharacterIds(),
+        appTags: ['shuraba', 'round-char-asks-user'],
+        messages: buildMessages(),
+        instruction,
+      });
+      removeLoading(loadingId);
+      const parsed = parseAiOutput(result && result.text || '');
+      if (!parsed.length) {
+        pushSysMsg('（AI 没有产生有效内容）');
+        return;
+      }
+      await renderAiBatchSequential(parsed);
+      // 等用户回答
+      state.phase = 'awaiting-user';
+      $('composer').style.display = 'flex';
+      $('composer-hint').style.display = 'block';
+      $('composer-hint').textContent = `你是承受者，回应 ${winner.name} 的「${state.mode}」`;
+      $('input').placeholder = state.mode === '真心话'
+        ? '诚实回答，或撒谎、反问、沉默…'
+        : '执行指令，或拒绝、讨价还价…';
+      setTimeout(() => $('input').focus(), 100);
+    } catch (e) {
+      removeLoading(loadingId);
+      pushSysMsg('出错了：' + (e && e.message || e));
+    }
+  }
+
+  const SEQUENCE_RULE = `
+
+【输出时序规范】
+1. 当一次性生成多个角色的对话时，请务必按照因果时间线进行排序。
+2. 如果角色 A 的发言是对角色 B 或 C 的回应，A 的输出必须排在 B 和 C 的后面。严禁让角色在不具备前置语境的情况下，提前预判别人的发言。
+3. 如果在同一轮中，某个角色有多段反应（比如先有内心感受，再对外界做出回应），请把该角色的发言拆分到文本的不同行：先输出其前置感受，再输出其他角色的争执，最后输出其对外界争执的回应。确保每一行都以【角色名】开头。
+
+【角色心声】
+在每个角色的所有发言行之后，必须为该角色单独输出一行心声，格式为：【角色名-心声】内心活动文字（50-100字）。
+要求：心声必须符合角色人设，体现表面伪装下的真实情绪（占有欲、嫉妒、暗爽、酸涩、心疼等）。这行文字不会直接显示在聊天气泡中，只在用户点击头像时才展示，所以可以写得更真实、更私密。每个角色只需一行心声。`;
+
+  function buildRoundInstruction(kind, ctx) {
+    // 和预设里 tags 对应的参数替换
+    const winnerName = ctx.winner?.name || '';
+    const loserName = ctx.loser?.name || '';
+    const base = {
+      'round-all-char': `这一轮由 ${winnerName}（在场的一位角色）作为胜者/发起者，向 ${loserName}（也是在场的一位角色）在「${state.mode}」模式下发起。请按预设格式输出：先 ${winnerName} 发起（真心话就提问题，大冒险就下指令），再 ${loserName} 回答/执行，然后场上所有其他非用户角色强制发言反应（一个不漏）。每行格式：【角色名】正文。动作写在圆括号里。`,
+      'round-char-asks-user': `这一轮由 ${winnerName}（在场角色）作为胜者/发起者，向用户（${userName()}）作为败者/承受者，在「${state.mode}」模式下发起。本次只需要输出：第一步 ${winnerName} 向用户发起（出题/下指令），第二步 其他在场非用户角色可以预热性反应（针对题目本身起哄、吃醋、补刀）——但严禁替用户回答，严禁出现【${userName()}】发言行。等用户回答后再进行下一步。每行格式：【角色名】正文。`,
+      'round-reactions-to-user': `刚刚用户（${userName()}）作为败者，针对 ${winnerName} 在「${state.mode}」里给出的题目做出了回答/执行。现在请让场上除用户外的所有角色（包括 ${winnerName}）全部发言做出连锁反应，一个不漏。要延续本局情绪。每行格式：【角色名】正文。严禁出现【${userName()}】发言行。`,
+      'round-user-asks-char': `本轮由用户（${userName()}）作为胜者/发起者，向 ${loserName}（在场角色）作为败者/承受者，在「${state.mode}」模式下发起了提问/指令。请输出：第一步 ${loserName} 回答/执行；第二步 其他在场所有非用户角色强制反应，一个不漏，延续情绪。每行格式：【角色名】正文。严禁出现【${userName()}】发言行。`,
+      'round-followup': `本局修罗场不会重新转指针。初始事件（${state.initialEventSummary || '见上文'}）仍是情绪锚点。用户刚刚说出或做了一件事（见本次 user 消息）。请让场上除用户外所有角色全部发言反应，一个不漏，围绕初始事件和已积累的情绪继续推进——可以升级冲突，可以让某人崩溃，但不许无故让场面平静下来、不许替用户发言。每行格式：【角色名】正文。严禁出现【${userName()}】发言行。`,
+      'round-observe': `本局修罗场不会重新转指针。初始事件（${state.initialEventSummary || '见上文'}）仍是情绪锚点。此刻用户选择沉默旁观，没有任何发言或行动介入。请让场上除用户外所有角色按照当前局势的内在逻辑自行推进——可以继续争吵、升级冲突、有人爆发或崩溃、有人拉架或落井下石——总之场面不会因为用户沉默而停下来，情绪继续蔓延。严禁替用户发言，严禁出现【${userName()}】发言行。每行格式：【角色名】正文。`,
+    };
+    return (base[kind] || '') + SEQUENCE_RULE;
+  }
+
+  function enableFollowupInput() {
+    state.phase = 'playing';
+    $('composer').style.display = 'flex';
+    $('composer-hint').style.display = 'block';
+    $('composer-hint').textContent = '轮到你 · 发言或行动，推动这场修罗场';
+    $('input').placeholder = '说点什么，或描述你的行动…';
+    $('input').value = '';
+    $('btn-send').disabled = true;
+    $('btn-observe').disabled = false;
+  }
+
+  /* ---------- 用户发送：第一轮未完成 / 第一轮已完成分别处理 ---------- */
+  async function onUserSend() {
+    if (state.generating) return;
+    const text = $('input').value.trim();
+    if (!text) return;
+    $('input').value = '';
+    $('input').style.height = 'auto';
+    $('btn-send').disabled = true;
+
+    // 根据当前 phase 分发
+    const winner = seat(state.winnerSeatId);
+    const loser = seat(state.loserSeatId);
+
+    if (!state.firstRoundDone) {
+      // 第一轮未完成
+      if (winner.kind === 'char' && loser.kind === 'user') {
+        // 情况 B 第二步：user 已经回答
+        pushUserMsg(text);
+        await runRoundReactionsToUser(winner);
+      } else if (winner.kind === 'user' && loser.kind === 'char') {
+        // 情况 C：user 刚刚出题
+        pushUserMsg(text);
+        await runRoundUserAsksChar(loser);
+      }
+    } else {
+      // 后续轮
+      state.roundNumber += 1;
+      renderGameHead();
+      pushUserMsg(text);
+      await runRoundFollowup();
+    }
+  }
+
+  async function onUserObserve() {
+    if (state.generating) return;
+    // 只在第一轮已完成后（后续轮 playing 阶段）才能用
+    if (!state.firstRoundDone) {
+      toast('第一轮还没完成，先完成当前环节');
+      return;
+    }
+    state.roundNumber += 1;
+    renderGameHead();
+    // 注入一条旁观系统消息（不进 gameContext，只做视觉提示）
+    pushSysMsg('—— 你选择沉默，静观其变 ——');
+    await runRoundObserve();
+  }
+
+  async function runRoundObserve() {
+    const loadingId = pushLoading();
+    state.generating = true;
+    $('btn-observe').disabled = true;
+    $('btn-send').disabled = true;
+    try {
+      const instruction = buildRoundInstruction('round-observe', {}) + buildOracleInstruction() + '\n\n' + buildContextBlock();
+      const result = await AiPhone.ai.generate({
+        characterIds: buildCharacterIds(),
+        appTags: ['shuraba', 'round-observe'],
+        messages: buildMessages(),
+        instruction,
+      });
+      removeLoading(loadingId);
+      const parsed = parseAiOutput(result && result.text || '');
+      if (!parsed.length) {
+        pushSysMsg('（AI 没有产生有效内容）');
+      } else {
+        await renderAiBatchSequential(parsed);
+      }
+      enableFollowupInput();
+    } catch (e) {
+      removeLoading(loadingId);
+      pushSysMsg('出错了：' + (e && e.message || e));
+      enableFollowupInput();
+    } finally {
+      state.generating = false;
+    }
+  }
+
+  async function runRoundReactionsToUser(winner) {
+    const loadingId = pushLoading();
+    state.generating = true;
+    try {
+      const loser = { kind: 'user', name: userName() };
+      const instruction = buildRoundInstruction('round-reactions-to-user', { winner, loser }) + buildOracleInstruction() + '\n\n' + buildContextBlock();
+      const result = await AiPhone.ai.generate({
+        characterIds: buildCharacterIds(),
+        appTags: ['shuraba', 'round-reactions-to-user'],
+        messages: buildMessages(),
+        instruction,
+      });
+      removeLoading(loadingId);
+      const parsed = parseAiOutput(result && result.text || '');
+      if (!parsed.length) {
+        pushSysMsg('（AI 没有产生有效内容）');
+      } else {
+        await renderAiBatchSequential(parsed);
+      }
+      // 初始事件摘要
+      state.initialEventSummary = `模式：${state.mode}；${winner.name} 向用户发起；用户的回答已在上下文中`;
+      state.firstRoundDone = true;
+      enableFollowupInput();
+    } catch (e) {
+      removeLoading(loadingId);
+      pushSysMsg('出错了：' + (e && e.message || e));
+    } finally {
+      state.generating = false;
+    }
+  }
+
+  async function runRoundUserAsksChar(loser) {
+    const loadingId = pushLoading();
+    state.generating = true;
+    try {
+      const winner = { kind: 'user', name: userName() };
+      const instruction = buildRoundInstruction('round-user-asks-char', { winner, loser }) + buildOracleInstruction() + '\n\n' + buildContextBlock();
+      const result = await AiPhone.ai.generate({
+        characterIds: buildCharacterIds(),
+        appTags: ['shuraba', 'round-user-asks-char'],
+        messages: buildMessages(),
+        instruction,
+      });
+      removeLoading(loadingId);
+      const parsed = parseAiOutput(result && result.text || '');
+      if (!parsed.length) {
+        pushSysMsg('（AI 没有产生有效内容）');
+      } else {
+        await renderAiBatchSequential(parsed);
+      }
+      state.initialEventSummary = `模式：${state.mode}；用户向 ${loser.name} 发起；相关内容在上下文中`;
+      state.firstRoundDone = true;
+      enableFollowupInput();
+    } catch (e) {
+      removeLoading(loadingId);
+      pushSysMsg('出错了：' + (e && e.message || e));
+    } finally {
+      state.generating = false;
+    }
+  }
+
+  async function runRoundFollowup() {
+    const loadingId = pushLoading();
+    state.generating = true;
+    try {
+      const instruction = buildRoundInstruction('round-followup', {}) + buildOracleInstruction() + '\n\n' + buildContextBlock();
+      const result = await AiPhone.ai.generate({
+        characterIds: buildCharacterIds(),
+        appTags: ['shuraba', 'round-followup'],
+        messages: buildMessages(),
+        instruction,
+      });
+      removeLoading(loadingId);
+      const parsed = parseAiOutput(result && result.text || '');
+      if (!parsed.length) {
+        pushSysMsg('（AI 没有产生有效内容）');
+      } else {
+        await renderAiBatchSequential(parsed);
+      }
+      enableFollowupInput();
+    } catch (e) {
+      removeLoading(loadingId);
+      pushSysMsg('出错了：' + (e && e.message || e));
+    } finally {
+      state.generating = false;
+    }
+  }
+
+
+  /* ---------- 结束本局 ---------- */
+  function openEndModal() {
+    if (state.generating) { toast('等 AI 回合结束…'); return; }
+    $('modal-end').classList.add('show');
+  }
+  function closeEndModal() { $('modal-end').classList.remove('show'); }
+
+  async function onRestart() {
+    closeEndModal();
+    // 保留神谕、背景、游戏内上下文、情绪、以及聊天记录本身 —— 全部保留
+    // 把本局 gameContext 合并进 pastContext（累积），用于拼给 AI 的上下文
+    state.pastContext = [...(state.pastContext || []), ...state.gameContext];
+    // 限长防止无限膨胀
+    if (state.pastContext.length > 160) {
+      state.pastContext = state.pastContext.slice(-160);
+    }
+    // 清空的是"本局结构化上下文"（gameContext），用于下一局重新计数；
+    // 但 state.messages（聊天框里显示的内容）不清空，留在屏幕上作为历史记录
+    state.gameContext = [];
+    state.winnerSeatId = null;
+    state.loserSeatId = null;
+    state.firstRoundDone = false;
+    state.initialEventSummary = '';
+    state.roundNumber = 0;
+    state.mode = null;
+    // 原班人马 → 回第二层
+    switchView('pendulum');
+    resetPendulumUI();
+    saveGameState(); // 持久化重置后的状态
+    toast('空气里还残留着上一场的情绪…');
+  }
+
+  /* ---------- 总结记忆卡片 ---------- */
+  function closeSummaryModal() { $('modal-summary').classList.remove('show'); }
+
+  async function onSummarize() {
+    closeEndModal();
+    const hasContent =
+      state.gameContext.some(c => c.role === 'assistant' || c.role === 'user') ||
+      state.pastContext.some(c => c.role === 'assistant' || c.role === 'user');
+    if (!hasContent) {
+      toast('还没有内容可总结'); return;
+    }
+    // 打开总结弹窗，先展示选目标 UI
+    $('modal-summary').classList.add('show');
+    const inner = $('modal-summary-inner');
+    const chars = allCharSeats();
+    const defaultSelected = chars.map(c => c.id);
+    const avatarHtml = (c) => c.avatar
+      ? `style="background-image:url('${c.avatar.replace(/'/g,"\\'")}')"`
+      : '';
+    inner.innerHTML = `
+      <h3>总结这场的记忆卡</h3>
+      <p>每位角色会以自己的第一人称视角，写一张关于这一局的记忆卡——然后发送到对应角色的主聊天历史里，让 TA 在之后的聊天中能自然回忆起这场聚会。</p>
+      <div class="section-title" style="margin:14px 2px 8px;"><span class="label">发 送 给</span></div>
+      <div class="send-target-list" id="send-target-list">
+        ${chars.map(c => `<div class="send-target-item selected" data-id="${escapeHtml(c.id)}">
+          <div class="char-avatar" ${avatarHtml(c)}>${c.avatar ? '' : escapeHtml((c.name || '?').slice(0,1))}</div>
+          <div class="char-name">${escapeHtml(c.name)}</div>
+          <div class="send-target-check"></div>
+        </div>`).join('')}
+      </div>
+      <div class="modal-actions">
+        <button id="sum-cancel">取 消</button>
+        <button id="sum-start" class="primary">生 成 并 发 送</button>
+      </div>
+    `;
+    const selected = new Set(defaultSelected);
+    inner.querySelectorAll('.send-target-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.dataset.id;
+        if (selected.has(id)) { selected.delete(id); el.classList.remove('selected'); }
+        else { selected.add(id); el.classList.add('selected'); }
+      });
+    });
+    $('sum-cancel').addEventListener('click', closeSummaryModal);
+    $('sum-start').addEventListener('click', async () => {
+      if (!selected.size) { toast('至少选一位角色'); return; }
+      const targets = chars.filter(c => selected.has(c.id));
+      await runSummarizeAndSend(targets);
+    });
+  }
+
+  async function runSummarizeAndSend(targets) {
+    const inner = $('modal-summary-inner');
+    inner.innerHTML = `
+      <h3>正 在 写 记 忆 卡 片</h3>
+      <p id="summary-status">${escapeHtml(targets[0].name)} 正在回味这一局…<span class="spinner" style="margin-left:8px;"></span></p>
+      <div id="summary-progress" style="font-size:12px;color:var(--ink-dim);margin-top:8px;letter-spacing:1px;">0 / ${targets.length}</div>
+    `;
+    const results = [];
+    for (let i = 0; i < targets.length; i++) {
+      const t = targets[i];
+      $('summary-status').innerHTML = `${escapeHtml(t.name)} 正在回味这一局…<span class="spinner" style="margin-left:8px;"></span>`;
+      $('summary-progress').textContent = `${i} / ${targets.length}`;
+      try {
+        const data = await generateMemoryForChar(t);
+        results.push({ char: t, data, ok: true });
+      } catch (e) {
+        results.push({ char: t, data: null, ok: false, error: (e && e.message) || String(e) });
+      }
+    }
+    $('summary-progress').textContent = `${targets.length} / ${targets.length}`;
+    // 展示结果 + 发送按钮
+    showSummaryResults(results);
+  }
+
+  async function generateMemoryForChar(charSeat) {
+    const winner = seat(state.winnerSeatId);
+    const loser = seat(state.loserSeatId);
+    const instruction = `这一局修罗场由 ${winner?.name} 作为胜者/发起者、${loser?.name} 作为败者/承受者，模式为「${state.mode}」。你现在是 ${charSeat.name}，请以第一人称视角写这张记忆卡（见预设格式要求），严格输出 JSON。涉及用户时用「${userName()}」。`
+      + buildOracleInstruction()
+      + '\n\n' + buildContextBlock();
+    const result = await AiPhone.ai.generate({
+      characterId: charSeat.characterId,
+      appTags: ['shuraba', 'summary'],
+      instruction,
+    });
+    return parseSummaryJson(result && result.text || '');
+  }
+
+  function parseSummaryJson(text) {
+    if (!text) return null;
+    const tryParse = (s) => { try { return JSON.parse(s); } catch (e) { return null; } };
+    let obj = tryParse(text);
+    if (!obj) {
+      const m = text.match(/\{[\s\S]*\}/);
+      if (m) obj = tryParse(m[0]);
+    }
+    if (!obj) {
+      // 兜底：把全文作为 narrative
+      obj = { narrative: text.slice(0, 500) };
+    }
+    return {
+      mood: String(obj.mood || '').slice(0, 20),
+      highlight: String(obj.highlight || '').slice(0, 60),
+      narrative: String(obj.narrative || '').slice(0, 600),
+      relations: String(obj.relations || '').slice(0, 100),
+      comment: String(obj.comment || '').slice(0, 80),
+    };
+  }
+
+  function showSummaryResults(results) {
+    const inner = $('modal-summary-inner');
+    const okList = results.filter(r => r.ok);
+    const failList = results.filter(r => !r.ok);
+    const previewHtml = okList.map(r => {
+      const d = r.data || {};
+      return `<div class="memory-preview">
+        <div class="mp-row"><span class="mp-label">${escapeHtml(r.char.name)} · ${escapeHtml(d.mood || '')}</span></div>
+        ${d.highlight ? `<div class="mp-row"><div class="mp-label">最 戳 心 的 瞬 间</div><div class="mp-content">${escapeHtml(d.highlight)}</div></div>` : ''}
+        ${d.narrative ? `<div class="mp-row"><div class="mp-label">回 味</div><div class="mp-content">${escapeHtml(d.narrative)}</div></div>` : ''}
+        ${d.relations ? `<div class="mp-row"><div class="mp-label">关 系 变 化</div><div class="mp-content">${escapeHtml(d.relations)}</div></div>` : ''}
+        ${d.comment ? `<div class="mp-row"><div class="mp-label">想 对 ${escapeHtml(userName())} 说</div><div class="mp-content">"${escapeHtml(d.comment)}"</div></div>` : ''}
+      </div>`;
+    }).join('');
+    inner.innerHTML = `
+      <h3>记 忆 卡 片 预 览</h3>
+      <p>以下是每位角色视角下的本局记忆。点击"发送到主聊天"，这些内容会写回对应角色的聊天历史，成为他们的真实记忆。</p>
+      <div style="max-height:50vh;overflow-y:auto;margin:0 -4px;padding:0 4px;">
+        ${previewHtml || '<div style="color:var(--red);font-size:13px;padding:12px;">所有角色的记忆卡生成都失败了。</div>'}
+        ${failList.length ? `<div style="font-size:12px;color:var(--red);margin-top:8px;">以下角色生成失败：${failList.map(r=>escapeHtml(r.char.name)).join('、')}</div>` : ''}
+      </div>
+      <div class="modal-actions">
+        <button id="sum-close">关 闭</button>
+        ${okList.length ? '<button id="sum-send" class="primary">发 送 到 主 聊 天</button>' : ''}
+      </div>
+    `;
+    $('sum-close').addEventListener('click', () => {
+      closeSummaryModal();
+      // 不自动结束本局，用户可选择继续
+    });
+    if (okList.length) {
+      $('sum-send').addEventListener('click', async () => {
+        await sendMemoryCards(okList);
+      });
+    }
+  }
+
+  function buildMemoryCardHtml({ charName, mode, winnerName, loserName, participants, timeLabel, mood, highlight, narrative, relations, comment, userName }) {
+    const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+    background: #f7f3ee;
+    color: #1f1c18;
+    min-height: 100%;
+    padding: 0;
+  }
+  .card {
+    background: #faf7f2;
+    border: 1px solid rgba(140,110,70,0.15);
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 10px;
+    box-shadow: 0 2px 16px rgba(80,50,20,0.08);
+  }
+  .card-head {
+    background: linear-gradient(135deg, #2a2218 0%, #3d3020 60%, #4a3a28 100%);
+    padding: 16px 18px 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-head::before {
+    content: '';
+    position: absolute; top: -20px; right: -20px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .card-head-label {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .card-head-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1.5px;
+    line-height: 1.3;
+  }
+  .card-head-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 8px;
+    letter-spacing: 1px;
+    line-height: 1.6;
+  }
+  .mood-pill {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 12px;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 1px;
+  }
+  .card-body { padding: 14px 18px 16px; }
+  .section { margin-bottom: 14px; }
+  .section:last-child { margin-bottom: 0; }
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #9a8870;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .section-text {
+    font-size: 13px;
+    line-height: 1.75;
+    color: #2a2218;
+    letter-spacing: 0.3px;
+  }
+  .section-text.highlight {
+    font-style: italic;
+    color: #5a3e28;
+    border-left: 2px solid #c8a878;
+    padding-left: 10px;
+  }
+  .section-text.comment {
+    color: #3a2c1c;
+    background: rgba(180,140,80,0.08);
+    border: 1px solid rgba(180,140,80,0.2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(140,110,70,0.2), transparent);
+    margin: 12px 0;
+  }
+  .card-footer {
+    padding: 8px 18px 12px;
+    font-size: 10px;
+    color: #b0a090;
+    letter-spacing: 1px;
+    border-top: 1px solid rgba(140,110,70,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+</style>
+</head><body>
+<div class="card">
+  <div class="card-head">
+    <div class="card-head-label">修 罗 场 · 记 忆 卡</div>
+    <div class="card-head-title">${esc(charName)} 的记忆</div>
+    <div class="card-head-sub">${esc(mode)} · ${esc(winnerName)} → ${esc(loserName)}<br>${esc(participants)}</div>
+    ${mood ? `<div class="mood-pill">${esc(mood)}</div>` : ''}
+  </div>
+  <div class="card-body">
+    ${highlight ? `<div class="section">
+      <div class="section-label">最 戳 心 的 瞬 间</div>
+      <div class="section-text highlight">${esc(highlight)}</div>
+    </div><div class="divider"></div>` : ''}
+    ${narrative ? `<div class="section">
+      <div class="section-label">回 味</div>
+      <div class="section-text">${esc(narrative)}</div>
+    </div>` : ''}
+    ${relations ? `<div class="section"><div class="divider"></div>
+      <div class="section-label">关 系 变 化</div>
+      <div class="section-text">${esc(relations)}</div>
+    </div>` : ''}
+    ${comment ? `<div class="section"><div class="divider"></div>
+      <div class="section-label">想 对 ${esc(userName)} 说</div>
+      <div class="section-text comment">"${esc(comment)}"</div>
+    </div>` : ''}
+  </div>
+  <div class="card-footer">
+    <span>真心话大冒险（修罗场）</span>
+    <span>${esc(timeLabel)}</span>
+  </div>
+</div>
+</body></html>`;
+  }
+
+  async function sendMemoryCards(okList) {
+    const inner = $('modal-summary-inner');
+    inner.innerHTML = `
+      <h3>正 在 发 送</h3>
+      <p id="summary-status">发送到主聊天…<span class="spinner" style="margin-left:8px;"></span></p>
+    `;
+    let successCount = 0;
+    const winner = seat(state.winnerSeatId);
+    const loser = seat(state.loserSeatId);
+    const timeLabel = new Date().toLocaleString('zh-CN', { hour12: false });
+    for (const r of okList) {
+      try {
+        const d = r.data;
+        // AI 可见的纯文字历史
+        const historyParts = [];
+        historyParts.push(`【真心话大冒险（修罗场）· ${r.char.name} 的记忆卡】`);
+        historyParts.push(`时间：${timeLabel}`);
+        historyParts.push(`参与：${state.seats.map(s => s.name + (s.kind === 'user' ? '（用户）' : '')).join('、')}`);
+        historyParts.push(`模式：${state.mode}`);
+        historyParts.push(`本局：${winner?.name} 向 ${loser?.name} 发起`);
+        if (d.mood) historyParts.push(`${r.char.name} 散场时的心情：${d.mood}`);
+        if (d.highlight) historyParts.push(`${r.char.name} 最戳心的瞬间：${d.highlight}`);
+        if (d.narrative) historyParts.push(`\n${r.char.name} 第一人称回味：\n${d.narrative}`);
+        if (d.relations) historyParts.push(`\n关系变化：${d.relations}`);
+        if (d.comment) historyParts.push(`\n${r.char.name} 想对 ${userName()} 说："${d.comment}"`);
+        historyParts.push(`\n（以上是 ${r.char.name} 对刚才这场线下真心话大冒险聚会的记忆。后续聊天中 ${r.char.name} 提到"刚才的聚会""刚才那局""真心话大冒险"等均指这场。）`);
+        const historyText = historyParts.join('\n');
+
+        // 卡片 HTML（沙盒 iframe 渲染，不执行脚本）
+        const participantNames = state.seats.map(s => s.name + (s.kind === 'user' ? '（你）' : '')).join('、');
+        const cardHtml = buildMemoryCardHtml({
+          charName: r.char.name,
+          mode: state.mode || '',
+          winnerName: winner?.name || '',
+          loserName: loser?.name || '',
+          participants: participantNames,
+          timeLabel,
+          mood: d.mood || '',
+          highlight: d.highlight || '',
+          narrative: d.narrative || '',
+          relations: d.relations || '',
+          comment: d.comment || '',
+          userName: userName(),
+        });
+
+        await AiPhone.chat.sendCard({
+          characterId: r.char.characterId,
+          role: 'assistant',
+          historyRole: 'system',
+          summary: `[修罗场记忆卡 · ${r.char.name}]`,
+          historyText,
+          card: {
+            height: 420,
+            html: cardHtml,
+          },
+        });
+        successCount++;
+      } catch (e) {
+        console.warn('sendCard failed, trying writeHistory fallback', e);
+        // 降级：没有 chat.sendCard 权限时回退到 writeHistory
+        try {
+          await AiPhone.chat.writeHistory({
+            characterId: r.char.characterId,
+            role: 'system',
+            content: historyText,
+          });
+          successCount++;
+        } catch (e2) {
+          console.warn('writeHistory fallback also failed', e2);
+        }
+      }
+    }
+    const failCount = okList.length - successCount;
+    const failMsg = failCount > 0 ? `（${failCount} 位发送失败）` : '';
+    inner.innerHTML = `
+      <h3>发 送 完 成</h3>
+      <p>已把记忆卡片发送到 ${successCount} 位角色的主聊天里${failMsg}。他们会把这当作一段真实经历过的记忆。</p>
+      <div class="modal-actions">
+        <button id="sum-done" class="primary">好 的</button>
+      </div>
+    `;
+    $('sum-done').addEventListener('click', () => {
+      closeSummaryModal();
+      // 问是否结束本局 / 回大厅
+      // 按产品规则：总结卡不影响本局游戏内上下文；重来一局情绪仍保留。
+      // 这里给个额外提示，让用户知道可继续玩
+      toast('记忆卡不影响本局上下文，可继续玩或结束');
+    });
+  }
+
+  /* ---------- 游戏状态持久化（支持大退后续玩） ---------- */
+  async function saveGameState() {
+    // 只在已进入游戏桌（有角色选择）时才保存
+    if (!state.selectedCharacterIds.length) return;
+    const payload = {
+      selectedCharacterIds: state.selectedCharacterIds,
+      mode: state.mode,
+      phase: state.phase,
+      winnerSeatId: state.winnerSeatId,
+      loserSeatId: state.loserSeatId,
+      roundNumber: state.roundNumber,
+      firstRoundDone: state.firstRoundDone,
+      initialEventSummary: state.initialEventSummary,
+      hasEnteredGameOnce: state.hasEnteredGameOnce || false,
+      messages: state.messages,
+      gameContext: state.gameContext,
+      pastContext: state.pastContext,
+      innerThoughts: state.innerThoughts,
+    };
+    try {
+      if (state.gameStateId) {
+        await AiPhone.db.update('gameState', state.gameStateId, payload);
+      } else {
+        const rec = await AiPhone.db.create('gameState', payload);
+        state.gameStateId = rec.id;
+      }
+    } catch (e) { console.warn('saveGameState', e); }
+  }
+
+  async function loadGameState() {
+    try {
+      const list = await AiPhone.db.list('gameState', { limit: 1 });
+      if (!list || !list[0]) return false;
+      const saved = list[0];
+      state.gameStateId = saved.id;
+      // 恢复选中角色
+      if (saved.selectedCharacterIds && saved.selectedCharacterIds.length) {
+        state.selectedCharacterIds = saved.selectedCharacterIds;
+      }
+      state.mode = saved.mode || null;
+      state.phase = saved.phase || 'spinning';
+      state.winnerSeatId = saved.winnerSeatId || null;
+      state.loserSeatId = saved.loserSeatId || null;
+      state.roundNumber = saved.roundNumber || 0;
+      state.firstRoundDone = saved.firstRoundDone || false;
+      state.initialEventSummary = saved.initialEventSummary || '';
+      state.hasEnteredGameOnce = saved.hasEnteredGameOnce || false;
+      state.messages = saved.messages || [];
+      state.gameContext = saved.gameContext || [];
+      state.pastContext = saved.pastContext || [];
+      state.innerThoughts = saved.innerThoughts || {};
+      return saved.selectedCharacterIds && saved.selectedCharacterIds.length > 0;
+    } catch (e) {
+      console.warn('loadGameState', e);
+      return false;
+    }
+  }
+
+  async function clearGameState() {
+    state.selectedCharacterIds = [];
+    state.mode = null;
+    state.phase = 'spinning';
+    state.winnerSeatId = null;
+    state.loserSeatId = null;
+    state.roundNumber = 0;
+    state.firstRoundDone = false;
+    state.initialEventSummary = '';
+    state.hasEnteredGameOnce = false;
+    state.messages = [];
+    state.gameContext = [];
+    state.pastContext = [];
+    state.innerThoughts = {};
+    try {
+      if (state.gameStateId) {
+        await AiPhone.db.delete('gameState', state.gameStateId);
+        state.gameStateId = null;
+      }
+    } catch (e) { console.warn('clearGameState', e); }
+  }
+
+  /* ---------- 初始化 ---------- */
+  function renderGlassDeco() {
+    const box = $('glass-deco');
+    if (!box) return;
+    let html = '';
+    // 雪花：用 ❄ 字符，随机大小位置和动画延迟
+    const snowCount = 9;
+    const snowChars = ['❄', '❅', '❆'];
+    for (let i = 0; i < snowCount; i++) {
+      const top = Math.random() * 100;
+      const left = Math.random() * 100;
+      const size = 10 + Math.random() * 10;
+      const delay = Math.random() * 6;
+      const ch = snowChars[Math.floor(Math.random() * snowChars.length)];
+      html += `<div class="snowflake" style="top:${top}%;left:${left}%;font-size:${size}px;animation-delay:${delay}s;">${ch}</div>`;
+    }
+    box.innerHTML = html;
+  }
+  async function init() {
+    renderGlassDeco();
+    bindHall();
+    bindPendulum();
+    bindGame();
+    try { state.launchContext = await AiPhone.app.getLaunchContext(); }
+    catch (e) { state.launchContext = null; }
+    await loadSettings();
+    await loadCharacters();
+    // 尝试恢复上次游戏进度
+    const hasProgress = await loadGameState();
+    if (hasProgress && state.hasEnteredGameOnce) {
+      // 有进行中的游戏，恢复角色列表后直接进入游戏桌
+      renderCharList(); // 刷新选中状态
+      buildSeats();
+      switchView('game');
+      renderSeats();
+      renderGameHead();
+      renderPointer();
+      renderMessages();
+      // 恢复指针位置
+      if (state.winnerSeatId && state.loserSeatId) {
+        const circle = $('table-circle');
+        if (circle) {
+          const winner = seat(state.winnerSeatId);
+          const loser = seat(state.loserSeatId);
+          if (winner && loser) {
+            const whiteTarget = seatClockAngle(winner) - 90;
+            const greyTarget = seatClockAngle(loser) - 90;
+            const w = circle.querySelector('.needle-white');
+            const g = circle.querySelector('.needle-grey');
+            if (w) { w.style.transition = 'none'; w.style.transform = `translate(0,0) rotate(${whiteTarget}deg)`; }
+            if (g) { g.style.transition = 'none'; g.style.transform = `translate(0,0) rotate(${greyTarget}deg)`; }
+            $('pointer-badge').style.display = 'inline-block';
+            $('winner-text').textContent = winner.name + (winner.kind === 'user' ? '（你）' : '');
+            $('loser-text').textContent = loser.name + (loser.kind === 'user' ? '（你）' : '');
+          }
+        }
+        $('btn-spin').style.display = 'none';
+        $('btn-spin-redo').style.display = 'none';
+        $('btn-spin-confirm').style.display = 'none';
+      }
+      // 恢复输入框状态
+      if (state.phase === 'playing' || state.phase === 'awaiting-user') {
+        $('composer').style.display = 'flex';
+        $('composer-hint').style.display = 'block';
+        if (state.firstRoundDone) {
+          $('composer-hint').textContent = '轮到你 · 发言或行动，推动这场修罗场';
+          $('input').placeholder = '说点什么，或描述你的行动…';
+        }
+      }
+      toast('已恢复上次游戏进度');
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "id": "workshop.radio-drama",
+  "name": "广播剧",
+  "version": "1.0.0",
+  "sdkVersion": "1.0",
+  "author": "工坊",
+  "description": "使用已导入角色创作、编辑、配音与导出沉浸式广播剧。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "ai.generate",
+    "voice.readProfiles",
+    "voice.tts",
+    "ui.toast"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": []
+}

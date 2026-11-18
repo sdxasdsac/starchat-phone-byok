@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>OnlyFans</title>
+  <style>
+    :root {
+      --of-blue: #00aff0;
+      --bg-color: #ffffff;
+      --gray-bg: #f5f6f8;
+      --text-main: #242529;
+      --text-sub: #8a96a3;
+      --border-color: #e8ebef;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg-color);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text-main);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .app {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border-color);
+      padding: var(--ai-phone-app-bar-top, 44px) 16px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 32px;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--of-blue);
+      letter-spacing: -0.5px;
+    }
+    
+    /* 核心修改：按要求重新调整位置 */
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      position: absolute;
+    }
+    .home-actions {
+      right: 80px; /* 主页往左移一个按键位置 */
+    }
+    .msg-actions, .profile-actions {
+      right: 48px; /* 私信和我的往后(右)移一个按键位置 */
+    }
+    
+    .circle-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      user-select: none;
+    }
+    .circle-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--text-main);
+    }
+    .circle-btn:active {
+      background: #e0e0e0;
+    }
+    .wallet-badge {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--of-blue);
+      background: #e6f7fd;
+      padding: 4px 8px;
+      border-radius: 12px;
+      margin-left: 4px;
+      white-space: nowrap;
+      cursor: pointer;
+      height: 24px;
+      display: flex;
+      align-items: center;
+    }
+    .bank-badge {
+      font-size: 13px;
+      font-weight: 600;
+      color: #10b981;
+      background: #d1fae5;
+      padding: 4px 8px;
+      border-radius: 12px;
+      margin-left: 4px;
+      white-space: nowrap;
+      height: 24px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Content Area */
+    .content {
+      flex: 1;
+      padding-bottom: calc(var(--ai-phone-app-safe-bottom, 24px) + 60px);
+      overflow-y: auto;
+    }
+    .page {
+      display: none;
+      animation: fadeIn 0.2s ease;
+    }
+    .page.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+
+    /* Post Card 极致压缩排版版 */
+    .post-card {
+      border-bottom: 1px solid var(--border-color);
+      padding: 12px 0;
+      transition: background 0.2s;
+      position: relative;
+    }
+    .post-card.clickable:active {
+      background: #f9f9f9;
+    }
+    .post-header {
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 2px; /* 减小与正文的间距 */
+    }
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #ccc;
+      object-fit: cover;
+    }
+    .author-info { flex: 1; }
+    .author-name {
+      font-weight: 700;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .post-delete-btn {
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .post-delete-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: #ef4444;
+    }
+    .author-handle {
+      font-size: 14px;
+      color: var(--text-sub);
+    }
+    .post-text {
+      padding: 0 16px;
+      margin-bottom: 0px;
+      font-size: 15px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+      position: relative;
+    }
+    /* 新增独立的翻译按钮，悬浮在正文右下角 */
+    .translate-btn {
+      position: absolute;
+      bottom: -4px;
+      right: 16px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--gray-bg);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      z-index: 5;
+    }
+    .translate-btn:active {
+      background: #e0e0e0;
+    }
+    .translation-box {
+      display: none;
+      margin: 8px 16px 0;
+      padding: 8px 12px;
+      background: #f0f9ff;
+      border-radius: 8px;
+      color: #0284c7;
+      font-size: 14px;
+    }
+    .post-media-container {
+      position: relative;
+      width: 100%;
+      background: #000;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0px; /* 极致压缩与上方翻译/正文的留白 */
+      margin-bottom: 0px; /* 极致压缩与下方 footer 的留白 */
+    }
+    .post-media {
+      width: 100%;
+      max-height: 500px;
+      object-fit: cover;
+      display: block;
+    }
+    .blur-media {
+      filter: blur(15px);
+    }
+    .locked-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      z-index: 10;
+    }
+    .locked-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      backdrop-filter: blur(4px);
+    }
+    .locked-icon svg {
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+    }
+    .unlock-btn {
+      background: var(--of-blue);
+      color: #fff;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(0, 175, 240, 0.3);
+    }
+    
+    .post-footer {
+      padding: 2px 16px 0; /* 极致压缩上方留白 */
+      display: flex;
+      gap: 24px;
+      color: var(--text-sub);
+      align-items: center;
+    }
+    .footer-action {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .footer-action svg {
+      width: 22px;
+      height: 22px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+    .footer-action.liked svg {
+      fill: #ec4899;
+      stroke: #ec4899;
+    }
+    .footer-action.liked {
+      color: #ec4899;
+    }
+
+    /* Floating Action Buttons */
+    .fab-container {
+      display: flex;
+      gap: 10px;
+      padding: 16px;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .fab-btn {
+      background: var(--gray-bg);
+      color: var(--of-blue);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    /* Messages Page */
+    .msg-list { padding: 0; }
+    .msg-item {
+      display: flex;
+      padding: 16px;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-color);
+      align-items: flex-start;
+    }
+    .msg-item .avatar { width: 40px; height: 40px; }
+    .msg-content { flex: 1; overflow: hidden; }
+    .msg-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .msg-preview {
+      color: var(--text-sub);
+      font-size: 14px;
+      white-space: pre-wrap;
+      line-height: 1.4;
+    }
+    .msg-time { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+
+    /* Profile Page */
+    .cover-photo {
+      width: 100%;
+      height: 150px;
+      background: #ccc;
+      object-fit: cover;
+    }
+    .profile-header {
+      padding: 0 16px;
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .profile-avatar {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 4px solid #fff;
+      margin-top: -45px;
+      background: #eee;
+      object-fit: cover;
+    }
+    .profile-info { margin-top: 12px; }
+    .profile-name { font-size: 20px; font-weight: 800; }
+    .profile-handle { color: var(--text-sub); font-size: 15px; margin-bottom: 12px; }
+    .profile-bio { font-size: 15px; line-height: 1.5; }
+    
+    /* 个人主页关注/粉丝数样式 */
+    .profile-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: 15px;
+    }
+    .profile-stat-item {
+      color: var(--text-sub);
+    }
+    .profile-stat-item span {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+
+    .edit-btn {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      background: transparent;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .profile-divider {
+      border: 0;
+      height: 1px;
+      background: var(--border-color);
+      margin: 16px 0 0 0;
+    }
+
+    /* Detail Page */
+    .detail-header {
+      display: flex;
+      align-items: center;
+      padding: var(--ai-phone-app-bar-top, 44px) 16px 12px;
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 50;
+    }
+    .back-btn {
+      font-size: 24px;
+      margin-right: 16px;
+      cursor: pointer;
+      color: var(--of-blue);
+      font-weight: bold;
+    }
+    .comment-section {
+      padding: 16px;
+      border-top: 8px solid var(--gray-bg);
+    }
+    .comment-item {
+      margin-bottom: 16px;
+      display: flex;
+      gap: 12px;
+    }
+    .comment-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #eee;
+    }
+    .comment-content-area {
+      flex: 1;
+      font-size: 14px;
+      background: var(--gray-bg);
+      padding: 10px 12px;
+      border-radius: 12px;
+    }
+    .comment-author {
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .comment-input-area {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      position: sticky;
+      bottom: calc(var(--ai-phone-app-safe-bottom, 24px));
+      background: #fff;
+      padding: 10px 0;
+    }
+    .comment-input {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      font-size: 14px;
+    }
+    .comment-submit {
+      background: var(--of-blue);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(var(--ai-phone-app-safe-bottom, 24px) + 50px);
+      background: #fff;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      padding-top: 10px;
+      z-index: 50;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text-sub);
+      font-size: 10px;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .nav-item.active {
+      color: var(--of-blue);
+    }
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+    }
+    .nav-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+    .nav-item.active .nav-icon svg {
+      fill: currentColor;
+      stroke: none;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+    }
+    .modal-content {
+      background: #fff;
+      width: 100%;
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      box-sizing: border-box;
+      padding-bottom: calc(var(--ai-phone-app-safe-bottom, 24px) + 20px);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .tag-btn { padding: 4px 10px; background: #e0f2fe; color: #0284c7; border-radius: 12px; font-size: 12px; cursor: pointer; border: 1px solid #bae6fd; }
+    .tag-btn:active { background: #bae6fd; }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; margin-top: 0; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 14px; margin-bottom: 8px; font-weight: 600; }
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 15px;
+    }
+    textarea.form-control { resize: none; height: 80px; }
+    .btn-primary {
+      width: 100%;
+      background: var(--of-blue);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 24px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .close-modal { float: right; font-size: 24px; color: var(--text-sub); cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header" id="mainHeader">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="logo">OnlyFans</div>
+        <div class="circle-btn" style="width: 28px; height: 28px;" onclick="openSettingsModal()" title="生成设置">
+          <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:var(--of-blue);"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+        </div>
+      </div>
+      <div class="header-actions home-actions" id="headerActionsHome">
+        <div class="circle-btn" onclick="generateRandomPost()" title="刷新广场">
+          <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+        </div>
+        <div class="circle-btn" onclick="openCharacterSelect()" title="角色专属内容">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+        </div>
+        <div class="circle-btn" onclick="clearAllPosts()" title="清理数据">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </div>
+        <div class="wallet-badge" id="walletBalance">-- 余额</div>
+      </div>
+      <div class="header-actions msg-actions" id="headerActionsMessages" style="display: none;">
+        <div class="circle-btn" onclick="generateRandomMessage()" title="随机私信">
+          <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+        </div>
+        <div class="circle-btn" onclick="openCharacterMessageSelect()" title="发送私信">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </div>
+        <div class="circle-btn" onclick="clearAllMessages()" title="清理私信">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </div>
+        <div class="wallet-badge" style="visibility: hidden; pointer-events: none;">-- 余额</div>
+      </div>
+      <div class="header-actions profile-actions" id="headerActionsProfile" style="display: none;">
+        <div class="bank-badge" id="bankBalanceProfile" title="银行卡收益">💳 $0</div>
+        <div class="circle-btn" onclick="openRechargeModal()" title="充值">
+          <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+        </div>
+        <div class="wallet-badge" id="walletBalanceProfile" style="visibility: hidden; pointer-events: none;">-- 余额</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Home Page -->
+      <div id="page-home" class="page active">
+        <div class="fab-container">
+          <div class="fab-btn" onclick="openCreateModal()">➕ 发动态</div>
+        </div>
+        <div id="feedContainer"></div>
+      </div>
+
+      <!-- Messages Page -->
+      <div id="page-messages" class="page">
+        <div class="msg-list" id="messagesContainer"></div>
+      </div>
+
+      <!-- Profile Page -->
+      <div id="page-profile" class="page">
+        <img src="" class="cover-photo" id="profileCover">
+        <div class="profile-header">
+          <img src="" class="profile-avatar" id="profileAvatar">
+          <button class="edit-btn" onclick="openProfileModal()">编辑主页</button>
+          <div class="profile-info">
+            <div class="profile-name" id="profileName">Name</div>
+            <div class="profile-handle" id="profileHandle">@handle</div>
+            <div class="profile-bio" id="profileBio">No bio yet.</div>
+            <div class="profile-stats">
+              <div class="profile-stat-item"><span id="profileFollowing">0</span> 正在关注</div>
+              <div class="profile-stat-item"><span id="profileFollowers">0</span> 关注者</div>
+            </div>
+          </div>
+        </div>
+        <hr class="profile-divider">
+        <div id="myPostsContainer"></div>
+      </div>
+      
+      <!-- Detail Page -->
+      <div id="page-detail" class="page">
+        <div class="detail-header">
+          <div class="back-btn" onclick="goBackToFeed()">←</div>
+          <div style="font-weight: 700; font-size: 18px;">Post</div>
+        </div>
+        <div id="detailContent"></div>
+        <div class="comment-section">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <h3 style="margin:0;">评论区</h3>
+            <div class="circle-btn" style="width:28px; height:28px;" onclick="generateRandomComments()" title="生成评论">
+              <svg viewBox="0 0 24 24" style="width:16px; height:16px;"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+            </div>
+          </div>
+          <div id="commentList"></div>
+          <div class="comment-input-area">
+            <input type="text" id="myCommentInput" class="comment-input" placeholder="写下你的评论...">
+            <button class="comment-submit" onclick="submitMyComment()">发送</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav" id="bottomNav">
+      <div class="nav-item active" onclick="switchTab('home', this)">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </div>
+        <span>主页</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('messages', this)">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+        </div>
+        <span>私信</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('profile', this)">
+        <div class="nav-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <span>我的</span>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="createModal">
+      <div class="modal-content">
+        <div class="close-modal" onclick="closeModal('createModal')">×</div>
+        <h3 class="modal-title">新建动态</h3>
+        <div class="form-group">
+          <label>文案内容</label>
+          <textarea id="newPostText" class="form-control" placeholder="写点什么..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>解锁价格 (金币)</label>
+          <input type="number" id="newPostPrice" class="form-control" value="0" placeholder="免费填 0">
+        </div>
+        <div class="form-group">
+          <div class="fab-btn" style="display:inline-block; margin-bottom:8px;" onclick="pickMediaForPost()">📷 真实照片/视频</div>
+          <div class="fab-btn" style="display:inline-block; margin-bottom:8px; margin-left: 8px;" onclick="openVirtualMediaInput()">📝 文字版照片/视频</div>
+          <div id="newPostMediaPreview" style="margin-top:10px; font-size:12px; color:var(--of-blue);"></div>
+        </div>
+        <button class="btn-primary" onclick="submitNewPost()">发布</button>
+      </div>
+    </div>
+
+    <!-- 虚拟媒体弹窗 -->
+    <div class="modal-overlay" id="virtualMediaModal" style="z-index: 101;">
+      <div class="modal-content">
+        <div class="close-modal" onclick="closeModal('virtualMediaModal')">×</div>
+        <h3 class="modal-title">文字版媒体</h3>
+        <div class="form-group">
+          <label>描述画面内容 (例如：【视频中，正在...】)</label>
+          <textarea id="virtualMediaText" class="form-control" placeholder="用文字详细描述画面..."></textarea>
+        </div>
+        <button class="btn-primary" onclick="confirmVirtualMedia()">确认使用</button>
+      </div>
+    </div>
+
+    <!-- 角色选择弹窗 -->
+    <div class="modal-overlay" id="charSelectModal" style="z-index: 105;">
+      <div class="modal-content">
+        <div class="close-modal" onclick="closeModal('charSelectModal')">×</div>
+        <h3 class="modal-title">选择角色</h3>
+        <div id="charSelectList" style="max-height: 300px; overflow-y: auto; margin-top: 10px;"></div>
+      </div>
+    </div>
+
+    <!-- 充值弹窗 -->
+    <div class="modal-overlay" id="rechargeModal">
+      <div class="modal-content">
+        <div class="close-modal" onclick="closeModal('rechargeModal')">×</div>
+        <h3 class="modal-title">充值金币</h3>
+        <div class="form-group">
+          <label style="color:var(--text-sub); margin-bottom: 12px; display:block;">从银行卡扣除。当前银行卡余额: <span style="color:#10b981; font-weight:bold;">💳 $<span id="rechargeBankBalance">0.00</span></span></label>
+          <label>充值金额</label>
+          <input type="number" id="rechargeAmount" class="form-control" value="100">
+        </div>
+        <button class="btn-primary" onclick="submitRecharge()">确认充值</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="profileModal">
+      <div class="modal-content">
+        <div class="close-modal" onclick="closeModal('profileModal')">×</div>
+        <h3 class="modal-title">编辑主页</h3>
+        <div class="form-group" style="display:flex; gap:10px;">
+          <div class="fab-btn" onclick="pickProfileMedia('avatar')">📷 更换头像</div>
+          <div class="fab-btn" onclick="pickProfileMedia('cover')">🖼️ 更换背景</div>
+        </div>
+        <div class="form-group">
+          <label>显示昵称</label>
+          <input type="text" id="editName" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>账号 (@handle)</label>
+          <input type="text" id="editHandle" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>简介</label>
+          <textarea id="editBio" class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+          <label>正在关注 (人数)</label>
+          <input type="number" id="editFollowing" class="form-control" value="0">
+        </div>
+        <div class="form-group">
+          <label>关注者 (人数)</label>
+          <input type="number" id="editFollowers" class="form-control" value="0">
+        </div>
+        <button class="btn-primary" onclick="saveProfile()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="settingsModal" style="z-index: 105;">
+    <div class="modal-content">
+      <div class="close-modal" onclick="closeModal('settingsModal')">×</div>
+      <h3 class="modal-title">生成偏好设置</h3>
+      <div class="form-group">
+        <label style="display:flex; justify-content:space-between; align-items:center;">
+          全局系统预设
+          <button onclick="document.getElementById('importPresetInput').click()" style="font-size:12px; padding:4px 10px; border-radius:12px; border:1px solid var(--of-blue); background:var(--of-blue); color:#fff; cursor:pointer; font-weight:bold;">导入 JSON</button>
+          <input type="file" id="importPresetInput" accept=".json" style="display:none" onchange="handleImportPreset(event)">
+        </label>
+        <textarea id="setSystemPrompt" class="form-control" placeholder="填入自定义设定、破狱指令，或导入 JSON..."></textarea>
+        <select id="presetSelect" style="display:none; width:100%; margin-top:8px; padding:8px; border-radius:8px; border:1px solid var(--border-color);" onchange="applySelectedPreset()"></select>
+      </div>
+      <div class="form-group">
+        <label>广场生成偏好 (XP/题材)</label>
+        <div class="tag-list">
+          <div class="tag-btn" onclick="addTag('角色扮演')">角色扮演</div>
+          <div class="tag-btn" onclick="addTag('日常')">日常</div>
+          <div class="tag-btn" onclick="addTag('剧情向')">剧情向</div>
+          <div class="tag-btn" onclick="addTag('擦边')">擦边</div>
+          <div class="tag-btn" onclick="addTag('大尺度')">大尺度</div>
+          <div class="tag-btn" onclick="addTag('重口')">重口</div>
+          <div class="tag-btn" onclick="addTag('纯爱')">纯爱</div>
+          <div class="tag-btn" onclick="addTag('调教')">调教</div>
+          <div class="tag-btn" onclick="addTag('捆绑')">捆绑</div>
+          <div class="tag-btn" onclick="addTag('露出')">露出</div>
+          <div class="tag-btn" onclick="addTag('道具')">道具</div>
+          <div class="tag-btn" onclick="addTag('边控')">边控</div>
+          <div class="tag-btn" onclick="addTag('榨汁')">榨汁</div>
+          <div class="tag-btn" onclick="addTag('病娇')">病娇</div>
+          <div class="tag-btn" onclick="addTag('魅魔')">魅魔</div>
+          <div class="tag-btn" onclick="addTag('傲娇')">傲娇</div>
+          <div class="tag-btn" onclick="addTag('绿茶')">绿茶</div>
+          <div class="tag-btn" onclick="addTag('户外')">户外</div>
+          <div class="tag-btn" onclick="addTag('办公室')">办公室</div>
+          <div class="tag-btn" onclick="addTag('落地窗')">落地窗</div>
+          <div class="tag-btn" onclick="addTag('主仆')">主仆</div>
+          <div class="tag-btn" onclick="addTag('兽耳')">兽耳</div>
+          <div class="tag-btn" onclick="addTag('强制')">强制</div>
+        </div>
+        <textarea id="setPreferences" class="form-control" placeholder="例如：虚构 2 个创作者发布的动态，主题是..."></textarea>
+      </div>
+      <button class="btn-primary" onclick="saveSettings()">保存设置</button>
+    </div>
+  </div>
+
+  <script>
+    const api = window.AiPhone;
+    let currentMediaRef = null;
+    let currentVirtualVideo = null;
+    let currentViewPostId = null;
+    let tempAvatarRef = null;
+    let tempCoverRef = null;
+
+    let myBankBalance = 0;
+    let importedPrompts = [];
+
+    function openSettingsModal() {
+      getMyProfile().then(p => {
+        document.getElementById('setSystemPrompt').value = p.systemPrompt || "";
+        document.getElementById('setPreferences').value = p.preferences || "";
+        document.getElementById('presetSelect').style.display = 'none';
+        openModal('settingsModal');
+      });
+    }
+
+    async function saveSettings() {
+      const sys = document.getElementById('setSystemPrompt').value;
+      const pref = document.getElementById('setPreferences').value;
+      try {
+        const list = await api.db.list("profile");
+        if(list.length > 0) {
+          await api.db.update("profile", list[0].id, { systemPrompt: sys, preferences: pref });
+        } else {
+          await api.db.create("profile", { systemPrompt: sys, preferences: pref });
+        }
+        api.ui.toast("设置已保存");
+        closeModal('settingsModal');
+      } catch(e){}
+    }
+
+    function addTag(tag) {
+      const ta = document.getElementById('setPreferences');
+      ta.value = ta.value ? ta.value + "，" + tag : tag;
+    }
+
+    function handleImportPreset(e) {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = JSON.parse(evt.target.result);
+          if(data.prompts && Array.isArray(data.prompts)) {
+            importedPrompts = data.prompts;
+            const sel = document.getElementById('presetSelect');
+            sel.innerHTML = '<option value="">-- 点击此处选择解析出的预设 --</option>' + importedPrompts.map((p, i) => `<option value="${i}">${p.name || '未命名'}</option>`).join('');
+            sel.style.display = 'block';
+            api.ui.toast("导入成功，请在下方选择");
+          } else {
+            api.ui.toast("JSON 格式错误：需包含 prompts 数组");
+          }
+        } catch(err) {
+          api.ui.toast("解析 JSON 失败");
+        }
+        e.target.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function applySelectedPreset() {
+      const idx = document.getElementById('presetSelect').value;
+      if(idx !== "") {
+        document.getElementById('setSystemPrompt').value = importedPrompts[idx].content || "";
+      }
+    }
+
+    async function loadBankBalance() {
+      try {
+        const list = await api.db.list("profile");
+        if (list.length > 0 && list[0].bankBalance !== undefined) {
+          myBankBalance = list[0].bankBalance;
+        }
+      } catch(e){}
+      updateBankUI();
+    }
+
+    function updateBankUI() {
+      const text = `💳 ${myBankBalance.toFixed(2)}`;
+      const h = document.getElementById('bankBalanceHome');
+      if(h) h.textContent = text;
+      const p = document.getElementById('bankBalanceProfile');
+      if(p) p.textContent = text;
+      const rb = document.getElementById('rechargeBankBalance');
+      if(rb) rb.textContent = myBankBalance.toFixed(2);
+    }
+
+    async function saveBankBalance(val) {
+      myBankBalance = val;
+      updateBankUI();
+      try {
+        const list = await api.db.list("profile");
+        if(list.length > 0) {
+          await api.db.update("profile", list[0].id, { bankBalance: myBankBalance });
+        } else {
+          await api.db.create("profile", { bankBalance: myBankBalance });
+        }
+      }catch(e){}
+    }
+
+    // === 基础导航与初始化 ===
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + tabId).classList.add('active');
+      el.classList.add('active');
+      
+      document.getElementById('mainHeader').style.display = 'flex';
+      document.getElementById('bottomNav').style.display = 'flex';
+
+      // 切换顶部按钮状态
+      document.getElementById('headerActionsHome').style.display = (tabId === 'home') ? 'flex' : 'none';
+      document.getElementById('headerActionsMessages').style.display = (tabId === 'messages') ? 'flex' : 'none';
+      document.getElementById('headerActionsProfile').style.display = (tabId === 'profile') ? 'flex' : 'none';
+
+      if(tabId === 'profile') loadMyProfile();
+      if(tabId === 'messages') loadMessages();
+      if(tabId === 'home') loadFeed();
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    
+    async function init() {
+      try {
+        await loadBankBalance();
+        await updateWallet();
+        await loadFeed();
+        await loadMyProfile();
+      } catch (e) { console.error(e); }
+    }
+
+    async function updateWallet() {
+      try {
+        const wallet = await api.wallet.get();
+        if (wallet && wallet.accounts.length > 0) {
+          document.getElementById('walletBalance').textContent = `${wallet.accounts[0].balance}`;
+          const wp = document.getElementById('walletBalanceProfile');
+          if(wp) wp.textContent = `${wallet.accounts[0].balance}`;
+        }
+      } catch (e) {}
+    }
+
+    // === 充值功能 ===
+    function openRechargeModal() {
+      openModal('rechargeModal');
+    }
+    async function submitRecharge() {
+      const amount = Number(document.getElementById('rechargeAmount').value) || 0;
+      if (amount <= 0) return api.ui.toast("请输入有效金额");
+      if (amount > myBankBalance) return api.ui.toast("银行卡余额不足");
+
+      try {
+        const wallet = await api.wallet.get();
+        if (!wallet || wallet.accounts.length === 0) return api.ui.toast("未找到可用钱包账户");
+        const accountId = wallet.accounts[0].id;
+        const res = await api.wallet.pay({
+          amount: -amount, 
+          accountId: accountId, 
+          title: "OnlyFans 充值",
+          category: "充值"
+        });
+        if(res.ok) {
+           await saveBankBalance(myBankBalance - amount);
+           api.ui.toast("充值成功");
+           updateWallet();
+           closeModal('rechargeModal');
+        } else {
+           api.ui.toast("充值失败");
+        }
+      } catch(e) {
+        console.error(e);
+        api.ui.toast("充值发生错误");
+      }
+    }
+
+    // === 翻译功能 ===
+    window.toggleTranslation = function(btn) {
+      // 找到卡片容器内的 translation-box
+      const card = btn.closest('.post-card');
+      const transDiv = card.querySelector('.translation-box');
+      if (transDiv) {
+        if (transDiv.style.display === 'none' || transDiv.style.display === '') {
+          transDiv.style.display = 'block';
+          btn.style.background = 'var(--of-blue)';
+          btn.style.color = '#fff';
+        } else {
+          transDiv.style.display = 'none';
+          btn.style.background = 'var(--gray-bg)';
+          btn.style.color = 'var(--text-main)';
+        }
+      }
+    }
+
+    // === 清理功能 ===
+    window.clearAllPosts = async function() {
+      const ok = await api.ui.confirm({ title: "清理数据", message: "这将会删除你所有的动态记录，确定要清空吗？" });
+      if (!ok) return;
+      try {
+        const posts = await api.db.list("posts", { limit: 200 });
+        for (const p of posts) {
+          if (p.mediaRef) await api.media.delete({ ref: p.mediaRef });
+          await api.db.delete("posts", p.id);
+        }
+        api.ui.toast("主页数据已清理完毕");
+        loadFeed();
+      } catch(e) {
+        console.error(e);
+        api.ui.toast("清理失败");
+      }
+    }
+    window.clearAllMessages = async function() {
+      const ok = await api.ui.confirm({ title: "清理私信", message: "这将会删除所有的私信记录，确定要清空吗？" });
+      if (!ok) return;
+      try {
+        const msgs = await api.db.list("messages", { limit: 200 });
+        for (const m of msgs) {
+          await api.db.delete("messages", m.id);
+        }
+        api.ui.toast("私信已清理完毕");
+        loadMessages();
+      } catch(e) {
+        console.error(e);
+        api.ui.toast("清理失败");
+      }
+    }
+
+    // === 动态卡片渲染 (极致压缩间距版) ===
+    async function renderPostCard(post, isDetail = false) {
+      const card = document.createElement('div');
+      card.className = 'post-card';
+      if (!isDetail) card.classList.add('clickable');
+      
+      let mediaHtml = '';
+      const isBlur = post.price > 0 && !post.unlocked;
+
+      if (post.virtualVideo) {
+        mediaHtml = `
+          <div class="post-media-container" style="background: #111; color: #fff; padding: 40px 20px; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">▶️</div>
+            <div class="${isBlur ? 'blur-media' : ''}" style="font-size: 16px; line-height: 1.5;">
+              ${post.virtualVideo}
+            </div>
+            ${isBlur ? `
+              <div class="locked-overlay">
+                <div class="locked-icon"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
+                <button class="unlock-btn" onclick="unlockPost('${post.id}', ${post.price}, event)">UNLOCK FOR $${post.price}</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      } else if (post.mediaRef) {
+        try {
+          const media = await api.media.get({ ref: post.mediaRef });
+          const blurClass = isBlur ? 'blur-media' : '';
+          
+          if (media.mime && media.mime.startsWith('video/')) {
+             mediaHtml = `<video src="${media.dataUrl}" class="post-media ${blurClass}" ${isBlur?'':'controls'}></video>`;
+          } else {
+             mediaHtml = `<img src="${media.dataUrl}" class="post-media ${blurClass}">`;
+          }
+
+          if (isBlur) {
+            mediaHtml = `
+              <div class="post-media-container">
+                ${mediaHtml}
+                <div class="locked-overlay">
+                  <div class="locked-icon"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
+                <button class="unlock-btn" onclick="unlockPost('${post.id}', ${post.price}, event)">UNLOCK FOR $${post.price}</button>
+              </div>
+            `;
+          } else {
+             mediaHtml = `<div class="post-media-container">${mediaHtml}</div>`;
+          }
+        } catch(e){}
+      }
+
+      const commentsCount = post.comments ? post.comments.length : 0;
+
+      let translateBtn = '';
+      let translationBox = '';
+      if (post.translation) {
+        translateBtn = `<div class="translate-btn" onclick="event.stopPropagation(); toggleTranslation(this)">翻</div>`;
+        translationBox = `<div class="translation-box">${post.translation}</div>`;
+      }
+
+      const heartIcon = `<svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+      const commentIcon = `<svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z"/></svg>`;
+      const tipIcon = `<svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>`;
+
+      let avatarHtml = `<div class="avatar"></div>`;
+      if (post.avatar) {
+        // 如果是图库里的引用，需要转成真实可用的 dataUrl
+        if (post.avatar.startsWith('media-store://')) {
+          try {
+             const am = await api.media.get({ ref: post.avatar });
+             avatarHtml = `<img src="${am.dataUrl}" class="avatar">`;
+          }catch(e){}
+        } else {
+          // 原本的普通 url
+          avatarHtml = `<img src="${post.avatar}" class="avatar">`;
+        }
+      }
+
+      const deleteBtnHtml = (post.type === 'my_post') ? 
+        `<div class="post-delete-btn" onclick="event.stopPropagation(); deletePostFromCard('${post.id}')">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+         </div>` : '';
+
+      card.innerHTML = `
+        <div class="post-header">
+          ${avatarHtml}
+          <div class="author-info">
+            <div class="author-name">${post.authorName} ✓</div>
+            <div class="author-handle">@${post.authorHandle}</div>
+          </div>
+          ${deleteBtnHtml}
+        </div>
+        <div class="post-text">
+          ${post.content}
+          ${translateBtn}
+        </div>
+        ${translationBox}
+        <div style="height: 8px;"></div>
+        ${mediaHtml}
+        <div class="post-footer">
+          <div class="footer-action" onclick="event.stopPropagation(); this.classList.toggle('liked')">${heartIcon}</div>
+          <div class="footer-action">${commentIcon} ${commentsCount}</div>
+          <div class="footer-action">${tipIcon}</div>
+        </div>
+      `;
+
+      if (!isDetail) {
+        card.onclick = (e) => {
+          if(e.target.closest('.unlock-btn') || e.target.innerText.includes('翻译') || e.target.closest('.footer-action')) return;
+          viewPostDetail(post.id);
+        };
+      }
+      return card;
+    }
+
+    async function loadFeed() {
+      const container = document.getElementById('feedContainer');
+      try {
+        const list = await api.db.list("posts", { limit: 30 });
+        list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        container.innerHTML = '';
+        if(list.length === 0) {
+          container.innerHTML = '<div style="padding:40px;text-align:center;color:#888;">No posts yet.</div>';
+        }
+        for (const p of list) {
+          container.appendChild(await renderPostCard(p));
+        }
+      } catch(e){}
+    }
+
+    // === 核心更新：提高配图视频概率 ===
+    async function generateRandomPost() {
+      api.ui.toast("正在寻找创作者，请稍候...");
+      try {
+        const profile = await getMyProfile();
+        const userPref = profile.preferences ? `重点围绕以下用户的XP和题材偏好生成：${profile.preferences}。` : "随机生成不同风格的内容。";
+        const res = await api.ai.chat({
+          messages: [
+            {role:"system", content: profile.systemPrompt || "你是一个专注于为 18+ 私密订阅平台(OnlyFans) 创作内容的虚拟助手。请务必在成人、NSFW 语境下理解用户的需求，不要进行清水化处理或装傻伪装（例如：绝对不能将'调教'理解为训练猫狗宠物）。"},
+            {role:"user", content:`当前任务：虚构 2 个创作者发布的动态。\n用户偏好/XP标签：${profile.preferences || '成人风格，大尺度，自由发挥'}\n(请务必严格在 18+ 情色/NSFW 语境下展开这些标签，不要生成清水内容)\n\n【重要格式要求】：必须且只能输出严格 JSON 数组格式，不要 Markdown。格式：[{'name':'名字','handle':'账号不用带@','content':'全英文文案','translation':'对应的中文翻译','mediaType':'video或none','virtualVideo':'如果是video，用中文详细且带有成人向描绘地写一段福利视频画面，用【】包裹','price':20}, ...] (必须是一维数组)`}
+          ],
+          timeoutMs: 60000
+        });
+        let jsonStr = res.text;
+        const match = jsonStr.match(/\[[\s\S]*\]/);
+        if (!match) {
+          console.log("【DEBUG】AI 返回的原始文本:", jsonStr);
+          throw new Error("模型拒答或未返回JSON。它说：" + jsonStr.substring(0, 60) + (jsonStr.length > 60 ? "..." : ""));
+        }
+        const dataArr = JSON.parse(match[0]);
+        
+        api.ui.toast(`成功获取 ${dataArr.length} 条动态，正在处理资源...`);
+
+        for (const data of dataArr) {
+          let mediaRef = null;
+          let virtualVideo = null;
+
+          if (data.mediaType === 'image' && data.imagePrompt && data.imagePrompt.trim() !== '') {
+            try {
+              const img = await api.ai.generateImage({ prompt: data.imagePrompt });
+              if(img.dataUrl) {
+                const stored = await api.media.put({ dataUrl: img.dataUrl });
+                mediaRef = stored.ref;
+              }
+            } catch (imgErr) {
+              console.warn("单条生图失败", imgErr);
+            }
+          } else if (data.mediaType === 'video' && data.virtualVideo) {
+            virtualVideo = data.virtualVideo;
+          }
+
+          await api.db.create("posts", {
+            type: "random",
+            authorName: data.name,
+            authorHandle: data.handle,
+            content: data.content,
+            translation: data.translation,
+            mediaRef: mediaRef,
+            virtualVideo: virtualVideo,
+            price: data.price || 0,
+            unlocked: false,
+            comments: [],
+            createdAt: new Date().toISOString()
+          });
+        }
+        
+        loadFeed();
+        api.ui.toast("✨ 新动态已刷新！");
+      } catch(e) {
+        console.error(e);
+        api.ui.toast("生成失败：" + (e.message || "未知错误"));
+      }
+    }
+
+    // === 详情页与评论功能 ===
+    function goBackToFeed() {
+      document.getElementById('page-detail').classList.remove('active');
+      document.getElementById('mainHeader').style.display = 'flex';
+      document.getElementById('bottomNav').style.display = 'flex';
+      
+      document.querySelectorAll('.nav-item').forEach(n => {
+        if(n.classList.contains('active')) {
+           const text = n.querySelector('span').innerText;
+           const tabId = text === '主页' ? 'home' : (text === '私信' ? 'messages' : 'profile');
+           document.getElementById('page-' + tabId).classList.add('active');
+        }
+      });
+      loadFeed();
+    }
+
+    async function viewPostDetail(postId) {
+      currentViewPostId = postId;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('mainHeader').style.display = 'none';
+      document.getElementById('bottomNav').style.display = 'none';
+      document.getElementById('page-detail').classList.add('active');
+      
+      try {
+        const post = await api.db.get("posts", postId);
+        const container = document.getElementById('detailContent');
+        container.innerHTML = '';
+        container.appendChild(await renderPostCard(post, true));
+        renderComments(post.comments || []);
+      } catch(e) {}
+    }
+
+    window.deletePostFromCard = async function(id) {
+      const ok = await api.ui.confirm({ title: "删除动态", message: "确定要删除这条动态吗？" });
+      if (!ok) return;
+      try {
+        const post = await api.db.get("posts", id);
+        if (post.mediaRef) {
+          await api.media.delete({ ref: post.mediaRef });
+        }
+        await api.db.delete("posts", id);
+        api.ui.toast("删除成功");
+        
+        // 如果当前在详情页并且删的是当前帖子，退回主页
+        if (document.getElementById('page-detail').classList.contains('active') && currentViewPostId === id) {
+          goBackToFeed();
+        } else {
+          // 刷新当前页面
+          if (document.getElementById('page-profile').classList.contains('active')) {
+            loadMyProfile();
+          } else {
+            loadFeed();
+          }
+        }
+      } catch(e) {
+        console.error(e);
+        api.ui.toast("删除失败");
+      }
+    }
+
+    function renderComments(comments) {
+      const list = document.getElementById('commentList');
+      if(comments.length === 0) {
+        list.innerHTML = '<div style="color:#888; padding: 20px 0; text-align:center;">暂无评论，快来抢沙发！</div>';
+        return;
+      }
+      list.innerHTML = comments.map(c => `
+        <div class="comment-item">
+          <div class="comment-avatar"></div>
+          <div class="comment-content-area">
+            <div class="comment-author">${c.author}</div>
+            <div>${c.content}</div>
+          </div>
+        </div>
+      `).join('');
+      setTimeout(() => {
+        window.scrollTo(0, document.body.scrollHeight);
+      }, 100);
+    }
+
+    async function submitMyComment() {
+      const input = document.getElementById('myCommentInput');
+      const text = input.value.trim();
+      if(!text) return;
+      try {
+        const post = await api.db.get("posts", currentViewPostId);
+        const comments = post.comments || [];
+        const profile = await getMyProfile();
+        comments.push({ author: profile.name || 'Me', content: text });
+        await api.db.update("posts", currentViewPostId, { comments });
+        input.value = '';
+        renderComments(comments);
+        api.ui.toast("评论成功");
+      } catch(e){}
+    }
+
+    async function generateRandomComments() {
+      api.ui.toast("正在呼叫粉丝...");
+      try {
+        const profile = await getMyProfile();
+        let fanCount = profile.followers || 0;
+        let genCount = 3;
+        if (fanCount > 1000) genCount = 8;
+        else if (fanCount > 500) genCount = 5;
+
+        const res = await api.ai.chat({
+          messages: [{role:"user", content:`生成 ${genCount} 条对动态的简短英文评论（像真实粉丝的口吻）。必须且只能输出严格 JSON 数组格式，不要 Markdown：[{'author':'名字', 'content':'评论内容'}, ...] (${genCount}个对象)`}]
+        });
+        const jsonStr = res.text.replace(/```json/g, '').replace(/```/g, '').trim();
+        const newComments = JSON.parse(jsonStr.match(/\[.*\]/s)[0]);
+        
+        const post = await api.db.get("posts", currentViewPostId);
+        const comments = post.comments || [];
+        comments.push(...newComments);
+        await api.db.update("posts", currentViewPostId, { comments });
+        renderComments(comments);
+        api.ui.toast("粉丝评论已到达");
+
+        if (post.type === 'my_post' && post.price > 0) {
+          // 每次生成评论有 80% 的概率会有人解锁购买
+          if (Math.random() < 0.8) {
+            let paidCount = Math.floor(Math.random() * 5) + 1; // 至少1-5个人
+            if (fanCount > 500) paidCount += Math.floor(Math.random() * 10); // 粉丝多的人数更多
+            const income = paidCount * post.price;
+            await saveBankBalance(myBankBalance + income);
+            setTimeout(() => {
+              api.ui.toast(`🎉 顺便有 ${paidCount} 位粉丝解锁了该视频，收益 +${income}`);
+            }, 1000);
+          }
+        }
+      } catch(e){
+        api.ui.toast("生成评论失败");
+      }
+    }
+
+    // === 解锁 ===
+    window.unlockPost = async function(id, price, event) {
+      if (event) event.stopPropagation();
+      try {
+        const wallet = await api.wallet.get();
+        if(!wallet || wallet.accounts.length===0) return api.ui.toast("无钱包");
+        const res = await api.wallet.pay({
+          amount: price, accountId: wallet.accounts[0].id, title:"OnlyFans解锁"
+        });
+        if(!res.ok) return api.ui.toast("余额不足");
+        await api.db.update("posts", id, { unlocked: true });
+        updateWallet();
+        
+        if (document.getElementById('page-detail').classList.contains('active')) {
+          viewPostDetail(id);
+        } else {
+          loadFeed();
+        }
+      }catch(e){}
+    }
+
+    // === 角色专属内容 ===
+    let pendingCharAction = null;
+    async function openCharSelectModal(action) {
+      try {
+        const chars = await api.characters.list();
+        if(chars.length === 0) return api.ui.toast("没有可用的角色");
+        pendingCharAction = action;
+        const listContainer = document.getElementById('charSelectList');
+        listContainer.innerHTML = chars.map(c => `
+          <div style="padding: 12px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="selectCharAndExecute('${c.id}', '${c.name.replace(/'/g, "\\'")}')">
+             <div style="width: 40px; height: 40px; border-radius: 50%; background: #eee; overflow: hidden;">
+               ${c.avatar ? `<img src="${c.avatar}" style="width:100%; height:100%; object-fit:cover;">` : ''}
+             </div>
+             <div style="font-weight: 600; font-size: 15px;">${c.name}</div>
+          </div>
+        `).join('');
+        openModal('charSelectModal');
+      } catch(e){}
+    }
+
+    function selectCharAndExecute(charId, charName) {
+      closeModal('charSelectModal');
+      if (pendingCharAction === 'post') {
+        executeCharPost(charId, charName);
+      } else if (pendingCharAction === 'message') {
+        executeCharMessage(charId, charName);
+      }
+    }
+
+    async function openCharacterSelect() {
+      openCharSelectModal('post');
+    }
+
+    async function executeCharPost(charId, charName) {
+      try {
+        api.ui.toast(`正在联系 ${charName}...`);
+        let historyText = "";
+        try {
+          const session = await api.chat.getCurrentSession();
+          if(session) {
+             const hist = await api.chat.readHistory({ sessionId: session.sessionId, limit: 10 });
+             historyText = hist.map(m => `${m.role}: ${m.content}`).join('\n');
+          }
+        }catch(e){}
+
+        const profile = await getMyProfile();
+        const sysPrefix = profile.systemPrompt ? `(系统全局预设：${profile.systemPrompt})\n` : "(系统默认要求：请务必在 18+、NSFW 成人语境下进行角色扮演，切勿将成人词汇清水化，如把调教当成训宠物等。)\n";
+        const userPref = profile.preferences ? `(当前任务偏好：${profile.preferences}。请严格在成人情色语境下展现这些元素)\n` : "请在成人/NSFW语境下自由发挥。\n";
+        const res = await api.ai.generate({
+          characterId: charId,
+          instruction: `${sysPrefix}你正在 18+ 平台 OnlyFans 上发布一条私密英文动态。主要基于你的人设来自由发挥，必须包含成人/NSFW元素。\n${userPref}请结合或参考以下近期聊天记录：\n${historyText}\n生成一条符合你人设的大尺度动态。必须且只能输出严格 JSON 格式，不要 Markdown：{'content':'全英文文案','translation':'对应的中文翻译','mediaType':'image、video或none','imagePrompt':'生成图片的英文提示词','virtualVideo':'如果是video，用中文详细且带有成人描绘地写一段福利视频画面，用【】包裹','price':20}`
+        });
+        
+        let jsonStr = res.text;
+        const match = jsonStr.match(/\{[\s\S]*\}/);
+        if (!match) {
+          console.log("【DEBUG】AI 返回的原始文本:", jsonStr);
+          throw new Error("模型拒答或未返回JSON。它说：" + jsonStr.substring(0, 60) + (jsonStr.length > 60 ? "..." : ""));
+        }
+        const data = JSON.parse(match[0]);
+        
+        let mediaRef = null;
+        let virtualVideo = null;
+
+        if(data.mediaType === 'image' && data.imagePrompt) {
+           try {
+             const img = await api.ai.generateImage({ prompt: data.imagePrompt, characterId: charId, useReferenceImage: true });
+             if(img.dataUrl) {
+               const stored = await api.media.put({ dataUrl: img.dataUrl });
+               mediaRef = stored.ref;
+             }
+           } catch (imgErr) { console.warn("角色生图失败", imgErr); }
+        } else if (data.mediaType === 'video' && data.virtualVideo) {
+           virtualVideo = data.virtualVideo;
+        }
+
+        await api.db.create("posts", {
+          type: "character",
+          authorName: charName,
+          authorHandle: charName.toLowerCase(),
+          content: data.content,
+          translation: data.translation,
+          mediaRef: mediaRef,
+          virtualVideo: virtualVideo,
+          price: data.price,
+          unlocked: false,
+          comments: [],
+          createdAt: new Date().toISOString()
+        });
+        loadFeed();
+        api.ui.toast("角色发来了新动态");
+      } catch(e) {
+        console.error(e);
+        api.ui.toast("获取失败：" + (e.message || "未知错误"));
+      }
+    }
+
+    function openCreateModal() { 
+      currentMediaRef = null;
+      currentVirtualVideo = null;
+      document.getElementById('newPostMediaPreview').textContent = '';
+      openModal('createModal'); 
+    }
+    
+    async function pickMediaForPost() {
+      try {
+        const picked = await api.media.pick({ accept: "image/*,video/*" });
+        const stored = await api.media.put({ dataUrl: picked.file.dataUrl });
+        currentMediaRef = stored.ref;
+        currentVirtualVideo = null;
+        document.getElementById('newPostMediaPreview').textContent = '已选择真实媒体文件';
+      } catch(e) {} 
+    }
+
+    function openVirtualMediaInput() {
+      openModal('virtualMediaModal');
+    }
+    function confirmVirtualMedia() {
+      const text = document.getElementById('virtualMediaText').value.trim();
+      if (text) {
+        currentVirtualVideo = text;
+        currentMediaRef = null;
+        document.getElementById('newPostMediaPreview').textContent = '已设置文字版媒体';
+        closeModal('virtualMediaModal');
+      } else {
+        api.ui.toast("描述不能为空");
+      }
+    }
+
+    async function submitNewPost() {
+      const text = document.getElementById('newPostText').value;
+      const price = Number(document.getElementById('newPostPrice').value) || 0;
+      if(!text && !currentMediaRef && !currentVirtualVideo) return api.ui.toast("不能发空内容");
+
+      const profile = await getMyProfile();
+      await api.db.create("posts", {
+        type: "my_post",
+        authorName: profile.name,
+        authorHandle: profile.handle,
+        avatar: profile.avatar,
+        content: text,
+        mediaRef: currentMediaRef,
+        virtualVideo: currentVirtualVideo,
+        price: price,
+        unlocked: true,
+        comments: [],
+        createdAt: new Date().toISOString()
+      });
+      
+      closeModal('createModal');
+      document.getElementById('newPostText').value = '';
+      document.getElementById('virtualMediaText').value = '';
+      api.ui.toast("发布成功");
+
+
+      
+      if(document.getElementById('page-profile').classList.contains('active')) {
+        loadMyProfile();
+      } else {
+        loadFeed();
+      }
+    }
+
+    async function loadMessages() {
+      const container = document.getElementById('messagesContainer');
+      try {
+        const list = await api.db.list("messages", { limit: 20 });
+        list.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        container.innerHTML = list.map(m => `
+          <div class="msg-item">
+            <div class="avatar"></div>
+            <div class="msg-content">
+              <div class="msg-name">${m.sender}</div>
+              <div class="msg-preview">${m.content}</div>
+              <div class="msg-time">刚刚</div>
+            </div>
+          </div>
+        `).join('');
+      }catch(e){}
+    }
+
+    async function generateRandomMessage() {
+      api.ui.toast("正在收取新私信，请稍候...");
+      try {
+        const profile = await getMyProfile();
+        const userPref = profile.preferences ? `重点围绕以下用户的XP和题材偏好生成：${profile.preferences}。` : "";
+        const res = await api.ai.chat({
+          messages: [
+            {role:"system", content: profile.systemPrompt || "你是一个专注于为 18+ 私密订阅平台(OnlyFans) 创作内容的虚拟助手。请务必在成人、NSFW 语境下理解用户的需求，不要进行清水化处理或装傻伪装。"},
+            {role:"user", content:`模拟粉丝发来的私信，表达对创作者近期发布内容的极度喜欢和赞美。\n用户偏好/XP标签：${userPref}\n(请结合偏好生成，绝对不要提及感谢充钱、打赏或交易之类的。)\n\n【重要格式要求】：必须且只能输出严格的 JSON 数组格式，不要包含 Markdown 标记：[{'sender':'名字', 'content':'全英文私信内容'}, ...] (必须是一维数组)`}
+          ]
+        });
+        let jsonStr = res.text;
+        const match = jsonStr.match(/\[[\s\S]*\]/);
+        if (!match) {
+          console.log("【DEBUG】AI 返回的原始文本:", jsonStr);
+          throw new Error("模型拒答或未返回JSON。它说：" + jsonStr.substring(0, 60) + (jsonStr.length > 60 ? "..." : ""));
+        }
+        const dataArr = JSON.parse(match[0]);
+        for (const data of dataArr) {
+          await api.db.create("messages", {
+            sender: data.sender,
+            content: data.content,
+            createdAt: new Date().toISOString()
+          });
+        }
+        loadMessages();
+        api.ui.toast("✨ 新私信已送达！");
+      }catch(e){
+        console.error(e);
+        api.ui.toast("生成私信失败");
+      }
+    }
+
+    async function openCharacterMessageSelect() {
+      openCharSelectModal('message');
+    }
+
+    async function executeCharMessage(charId, charName) {
+      try {
+        api.ui.toast(`正在请求 ${charName} 发送私信...`);
+        let historyText = "";
+        try {
+          const session = await api.chat.getCurrentSession();
+          if(session) {
+             const hist = await api.chat.readHistory({ sessionId: session.sessionId, limit: 10 });
+             historyText = hist.map(m => `${m.role}: ${m.content}`).join('\n');
+          }
+        }catch(e){}
+
+        const profile = await getMyProfile();
+        const sysPrefix = profile.systemPrompt ? `(系统全局预设：${profile.systemPrompt})\n` : "(系统默认要求：请务必在 18+、NSFW 成人语境下进行角色扮演，切勿将成人词汇清水化。)\n";
+        const userPref = profile.preferences ? `(当前任务偏好：${profile.preferences}。请严格在成人情色语境下展现这些元素)\n` : "请在成人/NSFW语境下自由发挥。\n";
+        const res = await api.ai.generate({
+          characterId: charId,
+          instruction: `${sysPrefix}你正在 18+ 平台 OnlyFans 上给用户发送一条私密英文私信。结合你的人设自由发挥，必须包含诱惑、成人或大尺度元素。\n${userPref}请参考以下近期聊天记录：\n${historyText}\n发送一条符合要求格式的私信。必须且只能输出严格的 JSON 格式，不要 Markdown：{'content':'全英文私信内容'}`
+        });
+        
+        let jsonStr = res.text;
+        const match = jsonStr.match(/\{[\s\S]*\}/);
+        if (!match) {
+          console.log("【DEBUG】AI 返回的原始文本:", jsonStr);
+          throw new Error("模型拒答或未返回JSON。它说：" + jsonStr.substring(0, 60) + (jsonStr.length > 60 ? "..." : ""));
+        }
+        const data = JSON.parse(match[0]);
+
+        await api.db.create("messages", {
+          sender: charName,
+          content: data.content,
+          createdAt: new Date().toISOString()
+        });
+        loadMessages();
+        api.ui.toast("收到一条新私信！");
+      } catch(e) {
+        console.error(e);
+        api.ui.toast("获取失败：" + (e.message || "未知错误"));
+      }
+    }
+
+    async function getMyProfile() {
+      try {
+        const list = await api.db.list("profile");
+        if(list.length > 0) return list[0];
+      }catch(e){}
+      return { name: "My Name", handle: "myhandle", bio: "Welcome to my page!", followers: 0, following: 0, avatar: null, cover: null, preferences: "", systemPrompt: "" };
+    }
+
+    async function loadMyProfile() {
+      const profile = await getMyProfile();
+      document.getElementById('profileName').textContent = profile.name;
+      document.getElementById('profileHandle').textContent = '@' + profile.handle;
+      document.getElementById('profileBio').textContent = profile.bio;
+      document.getElementById('profileFollowers').textContent = profile.followers || 0;
+      document.getElementById('profileFollowing').textContent = profile.following || 0;
+      
+      if (profile.avatar) {
+         api.media.get({ ref: profile.avatar }).then(m => {
+           document.getElementById('profileAvatar').src = m.dataUrl;
+         }).catch(e=>{});
+      }
+      if (profile.cover) {
+         api.media.get({ ref: profile.cover }).then(m => {
+           document.getElementById('profileCover').src = m.dataUrl;
+         }).catch(e=>{});
+      }
+
+      const container = document.getElementById('myPostsContainer');
+      try {
+        const list = await api.db.list("posts", { limit: 30 });
+        const myPosts = list.filter(p => p.type === 'my_post').sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+        container.innerHTML = '';
+        if(myPosts.length === 0) {
+          container.innerHTML = '<div style="padding:40px;text-align:center;color:#888;">还没有发布过动态</div>';
+        } else {
+          for(const p of myPosts) {
+            container.appendChild(await renderPostCard(p));
+          }
+        }
+      }catch(e){}
+    }
+
+    function openProfileModal() {
+      getMyProfile().then(p => {
+        document.getElementById('editName').value = p.name;
+        document.getElementById('editHandle').value = p.handle;
+        document.getElementById('editBio').value = p.bio;
+        document.getElementById('editFollowers').value = p.followers || 0;
+        document.getElementById('editFollowing').value = p.following || 0;
+        tempAvatarRef = p.avatar || null;
+        tempCoverRef = p.cover || null;
+        openModal('profileModal');
+      });
+    }
+
+    async function pickProfileMedia(type) {
+      try {
+        const picked = await api.media.pick({ accept: "image/*" });
+        const stored = await api.media.put({ dataUrl: picked.file.dataUrl });
+        if (type === 'avatar') {
+          tempAvatarRef = stored.ref;
+          api.ui.toast("已选择新头像，请点保存生效");
+        } else {
+          tempCoverRef = stored.ref;
+          api.ui.toast("已选择新背景，请点保存生效");
+        }
+      } catch (e) {}
+    }
+
+    async function saveProfile() {
+      const profileUpdate = {
+        name: document.getElementById('editName').value,
+        handle: document.getElementById('editHandle').value,
+        bio: document.getElementById('editBio').value,
+        followers: Number(document.getElementById('editFollowers').value) || 0,
+        following: Number(document.getElementById('editFollowing').value) || 0,
+        avatar: tempAvatarRef,
+        cover: tempCoverRef
+      };
+      try {
+        const list = await api.db.list("profile");
+        if(list.length > 0) {
+          profileUpdate.systemPrompt = list[0].systemPrompt || "";
+          profileUpdate.preferences = list[0].preferences || "";
+          await api.db.update("profile", list[0].id, profileUpdate);
+        } else {
+          await api.db.create("profile", profileUpdate);
+        }
+        closeModal('profileModal');
+        loadMyProfile();
+      }catch(e){}
+    }
+
+    init();
+  </script>
+</body>
+</html>

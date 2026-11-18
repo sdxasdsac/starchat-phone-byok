@@ -1,0 +1,38 @@
+{
+  "id": "guide.relationship",
+  "name": "攻略系统",
+  "version": "1.1.0",
+  "sdkVersion": "1.0",
+  "author": "小坊",
+  "description": "读取角色关系与全部记忆，推演你现在能做的关系推进任务，以及接下来可以发生什么（线上/线下）。支持多角色同选与面具指定。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "characters.relations.read",
+    "characters.state.read",
+    "user.profile.read",
+    "user.persona.read",
+    "memory.readCore",
+    "memory.readLongTerm",
+    "memory.readShortTerm",
+    "ai.generate",
+    "chat.write",
+    "chat.requestReply",
+    "ui.toast"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": []
+}

@@ -1,0 +1,2808 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+  <script src="/phone-apps/ai-phone-host.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Whisper</title>
+<style>
+  @font-face{
+    font-family:"EarWhisperSerif";
+    src:url('assets/noto-serif-sc.woff2') format('woff2');
+    font-weight:400 700;
+    font-style:normal;
+    font-display:swap;
+  }
+  :root{
+    --ink:#f6ecdf;
+    --ink-dim:rgba(246,236,223,.62);
+    --ink-faint:rgba(246,236,223,.38);
+    --accent:#bcad98;
+    --accent-2:#8e7f69;
+    --line-accent:rgba(188,173,152,.45);
+    --danger:#c9754a;
+    --bg-0:#090705;
+    --bg-1:#14100a;
+    --bg-2:#1c160d;
+    --glass:rgba(255,240,220,.04);
+    --glass-hi:rgba(20,16,10,.65);
+    --line:rgba(255,230,190,.09);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{width:100%;height:100%;margin:0;overflow:hidden;}
+  body{
+    background:
+      radial-gradient(65% 40% at 50% -4%, rgba(203,176,137,.08), transparent 62%),
+      radial-gradient(55% 35% at 92% 6%, rgba(157,129,90,.06), transparent 60%),
+      radial-gradient(45% 30% at 6% 22%, rgba(203,176,137,.04), transparent 60%),
+      linear-gradient(165deg, var(--bg-0), var(--bg-1) 55%, var(--bg-2));
+    color:var(--ink);
+    font-family:"EarWhisperSerif","Songti SC","STSong","SimSun","Noto Serif SC",serif;
+    overflow-x:hidden;
+  }
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;min-height:44px;}
+  textarea,input{font:inherit;color:inherit;}
+  .hidden{display:none !important;}
+  /* 头部(标题/分割线/TAB)固定,只有 main 内容区滚动,内容不会滚到状态栏下面 */
+  .app{position:relative;height:100dvh;display:flex;flex-direction:column;padding:var(--ai-phone-app-safe-top,88px) 16px 0;}
+
+  .bg-photo{position:fixed;inset:0;z-index:0;pointer-events:none;background:url('assets/bg.jpg') center top/cover no-repeat;}
+  .bg-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,7,5,.3) 0%,rgba(9,7,5,.16) 38%,rgba(9,7,5,.3) 72%,rgba(9,7,5,.5) 100%);}
+  .bg-dust{position:fixed;inset:0;z-index:0;pointer-events:none;background:url('assets/dust.webp') center/cover no-repeat;opacity:.45;}
+
+  .topbar{position:relative;z-index:1;display:flex;justify-content:center;flex-shrink:0;padding-top:26px;}
+  .brand-logo{width:62%;max-width:300px;height:auto;display:block;}
+  .header-row{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 16px;flex-shrink:0;}
+  .char-current-avatar{width:40px;height:40px;min-height:40px;border-radius:50%;background-color:rgba(255,240,220,.14);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;color:#f6ecdf;border:1px solid rgba(255,246,233,.55);box-shadow:0 0 6px rgba(203,176,137,.3);flex-shrink:0;}
+  .char-current-avatar:active{transform:scale(.93);}
+  .tabs{display:flex;gap:12px;}
+  .tab-btn{width:54px;height:25px;min-height:25px;padding:0;background-size:100% 100%;background-repeat:no-repeat;}
+  .tab-btn.tab-list{background-image:url('assets/tab-list-on.webp');}
+  .tab-btn.tab-list.active{background-image:url('assets/tab-list-off.webp');}
+  .tab-btn.tab-fav{background-image:url('assets/tab-fav-on.webp');}
+  .tab-btn.tab-fav.active{background-image:url('assets/tab-fav-off.webp');}
+
+  main{position:relative;z-index:1;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(var(--ai-phone-app-safe-bottom,24px) + 16px);scrollbar-width:none;}
+  main::-webkit-scrollbar{display:none;}
+  .view{display:none;}
+  .view.active{display:block;animation:fade-in .25s ease;}
+  @keyframes fade-in{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  .notice-card{background:var(--glass);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px;}
+  .notice-card p{margin:0 0 12px;font-size:13.5px;line-height:1.6;color:var(--ink-dim);}
+  .notice-card button{background:var(--glass-hi);border:1px solid var(--line-accent);color:#fdf4e6;font-weight:600;border-radius:12px;padding:0 16px;text-shadow:0 0 7px rgba(255,255,255,.55),0 0 2px rgba(255,255,255,.4);}
+
+  /* 切换角色:网格排布,一行五个,头像在上名字在下 */
+  .char-switch-list{display:grid;grid-template-columns:repeat(5,1fr);gap:16px 8px;margin:10px 0 6px;max-height:50vh;overflow-y:auto;}
+  .char-switch-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;min-height:0;text-align:center;}
+  .char-switch-item .ava{width:46px;height:46px;border-radius:50%;background-color:rgba(255,240,220,.14);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;color:#f6ecdf;border:1px solid transparent;}
+  .char-switch-item.active .ava{border-color:var(--line-accent);box-shadow:0 0 8px rgba(203,176,137,.4);}
+  .char-switch-item .name{width:100%;font-size:11px;color:var(--ink-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .char-switch-item.active .name{color:#fdf4e6;}
+  /* 多人模式:选中角标(全员平等,不区分主次) */
+  .char-switch-item .order-badge{position:absolute;top:-4px;right:calc(50% - 30px);width:17px;height:17px;border-radius:50%;background:rgba(203,176,137,.9);color:#1c160d;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .mode-seg{display:flex;gap:0;margin:2px 0 10px;border:1px solid var(--line);border-radius:999px;overflow:hidden;width:fit-content;}
+  .mode-seg button{min-height:32px;padding:0 18px;font-size:12.5px;color:var(--ink-dim);background:none;}
+  .mode-seg button.active{background:var(--glass-hi);color:#fdf4e6;font-weight:600;}
+  .cast-hint{font-size:11px;color:var(--ink-faint);margin:0 0 4px;}
+  /* 首页头像上的多人计数角标 */
+  /* 多人:并排叠放的头像组,视觉上全员平等,不突出任何一位 */
+  .char-current-avatar.multi{width:auto;min-width:0;height:40px;border:0;border-radius:0;background:none;box-shadow:none;padding:0;display:flex;align-items:center;}
+  .char-current-avatar.multi .cast-ava{width:36px;height:36px;border-radius:50%;background-color:rgba(255,240,220,.14);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:#f6ecdf;border:1px solid rgba(255,246,233,.55);box-shadow:0 0 6px rgba(203,176,137,.3);flex-shrink:0;}
+  .char-current-avatar.multi .cast-ava:not(:first-child){margin-left:-11px;}
+  /* 说话人名字:字幕上方一行小字,每位角色固定一个颜色 */
+  .caption-speaker{display:block;margin-bottom:4px;font-size:12px;letter-spacing:.14em;font-weight:600;opacity:.92;}
+  .t-line-text .caption-speaker{display:inline;margin-right:6px;font-size:11px;letter-spacing:.06em;}
+  /* 导入剧本:说话人对号入座 */
+  .import-map-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .import-map-row .map-name{flex:0 0 32%;font-size:12.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .import-map-row select{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12.5px;color:var(--ink);}
+  /* 编辑台词时的说话人选择 */
+  .t-edit-speaker{margin-bottom:8px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;color:var(--ink);width:auto;}
+
+  .section-title{margin:4px 0 16px;padding:0 5.25%;display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:700;color:var(--ink);}
+  .section-title-img{height:22px;width:auto;display:block;}
+  .title-actions{display:flex;align-items:center;gap:7px;}
+  .regen-link{font-size:12px;color:var(--accent);font-weight:600;}
+  .regen-icon-btn{width:25px;height:25px;min-height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,246,233,.45);box-shadow:0 0 5px rgba(255,246,233,.22);}
+  .regen-icon-btn svg{width:13px;height:13px;filter:drop-shadow(0 0 2px rgba(255,246,233,.5));}
+  .regen-icon-btn:active{transform:scale(.92);}
+  .transcript-toolbar{display:flex;gap:14px;margin-bottom:4px;}
+  .import-field{margin-bottom:12px;}
+  .import-field label{display:block;font-size:11.5px;color:var(--ink-faint);margin-bottom:5px;}
+  .import-field input[type="text"]{width:100%;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;color:var(--ink);}
+  .import-field textarea{width:100%;min-height:140px;resize:vertical;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:12.5px;line-height:1.6;color:var(--ink);font-family:inherit;}
+  .import-cover-preview{margin-top:8px;width:100%;max-width:150px;aspect-ratio:3/4;border-radius:12px;background-size:cover;background-position:center;border:1px solid var(--line);}
+  .ambience-picker{margin-top:14px;}
+  .ambience-picker-label{font-size:11.5px;color:var(--ink-faint);margin-bottom:7px;}
+  .ambience-chips{display:flex;gap:8px;flex-wrap:wrap;}
+  .ambience-chip{padding:0 13px;min-height:32px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid transparent;color:var(--ink-dim);font-size:12px;}
+  .ambience-chip.active{background:var(--glass-hi);border:1px solid var(--line-accent);color:#fdf4e6;font-weight:600;}
+
+  /* 卡片:直角、单层半像素细白框;固定 36.5% 列宽+居中,四周留大呼吸(按设计稿比例) */
+  .item-grid{display:grid;grid-template-columns:repeat(2,40.5%);justify-content:center;column-gap:8.5%;row-gap:28px;margin-bottom:24px;}
+  .item-card{position:relative;aspect-ratio:3/4;text-align:left;background:none;overflow:visible;}
+  .item-card .card-frame-main{position:absolute;inset:0;overflow:hidden;background:linear-gradient(160deg,#241d13,#120e08);z-index:1;}
+  /* 描边用 2 倍尺寸 1px 边框缩放 50% 的细线技法:高分屏上渲染成真正的半像素锐线 */
+  .item-card .card-frame-main::after{content:"";box-sizing:border-box;position:absolute;left:0;top:0;width:200%;height:200%;transform:scale(.5);transform-origin:0 0;border:1px solid rgba(255,255,255,.5);pointer-events:none;z-index:3;}
+  .item-card .cover{position:absolute;inset:0;background-size:cover;background-position:center;}
+  .item-card .cover.placeholder{display:flex;align-items:center;justify-content:center;font-size:26px;color:rgba(255,238,228,.25);}
+  /* 抬到遮罩(scrim)之上,否则点击会被遮罩截走冒泡到卡片 */
+  .item-card .cover-retry{position:relative;z-index:2;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,246,233,.45);box-shadow:0 0 6px rgba(255,246,233,.2);display:flex;align-items:center;justify-content:center;color:#f6ecdf;}
+  .item-card .cover-retry svg{width:18px;height:18px;}
+  .item-card .cover-retry:active{transform:scale(.9);}
+  .item-card .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,7,5,0) 55%,rgba(9,7,5,.55) 100%);pointer-events:none;}
+  /* 标题条:左侧不到边、右侧略溢出卡片,破形;所以放在裁剪层(card-frame-main)外面 */
+  .item-card .card-meta{position:absolute;left:14%;right:-13px;bottom:16px;z-index:2;background:rgba(9,7,5,.55);backdrop-filter:blur(2px);}
+  .item-card .card-meta b{display:block;position:relative;padding:4px 9px 3px 10px;font-size:13px;line-height:1.25;text-align:right;color:#fdf4e6;}
+  /* 分割线不到两边,和下面小字的文字区域同宽 */
+  .item-card .card-meta b::after{content:"";position:absolute;left:15px;right:9px;bottom:0;height:1px;background:rgba(255,255,255,.16);}
+  /* 简介小字:最多两行省略。padding-bottom 会让第三行在内边距区露头,所以底部间距用 margin,并加 max-height 双保险 */
+  .item-card .card-meta span{padding:3px 9px 0 10px;margin-bottom:5px;font-size:8px;color:rgba(246,233,226,.78);line-height:1.35;text-align:right;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;max-height:22px;}
+  .item-card .corner-actions{position:absolute;top:8px;right:8px;display:flex;gap:7px;z-index:2;}
+  .item-card .corner-btn{width:24px;height:24px;border-radius:50%;background:rgba(120,110,100,.42);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;color:#f6ecdf;}
+  .item-card .corner-btn svg{width:11px;height:11px;}
+  .item-card .corner-btn.fav-badge.active{color:#f2d792;}
+  /* 已生成:金色实心播放;未生成:暗淡描边播放 */
+  .item-card .corner-btn.play-ready{color:#f2d792;background:rgba(120,110,100,.5);}
+  .item-card .corner-btn.play-pending{color:rgba(246,236,223,.55);}
+  .item-card:active .card-frame-main{transform:scale(.97);}
+
+  /* 空态:三个错落的图片按钮(左-右-左阶梯,按设计稿位置) */
+  .feed-empty{min-height:60vh;display:flex;flex-direction:column;justify-content:flex-start;padding-top:14vh;}
+  .action-stack{display:none;flex-direction:column;gap:26px;margin-top:4px;}
+  .feed-empty .action-stack{display:flex;}
+  .stack-btn{background:none;border:0;padding:0;min-height:0;width:42%;max-width:195px;align-self:flex-start;}
+  .stack-btn img{width:100%;height:auto;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3));}
+  .stack-btn:active{transform:scale(.97);}
+  /* 三个按钮聚拢在中轴附近,只轻微错位(按设计稿:中、右偏、左偏) */
+  .stack-btn.s1{margin-left:32%;}
+  .stack-btn.s2{margin-left:40%;}
+  .stack-btn.s3{margin-left:26%;}
+
+  .custom-sheet-input{width:100%;min-height:76px;resize:none;background:rgba(0,0,0,.18);border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;line-height:1.6;color:var(--ink);}
+  .custom-sheet-input::placeholder{color:var(--ink-faint);}
+  /* 自有确认弹窗:要盖在播放页(z50)之上 */
+  #app-confirm-sheet{z-index:60;}
+  .app-confirm-message{margin:2px 0 4px;font-size:14px;line-height:1.7;color:var(--ink);}
+
+  .empty-tip{font-size:12.5px;color:var(--ink-faint);text-align:center;margin-top:40px;}
+
+  .sheet-overlay{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;background:rgba(8,5,3,.55);backdrop-filter:blur(4px);}
+  .sheet{position:relative;width:100%;max-width:480px;background:rgba(22,16,10,.92);backdrop-filter:blur(20px) saturate(120%);border:1px solid rgba(255,240,220,.13);border-bottom:0;border-radius:20px 20px 0 0;padding:26px 20px calc(env(safe-area-inset-bottom,0px) + 20px);max-height:80dvh;overflow-y:auto;box-shadow:0 -12px 40px rgba(0,0,0,.45);}
+  .sheet::before{content:"";position:absolute;top:9px;left:50%;transform:translateX(-50%);width:36px;height:3px;border-radius:2px;background:rgba(255,246,233,.22);}
+  .sheet-icon{font-size:20px;color:var(--accent);margin-bottom:8px;text-shadow:0 0 8px rgba(203,176,137,.4);}
+  .sheet h3{margin:0 0 8px;font-size:17px;letter-spacing:.06em;color:#fdf4e6;}
+  .sheet p{margin:0 0 10px;font-size:13px;line-height:1.6;color:var(--ink-dim);}
+  .sheet-actions{display:flex;gap:10px;margin-top:18px;}
+  .sheet-actions.column{flex-direction:column;}
+  .btn-primary{flex:1;background:var(--glass-hi);border:1px solid var(--line-accent);color:#fdf4e6;font-weight:600;border-radius:14px;text-shadow:0 0 7px rgba(255,255,255,.55),0 0 2px rgba(255,255,255,.4);}
+  .btn-ghost{flex:1;background:rgba(255,255,255,.06);border:1px solid transparent;border-radius:14px;color:var(--ink-dim);}
+  .sheet-close{position:absolute;right:16px;top:16px;width:32px;height:32px;min-height:32px;border-radius:50%;background:var(--glass);}
+
+  .loading-box{display:flex;flex-direction:column;align-items:center;gap:16px;color:var(--ink-dim);text-align:center;}
+  .pulse-ring{width:56px;height:56px;border-radius:50%;border:1.5px solid var(--accent);opacity:.55;animation:ring-pulse 1.6s ease-out infinite;}
+  @keyframes ring-pulse{0%{transform:scale(.6);opacity:.8;}100%{transform:scale(1.6);opacity:0;}}
+
+  .player{position:fixed;inset:0;z-index:50;background:#090705;display:flex;flex-direction:column;overflow:hidden;}
+  .bg-layer{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.1s ease;}
+  .player-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,6,9,.25) 0%,rgba(13,6,9,.35) 45%,rgba(13,6,9,.92) 100%);}
+  .pulse-dot{position:absolute;left:50%;top:44%;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#ffd9c2,transparent 70%);transform:translate(-50%,-50%);animation:pulse-beat 1.4s ease-in-out infinite;box-shadow:0 0 28px 6px rgba(255,180,140,.1);}
+  @keyframes pulse-beat{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.4;}50%{transform:translate(-50%,-50%) scale(2.4);opacity:.75;}}
+  .player-top{position:relative;z-index:2;display:flex;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 18px) 18px 0;}
+  #player-exit{width:34px;height:34px;min-height:34px;border-radius:50%;background:rgba(255,255,255,.1);color:var(--ink);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  #player-exit svg{width:17px;height:17px;}
+  /* 进度条移到字幕上方,不再占顶部 */
+  .player-progress-track{width:100%;max-width:420px;padding:10px 4px;touch-action:none;cursor:pointer;}
+  .player-progress{height:3px;border-radius:3px;background:rgba(255,255,255,.16);position:relative;}
+  .player-progress .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:3px;position:relative;transition:width .35s ease;}
+  .player-progress .fill::after{content:"";position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 3px rgba(201,167,141,.4);}
+  .player-progress-track.dragging .fill{transition:none;}
+  .player-stage{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:14px;padding:24px 24px 8px;}
+  .caption-panel{max-width:420px;}
+  .ended-banner{display:none;flex-direction:column;align-items:center;gap:10px;background:rgba(9,7,5,.6);border:1px solid var(--line);border-radius:16px;padding:12px 18px;}
+  .ended-banner p{margin:0;font-size:12.5px;color:var(--ink-dim);}
+  .ended-banner .row{display:flex;gap:10px;}
+  .ended-banner button{padding:0 16px;border-radius:999px;font-size:12.5px;background:var(--glass-hi);border:1px solid var(--line-accent);color:#fdf4e6;font-weight:600;min-height:36px;text-shadow:0 0 7px rgba(255,255,255,.55),0 0 2px rgba(255,255,255,.4);}
+  .ended-banner button.ghost{background:rgba(255,255,255,.08);border:1px solid transparent;color:var(--ink-dim);font-weight:600;}
+  .player.ended .ended-banner{display:flex;}
+  /* 结束弹窗出现后,底部跳过/暂停控制条就没意义了,直接隐藏 */
+  .player.ended .player-controls{display:none;}
+  .caption{font-size:18px;line-height:1.8;text-align:center;color:var(--ink);text-shadow:0 2px 18px rgba(0,0,0,.6);max-width:420px;transition:opacity .3s ease;letter-spacing:.01em;}
+  .caption .direction{color:rgba(246,233,226,.55);font-style:italic;font-size:14px;}
+  .caption .mute-hint{display:block;margin-top:6px;font-size:11px;color:rgba(201,167,141,.6);font-style:normal;}
+  .caption-trans{display:block;margin-top:8px;font-size:13.5px;line-height:1.6;color:rgba(246,233,226,.62);font-weight:400;letter-spacing:0;}
+  .caption-trans .direction{font-size:11.5px;}
+  .t-line-text .caption-trans{margin-top:5px;font-size:12px;color:var(--ink-faint);}
+  .player-controls{position:relative;z-index:2;display:flex;justify-content:center;gap:14px;padding:16px 20px calc(env(safe-area-inset-bottom,0px) + 22px);}
+  .player-controls button{padding:0 20px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid transparent;font-size:13px;color:var(--ink-dim);}
+  .player-controls button.primary{background:var(--glass-hi);border:1px solid var(--line-accent);color:#fdf4e6;font-weight:600;text-shadow:0 0 7px rgba(255,255,255,.55),0 0 2px rgba(255,255,255,.4);}
+
+  .transcript-body{margin-top:6px;display:flex;flex-direction:column;gap:6px;}
+  .t-line{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;font-size:13.5px;line-height:1.7;padding:8px 0;border-bottom:1px dashed var(--line);}
+  .t-line-text{flex:1;min-width:0;}
+  .t-line .direction{color:var(--ink-faint);font-style:italic;font-size:12px;}
+  .t-line .t-replay{display:inline-block;margin-left:8px;font-size:11px;color:var(--accent);}
+  .t-status{display:inline-block;margin-left:6px;font-size:10.5px;color:var(--ink-faint);}
+  .t-status.fail{color:var(--danger);}
+  .t-scene-divider{font-size:10.5px;color:var(--ink-faint);text-align:center;padding:4px 0;letter-spacing:.08em;}
+  .t-line-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .t-icon-btn{width:30px;height:30px;min-height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid transparent;color:var(--ink-dim);}
+  .t-icon-btn svg{width:15px;height:15px;}
+  .t-icon-btn:active{transform:scale(.9);}
+  .t-icon-btn.playing{border-color:var(--line-accent);color:#fdf4e6;background:var(--glass-hi);}
+  .t-icon-btn[disabled]{opacity:.35;}
+  .t-line-editing{flex-direction:column;align-items:stretch;}
+  .t-edit-input{width:100%;min-height:64px;resize:vertical;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:13px;line-height:1.6;color:var(--ink);font-family:inherit;}
+  .t-edit-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px;}
+  .t-edit-save{font-size:11.5px;color:#fdf4e6;background:var(--glass-hi);border:1px solid var(--line-accent);border-radius:8px;padding:0 12px;min-height:28px;text-shadow:0 0 6px rgba(255,255,255,.5);}
+  .t-edit-cancel{font-size:11.5px;color:var(--ink-faint);padding:0 8px;min-height:28px;}
+  .heart-count{font-size:12.5px;color:var(--accent);margin-top:-4px;}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="bg-photo" aria-hidden="true"></div>
+  <div class="bg-dust" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <img class="brand-logo" src="assets/title.webp" alt="耳边私语" />
+  </header>
+
+  <div class="header-row">
+    <button id="current-avatar" class="char-current-avatar hidden" aria-label="切换角色"></button>
+    <nav class="tabs">
+      <button class="tab-btn tab-list active" data-tab="home" aria-label="片单"></button>
+      <button class="tab-btn tab-fav" data-tab="favorites" aria-label="收藏"></button>
+    </nav>
+  </div>
+
+  <main>
+    <section id="view-home" class="view active">
+      <div id="group-blocked" class="notice-card hidden">
+        <p>私密时光暂不支持群聊场景,请从和TA的单人聊天里邀请,或者在这里重新选择角色单独开始。</p>
+        <button id="group-blocked-continue">选择角色</button>
+      </div>
+      <div id="no-character" class="notice-card hidden">
+        <p>还没有可以邀请的角色。请先在小手机里创建一个角色,再回来开始你们的私密时光。</p>
+      </div>
+
+      <div id="feed-section" class="hidden">
+        <div id="grid-wrap" class="hidden">
+          <h2 class="section-title">
+            <img class="section-title-img" src="assets/section-title.webp" alt="本周片单" />
+            <span class="title-actions">
+              <button class="regen-icon-btn" id="title-custom-btn" aria-label="定制剧本"><svg viewBox="0 0 24 24" fill="none" stroke="#fff6e9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+              <button class="regen-icon-btn" id="title-import-btn" aria-label="导入剧本"><svg viewBox="0 0 24 24" fill="none" stroke="#fff6e9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v10m0 0l-3.5-3.5M12 13l3.5-3.5M5 17v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2"/></svg></button>
+              <button class="regen-icon-btn" id="regen-btn" aria-label="换一批"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="#fff6e9"/></svg></button>
+            </span>
+          </h2>
+          <div id="item-grid" class="item-grid"></div>
+        </div>
+
+        <div id="action-stack" class="action-stack">
+          <button class="stack-btn s1" id="gen-first-btn" aria-label="生成剧本"><img src="assets/btn-gen.webp" alt="生成剧本" /></button>
+          <button class="stack-btn s2" id="custom-toggle-btn" aria-label="定制剧本"><img src="assets/btn-custom.webp" alt="定制剧本" /></button>
+          <button class="stack-btn s3" id="open-import-btn" aria-label="导入剧本"><img src="assets/btn-import.webp" alt="导入剧本" /></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-favorites" class="view">
+      <h2 class="section-title">收藏</h2>
+      <div id="favorites-grid" class="item-grid"></div>
+      <p id="favorites-empty" class="empty-tip hidden">还没有收藏,点片单卡片右上角的心形就能收藏。</p>
+    </section>
+  </main>
+
+  <div id="app-confirm-sheet" class="sheet-overlay hidden">
+    <div class="sheet">
+      <div class="sheet-icon">&#10022;</div>
+      <p id="app-confirm-message" class="app-confirm-message"></p>
+      <div class="sheet-actions">
+        <button id="app-confirm-cancel" class="btn-ghost">取消</button>
+        <button id="app-confirm-ok" class="btn-primary">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="custom-sheet" class="sheet-overlay hidden">
+    <div class="sheet">
+      <button id="custom-close" class="sheet-close">&#10005;</button>
+      <div class="sheet-icon">&#10022;</div>
+      <h3>定制剧本</h3>
+      <p>把你想要的情境告诉TA,TA会为你单独定制一条。</p>
+      <textarea id="custom-theme" class="custom-sheet-input" maxlength="140" placeholder="例如:出差回来的深夜,TA在门口等你很久了..."></textarea>
+      <div class="sheet-actions">
+        <button id="custom-cancel" class="btn-ghost">取消</button>
+        <button id="custom-start-btn" class="btn-primary">开始定制</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="char-switch-sheet" class="sheet-overlay hidden">
+    <div class="sheet">
+      <div class="sheet-icon">&#10022;</div>
+      <h3>切换角色</h3>
+      <div class="mode-seg">
+        <button id="mode-single-btn">单人</button>
+        <button id="mode-multi-btn">多人</button>
+      </div>
+      <p class="cast-hint hidden" id="cast-hint">点头像选 2~3 位角色同场,他们会一起演绎这段时光(不分主次)。</p>
+      <div class="char-switch-list" id="char-switch-list"></div>
+      <div class="sheet-actions">
+        <button id="char-switch-close" class="btn-ghost">关闭</button>
+        <button id="char-switch-confirm" class="btn-primary hidden">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirm-sheet" class="sheet-overlay hidden">
+    <div class="sheet">
+      <div class="sheet-icon">&#10023;</div>
+      <h3 id="confirm-title"></h3>
+      <p id="confirm-desc"></p>
+      <div class="ambience-picker">
+        <div class="ambience-picker-label">环境音(可选,全程循环播放)</div>
+        <div class="ambience-chips" id="ambience-chips"></div>
+      </div>
+      <button class="regen-link" id="confirm-review-link" style="display:block;margin:10px auto 0;">查看文字 / 重新配音</button>
+      <div class="sheet-actions">
+        <button id="confirm-cancel" class="btn-ghost">再想想</button>
+        <button id="confirm-start" class="btn-primary">开始</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="loading-sheet" class="sheet-overlay hidden">
+    <div class="loading-box"><div class="pulse-ring"></div><p id="loading-text">正在连线...</p></div>
+  </div>
+
+  <div id="ready-sheet" class="sheet-overlay hidden">
+    <div class="sheet">
+      <div class="sheet-icon">&#10022;</div>
+      <h3>准备好了</h3>
+      <p id="ready-desc"></p>
+      <div class="sheet-actions">
+        <button id="ready-play" class="btn-primary">开始播放</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="player" class="player hidden">
+    <div class="bg-layer" id="bg-layer-a"></div>
+    <div class="bg-layer" id="bg-layer-b"></div>
+    <div class="player-scrim"><div class="pulse-dot" id="pulse-dot"></div></div>
+    <div class="player-top">
+      <button id="player-exit" aria-label="返回"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    </div>
+    <div class="player-stage">
+      <div class="player-progress-track" id="player-progress-track">
+        <div class="player-progress"><div id="player-progress-fill" class="fill"></div></div>
+      </div>
+      <div class="caption-panel"><p id="player-caption" class="caption"></p></div>
+      <div class="ended-banner">
+        <p>这段时光结束了</p>
+        <div class="row">
+          <button class="ghost" id="ended-replay">重新播放</button>
+          <button id="ended-summary">查看总结</button>
+        </div>
+      </div>
+    </div>
+    <div class="player-controls">
+      <button id="player-skip">跳过这句</button>
+      <button id="player-pause" class="primary">暂停</button>
+    </div>
+  </div>
+
+  <div id="summary-sheet" class="sheet-overlay hidden">
+    <div class="sheet summary">
+      <div class="sheet-icon">&#9825;</div>
+      <h3>时光留下了</h3>
+      <p id="summary-desc"></p>
+      <p class="heart-count" id="summary-heart"></p>
+      <div class="sheet-actions column">
+        <button id="summary-share" class="btn-primary">分享到聊天(不含细节)</button>
+        <button id="summary-transcript" class="btn-ghost">回看文字</button>
+        <button id="summary-close" class="btn-ghost">返回</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="transcript-sheet" class="sheet-overlay hidden">
+    <div class="sheet transcript">
+      <button id="transcript-close" class="sheet-close">&#10005;</button>
+      <h3 id="transcript-title"></h3>
+      <div class="transcript-toolbar">
+        <button class="regen-link" id="transcript-regen-all">重新配音全部</button>
+        <button class="regen-link" id="transcript-download">下载音频(zip)</button>
+      </div>
+      <div id="transcript-body" class="transcript-body"></div>
+    </div>
+  </div>
+
+  <div id="import-sheet" class="sheet-overlay hidden">
+    <div class="sheet">
+      <button id="import-close" class="sheet-close">&#10005;</button>
+      <h3>导入剧本</h3>
+      <p>粘贴按 [景:...] / [语:...] 格式写好的剧本文本,选一张封面图,直接生成语音,不再调用AI写剧情。多人剧本把台词写成 [语@名字:...],导入时给每个名字对号一位角色。</p>
+      <div class="import-field">
+        <label>标题</label>
+        <input type="text" id="import-title" maxlength="20" placeholder="给这段时光起个名字" />
+      </div>
+      <div class="import-field">
+        <label>简介(可选)</label>
+        <input type="text" id="import-teaser" maxlength="60" placeholder="一句简介" />
+      </div>
+      <div class="import-field">
+        <label>封面图</label>
+        <button id="import-pick-cover" class="btn-ghost" style="width:100%">选择封面图片</button>
+        <div id="import-cover-preview" class="import-cover-preview hidden"></div>
+      </div>
+      <div class="import-field">
+        <label>剧本文本</label>
+        <textarea id="import-script" placeholder="[景:画面描述]&#10;&#10;[语:第一句台词]&#10;&#10;[语@名字:多人剧本这样写]&#10;..."></textarea>
+      </div>
+      <div class="import-field hidden" id="import-speaker-map-wrap">
+        <label>角色对号(剧本里的名字 → 用谁的声音)</label>
+        <div id="import-speaker-map"></div>
+      </div>
+      <div class="sheet-actions">
+        <button id="import-cancel" class="btn-ghost">取消</button>
+        <button id="import-submit" class="btn-primary">导入</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var api = window.AiPhone || window.AiPhoneApp;
+  var IMAGE_STYLE_SUFFIX = "，唯美插画风格，柔和电影感光影，暖色调，禁止出现人物身体或人脸，只表现场景与氛围，无文字水印";
+
+  // MiniMax speech-2.8-hd / speech-2.8-turbo 专属插入语标签 -> 字幕里显示的中文标签
+  // 注:(emm) 已剔除——MiniMax 渲染出的"嗯"迟疑音生硬出戏,写了也会被剥掉不发给 TTS
+  var INTERJECTION_LABELS = {
+    "laughs":"笑", "chuckle":"轻笑", "coughs":"咳嗽", "clear-throat":"清嗓",
+    "groans":"低吟", "breath":"呼吸", "pant":"喘息", "inhale":"吸气", "exhale":"呼气",
+    "gasps":"倒吸一口气", "sniffs":"吸鼻子", "sighs":"叹气", "snorts":"哼笑",
+    "burps":"打嗝", "lip-smacking":"咂嘴", "humming":"哼唱", "hissing":"倒吸凉气",
+    "sneezes":"打喷嚏"
+  };
+  var state = {
+    characters: [],
+    selectedCharacterId: null, // 视角角色 = castIds[0],保留旧名减少改动面
+    castIds: [],               // 参演角色(1个=单人模式,2~3个=多人模式)
+    launchContext: null,
+    groupBlocked: false,
+    historyBatches: [], // 所有阵容的批次，按时间倒序
+    hearts: {},
+    lastResult: null,
+    transcriptCtx: null
+  };
+  var MAX_CAST = 3;
+
+  // ---------- 阵容(cast)辅助 ----------
+  // 阵容键:成员 id 排序后拼接。单人阵容的键就是那个角色 id 本身,
+  // 因此老批次(只有 characterId 字段)天然等价于单人阵容键,无需迁移。
+  function castKey(ids){ return (ids || []).slice().sort().join("+"); }
+  function batchCastKey(b){ return b.castKey || b.characterId; }
+  function getCast(){
+    return state.castIds.map(function(id){
+      return state.characters.find(function(c){ return c.id === id; });
+    }).filter(Boolean);
+  }
+  function isMulti(){ return state.castIds.length > 1; }
+  function castNames(){ return getCast().map(function(c){ return c.name || "TA"; }); }
+  function joinNames(names){ return (names || []).join("、"); }
+  function setCast(ids){
+    state.castIds = ids.slice(0, MAX_CAST);
+    state.selectedCharacterId = state.castIds[0] || null;
+  }
+  // 记住上次的阵容,下次打开 APP 自动恢复
+  async function saveCastMeta(){
+    try{
+      var rec = await api.db.get("meta", "cast");
+      if (rec) await api.db.update("meta", "cast", { ids: state.castIds });
+      else await api.db.create("meta", { id: "cast", ids: state.castIds });
+    }catch(e){ /* 记不住也不阻断 */ }
+  }
+  async function loadCastMeta(){
+    try{
+      var rec = await api.db.get("meta", "cast");
+      var ids = (rec && Array.isArray(rec.ids)) ? rec.ids : [];
+      return ids.filter(function(id){ return state.characters.some(function(c){ return c.id === id; }); }).slice(0, MAX_CAST);
+    }catch(e){ return []; }
+  }
+
+  // 说话人颜色:按参演名单顺序固定分配,播放页/回看页共用
+  var SPEAKER_PALETTE = ["#e9c78f", "#a9cbe8", "#e8a9bd"];
+  var activeSpeakerColors = {};
+  function buildSpeakerColors(item){
+    var map = {};
+    var order = [];
+    (item.participants || []).forEach(function(p){ if (p && p.name && order.indexOf(p.name) < 0) order.push(p.name); });
+    (item.script || []).forEach(function(b){
+      if (b.type === "speech" && b.speaker && order.indexOf(b.speaker) < 0) order.push(b.speaker);
+    });
+    order.forEach(function(name, i){ map[name] = SPEAKER_PALETTE[i % SPEAKER_PALETTE.length]; });
+    return map;
+  }
+
+  var playback = null;
+  var readyToPlayCtx = null;
+
+  function $(id){ return document.getElementById(id); }
+  function uid(){ return "i_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8); }
+  function escapeHtml(str){
+    return String(str == null ? "" : str).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+  function directionsToHtml(raw){
+    var html = escapeHtml(raw);
+    // 半角括号：已知插入语标签转中文展示，其余半角内容（不管中文英文）也当舞台提示弱化显示
+    html = html.replace(/\(([^)]*)\)/g, function(match, inner){
+      var label = INTERJECTION_LABELS[inner.trim().toLowerCase()];
+      return '<span class="direction">' + (label ? ("（" + label + "）") : match) + '</span>';
+    });
+    html = html.replace(/（[^）]*）/g, function(m){
+      return m.indexOf('<span') === 0 ? m : '<span class="direction">' + m + '</span>';
+    });
+    // 容错：AI偶尔把全角/半角括号写混，兜底也弱化显示
+    html = html.replace(/（[^）]*\)/g, function(m){ return m.indexOf('<span') === 0 ? m : '<span class="direction">' + m + '</span>'; });
+    html = html.replace(/\([^)]*）/g, function(m){ return m.indexOf('<span') === 0 ? m : '<span class="direction">' + m + '</span>'; });
+    return html;
+  }
+  // 舞台提示清洗规则：
+  // - 全角括号包裹的内容一律不朗读（不管里面写的是中文还是英文）。
+  // - 半角括号只有内容命中 MiniMax 插入语固定词表、且当前语音支持时才保留朗读，其余半角括号内容
+  //   （包括AI手滑用半角括号写的中文提示）一律当舞台提示剥掉，不能只按"纯英文字母"判断。
+  // - 再兜底清掉AI偶尔把全角/半角括号写混（一边全角一边半角）的情况，避免漏网被朗读出来。
+  function toSpokenText(text, allowInterjections){
+    var out = text.replace(/（[^）]*）/g, "");
+    out = out.replace(/\(([^)]*)\)/g, function(match, inner){
+      var key = inner.trim().toLowerCase();
+      return (allowInterjections && INTERJECTION_LABELS[key]) ? match : "";
+    });
+    out = out.replace(/（[^）]*\)/g, "");
+    out = out.replace(/\([^)]*）/g, "");
+    return out.replace(/\s+/g, " ").trim();
+  }
+  // 外语角色的台词是"母语原句 | 中文翻译":左半朗读,右半仅显示。
+  // 中文角色不带分隔符,整句就是台词。兼容全角｜和半角|,只按第一个分隔符切。
+  function splitBilingual(body){
+    var i = body.indexOf("|");
+    var i2 = body.indexOf("｜");
+    if (i2 >= 0 && (i < 0 || i2 < i)) i = i2;
+    if (i < 0) return { raw: body, trans: "" };
+    var left = body.slice(0, i).trim();
+    var right = body.slice(i + 1).trim();
+    if (!left || !right) return { raw: body.replace(/[|｜]/g, " ").replace(/\s+/g, " ").trim(), trans: "" };
+    return { raw: left, trans: right };
+  }
+  // 字幕 HTML:母语原句为主行,有中文翻译时下面接一行弱化译文;
+  // 多人剧本的台词前面加说话人名字(带专属颜色)。
+  function captionHtml(beat){
+    var html = "";
+    if (beat.speaker) {
+      var color = activeSpeakerColors[beat.speaker] || SPEAKER_PALETTE[0];
+      html += '<span class="caption-speaker" style="color:' + color + '">' + escapeHtml(beat.speaker) + '</span>';
+    }
+    html += directionsToHtml(beat.raw);
+    if (beat.trans) html += '<span class="caption-trans">' + directionsToHtml(beat.trans) + '</span>';
+    return html;
+  }
+  function sleep(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  function formatDate(iso){
+    try{
+      var d = new Date(iso);
+      return (d.getMonth()+1) + "月" + d.getDate() + "日 " + String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+    }catch(e){ return ""; }
+  }
+  function toast(msg){ if (api && api.ui && api.ui.toast) api.ui.toast(msg).catch(function(){}); }
+
+  // 生成剧本要经过好几步异步等待(构思/画面/配音),真正开始播放时早就脱离了
+  // 用户点击的手势窗口，浏览器的自动播放策略会随机拦掉播放。
+  //
+  // 全程用 Web Audio(AudioContext)而不是 <audio> 元素:<audio> 会在 iOS
+  // 锁屏/控制中心生成"正在播放"卡片,而卡片绑定的页面是沙盒 iframe 的
+  // about:srcdoc——用户一点,系统就把整个 PWA 导航到空白页(表现为白屏)。
+  // Web Audio 不产生媒体卡片;解锁方式是在用户手势里 resume() 一次,
+  // 之后的程序化 resume 都会被放行(宿主通话链路同款方案)。
+  var audioCtx = null;
+  function getAudioCtx(){
+    if (audioCtx) return audioCtx;
+    var Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return null;
+    // 不要钉 sampleRate:部分 iOS 版本上非硬件采样率的 ctx 会"时钟照走、
+    // 输出全静音"。防发闷靠 TTS 请求参数(44100/256k)兜底。
+    try{ audioCtx = new Ctor(); }catch(e){ return null; }
+    return audioCtx;
+  }
+  // 连续两次"源已启动但时钟不走",判定当前 ctx 坏死,整个重建
+  function resetAudioEngine(){
+    try{ stopAmbience(); }catch(e){}
+    try{ stopVoice(); }catch(e){}
+    var old = audioCtx;
+    audioCtx = null;
+    if (old) { try{ old.close(); }catch(e){} }
+  }
+  function unlockAudioPlayback(){
+    var ctx = getAudioCtx();
+    // iOS 打断后状态可能是非标准的 "interrupted",一律按"没在跑"处理
+    if (ctx && ctx.state !== "running") { try{ ctx.resume().catch(function(){}); }catch(e){} }
+  }
+  function dataUrlToArrayBuffer(dataUrl){
+    var comma = dataUrl.indexOf(",");
+    var binary = atob(dataUrl.slice(comma + 1));
+    var bytes = new Uint8Array(binary.length);
+    for (var i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+  }
+  function decodeAudioSrc(src){
+    var ctx = getAudioCtx();
+    if (!ctx) return Promise.reject(new Error("当前浏览器不支持 Web Audio"));
+    var bufferP = (src.slice(0, 14) === "media-store://")
+      ? api.media.get({ ref: src, as: "dataUrl" }).then(function(res){
+          if (!res || !res.dataUrl) throw new Error("媒体不存在");
+          return dataUrlToArrayBuffer(res.dataUrl);
+        })
+      : (src.slice(0, 5) === "data:")
+        ? Promise.resolve().then(function(){ return dataUrlToArrayBuffer(src); })
+        : fetch(src).then(function(r){ return r.arrayBuffer(); });
+    return bufferP.then(function(arrayBuffer){
+      return new Promise(function(resolve, reject){
+        // 回调式写法兼容老 WebKit(其 decodeAudioData 不返回 Promise)
+        ctx.decodeAudioData(arrayBuffer, resolve, function(err){ reject(err || new Error("音频解码失败")); });
+      });
+    });
+  }
+  // 单声道语音通道:主播放和试听共用,新的播放自动顶掉旧的。
+  var voiceChannel = { source: null, token: 0 };
+  function stopVoice(){
+    voiceChannel.token++;
+    var source = voiceChannel.source;
+    voiceChannel.source = null;
+    if (source) {
+      source.onended = null;
+      try{ source.stop(); }catch(e){}
+      try{ source.disconnect(); }catch(e){}
+    }
+    if (hostVoicePlayAvailable()) {
+      try{ api.voice.stopPlayback({ channel: "voice" }).catch(function(){}); }catch(e){}
+    }
+  }
+  // 没有任何声音在播时挂起 ctx,把音频会话还给系统(iOS 控制中心不残留占用)
+  function releaseAudioSessionIfIdle(){
+    if (voiceChannel.source || ambientChannel.source) return;
+    try{ if (audioCtx && audioCtx.state === "running") audioCtx.suspend(); }catch(e){}
+  }
+  // 宿主代播:iOS 静音拨键会掐掉 Web Audio 的输出(表现为全线无声),而
+  // iframe 里自己建 <audio> 又会让锁屏媒体卡片绑到 about:srcdoc。所以播放
+  // 优先委托给宿主页面的 <audio> 元素(api.voice.play);老宿主没有这个
+  // 能力时回落 iframe 内 Web Audio(此时静音拨键开着会没声,属已知限制)。
+  function hostVoicePlayAvailable(){
+    return !!(api && api.voice && typeof api.voice.play === "function");
+  }
+  function playVoice(src, handlers){
+    handlers = handlers || {};
+    stopVoice();
+    var myToken = voiceChannel.token;
+    if (hostVoicePlayAvailable()) {
+      api.voice.play({ channel: "voice", dataUrl: src }).then(function(){
+        if (voiceChannel.token === myToken && handlers.onended) handlers.onended();
+      }, function(){
+        // 宿主代播被拦(如元素未解锁)→ 回落 iframe 内 Web Audio
+        if (voiceChannel.token === myToken) playVoiceWebAudio(src, handlers, myToken);
+      });
+      return;
+    }
+    playVoiceWebAudio(src, handlers, myToken);
+  }
+  var voiceEngineFails = 0;
+  var voiceEngineToastShown = false;
+  function playVoiceWebAudio(src, handlers, myToken){
+    var ctx = getAudioCtx();
+    if (!ctx) { if (handlers.onerror) handlers.onerror(new Error("当前浏览器不支持 Web Audio")); return; }
+    // resume 不作为前置条件等待:个别系统上它的 promise 会永远挂起。
+    // 解码照常进行,源启动后由看门狗确认时钟真的在走。
+    unlockAudioPlayback();
+    decodeAudioSrc(src).then(function(buffer){
+      if (voiceChannel.token !== myToken) return;
+      var source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.onended = function(){
+        if (voiceChannel.token !== myToken) return;
+        voiceEngineFails = 0;
+        voiceChannel.source = null;
+        if (handlers.onended) handlers.onended();
+      };
+      voiceChannel.source = source;
+      try{ source.start(0); }catch(e){
+        voiceChannel.source = null;
+        if (handlers.onerror) handlers.onerror(e);
+        return;
+      }
+      // 看门狗:1.2s 后时钟没走就再促一次 resume;3.5s 还没走判定引擎卡死,
+      // 走 onerror 降级为文字停留,不让整段播放吊死在第一句。
+      var t0 = ctx.currentTime;
+      setTimeout(function(){
+        if (voiceChannel.token !== myToken || voiceChannel.source !== source) return;
+        if (playback && playback.paused) return; // 用户主动暂停不算引擎故障
+        if (ctx.state === "running" && ctx.currentTime > t0) { voiceEngineFails = 0; return; }
+        unlockAudioPlayback();
+        setTimeout(function(){
+          if (voiceChannel.token !== myToken || voiceChannel.source !== source) return;
+          if (playback && playback.paused) return;
+          if (ctx.state === "running" && ctx.currentTime > t0) { voiceEngineFails = 0; return; }
+          var state = ctx.state;
+          stopVoice();
+          voiceEngineFails++;
+          if (voiceEngineFails >= 2) resetAudioEngine();
+          if (!voiceEngineToastShown) {
+            voiceEngineToastShown = true;
+            toast("音频引擎未能启动(状态:" + state + "),已自动降级,可暂停后点继续重试");
+          }
+          if (handlers.onerror) handlers.onerror(new Error("audio engine stalled: " + state));
+        }, 2300);
+      }, 1200);
+    }).catch(function(err){
+      if (voiceChannel.token === myToken && handlers.onerror) handlers.onerror(err);
+    });
+  }
+  function installUnlockListener(){
+    var handler = function(){ unlockAudioPlayback(); };
+    document.addEventListener("touchend", handler, { passive:true });
+    document.addEventListener("pointerdown", handler, { passive:true });
+    document.addEventListener("mousedown", handler, { passive:true });
+  }
+  function setLoading(on, text){
+    if (on) { $("loading-text").textContent = text || "正在连线..."; $("loading-sheet").classList.remove("hidden"); }
+    else { $("loading-sheet").classList.add("hidden"); }
+  }
+  async function runWithConcurrency(items, limit, worker){
+    var queue = items.slice();
+    var runners = [];
+    var n = Math.max(1, Math.min(limit, queue.length || 1));
+    for (var i = 0; i < n; i++) {
+      runners.push((async function(){
+        while (queue.length) { await worker(queue.shift()); }
+      })());
+    }
+    await Promise.all(runners);
+  }
+
+  // ---------- 初始化 ----------
+  async function init(){
+    try{ state.launchContext = await api.app.getLaunchContext(); }catch(e){ state.launchContext = null; }
+    try{ state.characters = await api.characters.list(); }catch(e){ state.characters = []; }
+
+    if (state.launchContext && state.launchContext.source === "chat_plus_action") {
+      if (state.launchContext.isGroup) { state.groupBlocked = true; }
+      else if (state.launchContext.characterId) { setCast([state.launchContext.characterId]); }
+    }
+    if (state.castIds.length === 0 && !state.groupBlocked) {
+      var savedCast = await loadCastMeta();
+      if (savedCast.length > 0) setCast(savedCast);
+      else if (state.characters.length >= 1) setCast([state.characters[0].id]);
+    }
+
+    await loadHearts();
+    await loadBatches();
+    bindStaticEvents();
+    renderHome();
+  }
+
+  async function loadHearts(){
+    try{
+      var list = await api.db.list("hearts", { limit: 200 });
+      var map = {};
+      (list || []).forEach(function(r){ map[r.characterId] = r.count || 0; });
+      state.hearts = map;
+    }catch(e){ state.hearts = {}; }
+  }
+  async function bumpHeart(characterId){
+    try{
+      var list = await api.db.list("hearts", { limit: 200 });
+      var existing = (list || []).find(function(r){ return r.characterId === characterId; });
+      if (existing) {
+        var updated = await api.db.update("hearts", existing.id, { count: (existing.count||0) + 1 });
+        state.hearts[characterId] = updated ? updated.count : (existing.count||0)+1;
+      } else {
+        var created = await api.db.create("hearts", { characterId: characterId, count: 1 });
+        state.hearts[characterId] = created.count;
+      }
+    }catch(e){ /* 心动值只是装饰 */ }
+  }
+
+  // "已听"标记单独存成一条小记录({itemId: 时间}),播放结束时只写它,
+  // 不再为改一个时间戳把整批(含全部音频/封面 dataURL)重写一遍——那个
+  // 序列化峰值在 iOS 上会把页面进程压崩(表现为跳到 about:srcdoc 空白页)。
+  var playsMap = {};
+  async function loadPlaysMap(){
+    try{
+      var rec = await api.db.get("meta", "plays");
+      playsMap = (rec && rec.map && typeof rec.map === "object") ? rec.map : {};
+    }catch(e){ playsMap = {}; }
+  }
+  async function savePlayedAt(itemId, iso){
+    playsMap[itemId] = iso;
+    // 只保留还存在的条目,防止 map 无限膨胀;刚播完的条目可能还在 pendingBatch 里,单独保住
+    var live = {};
+    var batches = state.historyBatches.concat(state.pendingBatch ? [state.pendingBatch] : []);
+    batches.forEach(function(b){ (b.items||[]).forEach(function(it){ if (playsMap[it.id]) live[it.id] = playsMap[it.id]; }); });
+    live[itemId] = iso;
+    playsMap = live;
+    try{
+      var rec = await api.db.get("meta", "plays");
+      if (rec) await api.db.update("meta", "plays", { map: playsMap });
+      else await api.db.create("meta", { id: "plays", map: playsMap });
+    }catch(e){ /* 标记丢了只影响"√已听"角标,不阻断 */ }
+  }
+  function mergePlayedAt(){
+    state.historyBatches.forEach(function(b){
+      (b.items||[]).forEach(function(it){ if (!it.playedAt && playsMap[it.id]) it.playedAt = playsMap[it.id]; });
+    });
+  }
+  async function loadBatches(){
+    try{
+      var list = await api.db.list("batches", { limit: 100 });
+      state.historyBatches = (list || []).slice().sort(function(a,b){ return new Date(b.createdAt) - new Date(a.createdAt); });
+    }catch(e){ state.historyBatches = []; }
+    await loadPlaysMap();
+    mergePlayedAt();
+  }
+  function currentBatch(){
+    var key = castKey(state.castIds);
+    return state.historyBatches.find(function(b){ return batchCastKey(b) === key; }) || null;
+  }
+  // ---------- 媒体外置存储 ----------
+  // 音频/图片这类重资产存宿主媒体库(Blob 进 IndexedDB),db 记录里只留
+  // media-store:// 引用。存档从"整批几十 MB 序列化"变成"几 KB 文本",
+  // 这是生成/重新配音时页面被内存峰值压崩(跳 about:srcdoc)的根治。
+  // 运行时内存对象照旧可以带 dataURL(刚生成的),读取端两种都认。
+  function mediaStoreAvailable(){
+    return !!(api && api.media && typeof api.media.put === "function");
+  }
+  // ref -> dataURL。blob objectURL 会被沙盒 iframe 的同源规则拒载(空源),
+  // 所以图片一律取 dataURL;只缓存最近少量几张,防止翻收藏页把内存堆大。
+  var mediaUrlCache = {};
+  var mediaUrlCacheKeys = [];
+  function resolveMediaUrl(ref){
+    if (!ref) return Promise.resolve(null);
+    if (mediaUrlCache[ref]) return Promise.resolve(mediaUrlCache[ref]);
+    if (!mediaStoreAvailable()) return Promise.resolve(null);
+    return api.media.get({ ref: ref }).then(function(res){
+      var url = (res && (res.dataUrl || res.objectUrl)) || null;
+      if (url) {
+        mediaUrlCache[ref] = url;
+        mediaUrlCacheKeys.push(ref);
+        while (mediaUrlCacheKeys.length > 24) { delete mediaUrlCache[mediaUrlCacheKeys.shift()]; }
+      }
+      return url;
+    }).catch(function(){ return null; });
+  }
+  function resolveMediaDataUrl(ref){
+    if (!ref || !mediaStoreAvailable()) return Promise.resolve(null);
+    return api.media.get({ ref: ref, as: "dataUrl" }).then(function(res){
+      return res && res.dataUrl ? res.dataUrl : null;
+    }).catch(function(){ return null; });
+  }
+  function deleteMediaRef(ref){
+    if (!ref || !mediaStoreAvailable()) return;
+    try{ api.media.delete({ ref: ref }).catch(function(){}); }catch(e){}
+  }
+  // 把一个批次里还是 dataURL 的重资产逐个上传媒体库,打上引用
+  async function externalizeBatchMedia(batch){
+    if (!mediaStoreAvailable()) return;
+    for (var i = 0; i < (batch.items || []).length; i++) {
+      var item = batch.items[i];
+      if (item.coverImage && !item.coverRef) {
+        try{ item.coverRef = (await api.media.put({ dataUrl: item.coverImage })).ref; }catch(e){ /* 存不进就留在记录里 */ }
+      }
+      var beats = item.script || [];
+      for (var j = 0; j < beats.length; j++) {
+        var b = beats[j];
+        if (b.image && !b.imageRef) {
+          try{ b.imageRef = (await api.media.put({ dataUrl: b.image })).ref; }catch(e){}
+        }
+        if (b.audio && !b.audioRef) {
+          try{ b.audioRef = (await api.media.put({ dataUrl: b.audio })).ref; }catch(e){}
+        }
+      }
+    }
+  }
+  // 存档副本:已有引用的重资产不落 db 记录(内存对象不动)
+  function serializeItemForStorage(item){
+    var copy = Object.assign({}, item);
+    if (copy.coverRef && copy.coverImage) delete copy.coverImage;
+    if (item.ambience && item.ambience.ref && item.ambience.dataUrl) {
+      copy.ambience = Object.assign({}, item.ambience);
+      delete copy.ambience.dataUrl;
+    }
+    if (Array.isArray(item.script)) {
+      copy.script = item.script.map(function(b){
+        var bc = Object.assign({}, b);
+        if (bc.audioRef && bc.audio) delete bc.audio;
+        if (bc.imageRef && bc.image) delete bc.image;
+        return bc;
+      });
+    }
+    return copy;
+  }
+  // 收集一个批次引用的全部媒体(删除批次时清理用)
+  function collectBatchMediaRefs(batch){
+    var refs = [];
+    (batch.items || []).forEach(function(item){
+      if (item.coverRef) refs.push(item.coverRef);
+      if (item.ambience && item.ambience.ref) refs.push(item.ambience.ref);
+      (item.script || []).forEach(function(b){
+        if (b.audioRef) refs.push(b.audioRef);
+        if (b.imageRef) refs.push(b.imageRef);
+      });
+    });
+    return refs;
+  }
+
+  async function persistBatch(batch){
+    try{
+      await externalizeBatchMedia(batch);
+      await api.db.update("batches", batch.id, { items: (batch.items || []).map(serializeItemForStorage) });
+      var idx = state.historyBatches.findIndex(function(b){ return b.id === batch.id; });
+      if (idx >= 0) state.historyBatches[idx] = batch;
+    }catch(e){ /* 存档失败不阻断体验 */ }
+  }
+  // 新建批次:入库的是"引用化"副本,返回的运行时对象保留内存里的 dataURL
+  async function createBatchRecord(record){
+    await externalizeBatchMedia(record);
+    var stored = Object.assign({}, record, { items: (record.items || []).map(serializeItemForStorage) });
+    var saved = await api.db.create("batches", stored);
+    return Object.assign({}, record, {
+      id: saved && saved.id ? saved.id : record.id,
+      createdAt: saved && saved.createdAt ? saved.createdAt : record.createdAt
+    });
+  }
+
+  function bindStaticEvents(){
+    document.querySelectorAll(".tab-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
+        btn.classList.add("active");
+        var tab = btn.getAttribute("data-tab");
+        $("view-home").classList.toggle("active", tab === "home");
+        $("view-favorites").classList.toggle("active", tab === "favorites");
+        if (tab === "favorites") renderFavorites();
+      });
+    });
+    $("group-blocked-continue").addEventListener("click", function(){
+      state.groupBlocked = false;
+      if (state.castIds.length === 0 && state.characters.length >= 1) setCast([state.characters[0].id]);
+      renderHome();
+    });
+    $("current-avatar").addEventListener("click", function(){ if (state.characters.length > 1) openCharSwitchSheet(); });
+    $("char-switch-close").addEventListener("click", function(){ $("char-switch-sheet").classList.add("hidden"); });
+    $("mode-single-btn").addEventListener("click", function(){ setSwitchMode("single"); });
+    $("mode-multi-btn").addEventListener("click", function(){ setSwitchMode("multi"); });
+    $("char-switch-confirm").addEventListener("click", applyMultiCast);
+    $("gen-first-btn").addEventListener("click", confirmGenerateBatch);
+    $("regen-btn").addEventListener("click", confirmGenerateBatch);
+    $("title-import-btn").addEventListener("click", openImportSheet);
+    $("custom-toggle-btn").addEventListener("click", openCustomSheet);
+    $("title-custom-btn").addEventListener("click", openCustomSheet);
+    $("custom-close").addEventListener("click", closeCustomSheet);
+    $("custom-cancel").addEventListener("click", closeCustomSheet);
+    $("custom-start-btn").addEventListener("click", generateCustomItem);
+    $("open-import-btn").addEventListener("click", openImportSheet);
+    $("import-close").addEventListener("click", closeImportSheet);
+    $("import-cancel").addEventListener("click", closeImportSheet);
+    $("import-pick-cover").addEventListener("click", pickImportCover);
+    $("import-submit").addEventListener("click", submitImport);
+
+    $("confirm-cancel").addEventListener("click", closeConfirmSheet);
+    $("confirm-start").addEventListener("click", function(){
+      unlockAudioPlayback();
+      var item = state.pendingItem;
+      closeConfirmSheet();
+      if (item) openItem(item);
+    });
+
+    $("ready-play").addEventListener("click", function(){
+      unlockAudioPlayback();
+      var ctx = readyToPlayCtx;
+      readyToPlayCtx = null;
+      $("ready-sheet").classList.add("hidden");
+      if (ctx) runPlayback(ctx.characterId, ctx.characterName, ctx.item);
+    });
+
+    $("player-exit").addEventListener("click", async function(){
+      if (!playback) return;
+      if (playback.ended) { exitPlayer(); showSummaryForLastResult(); return; }
+      var ok = true;
+      try{ ok = await appConfirm("确定要中断这段时光吗?"); }catch(e){ ok = true; }
+      if (ok) cancelPlayback();
+    });
+    $("player-pause").addEventListener("click", togglePause);
+    $("player-skip").addEventListener("click", function(){ if (playback && !playback.ended && playback.skipCurrent) playback.skipCurrent(); });
+    $("ended-replay").addEventListener("click", function(){ seekTo(0); });
+    $("ended-summary").addEventListener("click", function(){ exitPlayer(); showSummaryForLastResult(); });
+    bindProgressDrag();
+
+    $("summary-close").addEventListener("click", function(){ $("summary-sheet").classList.add("hidden"); });
+    $("summary-share").addEventListener("click", shareLastToChat);
+    $("summary-transcript").addEventListener("click", function(){
+      if (state.lastResult) openTranscript(state.lastResult.item, state.lastResult.characterId, state.lastResult.characterName);
+    });
+    $("transcript-close").addEventListener("click", function(){ stopPreview(); $("transcript-sheet").classList.add("hidden"); });
+    $("transcript-regen-all").addEventListener("click", regenerateAllAudio);
+    $("transcript-download").addEventListener("click", downloadItemAudio);
+
+    $("app-confirm-ok").addEventListener("click", function(){ settleAppConfirm(true); });
+    $("app-confirm-cancel").addEventListener("click", function(){ settleAppConfirm(false); });
+
+    // 所有弹窗支持点击空白遮罩关闭(loading 弹窗除外,生成中不允许误关)
+    var overlayClose = {
+      "app-confirm-sheet": function(){ settleAppConfirm(false); },
+      "custom-sheet": closeCustomSheet,
+      "char-switch-sheet": function(){ $("char-switch-sheet").classList.add("hidden"); },
+      "confirm-sheet": closeConfirmSheet,
+      "ready-sheet": function(){ readyToPlayCtx = null; $("ready-sheet").classList.add("hidden"); },
+      "summary-sheet": function(){ $("summary-sheet").classList.add("hidden"); },
+      "transcript-sheet": function(){ stopPreview(); $("transcript-sheet").classList.add("hidden"); },
+      "import-sheet": closeImportSheet
+    };
+    Object.keys(overlayClose).forEach(function(id){
+      var el = $(id);
+      el.addEventListener("click", function(e){ if (e.target === el) overlayClose[id](); });
+    });
+  }
+
+  // 自有样式的确认弹窗,替代宿主系统 confirm,视觉与其他弹窗统一
+  var appConfirmResolve = null;
+  function appConfirm(message){
+    return new Promise(function(resolve){
+      appConfirmResolve = resolve;
+      $("app-confirm-message").textContent = message;
+      $("app-confirm-sheet").classList.remove("hidden");
+    });
+  }
+  function settleAppConfirm(val){
+    $("app-confirm-sheet").classList.add("hidden");
+    if (appConfirmResolve) { var r = appConfirmResolve; appConfirmResolve = null; r(val); }
+  }
+
+  function openCustomSheet(){
+    if (!state.selectedCharacterId) { toast("请先选择一个角色"); return; }
+    $("custom-sheet").classList.remove("hidden");
+  }
+  function closeCustomSheet(){ $("custom-sheet").classList.add("hidden"); }
+
+  // 生成/换一批前先确认,避免误触消耗生成额度
+  async function confirmGenerateBatch(){
+    if (!state.selectedCharacterId) { toast("请先选择一个角色"); return; }
+    var who = isMulti() ? joinNames(castNames()) : "TA";
+    var message = currentBatch()
+      ? "要生成新一批片单吗?当前片单会被替换(已收藏的不受影响)。"
+      : "让" + who + "为你构思6段不同的私密时光吗?";
+    var ok = true;
+    try{ ok = await appConfirm(message); }catch(e){ ok = true; }
+    if (ok) generateBatch();
+  }
+
+  // ---------- 首页渲染 ----------
+  function renderHome(){
+    $("group-blocked").classList.toggle("hidden", !state.groupBlocked);
+    var hasChar = state.characters.length > 0;
+    $("no-character").classList.toggle("hidden", hasChar || state.groupBlocked);
+
+    var showMain = hasChar && !state.groupBlocked;
+    $("current-avatar").classList.toggle("hidden", !showMain || !state.selectedCharacterId);
+    $("feed-section").classList.toggle("hidden", !showMain || !state.selectedCharacterId);
+    if (!showMain) return;
+
+    var ava = $("current-avatar");
+    if (isMulti()) {
+      // 多人:并排叠放全部参演头像,不突出任何一位
+      ava.classList.add("multi");
+      ava.style.backgroundImage = "";
+      ava.textContent = "";
+      ava.innerHTML = getCast().map(function(c, i){
+        var bg = c.avatar ? ("background-image:url('" + String(c.avatar).replace(/'/g,"") + "')") : "";
+        var initial = c.avatar ? "" : escapeHtml((c.name || "?").slice(0,1));
+        return '<span class="cast-ava" style="' + bg + ';z-index:' + (state.castIds.length - i) + '">' + initial + '</span>';
+      }).join("");
+    } else {
+      ava.classList.remove("multi");
+      ava.innerHTML = "";
+      var current = state.characters.find(function(c){ return c.id === state.selectedCharacterId; });
+      if (current) {
+        if (current.avatar) { ava.style.backgroundImage = "url('" + String(current.avatar).replace(/'/g,"") + "')"; ava.textContent = ""; }
+        else { ava.style.backgroundImage = ""; ava.textContent = (current.name || "?").slice(0,1); }
+      }
+    }
+
+    var batch = currentBatch();
+    $("grid-wrap").classList.toggle("hidden", !batch);
+    $("feed-section").classList.toggle("feed-empty", !batch);
+    if (batch) renderGrid(batch);
+  }
+
+  // 切换角色弹层:单人模式点即选中;多人模式点头像勾选 2~3 位(第1位=视角),再点确定。
+  var switchMode = "single";      // "single" | "multi"
+  var multiDraft = [];            // 多人模式下的勾选草稿(有序)
+
+  function openCharSwitchSheet(){
+    switchMode = isMulti() ? "multi" : "single";
+    multiDraft = isMulti() ? state.castIds.slice() : (state.selectedCharacterId ? [state.selectedCharacterId] : []);
+    renderCharSwitchList();
+    $("char-switch-sheet").classList.remove("hidden");
+  }
+
+  function setSwitchMode(mode){
+    if (switchMode === mode) return;
+    switchMode = mode;
+    if (mode === "multi") multiDraft = state.selectedCharacterId ? [state.selectedCharacterId] : [];
+    renderCharSwitchList();
+  }
+
+  function applyMultiCast(){
+    if (multiDraft.length < 2) { toast("多人模式至少选 2 位角色"); return; }
+    setCast(multiDraft);
+    saveCastMeta();
+    $("char-switch-sheet").classList.add("hidden");
+    renderHome();
+  }
+
+  function renderCharSwitchList(){
+    var multi = switchMode === "multi";
+    $("mode-single-btn").classList.toggle("active", !multi);
+    $("mode-multi-btn").classList.toggle("active", multi);
+    $("cast-hint").classList.toggle("hidden", !multi);
+    $("char-switch-confirm").classList.toggle("hidden", !multi);
+    if (multi) $("char-switch-confirm").textContent = "确定(" + multiDraft.length + "/" + MAX_CAST + ")";
+
+    var list = $("char-switch-list");
+    list.innerHTML = state.characters.map(function(c){
+      var initial = escapeHtml((c.name || "?").slice(0,1));
+      var bg = c.avatar ? ("background-image:url('" + String(c.avatar).replace(/'/g,"") + "')") : "";
+      var selected = multi ? multiDraft.indexOf(c.id) >= 0 : c.id === state.selectedCharacterId;
+      var active = selected;
+      var badge = (multi && selected) ? '<span class="order-badge">&#10003;</span>' : '';
+      return '<button class="char-switch-item' + (active ? " active" : "") + '" data-id="' + escapeHtml(c.id) + '">' +
+        '<span class="ava" style="' + bg + '">' + (c.avatar ? "" : initial) + '</span>' +
+        badge +
+        '<span class="name">' + escapeHtml(c.name || "未命名") + '</span>' +
+        '</button>';
+    }).join("");
+    list.querySelectorAll(".char-switch-item").forEach(function(chip){
+      chip.addEventListener("click", function(){
+        var id = chip.getAttribute("data-id");
+        if (switchMode === "single") {
+          setCast([id]);
+          saveCastMeta();
+          $("char-switch-sheet").classList.add("hidden");
+          renderHome();
+          return;
+        }
+        var at = multiDraft.indexOf(id);
+        if (at >= 0) multiDraft.splice(at, 1);
+        else if (multiDraft.length >= MAX_CAST) { toast("最多 " + MAX_CAST + " 位角色同场"); return; }
+        else multiDraft.push(id);
+        renderCharSwitchList();
+      });
+    });
+  }
+
+  function renderGrid(batch){
+    renderItemGrid($("item-grid"), batch.items);
+  }
+
+  function findBatchContainingItem(itemId){
+    for (var i = 0; i < state.historyBatches.length; i++) {
+      if (state.historyBatches[i].items.some(function(it){ return it.id === itemId; })) return state.historyBatches[i];
+    }
+    return null;
+  }
+
+  function renderItemGrid(gridEl, items){
+    gridEl.innerHTML = items.map(function(item){
+      // 内存里的 dataURL 直接用;只有引用的(从存储加载的旧条目)先出占位,异步解析后回填
+      var coverUrl = item.coverImage || mediaUrlCache[item.coverRef] || "";
+      var coverStyle = coverUrl ? ("background-image:url('" + coverUrl.replace(/'/g,"") + "')") : "";
+      var hasCover = !!(coverUrl || item.coverRef);
+      var cover = hasCover
+        ? '<div class="cover" data-cover-for="' + item.id + '" style="' + coverStyle + '"></div>'
+        : '<div class="cover placeholder">' + (item.coverFailed
+            ? '<span class="cover-retry" role="button" aria-label="重新生成封面" data-retry="' + item.id + '"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/></svg></span>'
+            : '&#10022;') + '</div>';
+      var teaser = (item.playedAt ? "&#10003; " : "") + escapeHtml(item.teaser || "");
+      var starSvg = item.favorite
+        ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8-6.1-3.5-6.1 3.5 1.4-6.8L2.2 9.1l6.9-.8z"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8-6.1-3.5-6.1 3.5 1.4-6.8L2.2 9.1l6.9-.8z"/></svg>';
+      return '<button class="item-card" data-id="' + item.id + '">' +
+        '<div class="card-frame-main">' +
+          cover +
+          '<div class="scrim"></div>' +
+          '<span class="corner-actions">' +
+            (item.script
+              ? '<span class="corner-btn play-ready" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>'
+              : '<span class="corner-btn play-pending" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 5v14l11-7z"/></svg></span>') +
+            '<span class="corner-btn fav-badge' + (item.favorite ? " active" : "") + '" data-fav="' + item.id + '" role="button" aria-label="收藏">' + starSvg + '</span>' +
+          '</span>' +
+        '</div>' +
+        '<div class="card-meta"><b>' + escapeHtml(item.title || "私密时光") + '</b><span>' + teaser + '</span></div>' +
+      '</button>';
+    }).join("");
+    gridEl.querySelectorAll(".item-card").forEach(function(card){
+      card.addEventListener("click", function(){
+        var id = card.getAttribute("data-id");
+        var item = items.find(function(i){ return i.id === id; });
+        var batch = findBatchContainingItem(id);
+        if (item && batch) openConfirmSheet(item, batch);
+      });
+    });
+    gridEl.querySelectorAll(".fav-badge").forEach(function(btn){
+      btn.addEventListener("click", function(e){
+        e.stopPropagation();
+        toggleFavorite(btn.getAttribute("data-fav"));
+      });
+    });
+    gridEl.querySelectorAll(".cover-retry").forEach(function(btn){
+      btn.addEventListener("click", function(e){
+        e.stopPropagation();
+        regenerateCover(btn.getAttribute("data-retry"), btn);
+      });
+    });
+    // 异步解析引用型封面并回填
+    items.forEach(function(item){
+      if (item.coverImage || !item.coverRef || mediaUrlCache[item.coverRef]) return;
+      resolveMediaUrl(item.coverRef).then(function(url){
+        if (!url) return;
+        var el = gridEl.querySelector('[data-cover-for="' + item.id + '"]');
+        if (el) el.style.backgroundImage = "url('" + url.replace(/'/g,"") + "')";
+      });
+    });
+  }
+
+  // 单张封面重新生成:点失败卡片中央的刷新钮触发
+  var coverRetryBusy = {};
+  async function regenerateCover(itemId, btnEl){
+    if (coverRetryBusy[itemId]) return;
+    var batch = findBatchContainingItem(itemId);
+    if (!batch) return;
+    var item = batch.items.find(function(i){ return i.id === itemId; });
+    if (!item) return;
+    coverRetryBusy[itemId] = true;
+    setLoading(true, "正在重新绘制封面...");
+    try{
+      var img = await api.ai.generateImage({ prompt: item.coverPrompt + IMAGE_STYLE_SUFFIX, characterId: batch.characterId });
+      item.coverImage = img && img.dataUrl ? img.dataUrl : null;
+      item.coverFailed = !item.coverImage;
+      if (item.coverImage && item.coverRef) { deleteMediaRef(item.coverRef); item.coverRef = null; }
+      if (item.coverFailed) toast("还是没能生成,再点一次试试");
+    }catch(e){
+      item.coverFailed = true;
+      toast("封面生成失败(" + (e && e.message ? String(e.message).slice(0, 80) : "未知错误") + ")");
+    }finally{
+      coverRetryBusy[itemId] = false;
+      setLoading(false);
+    }
+    await persistBatch(batch);
+    renderHome();
+    renderFavorites();
+  }
+
+  async function toggleFavorite(itemId){
+    var batch = findBatchContainingItem(itemId);
+    if (!batch) return;
+    var item = batch.items.find(function(i){ return i.id === itemId; });
+    if (!item) return;
+    item.favorite = !item.favorite;
+    await persistBatch(batch);
+    renderHome();
+    renderFavorites();
+  }
+
+  function renderFavorites(){
+    var all = [];
+    state.historyBatches.forEach(function(b){
+      b.items.forEach(function(it){ if (it.favorite) all.push(it); });
+    });
+    var grid = $("favorites-grid");
+    var empty = $("favorites-empty");
+    if (all.length === 0) { grid.innerHTML = ""; empty.classList.remove("hidden"); return; }
+    empty.classList.add("hidden");
+    renderItemGrid(grid, all);
+  }
+
+  function openConfirmSheet(item, batch){
+    state.pendingItem = item;
+    state.pendingBatch = batch;
+    $("confirm-title").textContent = item.title || "私密时光";
+    $("confirm-desc").textContent = item.teaser || "";
+    var reviewLink = $("confirm-review-link");
+    var hasScript = !!(item.script && item.script.length > 0);
+    reviewLink.classList.toggle("hidden", !hasScript);
+    reviewLink.onclick = hasScript ? function(){
+      var current = state.characters.find(function(c){ return c.id === state.selectedCharacterId; });
+      openTranscript(item, state.selectedCharacterId, current ? current.name : "TA");
+    } : null;
+    renderAmbiencePicker(item, batch);
+    $("confirm-sheet").classList.remove("hidden");
+  }
+  function closeConfirmSheet(){ $("confirm-sheet").classList.add("hidden"); }
+
+  // ---------- 环境音 ----------
+  // 目前没有内置素材（找不到体积小、许可证干净的现成音效）。拿到授权音频文件后，
+  // 往这个数组里加 { key, name, src:"assets/ambience-xxx.mp3" } 并在 manifest.resources.assets 声明即可自动出现在选择器里。
+  var AMBIENCE_LIBRARY = [];
+  // 环境音同样走 Web Audio(循环 BufferSource + 增益),理由同上:<audio> 会产生
+  // iOS 媒体卡片。暂停/继续用增益静音实现,不打断循环。
+  var ambientChannel = { source: null, gain: null, token: 0 };
+
+  function resolveAmbienceSrc(ambience){
+    if (!ambience) return null;
+    if (ambience.source === "custom") return ambience.ref || ambience.dataUrl || null;
+    var found = AMBIENCE_LIBRARY.find(function(a){ return a.key === ambience.key; });
+    return found ? found.src : null;
+  }
+  function startAmbience(ambience){
+    stopAmbience();
+    var src = resolveAmbienceSrc(ambience);
+    if (!src) return;
+    if (hostVoicePlayAvailable()) {
+      try{ api.voice.play({ channel: "ambience", dataUrl: src, loop: true, volume: 0.3 }).catch(function(){}); }catch(e){}
+      return;
+    }
+    var ctx = getAudioCtx();
+    if (!ctx) return;
+    var myToken = ambientChannel.token;
+    decodeAudioSrc(src).then(function(buffer){
+      if (ambientChannel.token !== myToken) return;
+      var source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      var gain = ctx.createGain();
+      gain.gain.value = 0.3;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      try{
+        source.start(0);
+        ambientChannel.source = source;
+        ambientChannel.gain = gain;
+      }catch(e){ /* 环境音失败不影响主播放 */ }
+    }).catch(function(){});
+  }
+  function stopAmbience(){
+    ambientChannel.token++;
+    var source = ambientChannel.source;
+    var gain = ambientChannel.gain;
+    ambientChannel.source = null;
+    ambientChannel.gain = null;
+    if (source) { try{ source.stop(); }catch(e){} try{ source.disconnect(); }catch(e){} }
+    if (gain) { try{ gain.disconnect(); }catch(e){} }
+    if (hostVoicePlayAvailable()) {
+      try{ api.voice.stopPlayback({ channel: "ambience" }).catch(function(){}); }catch(e){}
+    }
+  }
+
+  function renderAmbiencePicker(item, batch){
+    var chips = $("ambience-chips");
+    var options = [{ key:null, name:"无" }].concat(AMBIENCE_LIBRARY.map(function(a){ return { key:a.key, name:a.name }; }));
+    var customLabel = (item.ambience && item.ambience.source === "custom") ? (item.ambience.name || "自定义") : "+ 上传";
+    options.push({ key:"custom", name: customLabel });
+    chips.innerHTML = options.map(function(opt){
+      var active = (!item.ambience && opt.key === null) ||
+        (item.ambience && item.ambience.source === "builtin" && item.ambience.key === opt.key) ||
+        (item.ambience && item.ambience.source === "custom" && opt.key === "custom");
+      return '<button class="ambience-chip' + (active ? " active" : "") + '" data-key="' + (opt.key || "") + '">' + escapeHtml(opt.name) + '</button>';
+    }).join("");
+    chips.querySelectorAll(".ambience-chip").forEach(function(btn){
+      btn.addEventListener("click", async function(){
+        var key = btn.getAttribute("data-key");
+        if (key === "custom") {
+          try{
+            var picked = await api.media.pick({ accept: "audio/*" });
+            var dataUrl = picked && picked.file && picked.file.dataUrl;
+            if (!dataUrl) return;
+            if (picked.file.size && picked.file.size > 20 * 1024 * 1024) { toast("音频太大了(超过 20MB),换个小一点的循环音效"); return; }
+            var ambName = ((picked.file.name || "自定义音效") + "").slice(0,16);
+            // 换掉旧的自定义音效时删掉它的媒体,避免孤儿
+            if (item.ambience && item.ambience.ref) deleteMediaRef(item.ambience.ref);
+            // 大文件走媒体库存引用,不塞进批次记录(内联会把存档拖崩)
+            if (mediaStoreAvailable()) {
+              try{
+                var put = await api.media.put({ dataUrl: dataUrl });
+                item.ambience = { source:"custom", ref: put.ref, name: ambName };
+              }catch(e){ item.ambience = { source:"custom", dataUrl:dataUrl, name: ambName }; }
+            } else {
+              item.ambience = { source:"custom", dataUrl:dataUrl, name: ambName };
+            }
+          }catch(e){ toast("选择音频失败: " + (e && e.message ? String(e.message).slice(0,60) : "")); return; }
+        } else if (!key) {
+          item.ambience = null;
+        } else {
+          item.ambience = { source:"builtin", key:key };
+        }
+        if (batch) await persistBatch(batch);
+        renderAmbiencePicker(item, batch);
+      });
+    });
+  }
+
+  // ---------- 多人:双引擎 ----------
+  // 首选新宿主的多角色链路:ai.generate({characterIds}) 由宿主组装"多人资料包"
+  // (全部成员人设/记忆结构化进上下文),场景条目按 appTags 命中,返回原始文本。
+  // 老宿主的同名接口是群聊线上形态(返回按角色切分的 results 数组,输出被群聊
+  // 解析器洗过),特征明显——探测到就永久回落"视角角色执笔+人设摘要注入"。
+  var ensembleSupported = null; // null=未探测
+  function looksLikeOldGroupHost(res){ return !!(res && Array.isArray(res.results)); }
+  function isGroupConfigError(e){ return /群聊|group ?chat/i.test((e && e.message) || ""); }
+  function castNamesBlock(parts){
+    return "【参演名单】(共" + parts.length + "位,均与用户熟识,人设资料见上下文): " + joinNames(parts.map(function(p){ return p.name; }));
+  }
+
+  // ---------- 多人:参演角色人设注入(老宿主回落路径) ----------
+  // 老宿主的 ai.generate 只自动组装视角角色(characterId)的人设/记忆/关系,
+  // 其他参演角色的人设要靠 characters.relations.read 读出来、写进任务说明,
+  // 执笔角色才知道"别人是谁、什么性格"。每人截 500 字,避免任务说明无限膨胀。
+  var personaCache = {};
+  async function getPersonaDigest(characterId){
+    if (personaCache[characterId] !== undefined) return personaCache[characterId];
+    var digest = "";
+    try{
+      var rel = await api.characters.readRelations({ characterId: characterId });
+      var c = rel && rel.character;
+      digest = [c && c.persona, c && c.personality].filter(Boolean).join("\n").slice(0, 500);
+    }catch(e){ digest = ""; }
+    personaCache[characterId] = digest;
+    return digest;
+  }
+  // 【参演名单】文本块:视角角色(第1位)不用附人设(ai.generate 会自动组装),
+  // 其余成员逐个附人设摘要。
+  async function buildCastBlock(cast){
+    var lines = ["【参演名单】(共" + cast.length + "位,均与用户熟识): " + joinNames(cast.map(function(c){ return c.name || "TA"; }))];
+    for (var i = 0; i < cast.length; i++) {
+      var c = cast[i];
+      if (i === 0) { lines.push("· " + (c.name || "TA") + ":就是你自己,人设不再赘述。"); continue; }
+      var digest = await getPersonaDigest(c.id);
+      lines.push("· " + (c.name || "TA") + ":" + (digest || "(人设资料暂缺,按名字和常识演绎)"));
+    }
+    return lines.join("\n");
+  }
+
+  // ---------- 生成片单 ----------
+  function parseBatchConcepts(text){
+    var re = /\[标题[:：]([\s\S]*?)\]\s*\[简介[:：]([\s\S]*?)\]\s*\[画面提示[:：]([\s\S]*?)\]/g;
+    var out = [];
+    var m;
+    while ((m = re.exec(text || "")) && out.length < 6) {
+      var title = m[1].trim(), teaser = m[2].trim(), cover = m[3].trim();
+      if (title) out.push({ title: title, teaser: teaser, coverPrompt: cover || title });
+    }
+    return out;
+  }
+
+  async function generateBatch(){
+    var characterId = state.selectedCharacterId;
+    var character = state.characters.find(function(c){ return c.id === characterId; });
+    if (!character) { toast("请先选择一个角色"); return; }
+    var cast = getCast();
+    var multi = cast.length > 1;
+
+    setLoading(true, "正在构思新一批片单...");
+    var textResult = null;
+    try{
+      if (multi) {
+        var parts = cast.map(function(c){ return { id: c.id, name: c.name || "TA" }; });
+        var multiHead = "请构思新一批6个不同的多人私密时光情境,以下所有角色和用户共同在场。\n\n";
+        // 新宿主:characterIds 资料包链路;老宿主:探测特征后回落视角执笔
+        if (ensembleSupported !== false) {
+          try{
+            var er = await api.ai.generate({
+              characterIds: state.castIds.slice(),
+              appTags: ["private_time", "batch_multi"],
+              instruction: multiHead + castNamesBlock(parts)
+            });
+            if (looksLikeOldGroupHost(er)) { ensembleSupported = false; }
+            else { ensembleSupported = true; textResult = er; }
+          }catch(e){
+            if (isGroupConfigError(e)) ensembleSupported = false;
+            else throw e;
+          }
+        }
+        if (!textResult) {
+          textResult = await api.ai.generate({
+            characterId: characterId,
+            appTags: ["private_time", "batch_multi"],
+            instruction: multiHead + (await buildCastBlock(cast))
+          });
+        }
+      } else {
+        textResult = await api.ai.generate({
+          characterId: characterId,
+          appTags: ["private_time", "batch"],
+          instruction: "请构思新一批6个不同的私密时光情境。"
+        });
+      }
+    }catch(e){
+      setLoading(false);
+      toast("构思失败: " + (e && e.message ? e.message : "请稍后再试"));
+      return;
+    }
+    var concepts = parseBatchConcepts(textResult && textResult.text);
+    if (concepts.length === 0) {
+      setLoading(false);
+      toast("这次没能构思出片单,再试一次吧");
+      return;
+    }
+
+    var items = concepts.map(function(c){
+      return { id: uid(), title: c.title, teaser: c.teaser, coverPrompt: c.coverPrompt, coverImage: null, coverFailed: false, script: null, playedAt: null };
+    });
+
+    // 生图逐张顺序生成(并发 2 实测会触发中转限流,失败率明显上升;失败仍补两轮,每轮间隔逐级拉长)。
+    var done = 0, total = items.length, lastCoverError = "";
+    setLoading(true, "正在绘制封面... 0/" + total);
+    await runWithConcurrency(items, 1, async function(item){
+      try{
+        var img = await api.ai.generateImage({ prompt: item.coverPrompt + IMAGE_STYLE_SUFFIX, characterId: characterId });
+        item.coverImage = img && img.dataUrl ? img.dataUrl : null;
+        item.coverFailed = !item.coverImage;
+        if (!item.coverImage) lastCoverError = "接口没有返回图片";
+      }catch(e){ item.coverFailed = true; lastCoverError = e && e.message ? String(e.message) : "未知错误"; }
+      done++;
+      setLoading(true, "正在绘制封面... " + done + "/" + total);
+    });
+    for (var cRound = 0; cRound < 2; cRound++) {
+      var failedCovers = items.filter(function(it){ return !it.coverImage; });
+      if (failedCovers.length === 0) break;
+      setLoading(true, "第" + (cRound + 2) + "轮补画封面,等待中...");
+      await sleep(4000 * (cRound + 1));
+      for (var fi = 0; fi < failedCovers.length; fi++) {
+        var fItem = failedCovers[fi];
+        if (fi > 0) await sleep(2000 * (cRound + 1));
+        try{
+          var fImg = await api.ai.generateImage({ prompt: fItem.coverPrompt + IMAGE_STYLE_SUFFIX, characterId: characterId });
+          fItem.coverImage = fImg && fImg.dataUrl ? fImg.dataUrl : null;
+          fItem.coverFailed = !fItem.coverImage;
+        }catch(e){ lastCoverError = e && e.message ? String(e.message) : "未知错误"; }
+        setLoading(true, "第" + (cRound + 2) + "轮补画封面... " + (fi + 1) + "/" + failedCovers.length);
+      }
+    }
+    // 三轮后仍失败的透出具体原因,不再静默
+    var stillFailed = items.filter(function(it){ return !it.coverImage; }).length;
+    if (stillFailed > 0) {
+      toast(stillFailed + " 张封面生成失败(" + (lastCoverError || "未知原因").slice(0, 80) + ")");
+    }
+
+    var participants = cast.map(function(c){ return { id: c.id, name: c.name || "TA" }; });
+    if (multi) items.forEach(function(it){ it.participants = participants; });
+    var record = {
+      characterId: characterId, characterName: character.name || "TA",
+      castKey: castKey(state.castIds), castIds: state.castIds.slice(), participants: participants,
+      items: items, createdAt: new Date().toISOString()
+    };
+    try{
+      var saved = await createBatchRecord(record);
+      // 被顶掉的旧片单:含收藏的整批保留(收藏页靠它播放),没收藏的从 db 删掉,
+      // 防止封面/配音在存储里无限堆积;媒体库里的 Blob 一并清。
+      var hasFav = function(b){ return (b.items || []).some(function(it){ return it.favorite; }); };
+      var myKey = castKey(state.castIds);
+      var oldBatches = state.historyBatches.filter(function(b){ return batchCastKey(b) === myKey; });
+      for (var oi = 0; oi < oldBatches.length; oi++) {
+        if (!hasFav(oldBatches[oi])) {
+          try{
+            await api.db.delete("batches", oldBatches[oi].id);
+            collectBatchMediaRefs(oldBatches[oi]).forEach(deleteMediaRef);
+          }catch(e){ /* 清理失败不阻断 */ }
+        }
+      }
+      state.historyBatches = state.historyBatches.filter(function(b){ return batchCastKey(b) !== myKey || hasFav(b); });
+      state.historyBatches.unshift(saved);
+    }catch(e){ toast("片单保存失败"); }
+
+    setLoading(false);
+    renderHome();
+  }
+
+  async function generateCustomItem(){
+    var text = $("custom-theme").value.trim();
+    if (!text) { toast("先写一点情境描述吧"); return; }
+    var characterId = state.selectedCharacterId;
+    var character = state.characters.find(function(c){ return c.id === characterId; });
+    if (!character) { toast("请先选择一个角色"); return; }
+
+    $("custom-theme").value = "";
+    closeCustomSheet();
+    setLoading(true, "正在为这条定制情境画封面...");
+    var item = { id: uid(), title: text.slice(0,12) || "自定情境", teaser: text.slice(0,60), coverPrompt: text.slice(0,80), coverImage: null, coverFailed: false, script: null, playedAt: null };
+    if (isMulti()) item.participants = getCast().map(function(c){ return { id: c.id, name: c.name || "TA" }; });
+    try{
+      var img = await api.ai.generateImage({ prompt: item.coverPrompt + IMAGE_STYLE_SUFFIX, characterId: characterId });
+      item.coverImage = img && img.dataUrl ? img.dataUrl : null;
+      if (!item.coverImage) item.coverFailed = true;
+    }catch(e){
+      item.coverFailed = true;
+      toast("封面生成失败(" + (e && e.message ? String(e.message).slice(0, 80) : "未知错误") + ")");
+    }
+
+    var batch = currentBatch();
+    if (batch) {
+      batch.items.unshift(item);
+      await persistBatch(batch);
+    } else {
+      try{
+        var saved = await createBatchRecord({
+          characterId: characterId, characterName: character.name || "TA",
+          castKey: castKey(state.castIds), castIds: state.castIds.slice(),
+          participants: getCast().map(function(c){ return { id: c.id, name: c.name || "TA" }; }),
+          items: [item], createdAt: new Date().toISOString()
+        });
+        state.historyBatches.unshift(saved);
+      }catch(e){ toast("保存失败"); }
+    }
+    setLoading(false);
+    renderHome();
+  }
+
+  // ---------- 导入自定义剧本 + 封面 ----------
+  var importCoverDataUrl = null;
+  var importMapNames = null; // 已渲染对号表的说话人名单(判断剧本是否被改过)
+
+  function openImportSheet(){
+    if (!state.selectedCharacterId) { toast("请先选择一个角色"); return; }
+    importCoverDataUrl = null;
+    importMapNames = null;
+    $("import-title").value = "";
+    $("import-teaser").value = "";
+    $("import-script").value = "";
+    $("import-cover-preview").classList.add("hidden");
+    $("import-cover-preview").style.backgroundImage = "";
+    $("import-speaker-map-wrap").classList.add("hidden");
+    $("import-speaker-map").innerHTML = "";
+    $("import-sheet").classList.remove("hidden");
+  }
+  function closeImportSheet(){ $("import-sheet").classList.add("hidden"); }
+
+  // 提取剧本里 [语@名字:...] 出现过的说话人名字(按出现顺序去重)
+  function scanImportSpeakers(text){
+    var names = [];
+    var re = /\[语\s*@\s*([^\]:：]{1,24})[:：]/g;
+    var m;
+    while ((m = re.exec(text || ""))) {
+      var name = m[1].trim();
+      if (name && names.indexOf(name) < 0) names.push(name);
+    }
+    return names;
+  }
+
+  // 对号入座表:剧本名字 → 我的某个角色(用TA的声音)或"仅字幕(不配音)"
+  function renderImportSpeakerMap(names){
+    var wrap = $("import-speaker-map-wrap");
+    var box = $("import-speaker-map");
+    box.innerHTML = names.map(function(name, i){
+      var exact = state.characters.find(function(c){ return (c.name || "").trim() === name; });
+      var options = ['<option value=""' + (exact ? '' : ' selected') + '>仅字幕(不配音)</option>'].concat(
+        state.characters.map(function(c){
+          var sel = exact && c.id === exact.id ? ' selected' : '';
+          return '<option value="' + escapeHtml(c.id) + '"' + sel + '>' + escapeHtml(c.name || "未命名") + '</option>';
+        })
+      ).join("");
+      return '<div class="import-map-row">' +
+        '<span class="map-name">' + escapeHtml(name) + '</span>' +
+        '<select data-map-name="' + escapeHtml(name) + '">' + options + '</select>' +
+      '</div>';
+    }).join("");
+    wrap.classList.remove("hidden");
+    importMapNames = names.slice();
+  }
+  function readImportSpeakerMap(){
+    var map = {};
+    $("import-speaker-map").querySelectorAll("select[data-map-name]").forEach(function(sel){
+      map[sel.getAttribute("data-map-name")] = sel.value || null;
+    });
+    return map;
+  }
+
+  async function pickImportCover(){
+    try{
+      var picked = await api.media.pick({ accept: "image/*" });
+      var dataUrl = picked && picked.file && picked.file.dataUrl;
+      if (!dataUrl) return;
+      importCoverDataUrl = dataUrl;
+      var preview = $("import-cover-preview");
+      preview.style.backgroundImage = "url('" + dataUrl.replace(/'/g,"") + "')";
+      preview.classList.remove("hidden");
+    }catch(e){ toast("选择图片失败: " + (e && e.message ? e.message : "请重试")); }
+  }
+
+  async function submitImport(){
+    var characterId = state.selectedCharacterId;
+    var character = state.characters.find(function(c){ return c.id === characterId; });
+    if (!character) { toast("请先选择一个角色"); return; }
+
+    var title = $("import-title").value.trim();
+    var teaser = $("import-teaser").value.trim();
+    var scriptText = $("import-script").value.trim();
+    if (!title) { toast("给这段时光起个标题吧"); return; }
+    if (!scriptText) { toast("剧本文本不能是空的"); return; }
+
+    // 多人剧本([语@名字:...]):先弹出对号表让用户把名字映射到自己的角色,
+    // 第二次点导入才真正入库。剧本文本改动过(名单变了)就重新对号。
+    var speakerNames = scanImportSpeakers(scriptText);
+    if (speakerNames.length > 0) {
+      var sameNames = importMapNames && importMapNames.length === speakerNames.length &&
+        importMapNames.every(function(n, i){ return n === speakerNames[i]; });
+      if (!sameNames) {
+        renderImportSpeakerMap(speakerNames);
+        toast("先给剧本里的角色对号入座,再点一次导入");
+        return;
+      }
+    }
+    var speakerMap = speakerNames.length > 0 ? readImportSpeakerMap() : {};
+
+    // 组装解析用的参演表:映射到角色的名字用TA的声音(含富语气检测),
+    // "仅字幕"的名字不进表,解析时自动降级为纯文字台词。
+    var viewpointCaps = await detectVoiceCapability(characterId);
+    var parseCast = [];
+    var participants = [];
+    for (var ni = 0; ni < speakerNames.length; ni++) {
+      var sn = speakerNames[ni];
+      var mappedId = speakerMap[sn];
+      if (!mappedId) continue;
+      var mCaps = mappedId === characterId ? viewpointCaps : await detectVoiceCapability(mappedId);
+      parseCast.push({ id: mappedId, name: sn, rich: mCaps.richMode });
+      participants.push({ id: mappedId, name: sn });
+    }
+
+    var beats = parseSceneScript(scriptText, { cast: parseCast, defaultId: characterId, defaultRich: viewpointCaps.richMode });
+    if (!beats.some(function(b){ return b.type === "speech"; })) {
+      toast("没能从文本里解析出台词,检查一下格式是不是 [语:...]");
+      return;
+    }
+    if (!beats.length || beats[0].type !== "scene") {
+      beats.unshift({ type: "scene", prompt: title, image: importCoverDataUrl || null });
+    } else if (importCoverDataUrl && !beats[0].image) {
+      beats[0].image = importCoverDataUrl;
+    }
+
+    var item = {
+      id: uid(), title: title.slice(0,20), teaser: teaser.slice(0,60) || "自己导入的剧本",
+      coverPrompt: title, coverImage: importCoverDataUrl, coverFailed: !importCoverDataUrl,
+      script: beats, playedAt: null, favorite: false
+    };
+    if (participants.length > 0) item.participants = participants;
+
+    closeImportSheet();
+    var batch = currentBatch();
+    if (batch) {
+      batch.items.unshift(item);
+      await persistBatch(batch);
+    } else {
+      try{
+        var saved = await createBatchRecord({
+          characterId: characterId, characterName: character.name || "TA",
+          castKey: castKey(state.castIds), castIds: state.castIds.slice(),
+          participants: getCast().map(function(c){ return { id: c.id, name: c.name || "TA" }; }),
+          items: [item], createdAt: new Date().toISOString()
+        });
+        state.historyBatches.unshift(saved);
+      }catch(e){ toast("保存失败"); }
+    }
+    renderHome();
+    toast("已导入,点这张卡片就能直接配音播放");
+  }
+
+  // ---------- 打开单条 · 懒生成完整脚本 ----------
+  // 名字容错匹配:先精确,再忽略空白/大小写,再互相包含(模型偶尔写"小满酱"漏字之类)
+  function resolveCastMember(name, cast){
+    if (!name || !cast || !cast.length) return null;
+    var norm = function(s){ return String(s || "").replace(/\s+/g, "").toLowerCase(); };
+    var n = norm(name);
+    var found = cast.find(function(c){ return norm(c.name) === n; });
+    if (found) return found;
+    return cast.find(function(c){
+      var cn = norm(c.name);
+      return cn && n && (cn.indexOf(n) >= 0 || n.indexOf(cn) >= 0);
+    }) || null;
+  }
+
+  // opts: { cast: [{id,name,rich}], defaultId, defaultRich }
+  // 单人剧本 [语:...] 不带说话人;多人剧本 [语@名字:...] 逐句标注。
+  // @名字能在 cast 里对上号的用TA的声音(按TA自己的语音模型决定插入语);
+  // 对不上号的(仅字幕角色/模型笔误)保留名字显示但不配音(noVoice)。
+  function parseSceneScript(text, opts){
+    opts = opts || {};
+    var cast = opts.cast || [];
+    var beats = [];
+    var re = /\[(景|语)(?:\s*@\s*([^\]:：]{1,24}))?[:：]([\s\S]*?)\]/g;
+    var m;
+    while ((m = re.exec(text || ""))) {
+      var body = m[3].trim();
+      if (!body) continue;
+      if (m[1] === "景") { beats.push({ type:"scene", prompt: body, image: null }); continue; }
+      var speakerName = (m[2] || "").trim();
+      var member = speakerName ? resolveCastMember(speakerName, cast) : null;
+      var rich = member ? !!member.rich : !!opts.defaultRich;
+      var bl = splitBilingual(body);
+      var spoken = toSpokenText(bl.raw, rich);
+      // 这一句去掉动作提示后没有真正可朗读的台词(整句都是括号旁白)时,标记为静音,
+      // 不再拿原文(含括号)去配音,免得旁白被读出来;播放时只做文字停留。
+      // 外语角色朗读母语原句(bl.raw),字幕另附中文译文(bl.trans)。
+      var beat = { type:"speech", raw: bl.raw, trans: bl.trans || undefined, spoken: spoken, silent: !spoken, audio: null, audioFailed: false };
+      if (speakerName) {
+        beat.speaker = speakerName;
+        if (member) beat.speakerId = member.id;
+        else beat.noVoice = true; // 名字对不上号:只显示,不配音
+      }
+      beats.push(beat);
+    }
+    return beats;
+  }
+
+  async function detectVoiceCapability(characterId){
+    try{
+      var profiles = await api.voice.readProfiles({ characterId: characterId });
+      var selected = profiles && profiles.selected;
+      if (!selected) return { voiceMode:false, richMode:false };
+      var isMinimax = selected.provider === "Minimax";
+      var model = String(selected.model || "").toLowerCase();
+      var richMode = isMinimax && model.indexOf("2.8") >= 0;
+      return { voiceMode:true, richMode:richMode };
+    }catch(e){ return { voiceMode:false, richMode:false }; }
+  }
+
+  function buildActInstruction(item, actIndex, actCount, richMode, castBlock, richNames){
+    var lineTag = castBlock ? "[语@名字:...]" : "[语:...]";
+    var TAG_LIST = "(laughs)(chuckle)(coughs)(clear-throat)(groans)(breath)(pant)(inhale)(exhale)(gasps)(sniffs)(sighs)(snorts)(burps)(lip-smacking)(humming)(hissing)(sneezes)";
+    var richNote;
+    if (richMode && castBlock && richNames && richNames.length > 0) {
+      // 多人:点名制授权——只有配了富语气语音的角色台词里才能用标签,其余角色写了也不生效
+      richNote = "\n\n参演角色里,只有" + richNames.join("、") + "的语音支持气声标签:在这几位的" + lineTag + "台词里,除了全角括号的表演提示外,还可以额外使用半角括号插入这些标准标签来产生真实的气声效果——" + TAG_LIST + ",只能用这些词,不要自造(尤其不要用 emm),一条台词最多用1到2个,只在真的需要一口气声时才加;其他角色的台词绝对不要加这些标签(对他们不生效)。所有角色都绝对不要在台词里直接用文字写“呼……”“嘘……”“嗯……”这类拖长的拟声(会被语音一字一顿硬念出来)。";
+    } else if (richMode) {
+      richNote = "\n\n你使用的语音支持更丰富的表现:在" + lineTag + "的台词里,除了全角括号的表演提示外,还可以额外使用半角括号插入这些标准标签来产生真实的气声效果——" + TAG_LIST + ",只能用这些词,不要自造(尤其不要用 emm),一条台词最多用1到2个,不要滥用,只在真的需要一口气声时才加。需要喘息、气声就用这些标签,绝对不要在台词里直接用文字写“呼……”“嘘……”“嗯……”这类拖长的拟声(会被语音一字一顿硬念出来)。";
+    } else {
+      richNote = "\n\n台词里的动作或情绪提示请只用全角括号,例如（笑）（叹气）（轻喘）,不要使用半角括号。绝对不要在台词里直接用文字写“呼……”“嘘……”“嗯……”“哈啊”这类单独拖长的气声/拟声——会被语音一字一顿硬念出来、非常出戏;要气声就写成全角括号的动作提示。";
+    }
+    var isFirst = actIndex === 0;
+    var isLast = actIndex === actCount - 1;
+    var head = isFirst
+      ? "本次情境:《" + item.title + "》。" + item.teaser + "\n请开始演绎这段私密时光。"
+      : "继续上面这段私密时光,不要重复已经演绎过的内容。";
+    // 多人:每一幕都带上参演名单(人设摘要),防止后面几幕忘了谁在场
+    if (castBlock) head += "\n\n" + castBlock + "\n每句台词必须写成 [语@名字:台词],名字从上面名单里原样照抄。";
+    var body;
+    if (isFirst) {
+      body = "这是第1幕(共" + actCount + "幕),负责开场:交代氛围和情绪起点。这一幕" + lineTag + "写22到28条,开场先给1个[景:...],不需要更多。这一幕不是结尾,不要收尾、不要说再见或总结性的话,留一个自然的钩子给下一幕继续。";
+    } else if (isLast) {
+      body = "这是第" + (actIndex + 1) + "幕,也是最后一幕(共" + actCount + "幕)。把情绪推向这次私密时光的顶点,然后给出一个温柔收束的结尾,让整段体验有始有终。这一幕" + lineTag + "写22到28条,可以在情绪或姿态明显转折处插入1到2个新的[景:...]。";
+    } else {
+      body = "这是第" + (actIndex + 1) + "幕(共" + actCount + "幕)。情绪继续推进、更靠近私密核心,这一幕依然不是结尾,不要收尾、不要说再见。这一幕" + lineTag + "写22到28条,可以在情绪或姿态明显转折处插入1到2个新的[景:...]。";
+    }
+    return head + body + richNote;
+  }
+
+  async function openItem(item){
+    var characterId = state.selectedCharacterId;
+    var character = state.characters.find(function(c){ return c.id === characterId; });
+    if (!character) { toast("请先选择一个角色"); return; }
+    var batch = state.pendingBatch || currentBatch();
+
+    // 本条的参演名单:条目自带(多人生成/导入对号) > 批次记录 > 单人(视角角色)
+    var participants = item.participants || (batch && batch.participants) || null;
+    var multi = !!(participants && participants.length > 1);
+    // 逐人检测语音能力(音色有没有配、是否支持富语气插入语)
+    var capsMap = {};
+    capsMap[characterId] = await detectVoiceCapability(characterId);
+    if (participants) {
+      for (var pi = 0; pi < participants.length; pi++) {
+        var pid = participants[pi].id;
+        if (pid && !capsMap[pid]) capsMap[pid] = await detectVoiceCapability(pid);
+      }
+    }
+    var caps = capsMap[characterId];
+    var speakerCaps = function(b){ return capsMap[b.speakerId || characterId] || { voiceMode:false, richMode:false }; };
+    var anyVoice = Object.keys(capsMap).some(function(id){ return capsMap[id].voiceMode; });
+    var anyRich = Object.keys(capsMap).some(function(id){ return capsMap[id].richMode; });
+    // 生成过程可能要经过好几个异步阶段、耗时一两分钟；等生成完再自动开播，
+    // 早就脱离了用户点击的手势窗口，浏览器会随缘拦截 audio.play()。
+    // 这次生成过东西的话，播放要改成再等用户点一下"开始播放"才发起，
+    // 保证播放请求是紧跟着一次真实点击发出去的。
+    var willGenerate = !item.script || item.script.length === 0;
+
+    if (!item.script || item.script.length === 0) {
+      var ACT_COUNT = 3;
+      var allBeats = [];
+      var actMessages = [];
+      var actBroke = false;
+      // 多人:新宿主走 characterIds 资料包链路(人设由宿主结构化注入,任务说明只带
+      // 名单);老宿主回落"视角执笔+人设摘要注入"。解析时按说话人自己的语音模型
+      // 决定是否保留插入语标签。
+      var castChars = [];
+      var castBlockNames = null;  // ensemble:仅名单
+      var castBlockFull = null;   // 回落:名单+人设摘要(懒构建,只在真回落时才读)
+      var parseCastList = [];
+      if (multi) {
+        castChars = participants.map(function(p){
+          return state.characters.find(function(c){ return c.id === p.id; }) || { id: p.id, name: p.name };
+        });
+        castBlockNames = castNamesBlock(participants);
+        parseCastList = participants.map(function(p){
+          return { id: p.id, name: p.name, rich: (capsMap[p.id] || {}).richMode };
+        });
+      }
+      var parseOpts = { cast: parseCastList, defaultId: characterId, defaultRich: caps.richMode };
+      // 多人:支持气声标签的角色名单(点名制授权,其他人写了标签也会被剥掉)
+      var richNames = multi ? participants.filter(function(p){
+        return p.id && capsMap[p.id] && capsMap[p.id].richMode;
+      }).map(function(p){ return p.name; }) : [];
+      var useEnsemble = multi && ensembleSupported !== false;
+      for (var actIdx = 0; actIdx < ACT_COUNT; actIdx++) {
+        setLoading(true, "正在构思剧情... 第" + (actIdx + 1) + "/" + ACT_COUNT + "幕");
+        if (multi && !useEnsemble && !castBlockFull) castBlockFull = await buildCastBlock(castChars);
+        var actPayload = {
+          appTags: multi ? ["private_time", "scene_multi"] : ["private_time", "scene"],
+          instruction: buildActInstruction(item, actIdx, ACT_COUNT, multi ? anyRich : caps.richMode,
+            multi ? (useEnsemble ? castBlockNames : castBlockFull) : null, richNames)
+        };
+        if (useEnsemble) actPayload.characterIds = participants.map(function(p){ return p.id; }).filter(Boolean);
+        else actPayload.characterId = characterId;
+        if (actIdx > 0) actPayload.messages = actMessages;
+        var actResult;
+        try{
+          actResult = await api.ai.generate(actPayload);
+        }catch(e){
+          // 老宿主没绑群聊配置会在这里报错:回落视角执笔,重跑当前幕
+          if (useEnsemble && isGroupConfigError(e)) { ensembleSupported = false; useEnsemble = false; actIdx--; continue; }
+          if (actIdx === 0) {
+            setLoading(false);
+            toast("生成失败: " + (e && e.message ? e.message : "请稍后再试"));
+            return;
+          }
+          actBroke = true;
+          break;
+        }
+        // 老宿主特征:返回按角色切分的 results 数组 → 这次输出被群聊格式污染,弃用重跑
+        if (useEnsemble && looksLikeOldGroupHost(actResult)) {
+          ensembleSupported = false; useEnsemble = false; actIdx--; continue;
+        }
+        if (useEnsemble) ensembleSupported = true;
+        var actBeats = parseSceneScript(actResult && actResult.text, parseOpts);
+        if (actBeats.length === 0 && actIdx === 0) {
+          setLoading(false);
+          toast("这一次没能生成内容,再点一次试试吧");
+          return;
+        }
+        allBeats = allBeats.concat(actBeats);
+        actMessages = actMessages.concat((actResult && actResult.appendMessages) || []);
+      }
+      if (actBroke) toast("剧情生成到一半中断了,先用已经写好的部分");
+
+      var beats = allBeats;
+      if (!beats.some(function(b){ return b.type === "speech"; })) {
+        setLoading(false);
+        toast("这一次没能生成内容,再点一次试试吧");
+        return;
+      }
+      if (!beats.length || beats[0].type !== "scene") {
+        beats.unshift({ type:"scene", prompt: item.coverPrompt, image: null });
+      }
+
+      var sceneBeats = beats.filter(function(b){ return b.type === "scene"; });
+      var startIdx = 0;
+      if (item.coverImage) { sceneBeats[0].image = item.coverImage; startIdx = 1; }
+      else if (item.coverRef) { sceneBeats[0].imageRef = item.coverRef; startIdx = 1; }
+      var todo = sceneBeats.slice(startIdx);
+      if (todo.length > 0) {
+        var doneImg = 0, lastSceneError = "";
+        setLoading(true, "正在绘制画面... 0/" + todo.length);
+        // 逐张顺序生成:并发 2 实测会触发中转限流,失败率明显上升
+        await runWithConcurrency(todo, 1, async function(b){
+          try{
+            var img = await api.ai.generateImage({ prompt: b.prompt + IMAGE_STYLE_SUFFIX, characterId: characterId });
+            b.image = img && img.dataUrl ? img.dataUrl : null;
+          }catch(e){ b.image = null; lastSceneError = e && e.message ? String(e.message) : "未知错误"; }
+          doneImg++;
+          setLoading(true, "正在绘制画面... " + doneImg + "/" + todo.length);
+        });
+        // 失败的补一轮,间隔拉长避开接口拥堵
+        var failedScenes = todo.filter(function(b){ return !b.image; });
+        if (failedScenes.length > 0) {
+          setLoading(true, "补画剩下的" + failedScenes.length + "张画面,等待中...");
+          await sleep(4000);
+          for (var fsi = 0; fsi < failedScenes.length; fsi++) {
+            if (fsi > 0) await sleep(2000);
+            try{
+              var fsImg = await api.ai.generateImage({ prompt: failedScenes[fsi].prompt + IMAGE_STYLE_SUFFIX, characterId: characterId });
+              failedScenes[fsi].image = fsImg && fsImg.dataUrl ? fsImg.dataUrl : null;
+            }catch(e){ lastSceneError = e && e.message ? String(e.message) : "未知错误"; }
+            setLoading(true, "补画画面... " + (fsi + 1) + "/" + failedScenes.length);
+          }
+        }
+        var scenesStillFailed = todo.filter(function(b){ return !b.image; }).length;
+        if (scenesStillFailed > 0) {
+          toast(scenesStillFailed + " 张画面生成失败(" + (lastSceneError || "未知原因").slice(0, 80) + "),播放时对应段落无背景");
+        }
+      }
+
+      // 之前封面失败的,用第一张场景图回填,卡片不再一直黑着
+      if (!item.coverImage && !item.coverRef && sceneBeats[0] && sceneBeats[0].image) {
+        item.coverImage = sceneBeats[0].image;
+        item.coverFailed = false;
+      }
+
+      item.script = beats;
+      if (multi && !item.participants) item.participants = participants;
+      if (batch) await persistBatch(batch);
+    }
+
+    var speechBeats = item.script.filter(function(b){ return b.type === "speech"; });
+    // 有说话人的台词按说话人自己的语音能力决定配不配音;能力是每次打开时
+    // 现查的,之前没配音色、后来配上了,noVoice 会自动解除。
+    speechBeats.forEach(function(b){
+      if (b.speakerId) b.noVoice = !speakerCaps(b).voiceMode;
+    });
+    var missingAudio = speechBeats.filter(function(b){
+      return !b.audio && !b.audioRef && !b.silent && !b.noVoice && speakerCaps(b).voiceMode;
+    });
+    if (missingAudio.length > 0 && anyVoice) {
+      willGenerate = true;
+      // 语音接口对短时间内连续请求很敏感，之前3并发+快速重试容易连环撞限流；
+      // 分幕之后台词量涨了三倍左右，完全顺序会等太久，折中用2并发+单句重试退避。
+      setLoading(true, "正在为TA的声音调音... 0/" + missingAudio.length);
+      var doneAudio = 0;
+      await runWithConcurrency(missingAudio, 2, async function(mb){
+        for (var attempt = 0; attempt < 2 && !mb.audio; attempt++) {
+          if (attempt > 0) await sleep(1200);
+          try{
+            var mres = await api.voice.tts({ characterId: mb.speakerId || characterId, text: mb.spoken });
+            mb.audio = mres && mres.dataUrl ? mres.dataUrl : null;
+            if (mb.audio) mb.audioError = null;
+          }catch(e){ mb.audio = null; mb.audioError = e && e.message ? String(e.message) : "未知错误"; }
+        }
+        mb.audioFailed = !mb.audio;
+        doneAudio++;
+        setLoading(true, "正在为TA的声音调音... " + doneAudio + "/" + missingAudio.length);
+        await sleep(300);
+      });
+
+      // 补两轮(共三轮生成):失败多半是限流(429/频率),每轮等待逐级拉长跨出限流窗口;
+      // 命中限流关键词时退避时间指数级增长,每句每轮给两次机会。
+      var isRateLimited = function(msg){ return /429|限流|频率|too many|rate ?limit|quota|繁忙|请求过多/i.test(msg || ""); };
+      for (var round = 0; round < 2; round++) {
+        var stragglers = missingAudio.filter(function(b){ return !b.audio; });
+        if (stragglers.length === 0) break;
+        var backoff = stragglers.some(function(b){ return isRateLimited(b.audioError); }) ? 8000 : 3000;
+        backoff = backoff * (round + 1);
+        setLoading(true, "第" + (round + 2) + "轮补生成,等待中再补" + stragglers.length + "句...");
+        await sleep(backoff);
+        for (var si = 0; si < stragglers.length; si++) {
+          var sb = stragglers[si];
+          for (var sa = 0; sa < 2 && !sb.audio; sa++) {
+            if (si > 0 || sa > 0) await sleep(backoff);
+            try{
+              var sres = await api.voice.tts({ characterId: sb.speakerId || characterId, text: sb.spoken });
+              sb.audio = sres && sres.dataUrl ? sres.dataUrl : null;
+              if (sb.audio) sb.audioError = null;
+            }catch(e){
+              sb.audioError = e && e.message ? String(e.message) : "未知错误";
+              if (isRateLimited(sb.audioError)) backoff = Math.min(backoff * 2, 25000);
+            }
+          }
+          sb.audioFailed = !sb.audio;
+          setLoading(true, "第" + (round + 2) + "轮补生成... " + (si + 1) + "/" + stragglers.length);
+        }
+      }
+
+      // 配音是按需生成的重量级步骤，生成完立刻存档，下次点开这条同样的台词不再重新调用语音接口。
+      if (batch) await persistBatch(batch);
+
+      // 把失败原因透出来,不再吞错——方便判断是限流、配置还是别的问题
+      var failedBeats = missingAudio.filter(function(b){ return !b.audio; });
+      if (failedBeats.length > 0) {
+        var reason = failedBeats[0].audioError || "未知原因";
+        toast(failedBeats.length + " 句配音失败(" + reason.slice(0, 60) + ")。可稍后在回看里单句重试。");
+      }
+    } else if (!anyVoice && speechBeats.some(function(b){ return !b.silent; })) {
+      toast("这次是文字模式(角色还没配置专属语音)");
+    }
+    // 多人:部分成员没配音色时点名提示一次,他们的台词以文字显示
+    if (multi && anyVoice) {
+      var voiceless = participants.filter(function(p){ return p.id && capsMap[p.id] && !capsMap[p.id].voiceMode; });
+      if (voiceless.length > 0) toast(joinNames(voiceless.map(function(p){ return p.name; })) + " 还没配置语音,对应台词以文字显示");
+    }
+
+    var displayName = multi ? joinNames(participants.map(function(p){ return p.name; })) : (character.name || "TA");
+    setLoading(false);
+    if (willGenerate) {
+      readyToPlayCtx = { characterId: characterId, characterName: displayName, item: item };
+      $("ready-desc").textContent = "《" + item.title + "》已经准备好了,点击开始这段时光。";
+      $("ready-sheet").classList.remove("hidden");
+    } else {
+      runPlayback(characterId, displayName, item);
+    }
+  }
+
+  // ---------- 播放引擎 ----------
+  function runPlayback(characterId, characterName, item){
+    activeSpeakerColors = buildSpeakerColors(item);
+    playback = {
+      characterId: characterId, characterName: characterName, item: item,
+      participantIds: (item.participants || []).map(function(p){ return p.id; }).filter(Boolean),
+      beats: item.script, index: 0,
+      speechTotal: item.script.filter(function(b){ return b.type === "speech"; }).length,
+      speechIndex: 0,
+      paused: false, cancelled: false, ended: false, endedBookkept: false,
+      loopActive: false, seekToken: 0,
+      skipCurrent: null, cancelCurrent: null, pendingVoice: null,
+      activeBg: 0
+    };
+    $("bg-layer-a").style.opacity = "0";
+    $("bg-layer-b").style.opacity = "0";
+    $("player").classList.remove("hidden");
+    $("player").classList.remove("ended");
+    $("player-pause").textContent = "暂停";
+    $("player-progress-fill").style.width = "0%";
+    startAmbience(item.ambience);
+    playLoop();
+  }
+
+  function updateBackground(imageUrl){
+    if (!imageUrl || !playback) return;
+    var layers = [$("bg-layer-a"), $("bg-layer-b")];
+    var next = layers[1 - playback.activeBg];
+    var current = layers[playback.activeBg];
+    next.style.backgroundImage = "url('" + imageUrl.replace(/'/g,"") + "')";
+    next.style.opacity = "1";
+    current.style.opacity = "0";
+    playback.activeBg = 1 - playback.activeBg;
+  }
+
+  function updateBackgroundImmediate(imageUrl){
+    if (!imageUrl || !playback) return;
+    var layers = [$("bg-layer-a"), $("bg-layer-b")];
+    var next = layers[1 - playback.activeBg];
+    var current = layers[playback.activeBg];
+    next.style.transition = "none";
+    next.style.backgroundImage = "url('" + imageUrl.replace(/'/g,"") + "')";
+    next.style.opacity = "1";
+    current.style.opacity = "0";
+    playback.activeBg = 1 - playback.activeBg;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ next.style.transition = ""; }); });
+  }
+
+  async function playLoop(){
+    var pb = playback;
+    pb.loopActive = true;
+    while (pb.index < pb.beats.length) {
+      if (pb.cancelled) { pb.loopActive = false; return; }
+      var i = pb.index;
+      var beat = pb.beats[i];
+      var myToken = pb.seekToken;
+      if (beat.type === "scene") {
+        if (beat.image) updateBackground(beat.image);
+        else if (beat.imageRef) { resolveMediaUrl(beat.imageRef).then(function(url){ if (url) updateBackground(url); }); }
+        await sleep(320);
+        if (pb.cancelled) { pb.loopActive = false; return; }
+        if (pb.seekToken === myToken) pb.index = i + 1;
+        continue;
+      }
+      updateProgress();
+      await playLine(beat);
+      if (pb.cancelled) { pb.loopActive = false; return; }
+      if (pb.seekToken === myToken) { pb.index = i + 1; pb.speechIndex++; }
+    }
+    pb.loopActive = false;
+    if (!pb.cancelled) onPlaybackEnded();
+  }
+
+  // 定位到第 targetSpeechIndex 句台词（0 起）并跳转播放，用于拖动进度条 / 结束后重播。
+  function seekTo(targetSpeechIndex){
+    if (!playback) return;
+    var pb = playback;
+    if (pb.speechTotal <= 0) return;
+    targetSpeechIndex = Math.max(0, Math.min(pb.speechTotal - 1, targetSpeechIndex));
+
+    var count = -1, targetBeatIndex = 0;
+    for (var i = 0; i < pb.beats.length; i++) {
+      if (pb.beats[i].type === "speech") {
+        count++;
+        if (count === targetSpeechIndex) { targetBeatIndex = i; break; }
+      }
+    }
+    var lastScene = null;
+    for (var j = 0; j <= targetBeatIndex; j++) {
+      if (pb.beats[j].type === "scene" && (pb.beats[j].image || pb.beats[j].imageRef)) lastScene = pb.beats[j];
+    }
+    if (lastScene) {
+      if (lastScene.image) updateBackgroundImmediate(lastScene.image);
+      else resolveMediaUrl(lastScene.imageRef).then(function(url){ if (url) updateBackgroundImmediate(url); });
+    }
+
+    var wasEnded = pb.ended;
+    pb.ended = false;
+    $("player").classList.remove("ended");
+    pb.seekToken++;
+    if (pb.cancelCurrent) pb.cancelCurrent();
+    pb.index = targetBeatIndex;
+    pb.speechIndex = targetSpeechIndex;
+    updateProgress();
+
+    if (wasEnded && !pb.loopActive && !pb.cancelled) { startAmbience(pb.item.ambience); playLoop(); }
+  }
+
+  function updateProgress(){
+    var pb = playback;
+    var pct = pb.speechTotal ? Math.round((pb.speechIndex / pb.speechTotal) * 100) : 0;
+    $("player-progress-fill").style.width = pct + "%";
+    var dot = $("pulse-dot");
+    var speed = 1.4 - (pb.speechIndex / Math.max(1, pb.speechTotal)) * 0.75;
+    dot.style.animationDuration = Math.max(0.55, speed) + "s";
+  }
+
+  function playLine(line){
+    return new Promise(function(resolve){
+      var pb = playback;
+      var settled = false;
+      var cleanupFns = [];
+      function finish(){
+        if (settled) return;
+        settled = true;
+        cleanupFns.forEach(function(fn){ try{ fn(); }catch(e){} });
+        resolve();
+      }
+
+      var caption = $("player-caption");
+      var fallbackStarted = false;
+
+      function fallbackTimedText(showHint){
+        if (fallbackStarted) return;
+        fallbackStarted = true;
+        var hint = showHint === false ? "" : '<span class="mute-hint">（这句语音没能播放,仅显示文字）</span>';
+        caption.innerHTML = captionHtml(line) + hint;
+        var basis = (line.spoken && line.spoken.length) ? line.spoken.length : line.raw.length;
+        var totalMs = Math.max(1600, Math.min(9000, basis * 230));
+        var remaining = totalMs;
+        var last = Date.now();
+        var iv = setInterval(function(){
+          if (pb.cancelled) { finish(); return; }
+          if (pb.paused) { last = Date.now(); return; }
+          var now = Date.now();
+          remaining -= (now - last);
+          last = now;
+          if (remaining <= 0) finish();
+        }, 100);
+        cleanupFns.push(function(){ clearInterval(iv); });
+      }
+
+      caption.innerHTML = captionHtml(line);
+
+      var lineAudioSrc = line.audioRef || line.audio;
+      if (lineAudioSrc && !line.audioFailed) {
+        var safety = setTimeout(finish, 45000);
+        var voiceHandlers = {
+          onended: function(){ finish(); },
+          onerror: function(){ fallbackTimedText(); }
+        };
+        var myPending = null;
+        cleanupFns.push(function(){
+          clearTimeout(safety);
+          stopVoice();
+          if (myPending && pb.pendingVoice === myPending) pb.pendingVoice = null;
+        });
+        if (pb.paused) {
+          // 暂停中装载:先挂起,等用户点「继续」时由 togglePause 补播
+          myPending = { src: lineAudioSrc, handlers: voiceHandlers };
+          pb.pendingVoice = myPending;
+        } else {
+          playVoice(lineAudioSrc, voiceHandlers);
+        }
+      } else {
+        // 静音旁白句(整句只是括号动作)和没配语音的说话人的台词,
+        // 不提示“没能播放”,只安静地做文字停留。
+        fallbackTimedText(!line.silent && !line.noVoice);
+      }
+
+      pb.skipCurrent = finish;
+      pb.cancelCurrent = finish;
+    });
+  }
+
+  function togglePause(){
+    if (!playback) return;
+    if (playback.ended) { seekTo(0); return; }
+    playback.paused = !playback.paused;
+    // 宿主代播:直接暂停/恢复两个通道的媒体元素
+    if (hostVoicePlayAvailable()) {
+      var act = playback.paused ? "pausePlayback" : "resumePlayback";
+      try{ api.voice[act]({ channel: "voice" }).catch(function(){}); }catch(e){}
+      try{ api.voice[act]({ channel: "ambience" }).catch(function(){}); }catch(e){}
+    }
+    // 回落路径:挂起/恢复整个 AudioContext(宿主代播时 ctx 空转,无副作用)
+    var ctx = getAudioCtx();
+    if (ctx) {
+      if (playback.paused) { try{ ctx.suspend().catch(function(){}); }catch(e){} }
+      else { try{ ctx.resume().catch(function(){}); }catch(e){} }
+    }
+    // 暂停期间装载的句子,恢复时补播
+    if (!playback.paused && playback.pendingVoice) {
+      var pv = playback.pendingVoice;
+      playback.pendingVoice = null;
+      playVoice(pv.src, pv.handlers);
+    }
+    $("player-pause").textContent = playback.paused ? "继续" : "暂停";
+  }
+
+  function cancelPlayback(){
+    if (!playback) return;
+    playback.cancelled = true;
+    if (playback.cancelCurrent) playback.cancelCurrent();
+    stopAmbience();
+    $("player").classList.add("hidden");
+    $("player").classList.remove("ended");
+    playback = null;
+  }
+
+  // ---------- 进度条拖动 ----------
+  function progressPointToPct(track, clientX){
+    var rect = track.getBoundingClientRect();
+    if (!rect.width) return 0;
+    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  }
+  function bindProgressDrag(){
+    var track = $("player-progress-track");
+    var dragging = false;
+    function setPreview(pct){ $("player-progress-fill").style.width = (pct * 100) + "%"; }
+    track.addEventListener("pointerdown", function(e){
+      if (!playback || !playback.speechTotal) return;
+      dragging = true;
+      track.classList.add("dragging");
+      try{ track.setPointerCapture(e.pointerId); }catch(err){}
+      setPreview(progressPointToPct(track, e.clientX));
+    });
+    track.addEventListener("pointermove", function(e){
+      if (!dragging) return;
+      setPreview(progressPointToPct(track, e.clientX));
+    });
+    function commit(e){
+      if (!dragging) return;
+      dragging = false;
+      track.classList.remove("dragging");
+      if (!playback || !playback.speechTotal) return;
+      var pct = progressPointToPct(track, e.clientX);
+      var targetIdx = Math.round(pct * (playback.speechTotal - 1));
+      seekTo(targetIdx);
+    }
+    track.addEventListener("pointerup", commit);
+    track.addEventListener("pointercancel", commit);
+  }
+
+  // 自然播放到末尾：停在播放器里显示"结束"状态，不再自动关闭/跳总结页，
+  // 由用户自己选"重新播放"或"查看总结"。记账（心动值/软记忆/存档）只做一次。
+  async function onPlaybackEnded(){
+    var pb = playback;
+    if (!pb || pb.cancelled) return;
+    pb.ended = true;
+    stopAmbience();
+    $("player").classList.add("ended");
+    $("player-pause").textContent = "重新播放";
+
+    if (pb.endedBookkept) return;
+    pb.endedBookkept = true;
+
+    // 结束时只写"已听"小记录和心动值,绝不重写整批(内存峰值会压崩页面)
+    if (!pb.item.playedAt) {
+      pb.item.playedAt = new Date().toISOString();
+      await savePlayedAt(pb.item.id, pb.item.playedAt);
+    }
+
+    // 多人:每位在场角色的心动值都+1;单人只有视角角色
+    var heartIds = pb.participantIds && pb.participantIds.length > 0 ? pb.participantIds : [pb.characterId];
+    for (var hi = 0; hi < heartIds.length; hi++) { await bumpHeart(heartIds[hi]); }
+    // 不自动写 timeline 软记忆:和分享卡片的 historyText 重复,模型会看到
+    // 两条几乎一样的"私密时光"记录。角色是否知道这件事,由用户点分享决定。
+
+    // 播放收束后释放音频会话,iOS 控制中心不会残留本 APP 的音频占用
+    releaseAudioSessionIfIdle();
+
+    state.lastResult = { characterId: pb.characterId, characterName: pb.characterName, title: pb.item.title, beats: pb.beats, item: pb.item };
+    renderHome();
+  }
+
+  function showSummaryForLastResult(){
+    if (!state.lastResult) return;
+    $("summary-desc").textContent = "你和 " + state.lastResult.characterName + " 度过了一段《" + state.lastResult.title + "》的私密时光。";
+    var heart = state.hearts[state.lastResult.characterId] || 0;
+    $("summary-heart").textContent = "心动值 · 目前 " + heart;
+    $("summary-sheet").classList.remove("hidden");
+  }
+
+  function exitPlayer(){
+    stopAmbience();
+    stopVoice();
+    releaseAudioSessionIfIdle();
+    $("player").classList.add("hidden");
+    $("player").classList.remove("ended");
+    playback = null;
+  }
+
+  async function shareLastToChat(){
+    if (!state.lastResult) return;
+    try{
+      // 卡片由用户发出(是用户在分享);historyText 写成事件记录:双方都用名字、
+      // 带标题和情境简介,让模型确切知道发生了什么,又不出现"用户/TA"这种出戏词。
+      var userName = "我";
+      try{
+        var profile = await api.user.getProfile({ characterId: state.lastResult.characterId });
+        if (profile && profile.name) userName = String(profile.name);
+      }catch(e){ /* 取不到用户名就用"我",不阻断分享 */ }
+      var shareTitle = state.lastResult.title || "私密时光";
+      var teaser = (state.lastResult.item && state.lastResult.item.teaser) ? String(state.lastResult.item.teaser) : "";
+      await api.chat.sendCard({
+        characterId: state.lastResult.characterId,
+        role: "user",
+        summary: "分享了一段私密时光《" + shareTitle + "》",
+        historyText: "[私密时光:" + userName + "和" + state.lastResult.characterName + "在 Whisper 里度过了一段《" + shareTitle + "》的私密时光" + (teaser ? "——" + teaser : "") + "]",
+        card: {
+          appLabel: "Whisper",
+          title: "一段悄悄话般的时光",
+          subtitle: state.lastResult.title,
+          body: "专属于你们的秘密,先留在这里就好。",
+          accentColor: "#cbb089"
+        }
+      });
+      toast("已分享到聊天");
+    }catch(e){ toast("分享失败: " + (e && e.message ? e.message : "未知错误")); }
+  }
+
+  var editingBeatIdx = null;
+  var previewingIdx = null;
+  var T_ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+  var T_ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  var T_ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+  var T_ICON_REGEN = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>';
+
+  function stopPreview(){
+    if (previewingIdx === null) return;
+    stopVoice();
+    releaseAudioSessionIfIdle();
+    previewingIdx = null;
+  }
+
+  function openTranscript(item, characterId, characterName){
+    if (!item || !item.script) return;
+    activeSpeakerColors = buildSpeakerColors(item);
+    state.transcriptCtx = { item: item, characterId: characterId };
+    editingBeatIdx = null;
+    stopPreview();
+    var displayName = (item.participants && item.participants.length > 1)
+      ? joinNames(item.participants.map(function(p){ return p.name; }))
+      : (characterName || "");
+    $("transcript-title").textContent = "《" + (item.title || "") + "》· " + displayName;
+    renderTranscriptBody();
+    $("transcript-sheet").classList.remove("hidden");
+  }
+
+  function renderTranscriptBody(){
+    var ctx = state.transcriptCtx;
+    if (!ctx) return;
+    var beats = ctx.item.script || [];
+    var body = $("transcript-body");
+    body.innerHTML = beats.map(function(b, i){
+      if (b.type === "scene") return '<div class="t-scene-divider">— 画面切换 —</div>';
+      if (editingBeatIdx === i) {
+        // 外语台词编辑时把"原句 | 译文"合起来给用户改,保存时再拆开
+        var editText = b.trans ? (b.raw + " | " + b.trans) : b.raw;
+        // 多人剧本:编辑时可以换说话人(换人后用新说话人的声音重新配音)
+        var speakerSel = "";
+        var parts = ctx.item.participants || [];
+        if (parts.length > 1) {
+          speakerSel = '<select class="t-edit-speaker" data-idx="' + i + '">' + parts.map(function(p){
+            var sel = (b.speakerId === p.id || (!b.speakerId && b.speaker === p.name)) ? ' selected' : '';
+            return '<option value="' + escapeHtml(p.id || "") + '"' + sel + '>' + escapeHtml(p.name) + '</option>';
+          }).join("") + '</select>';
+        }
+        return '<div class="t-line t-line-editing">' +
+          speakerSel +
+          '<textarea class="t-edit-input" data-idx="' + i + '">' + escapeHtml(editText) + '</textarea>' +
+          '<div class="t-edit-actions">' +
+            '<button class="t-edit-cancel" data-idx="' + i + '">取消</button>' +
+            '<button class="t-edit-save" data-idx="' + i + '">保存并重新生成</button>' +
+          '</div>' +
+        '</div>';
+      }
+      var tag = b.silent ? '<span class="t-status">旁白</span>'
+        : b.noVoice ? '<span class="t-status">文字</span>'
+        : b.audioFailed ? '<span class="t-status fail">未成功</span>'
+        : ((!b.audio && !b.audioRef) ? '<span class="t-status">未配音</span>' : '');
+      var playing = (previewingIdx === i);
+      var previewBtn = '<button class="t-icon-btn t-preview' + (playing ? " playing" : "") + '" data-idx="' + i + '" aria-label="试听"' + ((b.audio || b.audioRef) ? "" : " disabled") + '>' + (playing ? T_ICON_PAUSE : T_ICON_PLAY) + '</button>';
+      var editBtn = '<button class="t-icon-btn t-edit" data-idx="' + i + '" aria-label="编辑">' + T_ICON_EDIT + '</button>';
+      var regenBtn = (b.silent || b.noVoice) ? '' : '<button class="t-icon-btn t-regen" data-idx="' + i + '" aria-label="重新生成">' + T_ICON_REGEN + '</button>';
+      return '<div class="t-line">' +
+        '<div class="t-line-text">' + captionHtml(b) + tag + '</div>' +
+        '<div class="t-line-actions">' + previewBtn + editBtn + regenBtn + '</div>' +
+      '</div>';
+    }).join("");
+    body.querySelectorAll(".t-preview").forEach(function(btn){
+      btn.addEventListener("click", function(){ if (!btn.disabled) previewLine(Number(btn.getAttribute("data-idx"))); });
+    });
+    body.querySelectorAll(".t-regen").forEach(function(btn){
+      btn.addEventListener("click", function(){ regenerateLine(Number(btn.getAttribute("data-idx"))); });
+    });
+    body.querySelectorAll(".t-edit").forEach(function(btn){
+      btn.addEventListener("click", function(){ stopPreview(); editingBeatIdx = Number(btn.getAttribute("data-idx")); renderTranscriptBody(); });
+    });
+    body.querySelectorAll(".t-edit-cancel").forEach(function(btn){
+      btn.addEventListener("click", function(){ editingBeatIdx = null; renderTranscriptBody(); });
+    });
+    body.querySelectorAll(".t-edit-save").forEach(function(btn){
+      btn.addEventListener("click", function(){ saveLineEdit(Number(btn.getAttribute("data-idx"))); });
+    });
+  }
+
+  // 试听某一句：点击本身就是用户手势，直接播放最稳；再点同一句即停止。
+  function previewLine(beatIdx){
+    var ctx = state.transcriptCtx;
+    if (!ctx) return;
+    var beat = ctx.item.script[beatIdx];
+    if (!beat || (!beat.audio && !beat.audioRef)) { toast("这句还没有配音"); return; }
+    if (previewingIdx === beatIdx) { stopPreview(); renderTranscriptBody(); return; }
+    stopPreview();
+    unlockAudioPlayback();
+    playVoice(beat.audioRef || beat.audio, {
+      onended: function(){ previewingIdx = null; renderTranscriptBody(); releaseAudioSessionIfIdle(); },
+      onerror: function(){ previewingIdx = null; renderTranscriptBody(); releaseAudioSessionIfIdle(); toast("试听失败,再点一次试试"); }
+    });
+    previewingIdx = beatIdx;
+    renderTranscriptBody();
+  }
+
+  async function regenerateLine(beatIdx){
+    var ctx = state.transcriptCtx;
+    if (!ctx) return;
+    var beat = ctx.item.script[beatIdx];
+    if (!beat || beat.type !== "speech" || beat.silent) return;
+    stopPreview();
+    var btn = $("transcript-body").querySelector('.t-regen[data-idx="' + beatIdx + '"]');
+    if (btn) btn.disabled = true;
+    var regenError = "";
+    try{
+      var res = await api.voice.tts({ characterId: beat.speakerId || ctx.characterId, text: beat.spoken });
+      beat.audio = res && res.dataUrl ? res.dataUrl : null;
+      beat.audioFailed = !beat.audio;
+      if (beat.audio && beat.audioRef) { deleteMediaRef(beat.audioRef); beat.audioRef = null; }
+    }catch(e){ beat.audioFailed = true; regenError = e && e.message ? String(e.message) : ""; }
+    var batch = state.pendingBatch || currentBatch();
+    if (batch) await persistBatch(batch);
+    renderTranscriptBody();
+    toast(beat.audioFailed ? ("这句没能生成" + (regenError ? "(" + regenError.slice(0, 50) + ")" : "") + ",再试一次") : "已重新生成这句");
+  }
+
+  async function saveLineEdit(beatIdx){
+    var ctx = state.transcriptCtx;
+    if (!ctx) return;
+    var beat = ctx.item.script[beatIdx];
+    if (!beat || beat.type !== "speech") return;
+    var textarea = $("transcript-body").querySelector('.t-edit-input[data-idx="' + beatIdx + '"]');
+    var newRaw = textarea ? textarea.value.trim() : "";
+    if (!newRaw) { toast("台词不能是空的"); return; }
+    stopPreview();
+    var btn = $("transcript-body").querySelector('.t-edit-save[data-idx="' + beatIdx + '"]');
+    if (btn) { btn.disabled = true; btn.textContent = "生成中..."; }
+    // 多人:先应用说话人选择(换人=换声音),再按新说话人的语音能力处理插入语
+    var speakerSelEl = $("transcript-body").querySelector('.t-edit-speaker[data-idx="' + beatIdx + '"]');
+    if (speakerSelEl && speakerSelEl.value) {
+      var newSpeaker = (ctx.item.participants || []).find(function(p){ return p.id === speakerSelEl.value; });
+      if (newSpeaker && beat.speakerId !== newSpeaker.id) {
+        beat.speakerId = newSpeaker.id;
+        beat.speaker = newSpeaker.name;
+        beat.noVoice = false;
+        // 旧声音作废,换人重配
+        beat.audio = null;
+        if (beat.audioRef) { deleteMediaRef(beat.audioRef); beat.audioRef = null; }
+      }
+    }
+    var voiceCharId = beat.speakerId || ctx.characterId;
+    var caps = await detectVoiceCapability(voiceCharId);
+    var editBl = splitBilingual(newRaw);
+    beat.raw = editBl.raw;
+    beat.trans = editBl.trans || undefined;
+    beat.spoken = toSpokenText(editBl.raw, caps.richMode);
+    beat.silent = !beat.spoken;
+    var batch = state.pendingBatch || currentBatch();
+    if (beat.silent) {
+      // 改完只剩括号旁白,不配音,只保存文字。
+      beat.audio = null; beat.audioFailed = false;
+      if (beat.audioRef) { deleteMediaRef(beat.audioRef); beat.audioRef = null; }
+      if (batch) await persistBatch(batch);
+      editingBeatIdx = null;
+      renderTranscriptBody();
+      toast("已保存(这句只有旁白,不配音)");
+      return;
+    }
+    try{
+      var res = await api.voice.tts({ characterId: voiceCharId, text: beat.spoken });
+      beat.audio = res && res.dataUrl ? res.dataUrl : null;
+      beat.audioFailed = !beat.audio;
+      if (beat.audio && beat.audioRef) { deleteMediaRef(beat.audioRef); beat.audioRef = null; }
+    }catch(e){ beat.audioFailed = true; }
+    if (batch) await persistBatch(batch);
+    editingBeatIdx = null;
+    renderTranscriptBody();
+    toast(beat.audioFailed ? "文字已保存,但配音没能生成,再试一次" : "已保存文字并重新生成配音");
+  }
+
+  async function regenerateAllAudio(){
+    var ctx = state.transcriptCtx;
+    if (!ctx) return;
+    var ok = true;
+    try{ ok = await appConfirm("确定要重新生成这一条的全部配音吗?会覆盖现在的声音。"); }catch(e){ ok = true; }
+    if (!ok) return;
+
+    stopPreview();
+    // 没配语音的说话人的台词(noVoice)不参与重配,避免白白撞报错
+    var speechBeats = ctx.item.script.filter(function(b){ return b.type === "speech" && !b.silent && !b.noVoice; });
+    speechBeats.forEach(function(b){
+      b.audio = null; b.audioFailed = false;
+      if (b.audioRef) { deleteMediaRef(b.audioRef); b.audioRef = null; }
+    });
+    $("transcript-sheet").classList.add("hidden");
+    setLoading(true, "正在重新配音... 0/" + speechBeats.length);
+    var done = 0;
+    await runWithConcurrency(speechBeats, 2, async function(b){
+      for (var attempt = 0; attempt < 2 && !b.audio; attempt++) {
+        if (attempt > 0) await sleep(1200);
+        try{
+          var res = await api.voice.tts({ characterId: b.speakerId || ctx.characterId, text: b.spoken });
+          b.audio = res && res.dataUrl ? res.dataUrl : null;
+        }catch(e){ b.audio = null; }
+      }
+      b.audioFailed = !b.audio;
+      done++;
+      setLoading(true, "正在重新配音... " + done + "/" + speechBeats.length);
+    });
+    var batch = state.pendingBatch || currentBatch();
+    if (batch) await persistBatch(batch);
+    setLoading(false);
+    toast("已重新配音全部");
+    renderTranscriptBody();
+    $("transcript-sheet").classList.remove("hidden");
+  }
+
+  // ---------- 下载音频（纯前端手写 zip，不依赖外部库） ----------
+  var _crc32Table = null;
+  function crc32(bytes){
+    if (!_crc32Table) {
+      _crc32Table = [];
+      for (var n = 0; n < 256; n++) {
+        var c = n;
+        for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        _crc32Table[n] = c >>> 0;
+      }
+    }
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) crc = (crc >>> 8) ^ _crc32Table[(crc ^ bytes[i]) & 0xFF];
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function dataUrlToBytes(dataUrl){
+    var base64 = (dataUrl.split(",")[1] || "");
+    var binary = atob(base64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+  function buildZip(files){
+    var encoder = new TextEncoder();
+    var localParts = [];
+    var centralParts = [];
+    var offset = 0;
+
+    files.forEach(function(file){
+      var nameBytes = encoder.encode(file.name);
+      var crc = crc32(file.bytes);
+      var size = file.bytes.length;
+
+      var localHeader = new Uint8Array(30 + nameBytes.length);
+      var dv = new DataView(localHeader.buffer);
+      dv.setUint32(0, 0x04034b50, true);
+      dv.setUint16(4, 20, true);
+      dv.setUint16(6, 0, true);
+      dv.setUint16(8, 0, true);
+      dv.setUint16(10, 0, true);
+      dv.setUint16(12, 0x21, true);
+      dv.setUint32(14, crc, true);
+      dv.setUint32(18, size, true);
+      dv.setUint32(22, size, true);
+      dv.setUint16(26, nameBytes.length, true);
+      dv.setUint16(28, 0, true);
+      localHeader.set(nameBytes, 30);
+      localParts.push(localHeader, file.bytes);
+
+      var centralHeader = new Uint8Array(46 + nameBytes.length);
+      var cdv = new DataView(centralHeader.buffer);
+      cdv.setUint32(0, 0x02014b50, true);
+      cdv.setUint16(4, 20, true);
+      cdv.setUint16(6, 20, true);
+      cdv.setUint16(8, 0, true);
+      cdv.setUint16(10, 0, true);
+      cdv.setUint16(12, 0, true);
+      cdv.setUint16(14, 0x21, true);
+      cdv.setUint32(16, crc, true);
+      cdv.setUint32(20, size, true);
+      cdv.setUint32(24, size, true);
+      cdv.setUint16(28, nameBytes.length, true);
+      cdv.setUint16(30, 0, true);
+      cdv.setUint16(32, 0, true);
+      cdv.setUint16(34, 0, true);
+      cdv.setUint16(36, 0, true);
+      cdv.setUint32(38, 0, true);
+      cdv.setUint32(42, offset, true);
+      centralHeader.set(nameBytes, 46);
+      centralParts.push(centralHeader);
+
+      offset += localHeader.length + file.bytes.length;
+    });
+
+    var centralSize = centralParts.reduce(function(sum, p){ return sum + p.length; }, 0);
+    var centralOffset = offset;
+    var endRecord = new Uint8Array(22);
+    var edv = new DataView(endRecord.buffer);
+    edv.setUint32(0, 0x06054b50, true);
+    edv.setUint16(4, 0, true);
+    edv.setUint16(6, 0, true);
+    edv.setUint16(8, files.length, true);
+    edv.setUint16(10, files.length, true);
+    edv.setUint32(12, centralSize, true);
+    edv.setUint32(16, centralOffset, true);
+    edv.setUint16(20, 0, true);
+
+    return new Blob(localParts.concat(centralParts, [endRecord]), { type: "application/zip" });
+  }
+  function padNum(n, width){
+    var s = String(n);
+    while (s.length < width) s = "0" + s;
+    return s;
+  }
+
+  async function downloadItemAudio(){
+    var ctx = state.transcriptCtx;
+    if (!ctx) return;
+    var speechBeats = (ctx.item.script || []).filter(function(b){ return b.type === "speech" && (b.audio || b.audioRef); });
+    if (speechBeats.length === 0) { toast("还没有可下载的配音,先生成或播放一次"); return; }
+    try{
+      setLoading(true, "正在打包配音...");
+      var files = [];
+      for (var di = 0; di < speechBeats.length; di++) {
+        var b = speechBeats[di];
+        var dataUrl = b.audio || (await resolveMediaDataUrl(b.audioRef));
+        if (!dataUrl) continue;
+        files.push({ name: padNum(di + 1, 2) + ".mp3", bytes: dataUrlToBytes(dataUrl) });
+      }
+      setLoading(false);
+      if (files.length === 0) { toast("配音数据读取失败"); return; }
+      var blob = buildZip(files);
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = (ctx.item.title || "Whisper") + ".zip";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+      toast("已开始下载");
+    }catch(e){
+      setLoading(false);
+      toast("打包失败: " + (e && e.message ? e.message : "未知错误"));
+    }
+  }
+
+  installUnlockListener();
+  init();
+})();
+</script>
+</body>
+</html>

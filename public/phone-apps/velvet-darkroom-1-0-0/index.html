@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>Velvet 丝绒暗室</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root,[data-theme="dark-pink"]{--bg:#080808;--card:#121212;--panel:#181818;--accent:#ffa6d2;--accent-light:#ffcce5;--accent-hot:#ff85c0;--glow:rgba(255,166,210,0.25);--text:#fff;--text2:#d0c0ca;--border:rgba(255,166,210,0.22);--header-bg:rgba(12,12,12,0.96)}
+[data-theme="blue-white"]{--bg:#f0f7ff;--card:#fff;--panel:#e6f2ff;--accent:#7bbffc;--accent-light:#b8e0ff;--accent-hot:#58affb;--glow:rgba(123,191,252,0.25);--text:#1e2d3d;--text2:#6b8299;--border:rgba(123,191,252,0.35);--header-bg:rgba(240,247,255,0.96)}
+[data-theme="purple-green"]{--bg:#fbf8ff;--card:#fff;--panel:#f2e9fc;--accent:#d8b4fe;--accent-light:#f3e8ff;--accent-hot:#c084fc;--glow:rgba(216,180,254,0.4);--text:#2e1d40;--text2:#866e9c;--border:rgba(216,180,254,0.4);--header-bg:rgba(251,248,255,0.96)}
+[data-theme="macaron-light"]{--bg:#fcf8fa;--card:#fff;--panel:#f8edf3;--accent:#ffb8d9;--accent-light:#ffd6ea;--accent-hot:#ffa3ce;--glow:rgba(255,184,217,0.25);--text:#36242e;--text2:#8c717f;--border:rgba(255,184,217,0.4);--header-bg:rgba(252,248,250,0.96)}
+body,html{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.root{width:100%;height:100%;position:relative;overflow:hidden}
+.pg{display:none;width:100%;height:100%;flex-direction:column;background:var(--bg);overflow:hidden}.pg.on{display:flex !important}.pg.has-bar{padding-bottom:50px}
+/* 顶部 Header - 适配 App 安全区胶囊避让 */
+.hdr{padding:max(52px, calc(var(--ai-phone-app-bar-top, 52px) + 8px)) 14px 10px 14px;background:var(--header-bg);backdrop-filter:blur(20px);flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;}
+.hdr-brand{display:flex;align-items:center;gap:8px}
+.hdr-logo{width:30px;height:30px;border-radius:10px;background:#050306;display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px var(--glow);overflow:hidden;border:1px solid var(--accent);position:relative;}
+.hdr-name{font-size:14px;font-weight:900;letter-spacing:0.5px;}
+.hdr-actions{display:flex;justify-content:space-between;align-items:center;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.pill{padding:4px 10px;border-radius:12px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid var(--accent);color:var(--accent);background:rgba(255,166,210,0.12);display:inline-flex;align-items:center;gap:4px;position:relative;}
+.pill-anon{border-color:var(--border);color:var(--text2);background:rgba(255,166,210,0.08)}
+.pill-anon.act{background:var(--accent);color:#000;border-color:var(--accent);font-weight:800}
+/* 灵动红点 */
+.icon-badge-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+.red-dot{position:absolute;top:-2px;right:-4px;width:7px;height:7px;border-radius:50%;background:#ff4d4f;box-shadow:0 0 6px #ff4d4f;display:none;}
+.red-dot.on{display:block;}
+.marquee-bar{background:rgba(255,166,210,0.1);border-bottom:1px solid var(--border);padding:4px 12px;font-size:9.5px;color:var(--accent);font-weight:700;display:flex;align-items:center;gap:6px;flex-shrink:0;overflow:hidden}
+.marquee-wrap{flex:1;overflow:hidden;white-space:nowrap}.marquee-txt{display:inline-block;animation:mq 16s linear infinite}
+@keyframes mq{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.char-bar{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--panel);border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+.char-tag{padding:3px 8px;border-radius:12px;background:rgba(255,166,210,0.15);border:1px solid var(--border);font-size:10px;color:var(--accent);font-weight:700;white-space:nowrap}
+.char-add{font-size:10px;padding:3px 9px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-hot));border:none;color:#000;font-weight:800;cursor:pointer;margin-left:auto;flex-shrink:0}
+.cat-bar{background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;padding:6px 12px;overflow-x:auto}
+.cats{display:flex;gap:8px;width:max-content}
+.cat{padding:4px 13px;border-radius:14px;font-size:11px;font-weight:600;color:var(--text2);background:var(--bg);border:1px solid var(--border);cursor:pointer;white-space:nowrap}
+.cat.on{color:#000;background:linear-gradient(135deg,var(--accent),var(--accent-light));border-color:var(--accent);font-weight:800;box-shadow:0 0 10px var(--glow)}
+.act-strip{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:var(--panel);border-bottom:1px solid var(--border);flex-shrink:0;font-size:10px}
+.btn{padding:4px 10px;border-radius:10px;font-size:9.5px;font-weight:800;cursor:pointer;background:rgba(255,166,210,0.18);border:1px solid var(--accent);color:var(--accent);transition:opacity 0.2s;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-solid{background:linear-gradient(135deg,var(--accent),var(--accent-hot));border:none;color:#000}
+.feed{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:8px;box-shadow:0 4px 18px rgba(0,0,0,0.1);cursor:pointer}
+.card-hdr{display:flex;align-items:center;justify-content:space-between}
+.avi{width:28px;height:28px;border-radius:50%;background:rgba(255,166,210,0.2);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.avi-lg{width:48px;height:48px}
+.tag{font-size:9px;padding:2px 7px;border-radius:6px;background:rgba(255,166,210,0.15);color:var(--accent);border:1px solid var(--border);font-weight:700}
+.card-title{font-size:13.5px;font-weight:800;line-height:1.4}
+.card-body{font-size:11.5px;color:var(--text2);line-height:1.5;white-space:pre-wrap;word-break:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card-foot{display:flex;justify-content:space-between;align-items:center;padding-top:7px;border-top:1px solid var(--border);font-size:10px;color:var(--text2)}
+.like-btn{cursor:pointer;display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:8px;transition:all 0.15s;}
+.like-btn.liked{color:var(--accent-hot);font-weight:800;background:rgba(255,133,192,0.15);}
+.lnk{font-size:10px;color:var(--accent);font-weight:700;cursor:pointer}
+/* 底部 TabBar */
+.tabbar{position:absolute;bottom:0;left:0;right:0;height:50px;background:var(--header-bg);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-around;align-items:center;z-index:1000}
+.tabbar.tb-hide{display:none !important}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text2);font-size:9.5px;font-weight:700;cursor:pointer;flex:1;height:100%;}
+.tab.on{color:var(--accent)}.tab svg{width:18px;height:18px;fill:currentColor}
+/* 子页 Header */
+.sub-hdr{display:flex;align-items:center;justify-content:space-between;padding:max(52px, calc(var(--ai-phone-app-bar-top, 52px) + 8px)) max(14px, var(--ai-phone-app-bar-clear-right, 92px)) 10px 14px;background:var(--header-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);flex-shrink:0;position:relative}
+.sub-hdr-title{position:absolute;left:50%;transform:translateX(-50%);font-size:13px;font-weight:800;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none}
+.back{font-size:10.5px;font-weight:800;color:#000;padding:4px 10px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-light));border:none;cursor:pointer}
+.inp-bar{padding:8px 12px;background:var(--header-bg);border-top:1px solid var(--border);display:flex;gap:6px;align-items:center;flex-shrink:0}
+.inp{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:7px 12px;color:var(--text);font-size:11.5px;outline:none}
+.inp-send{background:linear-gradient(135deg,var(--accent),var(--accent-hot));border:none;border-radius:16px;padding:6px 13px;color:#000;font-weight:800;font-size:10.5px;cursor:pointer}
+.modal{display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(16px);z-index:5000;align-items:flex-end}
+.modal.on{display:flex !important}
+.modal-card{width:100%;max-height:85%;background:var(--panel);border-top-left-radius:20px;border-top-right-radius:20px;padding:16px 14px 22px;border-top:1px solid var(--accent);display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.modal-card.modal-full{max-height:96%;min-height:80%}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center}
+.modal-hdr span:first-child{font-size:13.5px;font-weight:800;color:var(--accent)}
+.modal-close{cursor:pointer;font-size:18px;color:var(--text2)}
+.m-inp{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text);font-size:11px;outline:none;width:100%}
+.m-ta{min-height:200px;resize:none;line-height:1.5;flex:1}
+.m-sel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--accent);font-size:11px;outline:none;width:100%}
+.m-btn{width:100%;padding:11px;border-radius:12px;font-size:12px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--accent-hot));border:none;color:#000;box-shadow:0 4px 14px var(--glow);margin-top:4px}
+.cmt-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.cmt-hdr{display:flex;justify-content:space-between;align-items:center}
+.cmt-author{display:flex;align-items:center;gap:6px}
+.cmt-name{font-size:11px;font-weight:700;color:var(--accent)}
+.cmt-text{font-size:12px;color:var(--text2);line-height:1.5;white-space:pre-wrap}
+.cmt-actions{display:flex;gap:8px}
+.dm-actions{display:flex;gap:8px;padding:6px 12px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0}
+.dm-actions .btn{flex:1;text-align:center;padding:8px;font-size:10.5px}
+.theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.theme-card{padding:8px 6px;border-radius:10px;border:2px solid var(--border);background:var(--card);display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all 0.2s}
+.theme-card.on{border-color:var(--accent);box-shadow:0 0 14px var(--glow)}
+.theme-dot{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.5)}
+.theme-label{font-size:9.5px;font-weight:700;color:var(--text2)}
+.theme-card.on .theme-label{color:var(--accent)}
+.msg-row{display:flex;gap:8px;width:100%;margin-bottom:4px;align-items:flex-start}
+.msg-row.me{flex-direction:row-reverse}
+.msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;overflow:hidden;border:1px solid var(--border)}
+.msg-content-wrap{display:flex;flex-direction:column;max-width:75%;gap:3px}
+.msg-row.me .msg-content-wrap{align-items:flex-end}
+.msg-sender-name{font-size:9.5px;font-weight:700;color:var(--text2);padding:0 2px}
+.msg-row.me .msg-sender-name{color:var(--accent)}
+.msg-bubble{padding:8px 12px;border-radius:14px;font-size:11.5px;line-height:1.5;word-break:break-word;white-space:pre-wrap;border:1px solid var(--border);position:relative;}
+.msg-row.other .msg-bubble{background:var(--panel);color:var(--text);border-top-left-radius:3px}
+.msg-row.me .msg-bubble{background:linear-gradient(135deg,var(--accent),var(--accent-hot));color:#000;font-weight:600;border:none;border-top-right-radius:3px;box-shadow:0 2px 8px var(--glow)}
+.msg-row.admin .msg-bubble{background:rgba(255,166,210,0.15);border-color:var(--accent);color:var(--accent);font-weight:700}
+.msg-meta{font-size:8.5px;color:rgba(0,0,0,0.5);margin-top:2px;display:flex;gap:4px;align-items:center;justify-content:flex-end;}
+.msg-row.other .msg-meta{color:var(--text2);justify-content:flex-start;}
+.avi-edit-wrap{position:relative}
+.avi-edit-icon{position:absolute;bottom:-2px;right:-2px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-hot));display:flex;align-items:center;justify-content:center;border:2px solid var(--card);cursor:pointer;font-size:10px}
+.avi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.avi-opt{width:100%;aspect-ratio:1;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all 0.2s}
+.avi-opt.sel{border-color:var(--accent);box-shadow:0 0 10px var(--glow)}
+.avi-opt-upload{display:flex;align-items:center;justify-content:center;background:var(--card);border:2px dashed var(--border);font-size:18px;color:var(--text2)}
+/* 唯美开屏遮罩与动画 */
+.splash{position:absolute;inset:0;background:radial-gradient(circle at center, #1a0614 0%, #080808 90%);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:all 0.8s cubic-bezier(0.65, 0, 0.35, 1);overflow:hidden;}
+.splash.splash-out{opacity:0;transform:scale(1.08);visibility:hidden;pointer-events:none;}
+.splash-glow-bg{position:absolute;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle, var(--accent-hot) 0%, rgba(255,133,192,0) 70%);opacity:0.3;animation:pulseGlow 2.5s infinite ease-in-out;filter:blur(30px);}
+@keyframes pulseGlow{0%,100%{transform:scale(0.85);opacity:0.2;}50%{transform:scale(1.25);opacity:0.45;}}
+.splash-logo-wrap{position:relative;width:96px;height:96px;display:flex;align-items:center;justify-content:center;z-index:2;}
+.splash-logo{width:88px;height:88px;border-radius:24px;box-shadow:0 0 35px var(--glow), 0 8px 30px rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;background:#050306;overflow:hidden;border:2px solid var(--accent);animation:iconFloat 2.2s infinite ease-in-out;}
+@keyframes iconFloat{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-8px) scale(1.04);}}
+.splash-title{font-size:22px;font-weight:900;letter-spacing:2px;color:#fff;text-shadow:0 0 16px var(--glow);z-index:2;animation:fadeInUp 1s ease-out;}
+.splash-sub{font-size:11.5px;font-weight:700;color:var(--accent);letter-spacing:1px;z-index:2;animation:fadeInUp 1.3s ease-out;display:flex;align-items:center;gap:6px;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.report-reasons{display:flex;flex-direction:column;gap:6px}
+.report-reason{padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);font-size:11px;color:var(--text);cursor:pointer;transition:all 0.15s}
+.report-reason.sel{border-color:var(--accent);background:rgba(255,166,210,0.15);color:var(--accent);font-weight:700}
+.judge-btns{display:flex;gap:6px;margin-top:6px;}
+.judge-btn{flex:1;padding:4px 8px;border-radius:8px;font-size:9.5px;font-weight:800;border:1px solid var(--border);background:var(--panel);color:var(--text2);cursor:pointer;transition:all 0.15s;}
+.judge-btn.j-violation{border-color:var(--accent-hot);color:var(--accent-hot);}
+.judge-btn.j-pass{border-color:rgba(100,220,150,0.5);color:#64dc96;}
+/* 撕拉黑膜遮罩 */
+.blur-spoiler{background:#222;color:transparent;text-shadow:0 0 8px rgba(255,255,255,0.7);padding:0 4px;border-radius:4px;cursor:pointer;user-select:none;transition:all 0.2s;}
+.blur-spoiler.revealed{background:rgba(255,166,210,0.18);color:var(--accent);text-shadow:none;}
+/* 动态三点动画 */
+@keyframes typingDots {
+  0% { content: '.'; }
+  33% { content: '..'; }
+  66% { content: '...'; }
+}
+.typing-dots::after {
+  content: '.';
+  animation: typingDots 1.5s infinite steps(1);
+}
+.badge-tag{padding:1px 6px;border-radius:6px;font-size:8.5px;font-weight:800;background:rgba(255,166,210,0.2);color:var(--accent);border:1px solid var(--border);display:inline-flex;align-items:center;gap:2px;}
+.progress-bar-bg{width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,0.1);overflow:hidden;margin-top:4px;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-hot));border-radius:3px;transition:width 0.3s ease;}
+.notif-item{padding:10px 12px;border-radius:12px;background:var(--card);border:1px solid var(--border);display:flex;flex-direction:column;gap:4px;cursor:pointer;}
+.notif-item.unread{border-color:var(--accent);background:rgba(255,166,210,0.08);}
+.fab-post-btn{position:fixed;bottom:64px;right:16px;width:46px;height:46px;border-radius:50%;background:rgba(255,166,210,0.25);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 4px 16px var(--glow);display:flex;align-items:center;justify-content:center;color:var(--accent);cursor:pointer;z-index:900;border:1.5px solid var(--accent);transition:transform 0.18s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s ease;}
+.fab-post-btn svg{width:22px;height:22px;fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.fab-post-btn:active{transform:scale(0.9);background:rgba(255,166,210,0.45);}
+@keyframes radarScan {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+.radar-circle {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  position: absolute;
+  animation: radarScan 1.8s infinite ease-out;
+}
+</style>
+</head>
+<body data-theme="dark-pink">
+<div class="root">
+<div class="splash" id="splash">
+  <div class="splash-glow-bg"></div>
+  <div class="splash-logo-wrap">
+    <div class="splash-logo">
+      <img id="splashIconImg" style="width:100%;height:100%;object-fit:cover;display:none;" />
+      <div id="splashFallbackSvg" style="width:100%;height:100%;">
+        <svg viewBox="0 0 100 100" style="width:100%;height:100%;display:block;">
+          <defs>
+            <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff85c0"/>
+              <stop offset="50%" stop-color="#ffa6d2"/>
+              <stop offset="100%" stop-color="#d8b4fe"/>
+            </linearGradient>
+            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <rect width="100" height="100" fill="#060307"/>
+          <g filter="url(#glow)">
+            <path d="M50 82 C20 62 10 42 22 26 C32 12 46 20 50 30 C54 20 68 12 78 26 C90 42 80 62 50 82 Z" fill="none" stroke="url(#neonGrad)" stroke-width="2.5"/>
+            <circle cx="50" cy="46" r="32" fill="none" stroke="url(#neonGrad)" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.75"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="splash-title">Velvet 丝绒暗室</div>
+  <div class="splash-sub"><span>💋 沉溺于夜色</span>·<span>捕捉未公开的心事</span></div>
+</div>
+<div class="fab-post-btn" id="fabBtn" onclick="openModal('mdPost')" title="发密语">
+  <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+</div>
+<!-- 大厅页面 -->
+<div class="pg on has-bar" id="pgFeed">
+  <div class="hdr">
+    <div class="hdr-top">
+      <div class="hdr-brand">
+        <div class="hdr-logo">
+          <img id="hdrIconImg" style="width:100%;height:100%;object-fit:cover;display:none;" />
+          <div id="hdrFallbackSvg" style="width:100%;height:100%;">
+            <svg viewBox="0 0 100 100" style="width:100%;height:100%;display:block;">
+              <rect width="100" height="100" fill="#060307"/>
+              <path d="M50 82 C20 62 10 42 22 26 C32 12 46 20 50 30 C54 20 68 12 78 26 C90 42 80 62 50 82 Z" fill="none" stroke="#ffa6d2" stroke-width="3.5"/>
+            </svg>
+          </div>
+        </div>
+        <div class="hdr-name">Velvet 丝绒暗室</div>
+      </div>
+    </div>
+    <div class="hdr-actions">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <div class="pill" onclick="openCurator()">⚖️ 裁决庭 (<span id="scoreText">0</span>分)</div>
+        <div class="pill pill-anon" id="anonBtn" onclick="toggleAnon()"><span id="anonLabel">匿名: 关</span></div>
+      </div>
+      <div class="pill" onclick="openNotifs()">
+        <span class="icon-badge-wrap">🔔 消息<span class="red-dot" id="hdrNotifDot"></span></span>
+      </div>
+    </div>
+  </div>
+  <div class="marquee-bar"><span>通告:</span><div class="marquee-wrap"><span class="marquee-txt" id="bulletinText">【风控处分通告】正在拉取暗室社区最新动态...</span></div></div>
+  <div class="char-bar"><span style="font-size:10px;color:var(--text2);font-weight:700;">入驻角色:</span><div id="charTagsBox" style="display:flex;gap:6px;align-items:center;"></div><button class="char-add" onclick="openModal('mdCharPick')">+ 选择成员</button></div>
+  <div class="cat-bar"><div class="cats" id="catBar"><div class="cat on" onclick="pickCat(this,'ALL')">全部</div><div class="cat" onclick="pickCat(this,'阴暗碎碎念')">阴暗碎碎念</div><div class="cat" onclick="pickCat(this,'专栏科普')">专栏科普</div><div class="cat" onclick="pickCat(this,'技巧困惑')">技巧困惑</div><div class="cat" onclick="pickCat(this,'疑虑疑问求解')">疑虑疑问求解</div><div class="cat" onclick="pickCat(this,'树洞吐槽')">树洞吐槽</div><div class="cat" onclick="pickCat(this,'种草测评')">种草测评</div></div></div>
+  <div class="act-strip"><span style="color:var(--accent);font-weight:700;" id="catLabel">全部流向</span><div style="display:flex;gap:6px;"><button class="btn" id="btnRefreshAll" onclick="fetchPosts(curCat,8,'replace')">🎲 清空并刷新</button><button class="btn" id="btnFetchMore" onclick="fetchPosts(curCat,5,'prepend')">✨ 想看新帖</button></div></div>
+  <div class="feed" id="postFeed"></div>
+</div>
+<!-- 随机匹配聊天室页面 -->
+<div class="pg has-bar" id="pgMatch">
+  <div class="sub-hdr">
+    <button class="back" onclick="go('feed')">‹ 大厅</button>
+    <div class="sub-hdr-title">🔮 暗室随机匹配信道</div>
+    <div style="width:40px;"></div>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;" id="matchContainer">
+    <div id="matchInitBox" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:20px;text-align:center;">
+      <div style="position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center;">
+        <div class="radar-circle" id="radarAnim" style="display:none;"></div>
+        <div style="width:76px;height:76px;border-radius:22px;background:#050306;display:flex;align-items:center;justify-content:center;box-shadow:0 0 28px var(--glow);z-index:2;border:2px solid var(--accent);overflow:hidden;">
+          <img id="matchRadarIconImg" style="width:100%;height:100%;object-fit:cover;display:none;" />
+          <div id="matchRadarFallbackSvg" style="width:100%;height:100%;">
+            <svg viewBox="0 0 100 100" style="width:100%;height:100%;display:block;">
+              <rect width="100" height="100" fill="#060307"/>
+              <path d="M50 82 C20 62 10 42 22 26 C32 12 46 20 50 30 C54 20 68 12 78 26 C90 42 80 62 50 82 Z" fill="none" stroke="#ffa6d2" stroke-width="3.5"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:900;margin-bottom:6px;">随机连接心事路人</div>
+        <div style="font-size:11px;color:var(--text2);max-width:240px;line-height:1.5;">匿名加密信道，随机匹配当下也在暗室留存的真实网友，倾吐未公开的心事。</div>
+      </div>
+      <button class="btn btn-solid" style="padding:12px 28px;font-size:13px;border-radius:20px;box-shadow:0 4px 16px var(--glow);" onclick="startMatch()">⚡ 开启随机匹配信道</button>
+    </div>
+    <div id="matchChatBox" style="display:none;flex:1;flex-direction:column;overflow:hidden;">
+      <div style="padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;" id="matchedUserHeader"></div>
+        <div style="display:flex;gap:4px;">
+          <button class="btn" id="btnMatchSkip" style="font-size:9px;padding:3px 7px;" onclick="skipMatch()">🔄 换人</button>
+          <button class="btn" style="font-size:9px;padding:3px 7px;color:#ff6b6b;border-color:rgba(255,100,100,0.3);" onclick="blockMatchUser()">🚫 拉黑</button>
+          <button class="btn" style="font-size:9px;padding:3px 7px;color:#ffaa00;border-color:rgba(255,170,0,0.3);" onclick="reportMatchUserModal()">🚩 举报</button>
+          <button class="btn btn-solid" style="font-size:9.5px;padding:3px 7px;" onclick="saveMatchToDm()">💾 存私信</button>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;" id="matchMessages"></div>
+      <div class="inp-bar" style="position:sticky;bottom:0;"><input type="text" id="matchInp" class="inp" placeholder="发送匿名密语..." /><button class="inp-send" onclick="sendMatchMsg()">发送</button></div>
+    </div>
+  </div>
+</div>
+<!-- 加密私信信道列表 -->
+<div class="pg has-bar" id="pgDm"><div class="sub-hdr"><button class="back" onclick="go('feed')">‹ 大厅</button><div class="sub-hdr-title">加密私信与站内通知</div><div style="width:40px;"></div></div><div style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;" id="dmListBox"><div class="card" onclick="openDm('卷卷 (社区助理)')"><div style="display:flex;align-items:center;gap:10px;"><div class="avi" style="background:#050306;border-color:var(--accent);">
+  <img class="juan-global-icon" style="width:100%;height:100%;object-fit:cover;display:none;" />
+  <div class="juan-global-svg" style="width:100%;height:100%"><svg viewBox="0 0 100 100" style="width:100%;height:100%;"><rect width="100" height="100" fill="#060307"/><path d="M50 82 C20 62 10 42 22 26 C32 12 46 20 50 30 C54 20 68 12 78 26 C90 42 80 62 50 82 Z" fill="none" stroke="#ffa6d2" stroke-width="4"/></svg></div>
+</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">卷卷 (社区助理)</div><div style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">暗室驻留助理，点击解答社区常见疑问</div></div><span class="lnk" style="flex-shrink:0;">在线咨询 ›</span></div></div><div id="dmCharCards"></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><div style="font-size:11px;font-weight:700;color:var(--accent);">📬 陌生人来信</div><div style="display:flex;gap:6px;"><button class="btn" id="btnFetchDm" style="font-size:9px;padding:2px 8px;" onclick="fetchNewDms()">🔄 接收新私信</button><button class="btn" style="font-size:9px;padding:2px 8px;color:#ff6b6b;border-color:rgba(255,100,100,0.3);" onclick="clearRandomDms()">🗑️ 清空</button></div></div><div id="dmRandomBox" style="display:flex;flex-direction:column;gap:8px;"></div></div></div>
+<!-- 私信对话界面 -->
+<div class="pg" id="pgDmChat">
+  <div class="sub-hdr">
+    <button class="back" onclick="go('dm')">‹ 返回信道</button>
+    <div class="sub-hdr-title" id="chatTitle">对话</div>
+    <button class="btn" style="font-size:9px;padding:3px 7px;color:#ffaa00;border-color:rgba(255,170,0,0.4);" onclick="openReport({author: curDmTarget, text: getDmEvidence()})">🚩 举报</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px;display:flex;flex-direction:column;gap:10px;" id="chatBox"></div>
+  <div class="dm-actions" id="dmActBar"><button class="btn" id="btnHelpJuan" style="flex:1;padding:8px;font-size:10.5px;" onclick="dmAskJuan()">🛡️ 向卷卷求助</button><button class="btn" id="btnHelpChar" style="flex:1;padding:8px;font-size:10.5px;" onclick="dmAskChar()">🆘 向角色求救</button></div>
+  <div class="inp-bar" id="dmChatInpBar" style="position:sticky;bottom:0;"><input type="text" id="chatInp" class="inp" placeholder="发送私密消息..." onfocus="scrollChatToBottom()" /><button class="inp-send" id="chatSendBtn" onclick="sendDm()">发送</button></div>
+</div>
+<!-- 帖子详情界面 -->
+<div class="pg" id="pgDetail"><div class="sub-hdr"><button class="back" onclick="go('feed')">‹ 返回暗室</button><div style="font-size:12.5px;font-weight:700;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="detailTitle">帖子详情</div><div style="width:40px;"></div></div><div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;" id="detailArea"></div><div class="inp-bar" id="cmtInpBar"><input type="text" id="cmtInp" class="inp" placeholder="发表你的看法/吐槽..." onfocus="cmtInpFocus()" /><span style="font-size:20px;cursor:pointer;flex-shrink:0;" onclick="toggleEmoji('cmtInp')">😊</span><button class="inp-send" onclick="submitCmt()">发送</button></div></div>
+<!-- 个人主页与换肤 -->
+<div class="pg has-bar" id="pgProfile"><div class="sub-hdr"><button class="back" onclick="go('feed')">‹ 大厅</button><div class="sub-hdr-title">个人主页 & 主题设置</div><div style="width:40px;"></div></div><div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:14px;"><div class="card" style="flex-direction:row;align-items:center;gap:12px;cursor:default;"><div class="avi-edit-wrap"><div class="avi avi-lg" id="myAvatarBox"><svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:#000;"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L12 22L9.5 9.5L12 2z"/></svg></div><div class="avi-edit-icon" onclick="openAvatarPicker()">✏️</div></div><div style="flex:1;"><div style="font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span id="profName">丝绒客</span><span id="profBadge" class="badge-tag">🥉 实习吃瓜人</span><button class="btn" style="font-size:8.5px;padding:2px 6px;" onclick="openEditProfile()">✏️ 编辑</button></div><div style="font-size:10.5px;color:var(--text2);margin-top:2px;" id="profBio">沉溺于夜色，捕捉所有未公开的心事。</div><div id="badgeProgressBox" style="margin-top:6px;"></div></div></div><div class="card" style="cursor:default;"><div style="font-size:12px;font-weight:800;color:var(--accent);">🎨 论坛色彩主题一键换肤</div><div class="theme-grid" id="themeGrid"></div></div><div style="font-size:12.5px;font-weight:700;color:var(--accent);">📝 我的实名发帖记录</div><div id="historyBox" style="display:flex;flex-direction:column;gap:10px;"></div></div></div>
+<!-- 底部 TabBar -->
+<div class="tabbar">
+  <div class="tab on" id="tFeed" onclick="go('feed')">
+    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>大厅</span>
+  </div>
+  <div class="tab" id="tMatch" onclick="go('match')">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/></svg>
+    <span>匹配</span>
+  </div>
+  <div class="tab" id="tDm" onclick="go('dm')">
+    <span class="icon-badge-wrap">
+      <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      <span class="red-dot" id="tabDmDot"></span>
+    </span>
+    <span>私信</span>
+  </div>
+  <div class="tab" id="tProf" onclick="go('profile')">
+    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+    <span>我的</span>
+  </div>
+</div>
+<!-- 各种 Modals 弹窗 -->
+<div class="modal" id="mdPost"><div class="modal-card modal-full"><div class="modal-hdr"><span>✨ 倾吐密语 (Velvet Post)</span><span class="modal-close" onclick="closeModal('mdPost')">✕</span></div><select id="postCatSel" class="m-sel"><option value="阴暗碎碎念">阴暗碎碎念</option><option value="专栏科普">专栏科普</option><option value="技巧困惑">技巧困惑</option><option value="疑虑疑问求解">疑虑疑问求解</option><option value="树洞吐槽">树洞吐槽</option><option value="种草测评">种草测评</option></select><input type="text" id="postTitleInp" class="m-inp" placeholder="话题标题..." /><textarea id="postBodyInp" class="m-inp m-ta" placeholder="写下你的真实困惑、两性感情、身体疑问或吐槽..."></textarea><button class="m-btn" onclick="submitPost()">发布到 Velvet 暗室</button></div></div>
+<div class="modal" id="mdCharPick"><div class="modal-card"><div class="modal-hdr"><span>选择入驻论坛的角色</span><span class="modal-close" onclick="closeModal('mdCharPick')">✕</span></div><div id="charPickList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div><button class="m-btn" onclick="confirmChars()">确认入驻暗室</button></div></div>
+<div class="modal" id="mdCurator"><div class="modal-card"><div class="modal-hdr"><span>⚖️ 丝绒裁决庭 (案件档案)</span><span class="modal-close" onclick="closeModal('mdCurator')">✕</span></div><div style="font-size:11px;color:var(--text2);">审阅言论进行裁决，投对 <b>+10分</b>，投错 <b>-5分</b>。当前：<b style="color:var(--accent);" id="curPts">0</b> 分</div><div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;" id="casesList"></div><div style="display:flex;gap:8px;"><button class="m-btn" id="btnRefreshCase" style="flex:1;" onclick="generateNewCase()">🔄 刷新案件（含真实/误报言论）</button><button class="m-btn" style="flex:1;background:var(--card);color:var(--accent);border:1px solid var(--accent);box-shadow:none;" onclick="closeModal('mdCurator')">关闭案卷</button></div></div></div>
+<div class="modal" id="mdNotifs"><div class="modal-card"><div class="modal-hdr"><span>🔔 站内消息通知中心</span><span class="modal-close" onclick="closeModal('mdNotifs')">✕</span></div><div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text2);"><span>最新站内互动提醒：</span><span class="lnk" onclick="clearNotifs()">清空全部通知</span></div><div id="notifsList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div><button class="m-btn" onclick="closeModal('mdNotifs')">关闭消息中心</button></div></div>
+<div class="modal" id="mdReport"><div class="modal-card"><div class="modal-hdr"><span>🚩 提交举报至丝绒裁决庭</span><span class="modal-close" onclick="closeModal('mdReport')">✕</span></div><div style="font-size:11px;color:var(--text2);">选择举报理由：</div><div class="report-reasons" id="reportReasons"><div class="report-reason" onclick="pickReason(this)">涉未成年违法诱导/不良交易</div><div class="report-reason" onclick="pickReason(this)">恶意人身攻击与极端侮辱网暴</div><div class="report-reason" onclick="pickReason(this)">违禁品非法广告/诈骗诱导</div><div class="report-reason" onclick="pickReason(this)">严重违规血腥暴力</div><div class="report-reason" onclick="pickReason(this)">骚扰/变态/跟踪行为</div></div><textarea id="reportDetail" class="m-inp" style="min-height:60px;resize:none;" placeholder="补充说明（可选）..."></textarea><button class="m-btn" onclick="submitReport()">提交裁决庭风控审核</button></div></div>
+<div class="pg" id="pgUserProfile"><div class="sub-hdr"><button class="back" id="upBack">‹ 返回</button><div style="font-size:12.5px;font-weight:700;" id="upTitle">用户主页</div><div style="width:40px;"></div></div><div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px;" id="upContent"></div><div class="inp-bar" id="upDmBar"><input type="text" id="upDmInp" class="inp" placeholder="给 TA 发一条私信..." /><button class="inp-send" onclick="sendUserDm()">发送</button></div></div>
+<div class="modal" id="mdAvatarPick"><div class="modal-card"><div class="modal-hdr"><span>🎨 选择头像</span><span class="modal-close" onclick="closeModal('mdAvatarPick')">✕</span></div><div style="font-size:11px;color:var(--text2);">选择一个系统配色头像，或上传自定义图片：</div><div class="avi-grid" id="aviGridBox"></div><button class="m-btn" onclick="confirmAvatar()">使用此头像</button></div></div>
+<div class="modal" id="mdEditProf"><div class="modal-card"><div class="modal-hdr"><span>✏️ 修改个人资料</span><span class="modal-close" onclick="closeModal('mdEditProf')">✕</span></div><div style="font-size:11px;color:var(--text2);">设置你在丝绒暗室中的主页形象：</div><input type="text" id="editNameInp" class="m-inp" placeholder="输入你的社区昵称..." /><textarea id="editBioInp" class="m-inp" style="min-height:60px;resize:none;" placeholder="个性签名..."></textarea><button class="m-btn" onclick="saveMyProfile()">保存修改</button></div></div>
+<div class="modal" id="mdCharHelp"><div class="modal-card"><div class="modal-hdr"><span>🆘 选择求救角色</span><span class="modal-close" onclick="closeModal('mdCharHelp')">✕</span></div><div id="charHelpList" style="display:flex;flex-direction:column;gap:8px;"></div></div></div>
+</div>
+<script>
+const NL = String.fromCharCode(10);
+const API = window.AiPhone || window.AiPhoneApp || null;
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+/* 彻底符合 App 规范的私有数据库 KV 存储逻辑（无 upsert 报错隐患） */
+async function loadStoredKV(key, fallback){
+  if(API && API.db && typeof API.db.get === 'function'){
+    try{
+      const item = await API.db.get('velvet_data', key);
+      if(item && item.val !== undefined) return item.val;
+    }catch(e){}
+  }
+  try{
+    const raw = localStorage.getItem('velvet_' + key);
+    if(raw !== null) return JSON.parse(raw);
+  }catch(e){}
+  return fallback;
+}
+async function saveKV(key, val){
+  if(API && API.db){
+    try{
+      const item = await API.db.get('velvet_data', key);
+      if(item){
+        await API.db.update('velvet_data', key, { val: val });
+      } else {
+        await API.db.create('velvet_data', { id: key, val: val });
+      }
+    }catch(e){
+      try{ await API.db.create('velvet_data', { id: key, val: val }); }catch(err){}
+    }
+  }
+  try{
+    localStorage.setItem('velvet_' + key, JSON.stringify(val));
+  }catch(e){}
+}
+(async function applyThemeImmediately(){
+  try{
+    const t = await loadStoredKV('theme', 'dark-pink');
+    if(t) document.body.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+const VALID_CATS = ['阴暗碎碎念', '专栏科普', '技巧困惑', '疑虑疑问求解', '树洞吐槽', '种草测评'];
+function normalizeTag(rawTag){
+  if(!rawTag) return '疑虑疑问求解';
+  for(const cat of VALID_CATS){
+    if(rawTag.includes(cat) || cat.includes(rawTag)) return cat;
+  }
+  return VALID_CATS[Math.floor(Math.random()*VALID_CATS.length)];
+}
+function matchCat(postTag, targetCat){
+  if(targetCat === 'ALL') return true;
+  if(!postTag) return false;
+  return postTag.includes(targetCat) || targetCat.includes(postTag);
+}
+const realUsernames = ['momo', '草莓硬糖', '不吃香菜', '今晚绝对不熬夜', '失眠小包子', '纯爱战神', '猫咪吃鱼', '晚风温柔', '月亮出逃', '炸薯条专家', '咕噜咕噜', '野生可乐', '绝望爆米花', '熬夜冠军'];
+function getRandomUsername(){
+  const base = realUsernames[Math.floor(Math.random() * realUsernames.length)];
+  const r = Math.random();
+  if(r < 0.5) return base;
+  if(r < 0.8) {
+    const syms = ['.', '_', 'v', 'qaq', 'x'];
+    return base + syms[Math.floor(Math.random() * syms.length)];
+  }
+  return base + '_' + Math.floor(Math.random() * 89 + 10);
+}
+let cachedGlobalIconUrl = null;
+const defaultTwoSexPosts = [
+  {id:'init_p_1', title:'深夜碎碎念：感觉自己有点肌肤饥渴症怎么办', body:'每次一个人躺在床上就心里空落落的。特别想被抱紧、被抚摸，但又极其讨厌无效社交...大家是怎么熬过这种渴望被触碰的感觉的😭', author:'momo', tag:'阴暗碎碎念', likes:18, isLiked:false, comments:[]},
+  {id:'init_p_2', title:'【专栏科普】关于 G 点探索与潮喷生理机制常识', body:'今天科普一下：G点位于阴道前壁约 3-5cm 处，配合充分的前戏与水基润滑液，轻轻勾动能大幅提升亲密体验。配合 Aftercare 抚慰非常重要。', author:'草莓硬糖', tag:'专栏科普', likes:42, isLiked:false, comments:[]},
+  {id:'init_p_3', title:'后入式总是撞得肚子钝痛，怎么调整姿势？', body:'他特别喜欢从后面，但每次稍微用力顶深一点我就觉得肚子酸疼。是不是应该在肚子下面垫个枕头？求姐妹们赐教！', author:'不吃香菜_', tag:'技巧困惑', likes:29, isLiked:false, comments:[]},
+  {id:'init_p_4', title:'第一次尝试遥控跳蛋去约会，结果在餐厅被顶高潮了...', body:'他恶趣味地让我戴着跳蛋出门，遥控器在他手里。桌底下他悄悄开到最大档，震得我双腿发软内裤湿透...大家玩这个也这么刺激吗？', author:'失眠小包子', tag:'疑虑疑问求解', likes:15, isLiked:false, comments:[]},
+  {id:'init_p_5', title:'树洞吐槽：遇到前戏一分钟、结束就倒头大睡的男友该分吗？', body:'真的要气笑了！每次他欲望上来了就把我按倒，前戏不到一分钟硬塞进来，三分钟自己交代完就睡觉，完全不顾我的感受！', author:'纯爱战神v', tag:'树洞吐槽', likes:36, isLiked:false, comments:[]},
+  {id:'init_p_6', title:'【实测】几款热门吸吮跳蛋与热感润滑液深度横评！', body:'作为一个情趣玩具大户，这款吸吮功能的真的神了！模拟口爱频率非常柔和，开二档 3 分钟直接让人潮喷水多到不行！', author:'晚风温柔', tag:'种草测评', likes:53, isLiked:false, comments:[]}
+];
+let curCat='ALL',isAnon=false,score=0,allChars=[],selCharIds=[],posts=defaultTwoSexPosts,curPost=null,curDmTarget='',dmHistory={},reportTarget=null,selectedReason='',notifications=[],blockedUsers=[],dmHelpState={};
+let currentMatchedUser=null, matchChatHistory=[], currentMatchToken=0;
+function getBadge(pts){
+  if(pts < 30) return { title:'🥉 实习吃瓜人', next:30, prev:0 };
+  if(pts < 80) return { title:'🥈 丝绒巡查员', next:80, prev:30 };
+  if(pts < 150) return { title:'🥇 裁决陪审员', next:150, prev:80 };
+  if(pts < 300) return { title:'💎 铁面法官', next:300, prev:150 };
+  return { title:'👑 暗室执法人', next:300, prev:300 };
+}
+const npcBadges=['🥉 实习吃瓜人','🥈 丝绒巡查员','🥇 裁决陪审员','💎 铁面法官','👑 暗室执法人'];
+function getNpcBadge(name){
+  if(!name) return '🥉 实习吃瓜人';
+  let h=0;for(let i=0;i<name.length;i++)h=name.charCodeAt(i)+((h<<5)-h);
+  return npcBadges[Math.abs(h)%npcBadges.length];
+}
+let defaultCases=[
+  {id:'case_init_1', target:'用户 @momo.qaq', reason:'被检举：涉未成年违法诱导', evidence:'有没有未成年MM的联系方式？出高价重金求，懂的来私！', isViolationTarget:true, result:'核实属于严重违规，全网禁言封禁', judged:false, userChoice:null},
+  {id:'case_init_2', target:'用户 @暴躁老哥_x', reason:'被检举：恶意人身攻击与极端网暴', evidence:'楼主这智商也配发帖？真希望你全家今天出门就被打死，恶心死人了。', isViolationTarget:true, result:'核实属于极端人身攻击网暴，限制发帖30天', judged:false, userChoice:null},
+  {id:'case_init_3', target:'用户 @草莓硬糖', reason:'被检举：涉嫌违规擦边内容', evidence:'今天给大家科普一下两性生理健康常识，关爱身体健康从防范感染开始...', isViolationTarget:false, result:'经风控复核属于正当健康科普，判定合规不予处分', judged:false, userChoice:null}
+];
+let cases = defaultCases;
+let defaultRandomDms=[
+  {id:'default_rdm_1', sender:'momo', text:'刚刚在论坛看到你发的观点，深有同感...能聊聊两性心事吗？'},
+  {id:'default_rdm_2', sender:'夜猫子', text:'你好，这是暗室为你分配的加密匿名私信通路。'}
+];
+let randomDms=[], myProfileData={name:'丝绒客',bio:'沉溺于夜色，捕捉所有未公开的心事。',seed:'丝绒客'};
+const themes=[{key:'dark-pink',label:'经典黑粉',bg:'#080808',accent:'#ffa6d2'},{key:'blue-white',label:'可爱蓝白',bg:'#f0f7ff',accent:'#7bbffc'},{key:'purple-green',label:'浅紫薰衣草',bg:'#fbf8ff',accent:'#d8b4fe'},{key:'macaron-light',label:'奶油马卡龙',bg:'#fcf8fa',accent:'#ffb8d9'}];
+const avatarGrads=[['#ff9a9e','#fecfef'],['#a1c4fd','#c2e9fb'],['#ff85c0','#ffa6d2'],['#84fab0','#8fd3f4'],['#fccb90','#d782d9'],['#e0c3fc','#8ec5fc'],['#f6d365','#fda085'],['#d4fc79','#96e6a1'],['#a8edd9','#fed6e3']];
+function getTimeStr(){
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function aviHtml(n){
+  if(!n) n='网友';
+  if(n.includes('卷卷')){
+    if(cachedGlobalIconUrl){
+      return '<img src="'+cachedGlobalIconUrl+'" style="width:100%;height:100%;object-fit:cover;" />';
+    }
+    return '<div style="width:100%;height:100%;background:#050306;display:flex;align-items:center;justify-content:center;"><svg viewBox="0 0 100 100" style="width:100%;height:100%;"><rect width="100" height="100" fill="#060307"/><path d="M50 82 C20 62 10 42 22 26 C32 12 46 20 50 30 C54 20 68 12 78 26 C90 42 80 62 50 82 Z" fill="none" stroke="#ffa6d2" stroke-width="4"/></svg></div>';
+  }
+  let h=0;for(let i=0;i<n.length;i++)h=n.charCodeAt(i)+((h<<5)-h);
+  const g=avatarGrads[Math.abs(h)%avatarGrads.length];
+  return '<div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,'+g[0]+','+g[1]+');"></div>';
+}
+function toast(m){if(API&&API.ui&&typeof API.ui.toast==='function')API.ui.toast(m);}
+function $(id){return document.getElementById(id);}
+function getMyName(){return (myProfileData&&myProfileData.name)?myProfileData.name:'丝绒客';}
+function pushNotif(type, title, text, targetId){
+  notifications.unshift({
+    id: 'notif_' + Date.now() + Math.random(),
+    type: type,
+    title: title,
+    text: text,
+    time: getTimeStr(),
+    targetId: targetId,
+    read: false
+  });
+  saveKV('notifications', notifications);
+  updateRedDots();
+}
+function updateRedDots(){
+  const hasUnreadNotif = notifications.some(n => !n.read);
+  var hd=$('hdrNotifDot');if(hd)hd.classList.toggle('on', hasUnreadNotif);
+  
+  const hasUnreadDm = randomDms.some(d => !d.read);
+  var td=$('tabDmDot');if(td)td.classList.toggle('on', hasUnreadDm);
+}
+function openNotifs(){
+  renderNotifs();
+  openModal('mdNotifs');
+  notifications.forEach(n => n.read = true);
+  saveKV('notifications', notifications);
+  updateRedDots();
+}
+function renderNotifs(){
+  const listEl=$('notifsList');
+  if(!listEl)return;
+  if(notifications.length===0){
+    listEl.innerHTML='<div style="text-align:center;padding:30px;font-size:11px;color:var(--text2);">暂无新的互动通知</div>';
+    return;
+  }
+  listEl.innerHTML=notifications.map(n=>{
+    const unreadClass = n.read ? '' : 'unread';
+    return '<div class="notif-item '+unreadClass+'" onclick="clickNotif(\''+n.id+'\')">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:800;color:var(--accent);">'+
+        '<span>'+escapeHtml(n.title)+'</span><span style="font-size:9px;color:var(--text2);">'+n.time+'</span>'+
+      '</div>'+
+      '<div style="font-size:11.5px;color:var(--text);line-height:1.4;">'+escapeHtml(n.text)+'</div>'+
+    '</div>';
+  }).join('');
+}
+function clickNotif(id){
+  const n = notifications.find(x => x.id === id);
+  if(!n) return;
+  closeModal('mdNotifs');
+  if(n.type==='detail' && n.targetId){
+    openDetail(n.targetId);
+  }else if(n.type==='dm' && n.targetId){
+    openDm(n.targetId);
+  }else if(n.type==='curator'){
+    openCurator();
+  }
+}
+function clearNotifs(){
+  notifications = [];
+  saveKV('notifications', []);
+  renderNotifs();
+  updateRedDots();
+  toast('通知已清空');
+}
+function go(key){
+  try {
+    document.querySelectorAll('.pg').forEach(el=>el.classList.remove('on'));
+    document.querySelectorAll('.tab').forEach(el=>el.classList.remove('on'));
+    const tb=document.querySelector('.tabbar'),showBar=(key==='feed'||key==='match'||key==='dm'||key==='profile');
+    if(tb)tb.classList.toggle('tb-hide',!showBar);
+    
+    var fab=$('fabBtn');if(fab)fab.style.display=(key==='feed')?'flex':'none';
+    if(key==='feed'){
+      var el=$('pgFeed');if(el)el.classList.add('on');
+      var t=$('tFeed');if(t)t.classList.add('on');
+    }
+    else if(key==='match'){
+      var el=$('pgMatch');if(el)el.classList.add('on');
+      var t=$('tMatch');if(t)t.classList.add('on');
+    }
+    else if(key==='dm'){
+      var el=$('pgDm');if(el)el.classList.add('on');
+      var t=$('tDm');if(t)t.classList.add('on');
+      randomDms.forEach(d => d.read = true);
+      saveKV('randomDms', randomDms);
+      updateRedDots();
+      try{ renderDmList(); }catch(e){}
+    }
+    else if(key==='profile'){
+      var el=$('pgProfile');if(el)el.classList.add('on');
+      var t=$('tProf');if(t)t.classList.add('on');
+      try{ renderMyProfile(); }catch(e){}
+      try{ renderHistory(); }catch(e){}
+      try{ renderThemeGrid(); }catch(e){}
+    }
+    else if(key==='detail'){
+      var el=$('pgDetail');if(el)el.classList.add('on');
+    }
+    else if(key==='dmChat'){
+      var el=$('pgDmChat');if(el)el.classList.add('on');
+    }
+    else if(key==='userProfile'){
+      var el=$('pgUserProfile');if(el)el.classList.add('on');
+    }
+  } catch(err) {}
+}
+/* 随机匹配（含竞态防切断错乱修复） */
+async function startMatch(){
+  currentMatchToken = Date.now();
+  const token = currentMatchToken;
+  
+  var rAnim=$('radarAnim'); if(rAnim) rAnim.style.display='block';
+  toast('🔍 正在检索暗室活跃加密信道...');
+  
+  setTimeout(async ()=>{
+    if(currentMatchToken !== token) return;
+    
+    let candidateName = getRandomUsername();
+    while(blockedUsers.includes(candidateName)){
+      candidateName = getRandomUsername();
+    }
+    currentMatchedUser = { name: candidateName, badge: getNpcBadge(candidateName) };
+    
+    let firstMsg = '你好...能聊聊两性心事吗？';
+    try {
+      if(API && API.ai && typeof API.ai.chat === 'function'){
+        const pOpening = '你是两性匿名论坛随机匹配的网友【'+candidateName+'】。请随机挑选一种语气主动向对方发第一句开场白（10-35字，必须围绕两性亲密、身体困惑或私密心事，语言活泼极简）：'+NL+
+        '只输出这一句开场白即可，严禁学术腔。';
+        const res = await API.ai.chat({ messages: [{ role:'user', content: pOpening }] });
+        if(res && res.text) firstMsg = res.text.trim();
+      }
+    } catch(e){}
+    
+    if(currentMatchToken !== token) return;
+    
+    if(rAnim) rAnim.style.display='none';
+    matchChatHistory = [{ sender: candidateName, text: firstMsg, time: getTimeStr() }];
+    
+    $('matchInitBox').style.display='none';
+    $('matchChatBox').style.display='flex';
+    
+    const hdrEl = $('matchedUserHeader');
+    if(hdrEl){
+      hdrEl.innerHTML = '<div class="avi" style="width:24px;height:24px;">' + aviHtml(candidateName) + '</div>' +
+        '<span style="font-size:12px;font-weight:800;">' + escapeHtml(candidateName) + '</span>' +
+        '<span class="badge-tag" style="font-size:7.5px;">' + currentMatchedUser.badge + '</span>';
+    }
+    
+    renderMatchMessages();
+    toast('✨ 匹配成功！已连接到 @' + candidateName);
+  }, 700);
+}
+function renderMatchMessages(){
+  const box = $('matchMessages');
+  if(!box) return;
+  box.innerHTML = matchChatHistory.map(m => {
+    const isMe = m.sender === getMyName();
+    const tStr = m.time || getTimeStr();
+    return '<div class="msg-row ' + (isMe ? 'me' : 'other') + '">' +
+      '<div class="msg-avatar">' + aviHtml(m.sender) + '</div>' +
+      '<div class="msg-content-wrap">' +
+        '<div class="msg-sender-name">' + escapeHtml(m.sender) + '</div>' +
+        '<div class="msg-bubble">' + escapeHtml(m.text) + '<div class="msg-meta"><span>' + tStr + '</span></div></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+}
+/* 匹配聊天：修复主客视角，锁定路人发言身份 */
+async function sendMatchMsg(){
+  const inp = $('matchInp'), txt = inp.value.trim();
+  if(!txt || !currentMatchedUser) return;
+  
+  const token = currentMatchToken;
+  const targetName = currentMatchedUser.name;
+  
+  matchChatHistory.push({ sender: getMyName(), text: txt, time: getTimeStr() });
+  inp.value = '';
+  renderMatchMessages();
+  
+  const box = $('matchMessages');
+  const typingRow = document.createElement('div');
+  typingRow.className = 'msg-row other';
+  typingRow.id = 'matchTypingRow';
+  typingRow.innerHTML = '<div class="msg-avatar">' + aviHtml(targetName) + '</div><div class="msg-content-wrap"><div class="msg-sender-name">' + escapeHtml(targetName) + '</div><div class="msg-bubble" style="opacity:0.75;font-style:italic;color:var(--accent);"><span>对方正在输入中</span><span class="typing-dots"></span></div></div>';
+  box.appendChild(typingRow);
+  box.scrollTop = box.scrollHeight;
+  
+  try{
+    let reply = '';
+    if(API && API.ai && typeof API.ai.chat === 'function'){
+      const apiMessages = [];
+      apiMessages.push({
+        role: 'system',
+        content: `你是两性匿名论坛中随机匹配的网友【${targetName}】。
+【绝对视角锁定】：
+1. 必须 100% 锁定你是上文那些属于【${targetName}】发言的作者！你之前发起的困扰/话题就是你自己的亲身经历。对方正在顺着你的话题提问，请顺着你当时的立场和性格继续回答（15-40字以内）。
+2. 绝对禁止角色颠倒，严禁自称AI、程序或心理导师，绝不出现“我理解你/生活不易”等客服/圣母安慰腔！
+3. 请以贴吧/论坛网民随意口吻回复。`
+      });
+      matchChatHistory.forEach(h => {
+        if (h.sender === getMyName()) {
+          apiMessages.push({ role: 'user', content: h.text });
+        } else {
+          apiMessages.push({ role: 'assistant', content: h.text });
+        }
+      });
+      const res = await API.ai.chat({ messages: apiMessages });
+      if(res && res.text) reply = res.text.trim();
+    }
+    
+    if(currentMatchToken !== token || !currentMatchedUser || currentMatchedUser.name !== targetName) return;
+    
+    const tr = $('matchTypingRow'); if(tr) tr.remove();
+    if(reply){
+      matchChatHistory.push({ sender: targetName, text: reply, time: getTimeStr() });
+      renderMatchMessages();
+    }
+  }catch(e){
+    const tr = $('matchTypingRow'); if(tr) tr.remove();
+  }
+}
+async function skipMatch(){
+  currentMatchToken = Date.now();
+  const btn = $('btnMatchSkip');
+  if(btn){ btn.disabled = true; btn.innerText = '⏳ 切断中...'; }
+  toast('🔄 正在切断并重新匹配...');
+  
+  currentMatchedUser = null;
+  matchChatHistory = [];
+  $('matchChatBox').style.display = 'none';
+  $('matchInitBox').style.display = 'flex';
+  
+  await startMatch();
+  if(btn){ btn.disabled = false; btn.innerText = '🔄 换人'; }
+}
+function blockMatchUser(){
+  if(!currentMatchedUser) return;
+  const name = currentMatchedUser.name;
+  if(!blockedUsers.includes(name)) blockedUsers.push(name);
+  saveKV('blockedUsers', blockedUsers);
+  
+  toast('🚫 已将 @' + name + ' 加入黑名单并断开连接');
+  currentMatchedUser = null;
+  matchChatHistory = [];
+  $('matchChatBox').style.display = 'none';
+  $('matchInitBox').style.display = 'flex';
+}
+function reportMatchUserModal(){
+  if(!currentMatchedUser) return;
+  openReport({ author: currentMatchedUser.name, text: '随机聊天信道违规言论' });
+}
+function saveMatchToDm(){
+  if(!currentMatchedUser) return;
+  const name = currentMatchedUser.name;
+  dmHistory[name] = matchChatHistory;
+  saveKV('dmHistory', dmHistory);
+  toast('💾 已保存至加密私信信道！');
+  openDm(name);
+}
+function openModal(id){var el=$(id);if(el)el.classList.add('on');}
+function closeModal(id){var el=$(id);if(el)el.classList.remove('on');}
+function toggleAnon(){isAnon=!isAnon;$('anonLabel').innerText=isAnon?'匿名: 开':'匿名: 关';$('anonBtn').classList.toggle('act',isAnon);toast(isAnon?'已开启匿名模式':'已关闭匿名模式');}
+function renderThemeGrid(){
+  const ct=document.body.getAttribute('data-theme')||'dark-pink';
+  const grid=$('themeGrid');
+  if(!grid)return;
+  grid.innerHTML=themes.map(t=>'<div class="theme-card '+(t.key===ct?'on':'')+'" onclick="setTheme(\''+t.key+'\')">'+'<div class="theme-dot" style="background:linear-gradient(135deg,'+t.bg+' 50%,'+t.accent+' 50%);"></div><div class="theme-label">'+t.label+'</div></div>').join('');
+}
+function setTheme(k){
+  document.body.setAttribute('data-theme',k);
+  saveKV('theme',k);
+  renderThemeGrid();
+  toast('主题已切换为【'+k+'】');
+}
+function pickCat(el,cat){document.querySelectorAll('#catBar .cat').forEach(i=>i.classList.remove('on'));el.classList.add('on');curCat=cat;$('catLabel').innerText=cat==='ALL'?'全部流向':cat;renderFeed();}
+async function loadChars(){
+  try{
+    let list = null;
+    if(API && API.characters && typeof API.characters.list === 'function') list = await API.characters.list();
+    if(list && Array.isArray(list) && list.length > 0){
+      allChars = list.map(c=>({id: c.id||c.name, name: c.name}));
+    }
+  }catch(e){}
+  renderCharTags();
+  renderCharPicker();
+}
+function renderCharTags(){
+  const box=$('charTagsBox');
+  if(!box)return;
+  if(!Array.isArray(selCharIds)) selCharIds=[];
+  if(selCharIds.length===0){box.innerHTML='<span style="font-size:10px;color:var(--text2);">无入驻角色</span>';return;}
+  box.innerHTML=selCharIds.map(id=>{
+    const c=(allChars||[]).find(x=>x.id===id);
+    return '<div class="char-tag">@'+(c?c.name:id)+'</div>';
+  }).join('');
+}
+function renderCharPicker(){
+  const box=$('charPickList');
+  if(!box)return;
+  if(!Array.isArray(allChars)) allChars=[];
+  if(!Array.isArray(selCharIds)) selCharIds=[];
+  if(allChars.length===0){box.innerHTML='<div style="text-align:center;padding:20px;font-size:11px;color:var(--text2);">系统中未检测到角色卡</div>';return;}
+  box.innerHTML=allChars.map(c=>'<div style="padding:10px 12px;border:1px solid '+(selCharIds.includes(c.id)?'var(--accent)':'var(--border)')+';border-radius:10px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;background:'+(selCharIds.includes(c.id)?'rgba(255,166,210,0.15)':'var(--card)')+';" onclick="toggleChar(\''+c.id+'\')">'+'<span style="font-size:12px;font-weight:700;">'+c.name+'</span><span style="font-size:11px;font-weight:800;color:'+(selCharIds.includes(c.id)?'var(--accent)':'var(--text2)')+';">'+(selCharIds.includes(c.id)?'✓ 已入驻':'未入驻')+'</span></div>').join('');
+}
+function toggleChar(id){
+  if(!Array.isArray(selCharIds)) selCharIds=[];
+  if(selCharIds.includes(id))selCharIds=selCharIds.filter(i=>i!==id);else selCharIds.push(id);
+  renderCharPicker();
+}
+function confirmChars(){closeModal('mdCharPick');renderCharTags();saveKV('selectedCharIds',selCharIds);renderDmList();toast('已更新入驻角色');}
+function submitPost(){
+  const title=$('postTitleInp').value.trim(),body=$('postBodyInp').value.trim(),tag=$('postCatSel').value;
+  if(!title||!body)return;
+  const authorName=isAnon?'匿名丝绒客':getMyName();
+  posts.unshift({
+    id:'p_'+Date.now(),
+    title:title,
+    body:body,
+    author:authorName,
+    tag:tag,
+    likes:0,
+    isLiked:false,
+    comments:[],
+    isSelf:true,
+    isAnon:isAnon
+  });
+  savePostsLater();
+  $('postTitleInp').value='';
+  $('postBodyInp').value='';
+  closeModal('mdPost');
+  renderFeed();
+  renderHistory();
+  toast('密语已发布至 #'+tag);
+  triggerPostDms(title,body);
+}
+function toggleLike(postId, e){
+  if(e) e.stopPropagation();
+  const p = posts.find(x => x.id === postId);
+  if(!p) return;
+  p.isLiked = !p.isLiked;
+  if(p.isLiked) p.likes = (p.likes || 0) + 1;
+  else p.likes = Math.max(0, (p.likes || 1) - 1);
+  savePostsLater();
+  renderFeed();
+  if(curPost && curPost.id === postId) renderDetail();
+}
+function pickReason(el){document.querySelectorAll('#reportReasons .report-reason').forEach(i=>i.classList.remove('sel'));el.classList.add('sel');selectedReason=el.innerText;}
+async function submitReport(){
+  if(!selectedReason){toast('请选择举报理由');return;}
+  closeModal('mdReport');
+  toast('⚖️ 已提交裁决庭，正在审核中...');
+  const detail=$('reportDetail').value.trim();
+  const desc=reportTarget?(reportTarget.author||'被举报网友'):'违规网友';
+  const evidenceText = reportTarget?(reportTarget.title || reportTarget.body || reportTarget.text || '【违规言论证据库录入】'):'涉嫌破坏暗室规范言论';
+  
+  try{
+    let raw='';
+    if(API&&API.ai&&typeof API.ai.chat==='function'){
+      const res=await API.ai.chat({messages:[{role:'user',content:'你是丝绒暗室风控裁决庭审判员。举报对象：'+desc+'，检举证据内容：'+evidenceText+'，理由：'+selectedReason+(detail?'，补充：'+detail:'')+'。判定违规成立或合规不予处分，用[判定]和[处分]标签输出。'}]});
+      if(res&&res.text)raw=res.text;
+    }
+    const isViol = raw.includes('违规成立');
+    cases.unshift({
+      id:'case_'+Date.now(), 
+      target:'用户 @'+desc,
+      reason:'被网友检举：'+selectedReason,
+      evidence:evidenceText.slice(0,80)+(evidenceText.length>80?'...':''),
+      isViolationTarget: isViol,
+      result: isViol ? '暗室风控复核：核实属于违规，执行禁言惩罚' : '暗室风控复核：核实属于正常交流，判定合规',
+      judged:true,
+      userChoice: isViol
+    });
+    saveKV('cases', cases);
+    if(isViol){
+      toast('⚖️ 检举言论已成功录入裁决庭案卷！');
+      if(currentMatchedUser && currentMatchedUser.name === desc){
+        blockMatchUser();
+      }
+    }else{
+      toast('⚖️ 检举言论已录入案卷待陪审员判定');
+    }
+    renderCases();
+  }catch(e){
+    toast('⚖️ 举报已受理');
+  }
+  selectedReason='';
+  $('reportDetail').value='';
+}
+function openReport(t){reportTarget=t;document.querySelectorAll('#reportReasons .report-reason').forEach(i=>i.classList.remove('sel'));selectedReason='';$('reportDetail').value='';openModal('mdReport');}
+function openCurator(){renderCases();openModal('mdCurator');}
+async function generateNewCase(){
+  const btn = $('btnRefreshCase');
+  if(btn){ btn.disabled = true; btn.innerText = '⏳ 正在调取中...'; }
+  toast('🔄 正在调取新案件档案...');
+  try{
+    if(API&&API.ai&&typeof API.ai.chat==='function'){
+      const prompt='你是丝绒暗室风控裁决庭。请生成4条不同违规与合规案件（包含真违规与误报合规，涉及两性与风控言论）。'+NL+
+      '【网名铁律】：网名必须随机真实（如 momo, 熬夜冠军 等），严禁剧本网名！'+NL+
+      '必须严格使用以下格式输出，每条之间用 === 分隔：'+NL+
+      '[对象] @网名'+NL+
+      '[案由] 被检举：涉未成年不良诱导'+NL+
+      '[言论] 涉案言论原文'+NL+
+      '[判定] 违规'+NL+
+      '[处分] 复核属于违法诱导，永久封禁'+NL+
+      '==='+NL+
+      '请生成4条：';
+      const res=await API.ai.chat({messages:[{role:'user',content:prompt}]});
+      if(res&&res.text){
+        parseCasesFromAi(res.text);
+      }
+    }
+  }catch(e){}
+  if(btn){ btn.disabled = false; btn.innerText = '🔄 刷新案件（含真实/误报言论）'; }
+}
+function parseCasesFromAi(rawText){
+  let normalized=rawText.replace(/(\r\n|\r)/g,'\n');
+  normalized=normalized.replace(/\n-{3,}\n/g,'\n===\n');
+  let blocks=normalized.split('===') .filter(b=>b.trim());
+  let added=0;
+  
+  blocks.forEach(b=>{
+    const obj=b.match(/\[对象\]\s*(.+)/)||b.match(/对象[:：]\s*(.+)/);
+    const reason=b.match(/\[案由\]\s*(.+)/)||b.match(/案由[:：]\s*(.+)/);
+    const evid=b.match(/\[言论\]\s*(.+)/)||b.match(/言论[:：]\s*(.+)/);
+    const judge=b.match(/\[判定\]\s*(.+)/)||b.match(/判定[:：]\s*(.+)/);
+    const result=b.match(/\[处分\]\s*(.+)/)||b.match(/处分[:：]\s*(.+)/);
+    
+    if(obj&&reason){
+      const isV = judge ? judge[1].includes('违规') : true;
+      cases.unshift({
+        id:'case_'+Date.now()+Math.random(), 
+        target:obj[1].trim(),
+        reason:reason[1].trim().replace(/误报|绝非|肯定|已确诊|已被/g, '涉嫌'),
+        evidence:evid?evid[1].trim():'【检举人保密文本证据】',
+        isViolationTarget: isV,
+        result:result?result[1].trim():(isV?'复核确属违规，已处分':'复核属于正常言论，合规'),
+        judged:false,
+        userChoice:null
+      });
+      added++;
+    }
+  });
+  if(added>0){
+    saveKV('cases', cases);
+    renderCases();
+    toast('✅ 已新增 '+added+' 条待裁决案件！');
+  }else{
+    toast('案件刷新格式异常，请重试');
+  }
+}
+function judgeCase(caseId, userChoiceIsViolation, e){
+  if(e) e.stopPropagation();
+  const c = cases.find(x => x.id === caseId);
+  if(!c || c.judged) return;
+  
+  c.judged = true;
+  c.userChoice = userChoiceIsViolation;
+  
+  const isRight = (userChoiceIsViolation === c.isViolationTarget);
+  if(isRight){
+    score += 10;
+    toast('🎯 判定正确！与暗室风控复核一致 (+10 裁决积分)');
+    pushNotif('curator', '⚖️ 裁决判定正确', '经暗室风控复核，你对 '+c.target+' 的判决准确无误！裁决积分 +10');
+  }else{
+    score = Math.max(0, score - 5);
+    toast('❌ 判定错误！经复核该言论属于【'+(c.isViolationTarget?'违规':'合规')+'】 (-5 积分)');
+    pushNotif('curator', '❌ 裁决判决误判', '经暗室风控复核，你对 '+c.target+' 的判决误判。积分 -5');
+  }
+  
+  saveKV('score', score);
+  saveKV('cases', cases);
+  renderCases();
+  renderMyProfile();
+}
+function renderCases(){
+  const listEl=$('casesList');
+  if(!listEl)return;
+  listEl.innerHTML=cases.map(c=>{
+    const evidenceHtml = c.evidence ? '<div style="font-size:10px;color:var(--text);background:var(--card);padding:6px 8px;border-radius:8px;border:1px solid var(--border);margin:4px 0;line-height:1.4;">💬 <b>涉案言论原文：</b>"'+escapeHtml(c.evidence)+'"</div>' : '';
+    let resultArea = '';
+    
+    if(c.judged){
+      const isRight = (c.userChoice === c.isViolationTarget);
+      resultArea = '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);">' +
+        '<div style="font-size:10px;color:var(--accent-hot);font-weight:700;">🔍 官方风控复核结论：'+escapeHtml(c.result)+'</div>' +
+        (isRight 
+          ? '<div style="font-size:9.5px;color:#64dc96;font-weight:800;text-align:right;margin-top:3px;">🎯 陪审员裁决正确 (+10分)</div>'
+          : '<div style="font-size:9.5px;color:#ff6b6b;font-weight:800;text-align:right;margin-top:3px;">❌ 陪审员误判 (-5分) | 正确应为: '+(c.isViolationTarget?'【违规】':'【合规】')+'</div>'
+        ) +
+      '</div>';
+    }else{
+      resultArea = '<div class="judge-btns">' +
+        '<button class="judge-btn j-violation" onclick="judgeCase(\''+c.id+'\', true, event)">⚖️ 判定违规</button>' +
+        '<button class="judge-btn j-pass" onclick="judgeCase(\''+c.id+'\', false, event)">✅ 判定合规</button>' +
+      '</div>';
+    }
+    return '<div class="card" style="cursor:default;gap:4px;">'+
+      '<div style="display:flex;justify-content:space-between;font-weight:700;font-size:11px;"><span>'+escapeHtml(c.target)+'</span><span style="color:var(--accent);">'+(c.judged?(c.userChoice===c.isViolationTarget?'+10':'-5'):'🔍 待陪审员裁决')+'</span></div>'+
+      '<div style="font-size:10px;color:var(--text2);">案由: '+escapeHtml(c.reason)+'</div>'+
+      evidenceHtml +
+      resultArea +
+    '</div>';
+  }).join('');
+  
+  var sText=$('scoreText');if(sText)sText.innerText=score;
+  var cPts=$('curPts');if(cPts)cPts.innerText=score;
+}
+function renderFeed(){
+  const box=$('postFeed');
+  if(!box)return;
+  if(!Array.isArray(posts)) posts=[];
+  const list = curCat==='ALL' ? posts : posts.filter(p => matchCat(p.tag, curCat));
+  if(list.length===0){box.innerHTML='<div style="text-align:center;padding:40px;font-size:12px;color:var(--text2);">本板块暂无动态，点击【🎲 清空并刷新】刷出暗室新帖！</div>';return;}
+  box.innerHTML=list.map(p=>{
+    const sa=p.author.replace(/'/g,"\\'");
+    const likedClass = p.isLiked ? 'liked' : '';
+    let bodyText = escapeHtml(p.body);
+    bodyText = bodyText.replace(/(高潮|姿势|前戏|快感|湿透|叫声|私处|叫床|润滑|避孕|敏感点|抽动|摩擦|潮红|欲望|身体|出轨|亲密|欢愉|情趣|口爱|潮喷|后入|露出|做爱)/g, '<span class="blur-spoiler" onclick="this.classList.toggle(\'revealed\');event.stopPropagation();">$1</span>');
+    const badgeStr = (p.isSelf || p.author === getMyName())
+      ? getBadge(score).title 
+      : (p.author.includes('匿名') ? '🔒 丝绒客' : getNpcBadge(p.author));
+    return '<div class="card" onclick="openDetail(\''+p.id+'\')">'+
+      '<div class="card-hdr"><div style="display:flex;align-items:center;gap:6px;"><div class="avi" style="cursor:pointer;" onclick="openUserProfile(\''+sa+'\',\'feed\');event.stopPropagation();">'+aviHtml(p.author)+'</div><span style="font-size:12px;font-weight:700;cursor:pointer;" onclick="openUserProfile(\''+sa+'\',\'feed\');event.stopPropagation();">'+escapeHtml(p.author)+'</span><span class="badge-tag">'+badgeStr+'</span></div><span class="tag">#'+escapeHtml(p.tag)+'</span></div>'+
+      '<div class="card-title">'+escapeHtml(p.title)+'</div>'+
+      '<div class="card-body">'+bodyText+'</div>'+
+      '<div class="card-foot"><span class="like-btn '+likedClass+'" onclick="toggleLike(\''+p.id+'\', event)">❤️ '+(p.likes||0)+'</span><span class="lnk">💬 评论 ('+(p.comments?p.comments.length:0)+')</span></div>'+
+    '</div>';
+  }).join('');
+}
+function openDetail(id){const p=posts.find(x=>x.id===id);if(!p)return;curPost=p;$('detailTitle').innerText=p.title;renderDetail();go('detail');if(!p.comments||p.comments.length===0)fetchComments('append');}
+function renderDetail(){
+  const p=curPost;if(!p)return;const cmts=p.comments||[];
+  function buildCmtHtml(){
+    if(cmts.length===0)return '<div style="text-align:center;padding:20px;font-size:11px;color:var(--text2);">暂无楼层讨论，点击上方按钮加载楼层评论...</div>';
+    let h='';for(let idx=0;idx<cmts.length;idx++){const c=cmts[idx],sa=(c.author||'').replace(/'/g,"\\'");
+      const cmtBadge = (c.author === getMyName()) ? getBadge(score).title : getNpcBadge(c.author);
+      h+='<div class="cmt-card"><div class="cmt-hdr"><div class="cmt-author">';
+      h+='<div class="avi" style="width:22px;height:22px;cursor:pointer;" onclick="openUserProfile(\''+sa+'\',\'detail\');event.stopPropagation();">'+aviHtml(c.author)+'</div>';
+      h+='<span class="cmt-name" style="cursor:pointer;" onclick="openUserProfile(\''+sa+'\',\'detail\');event.stopPropagation();">'+escapeHtml(c.author)+'</span><span class="badge-tag" style="font-size:7.5px;">'+cmtBadge+'</span></div>';
+      h+='<div class="cmt-actions"><button class="btn" style="padding:2px 7px;font-size:8.5px;" onclick="replyCmt('+idx+',\''+sa+'\')">💬 回复</button><button class="btn" style="padding:2px 7px;font-size:8.5px;" onclick="openReport(curPost.comments['+idx+']);">🚩 举报</button></div></div><div class="cmt-text">'+escapeHtml(c.text)+'</div>';
+      if(c.replies&&c.replies.length>0){for(let ri=0;ri<c.replies.length;ri++){const r=c.replies[ri],sr=(r.author||'').replace(/'/g,"\\'");
+        const replyBadge = (r.author === getMyName()) ? getBadge(score).title : getNpcBadge(r.author);
+        h+='<div style="margin-top:6px;margin-left:28px;padding:8px 10px;background:rgba(255,166,210,0.06);border-left:2px solid var(--accent);border-radius:0 8px 8px 0;">';
+        h+='<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;"><div class="avi" style="width:18px;height:18px;cursor:pointer;" onclick="openUserProfile(\''+sr+'\',\'detail\');event.stopPropagation();">'+aviHtml(r.author)+'</div>';
+        h+='<span style="font-size:10px;font-weight:700;color:var(--accent);cursor:pointer;" onclick="openUserProfile(\''+sr+'\',\'detail\');event.stopPropagation();">'+escapeHtml(r.author)+'</span><span class="badge-tag" style="font-size:7.5px;">'+replyBadge+'</span>';
+        h+='<span style="font-size:9px;color:var(--text2);margin-left:4px;">回复 @'+escapeHtml(r.replyTo||c.author||'楼主')+'</span></div>';
+        h+='<div style="font-size:11px;color:var(--text2);line-height:1.4;white-space:pre-wrap;">'+escapeHtml(r.text)+'</div>';
+        h+='<div style="margin-top:4px;text-align:right;"><button class="btn" style="padding:1px 6px;font-size:8px;" onclick="replyCmt('+idx+',\''+sr+'\')">💬 回复</button></div></div>';}}
+      h+='</div>';}
+    return h;
+  }
+  const sa2=p.author.replace(/'/g,"\\'");
+  const likedClass = p.isLiked ? 'liked' : '';
+  const postBadge = (p.isSelf || p.author === getMyName()) ? getBadge(score).title : getNpcBadge(p.author);
+  $('detailArea').innerHTML='<div class="card" style="cursor:default;"><div class="card-hdr"><div style="display:flex;align-items:center;gap:6px;"><div class="avi" style="cursor:pointer;" onclick="openUserProfile(\''+sa2+'\',\'detail\');event.stopPropagation();">'+aviHtml(p.author)+'</div><span style="font-size:12px;font-weight:700;cursor:pointer;" onclick="openUserProfile(\''+sa2+'\',\'detail\');event.stopPropagation();">'+escapeHtml(p.author)+'</span><span class="badge-tag">'+postBadge+'</span></div><span class="tag">#'+escapeHtml(p.tag)+'</span></div><div style="font-size:15px;font-weight:800;line-height:1.4;">'+escapeHtml(p.title)+'</div><div style="font-size:12.5px;color:var(--text2);line-height:1.6;white-space:pre-wrap;">'+escapeHtml(p.body)+'</div><div style="display:flex;gap:8px;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--border);"><span class="like-btn '+likedClass+'" onclick="toggleLike(\''+p.id+'\', event)">❤️ '+(p.likes||0)+'</span><div style="display:flex;gap:6px;"><button class="btn" style="font-size:9px;padding:3px 8px;" onclick="openReport(curPost)">🚩 举报此帖</button><button class="btn" style="font-size:9px;padding:3px 8px;" onclick="shareToChat();event.stopPropagation();">📤 转发到聊天</button></div></div></div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;font-weight:700;color:var(--accent);">楼层讨论 ('+cmts.length+')</span><div style="display:flex;gap:6px;"><button class="btn" style="font-size:9.5px;padding:4px 8px;" onclick="fetchComments(\'replace\')">🎲 清空并刷新</button><button class="btn btn-solid" style="font-size:9.5px;padding:4px 8px;" onclick="fetchComments(\'append\')">✨ 想看新评论</button></div></div>'+buildCmtHtml();
+}
+async function shareToChat(){
+  if(!curPost)return;if(selCharIds.length===0){toast('请先入驻角色');return;}
+  const pickChar=(charId)=>{const co=allChars.find(c=>c.id===charId),cn=co?co.name:charId;const sc2= me=>{const ol=$('_shareOverlay');if(ol&&ol.parentNode)ol.parentNode.removeChild(ol);};sc2();toast('正在转发给 '+cn+'...');
+    (async()=>{try{const un=getMyName();if(API&&API.chat&&typeof API.chat.sendCard==='function'){await API.chat.sendCard({characterId:charId,role:'user',summary:un+'分享了一条暗室帖子：【'+curPost.title+'】',historyText:'[论坛分享：'+un+'在丝绒暗室看到一条帖子【'+curPost.title+'】，内容是：'+curPost.body.slice(0,100)+']',card:{appLabel:'Velvet 丝绒暗室',title:curPost.title,subtitle:'#'+curPost.tag+' · @'+curPost.author,body:curPost.body.slice(0,120)+(curPost.body.length>120?'...':''),status:'论坛帖子',accentColor:'#ffa6d2',sections:[{title:'帖子信息',rows:[{label:'作者',value:curPost.author},{label:'板块',value:curPost.tag},{label:'评论数',value:String((curPost.comments||[]).length)}]}]}});toast('已转发给 '+cn+'！');if(API&&API.chat&&typeof API.chat.requestReply==='function')await API.chat.requestReply({characterId:charId});}}catch(e){toast('转发失败');}})();};
+  if(selCharIds.length===1){pickChar(selCharIds[0]);return;}
+  const ov=document.createElement('div');ov.id='_shareOverlay';ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  let inner='<div style="background:var(--panel);border:1px solid var(--accent);border-radius:14px;padding:16px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px;"><div style="font-size:12px;font-weight:700;color:var(--accent);">📤 选择转发给谁</div>';
+  selCharIds.forEach(id=>{const c=allChars.find(x=>x.id===id),nm=c?c.name:id;inner+='<div class="card" style="cursor:pointer;" onclick="document.getElementById(\'_shareOverlay\')._pickChar(\''+id+'\')">'+'<div style="display:flex;align-items:center;gap:10px;"><div class="avi">'+aviHtml(nm)+'</div><span style="font-size:12px;font-weight:700;">'+escapeHtml(nm)+'</span></div></div>';});
+  inner+='<button class="btn" style="width:100%;padding:8px;" onclick="var ol=document.getElementById(\'_shareOverlay\');if(ol)ol.parentNode.removeChild(ol);">取消</button></div>';
+  ov.innerHTML=inner;ov._pickChar=pickChar;ov.onclick=(e)=>{if(e.target===ov)ov.parentNode.removeChild(ov);};document.body.appendChild(ov);
+}
+function submitCmt(){
+  const inp=$('cmtInp'),txt=inp.value.trim();if(!txt||!curPost)return;
+  if(!curPost.comments)curPost.comments=[];
+  const authorName = isAnon?'匿名网友':getMyName();
+  curPost.comments.push({author:authorName,text:txt});
+  inp.value='';savePostsLater();renderDetail();
+  
+  if(selCharIds.length > 0){
+    const charId = selCharIds.find(id=>{const ch=allChars.find(x=>x.id===id);return ch && curPost.author.includes(ch.name);});
+    if(charId){
+      triggerCharPostReply(charId, authorName, txt);
+    }
+  }
+}
+async function triggerCharPostReply(charId, replierName, replierText){
+  try{
+    const co = allChars.find(x => x.id === charId), charName = co ? co.name : '角色';
+    if(API && API.ai && typeof API.ai.generate === 'function'){
+      const pRole = '你在两性匿名论坛【丝绒暗室】上发布了一条主帖【'+curPost.title+'】。现在你的朋友（昵称：'+replierName+'）在你的帖子下面评论说："'+replierText+'"。请完全基于你自身的性格人设与喜好偏好进行回复。'+NL+
+      '【防暴露铁律】：必须使用你自拟的论坛网名，严禁暴露详细真实全名！简短回应（15-40字），只输出回复内容。';
+      const res = await API.ai.generate({characterId:charId, appTags:['velvet','forum'], instruction:pRole});
+      if(res && res.text){
+        curPost.comments.push({author: curPost.author, text: res.text.trim()});
+        savePostsLater();
+        renderDetail();
+        pushNotif('detail', '💬 楼主 @'+charName+' 回复了你', '楼主回复了你在【'+curPost.title+'】下的评论："'+res.text.trim()+'"', curPost.id);
+      }
+    }
+  }catch(e){}
+}
+function replyCmt(idx,author){
+  const oldOl=$('_replyOverlay');if(oldOl)oldOl.remove();
+  const ov=document.createElement('div');ov.id='_replyOverlay';ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML='<div style="background:var(--panel);border:1px solid var(--accent);border-radius:14px;padding:16px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px;"><div style="font-size:12px;font-weight:700;color:var(--accent);">回复 @'+escapeHtml(author)+' 的评论</div><input type="text" id="_replyInp" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;color:var(--text);font-size:12px;outline:none;" placeholder="输入你的回复..." /><div style="display:flex;gap:8px;justify-content:flex-end;"><button type="button" id="_replyCancel" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;">取消</button><button type="button" id="_replyOk" style="padding:6px 12px;border-radius:8px;border:none;background:var(--accent);color:#000;font-weight:700;font-size:11px;cursor:pointer;">发送</button></div></div>';
+  document.body.appendChild(ov);
+  const safeClose=()=>{const ol=$('_replyOverlay');if(ol&&ol.parentNode)ol.parentNode.removeChild(ol);};
+  ov.onclick=(e)=>{if(e.target===ov)safeClose();};$('_replyCancel').onclick=(e)=>{e.stopPropagation();safeClose();};
+  setTimeout(()=>{const inp=$('_replyInp');if(inp)inp.focus();},100);
+  $('_replyOk').onclick=async(e)=>{
+    e.stopPropagation();const v=$('_replyInp').value.trim();safeClose();if(!v||!curPost||!curPost.comments[idx])return;
+    const tc=curPost.comments[idx];if(!tc.replies)tc.replies=[];const mn=isAnon?'匿名网友':getMyName();
+    tc.replies.push({author:mn,text:v,replyTo:author});renderDetail();savePostsLater();toast('回复已发送，等待回应...');
+    try{
+      let reply='';
+      const charNms=selCharIds.map(id=>{const ch=allChars.find(x=>x.id===id);return ch?ch.name:null;}).filter(Boolean);
+      const isCA=charNms.some(n=>n&&author.includes(n));const cId=isCA?selCharIds.find(id=>{const ch=allChars.find(x=>x.id===id);return ch&&author.includes(ch.name);}):null;
+      if(isCA&&cId&&API&&API.ai&&typeof API.ai.generate==='function'){
+        const pRole='你在两性匿名论坛【丝绒暗室】上发了一条评论，你的朋友（昵称：'+mn+'）回复你说："'+v+'"。请完全基于你自身的性格人设回应。'+NL+
+        '【防暴露铁律】：必须使用你自拟的论坛网名，严禁暴露详细真实全名！简短回应（15-40字），只输出回复内容。';
+        const res=await API.ai.generate({characterId:cId, appTags:['velvet','forum'], instruction:pRole});
+        if(res&&res.text)reply=res.text.trim();
+      }
+      else if(API&&API.ai&&typeof API.ai.chat==='function'){
+        const pNet='你是两性论坛网友【'+author+'】。有人回复你说："'+v+'"。以贴吧网友口吻简短回应两性话题（15-40字），严禁机械腔。';
+        const res=await API.ai.chat({messages:[{role:'user',content:pNet}]});
+        if(res&&res.text)reply=res.text.trim();
+      }
+      if(reply){
+        tc.replies.push({author:author,text:reply,replyTo:mn});
+        renderDetail();savePostsLater();
+        pushNotif('detail', '💬 评论收到新回应', '网友 @'+author+' 回复了你在【'+curPost.title+'】下的评论："'+reply+'"', curPost.id);
+      }
+    }catch(e){}
+  };
+  $('_replyInp').onkeydown=(e)=>{if(e.key==='Enter')$('_replyOk').click();};
+}
+function cmtInpFocus(){
+  setTimeout(()=>{
+    const inp=$('cmtInp');if(!inp)return;
+    const pk=$('emojiPk');if(pk){pk.remove();if(pk._outsideClose)document.removeEventListener('click',pk._outsideClose);}
+    const area=$('detailArea');if(area)area.scrollTop=area.scrollHeight;
+    inp.scrollIntoView({block:'end',behavior:'smooth'});
+  },300);
+}
+const emojis=['😭','🥺','💀','🔥','❤️','😅','🤣','😍','🥰','氛围','😈','👀','💦','🙄','😤','🤮','😱','🫠','✨','💔','👍','👎','🖕','💋','🍑','汁','🤡','💩','😘','🤤'];
+function toggleEmoji(inputId){
+  let pk=$('emojiPk');
+  if(pk){pk.remove();return;}
+  pk=document.createElement('div');pk.id='emojiPk';
+  const ti=$(inputId), bar=$('cmtInpBar');
+  const ir=bar?bar.getBoundingClientRect():null, eb=ir?(window.innerHeight-ir.top+4):56;
+  pk.style.cssText='position:fixed;bottom:'+eb+'px;left:10px;right:10px;background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;z-index:8000;box-shadow:0 -4px 20px var(--glow);max-height:160px;overflow-y:auto;';
+  emojis.forEach(em=>{
+    const s=document.createElement('span');s.innerText=em;s.style.cssText='font-size:20px;cursor:pointer;padding:2px;';
+    s.onclick=(e)=>{
+      e.stopPropagation();const inp=$(inputId);if(inp){inp.value+=em;inp.focus();}
+      pk.remove();document.removeEventListener('click',pk._outsideClose);
+    };
+    pk.appendChild(s);
+  });
+  document.body.appendChild(pk);
+  pk._outsideClose=(e)=>{if(!pk.contains(e.target)){pk.remove();document.removeEventListener('click',pk._outsideClose);}};
+  setTimeout(()=>{
+    document.addEventListener('click',pk._outsideClose);
+    if(ti) ti.scrollIntoView({block:'end',behavior:'smooth'});
+  },50);
+}
+/* 全新合规防风控拦截、真实生态比例 Prompt */
+async function fetchPosts(category,count,mode){
+  const btn1 = $('btnRefreshAll'), btn2 = $('btnFetchMore');
+  if(mode==='replace'){
+    if(btn1){ btn1.disabled = true; btn1.innerText = '⏳ 刷新中...'; }
+    $('postFeed').innerHTML='<div style="text-align:center;padding:30px;color:var(--accent);font-size:12px;font-weight:700;">🎲 正在清空并刷新当前帖子...</div>';
+    toast('🎲 正在清空并刷新本区...');
+  } else {
+    if(btn2){ btn2.disabled = true; btn2.innerText = '⏳ 加载中...'; }
+    toast('✨ 正在加载新帖...');
+  }
+  
+  const prompt = `你是【丝绒暗室】两性隐秘论坛的动态生成器。请生成 ${count} 条极其真实、毫无矫揉造作的匿名论坛帖子。
+【铁律】
+1. 所有发帖作者必须 100% 使用自拟的随机路人网名（如 momo, 绝望爆米花, 熬夜冠军, 失眠小包子 等），网名必须与帖子内容完全无关！绝不能出现强关联网名。
+【生态分布】（根据以下类型随机分布，直白真实，像真人匿名发帖一样毫不遮掩）：
+- 真实性体验/两性困惑：直白描述身体感受与私密经历，不要回避。
+- 情感撕逼/出轨吐槽：极具情绪张力的亲密关系冲突、抓包与吐槽。
+- 擦边照/氛围拍：带图帖子，配图统一用 [图片:简短画面描述] 表示。
+- 闲聊灌水：深夜无厘头碎碎念、打卡、无意义发泄。
+- 猎奇怪癖自曝：男女视角均有，类型多样化（小众幻想、特殊癖好等），严禁重复同一种梗。
+- 约会交友/线下约：深夜寻同城聊天、找人解闷或线下约会倾向。
+- 青少年/身体发育疑虑：直接直白描述身体部位、生理反应疑问或症状，绝不拐弯抹角。
+【风格与打字习惯】
+绝对摒弃任何 AI 腔调、总结性话术和学术感语气！真实模拟网民千奇百怪的打字习惯：
+- 有人不打标点符号，一气呵成；
+- 有人爱用大量 emoji（😭, 💀, 💦, 🥵）或颜文字；
+- 允许出现真实的口语化错别字、贴吧/小红书网感俚语。
+【输出格式】（每条帖子间用 === 分隔）：
+[通告] 【处分通告】用户 @momo 因违规已被执行降权禁言
+===
+[作者] 随机网名
+[标题] 话题标题
+[正文] 真实正文内容
+[标签] ${category==='ALL'?'在【阴暗碎碎念、专栏科普、技巧困惑、疑虑疑问求解、树洞吐槽、种草测评】中选择':category}
+===`;
+try{
+    let raw='';
+    if(API&&API.ai&&typeof API.ai.chat==='function'){const res=await API.ai.chat({messages:[{role:'user',content:prompt}]});if(res&&res.text)raw=res.text;}
+    else if(API&&API.ai&&typeof API.ai.generate==='function'){const res=await API.ai.generate({instruction:prompt});if(res&&res.text)raw=res.text;}
+    if(raw){parsePosts(raw,mode);}
+  }catch(e){toast('操作失败，请检查网络');renderFeed();}
+  
+  if(btn1){ btn1.disabled = false; btn1.innerText = '🎲 清空并刷新'; }
+  if(btn2){ btn2.disabled = false; btn2.innerText = '✨ 想看新帖'; }
+}
+function parsePosts(raw,mode){
+  const nm=raw.match(/\[通告\]\s*(.+)/)||raw.match(/通告[:：]\s*(.+)/);
+  if(nm)$('bulletinText').innerText=nm[1].trim();
+  let normalized=raw.replace(/(\r\n|\r)/g,'\n');
+  normalized=normalized.replace(/\n-{3,}\n/g,'\n===\n');
+  normalized=normalized.replace(/\n(?=(?:【\d+】|\d+[\.、]))/g,'\n===\n');
+  
+  let blocks=normalized.split('===\n').filter(b=>b.trim()&&!b.match(/^\s*\[?通告\]?/));
+  if(blocks.length<2){
+    blocks=normalized.split(/(?=\[(?:作者|标题)\])/).filter(b=>b.trim()&&!b.match(/^\s*\[?通告\]?/));
+  }
+  const np=[];
+  blocks.forEach(b=>{
+    const a=b.match(/\[作者\]\s*(.+)/)||b.match(/作者[:：]\s*(.+)/);
+    const t=b.match(/\[标题\]\s*(.+)/)||b.match(/标题[:：]\s*(.+)/);
+    const bd=b.match(/\[正文\]\s*([\s\S]+?)(?=\[?标签\]?|$)/)||b.match(/正文[:：]\s*([\s\S]+?)(?=\[?标签\]?|$)/);
+    const tg=b.match(/\[标签\]\s*(.+)/)||b.match(/标签[:：]\s*(.+)/);
+    if(t&&bd){
+      const authorName = a?a[1].trim():getRandomUsername();
+      if(!blockedUsers.includes(authorName)){
+        np.push({
+          id:'ai_'+Math.random().toString(36).substr(2,9),
+          author:authorName,
+          title:t[1].trim(),
+          body:bd[1].trim().replace(/^\[正文\]\s*/,''),
+          tag: normalizeTag(tg?tg[1].trim():''),
+          likes:Math.floor(Math.random()*20),
+          isLiked:false,
+          comments:[]
+        });
+      }
+    }
+  });
+  if(np.length>0){
+    if(mode==='replace'){
+      const myOwnPosts = posts.filter(p => p.isSelf === true || p.author === getMyName());
+      posts = [...myOwnPosts, ...np];
+      toast('🎲 已刷出 '+np.length+' 条两性话题新帖');
+    }else{
+      posts=[...np,...posts];
+      toast('✨ 已加载 '+np.length+' 条两性话题新帖');
+    }
+    savePostsLater();
+  }else toast('未能解析到帖子，请重试');
+  renderFeed();
+  if(selCharIds.length>0&&Math.random()<0.85)triggerCharPost();
+}
+/* 角色发帖：自拟论坛匿名网名，隐藏真名防 OOC 泄露 */
+async function triggerCharPost(){
+  const ci=Math.floor(Math.random()*selCharIds.length),charId=selCharIds[ci],co=allChars.find(c=>c.id===charId),charName=co?co.name:charId;
+  let nick='暗室网友_'+Math.floor(Math.random()*9000+1000);
+  try{
+    if(API&&API.ai&&typeof API.ai.generate==='function'){
+      const promptName='你在匿名论坛注册，给自己起一个简短的匿名网名（2-8字，符合你性格，绝对不能包含你自己的真实姓名！）。只输出网名。';
+      const nr=await API.ai.generate({characterId:charId, instruction:promptName});
+      if(nr&&nr.text)nick=nr.text.trim().replace(/[^\u4e00-\u9fa5a-zA-Z0-9_\-]/g,'').slice(0,12)||nick;
+    }
+  }catch(e){}
+  
+  const displayName = nick;
+  const cats=['阴暗碎碎念','树洞吐槽','技巧困惑','疑虑疑问求解'],tag=cats[Math.floor(Math.random()*cats.length)];
+  try{
+    let raw='';
+    const promptCharPost='你在两性匿名论坛【丝绒暗室】发帖。请严格结合你自身的性格、喜好与背景记忆发帖。'+NL+
+    '【防暴露铁律】：严禁暴露你的真实全名与具体真实身份，使用自拟网络匿名网名！'+NL+
+    '格式：'+NL+'[标题] xxx'+NL+'[正文] xxx';
+    if(API&&API.ai&&typeof API.ai.generate==='function'){
+      const res=await API.ai.generate({characterId:charId, appTags:['velvet','forum'], instruction:promptCharPost});
+      if(res&&res.text)raw=res.text;
+    }
+    if(raw){
+      let title='',body='';
+      const tm=raw.match(/\[标题\]\s*(.+)/)||raw.match(/标题[:：]\s*(.+)/);
+      const bm=raw.match(/\[正文\]\s*([\s\S]+)/)||raw.match(/正文[:：]\s*([\s\S]+)/);
+      if(tm){title=tm[1].trim();body=bm?bm[1].trim().replace(/^\[正文\]\s*/,''):'';}
+      if(title){
+        body=body.replace(/^\[正文\]\s*/,'').trim();
+        posts.splice(Math.floor(Math.random()*Math.min(posts.length,5)),0,{id:'char_'+Date.now(),title:title,body:body,author:displayName,tag:tag,likes:Math.floor(Math.random()*10),isLiked:false,comments:[]});
+        savePostsLater();
+        renderFeed();
+      }
+    }
+  }catch(e){}
+}
+/* 楼层评论：带竞态防串号保护，确保 A 帖评论不混进 B 帖 */
+async function fetchComments(mode){
+  if(!curPost)return;
+  const targetPost = curPost;
+  const targetPostId = curPost.id;
+  
+  if(mode==='replace'){
+    targetPost.comments=[];
+    toast('🎲 正在清空楼层并刷新评论...');
+  } else {
+    toast('✨ 正在寻找新评论...');
+  }
+  
+  const existNames=(targetPost.comments||[]).map(c=>c.author).filter(Boolean);
+  const eligibleCharIds = selCharIds.filter(id => {
+    const c = allChars.find(x=>x.id===id);
+    return c && !targetPost.author.includes(c.name);
+  });
+  const charNames=eligibleCharIds.map(id=>{const c=allChars.find(x=>x.id===id);return c?c.name:null;}).filter(Boolean);
+  
+  let charLine='';
+  if(charNames.length){
+    charLine=NL+'社区入驻角色：'+charNames.join('、')+'。请让其中1条评论由入驻角色之一发出（用角色匿名网名做[作者]）。角色回复时，严禁暴露真实身份！';
+  }
+  const prompt='你是两性帖子楼层网友。针对以下帖子生成5条接地气评论（贴吧风格，严禁机械腔）。打字习惯多样化。约2条直接评论，2-3条盖楼回复。'+(existNames.length?'已有楼层网友：'+existNames.join('、')+'。盖楼时用[回复对象]标明。':'')+charLine+NL+
+  '【网名铁律】：网名必须随机真实（如 momo, 熬夜冠军 等），严禁剧本网名！'+NL+
+  '标题：'+targetPost.title+NL+'正文：'+targetPost.body+NL+'格式（===分隔）：'+NL+'[作者] 网名'+NL+'[回复对象] 被回复网名（仅盖楼时写）'+NL+'[回复] 内容'+NL+'===';
+  
+  try{
+    let raw='';
+    if(API&&API.ai&&typeof API.ai.chat==='function'){const res=await API.ai.chat({messages:[{role:'user',content:prompt}]});if(res&&res.text)raw=res.text;}
+    if(raw){
+      const blocks=raw.split('===').filter(b=>b.trim());
+      if(!targetPost.comments) targetPost.comments=[];
+      const newCmts=[];
+      blocks.forEach(b=>{
+        const a=b.match(/\[作者\]\s*(.+)/)||b.match(/作者[:：]\s*(.+)/);
+        const rt=b.match(/\[回复对象\]\s*(.+)/)||b.match(/回复对象[:：]\s*(.+)/);
+        const r=b.match(/\[回复\]\s*([\s\S]+)/)||b.match(/回复[:：]\s*([\s\S]+)/);
+        if(r){
+          const author=a?a[1].trim():getRandomUsername();
+          if(!blockedUsers.includes(author)){
+            let text=r[1].trim();
+            const pfx=text.match(/^回复\s*@[^：:]+[：:]\s*/);
+            if(pfx)text=text.slice(pfx[0].length)||text;
+            const targetName=rt?rt[1].trim():null;
+            if(targetName){
+              const tc2=targetPost.comments.find(c=>c.author===targetName)||newCmts.find(c=>c.author===targetName);
+              if(tc2){if(!tc2.replies)tc2.replies=[];tc2.replies.push({author:author,text:text});}
+              else newCmts.push({author:author,text:text,replies:[]});
+            }else newCmts.push({author:author,text:text,replies:[]});
+          }
+        }
+      });
+      
+      targetPost.comments.push(...newCmts);
+      savePostsLater();
+      
+      if(curPost && curPost.id === targetPostId && $('pgDetail').classList.contains('on')){
+        renderDetail();
+      }
+      toast('✨ 已刷新并载入评论');
+    }
+  }catch(e){}
+}
+function renderDmList(){
+  const cb=$('dmCharCards');
+  if(!cb)return;
+  if(!Array.isArray(selCharIds)) selCharIds=[];
+  if(!Array.isArray(allChars)) allChars=[];
+  
+  if(selCharIds.length===0){
+    cb.innerHTML='<div style="padding:10px 12px;background:var(--panel);border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:11px;color:var(--text2);">尚未选择入驻角色</span><button class="btn" style="font-size:9px;" onclick="openModal(\'mdCharPick\')">+ 入驻角色</button></div>';
+  }else{
+    cb.innerHTML=selCharIds.map(id=>{
+      const c=allChars.find(x=>x.id===id),nm=c?c.name:id;
+      return '<div class="card" onclick="openDm(\''+nm+'\')">'+'<div style="display:flex;align-items:center;gap:10px;"><div class="avi">'+aviHtml(nm)+'</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(nm)+'</div><div style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">[加密信道] 点击进入私密对话</div></div><span class="lnk" style="flex-shrink:0;">私信 ›</span></div></div>';
+    }).join('');
+  }
+  renderRandomDms();
+}
+function renderRandomDms(){
+  const box=$('dmRandomBox');
+  if(!box)return;
+  if(!Array.isArray(randomDms)) randomDms=[];
+  
+  const filteredDms = (randomDms.length > 0 ? randomDms : defaultRandomDms).filter(d => !blockedUsers.includes(d.sender));
+  box.innerHTML=filteredDms.map(dm=>'<div class="card" style="border-color:rgba(255,100,100,0.3);"><div style="display:flex;align-items:center;gap:10px;"><div class="avi" style="background:rgba(255,100,100,0.25);border-color:rgba(255,100,100,0.4);" onclick="openDm(\''+dm.sender+'\')">'+ aviHtml(dm.sender)+'</div><div style="flex:1;min-width:0;cursor:pointer;" onclick="openDm(\''+dm.sender+'\')">'+'<div style="font-size:12px;font-weight:800;color:#ff6b6b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(dm.sender)+'</div><div style="font-size:10px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+escapeHtml(dm.text)+'</div></div><button class="btn" style="flex-shrink:0;padding:4px 8px;font-size:9px;color:#ff6b6b;border-color:rgba(255,100,100,0.3);" onclick="deleteRandomDm(\''+dm.id+'\');event.stopPropagation();">🗑️</button></div></div>').join('');
+}
+function deleteRandomDm(id){
+  if(!Array.isArray(randomDms)) randomDms=[];
+  randomDms=randomDms.filter(d=>d.id!==id);
+  defaultRandomDms=defaultRandomDms.filter(d=>d.id!==id);
+  saveKV('randomDms',randomDms);
+  renderRandomDms();
+  updateRedDots();
+  toast('已删除该陌生人信道');
+}
+function clearRandomDms(){
+  randomDms=[];
+  defaultRandomDms=[];
+  saveKV('randomDms',[]);
+  renderRandomDms();
+  updateRedDots();
+  toast('已清空陌生人私信');
+}
+async function triggerPostDms(title,body){
+  try{
+    let raw='';
+    const count = Math.floor(Math.random()*3)+1;
+    if(API&&API.ai&&typeof API.ai.chat==='function'){
+      const prompt='用户在暗室论坛发布了新帖【'+title+'】正文【'+body+'】。请生成'+count+'条不同陌生路人针对这个发帖内容给用户发来的私信（包含搭讪、两性私密探讨、骚扰或垃圾广告，每条15字以内）。'+NL+
+      '【网名铁律】：网名必须随机真实（如 momo, 熬夜冠军 等），严禁剧本网名！'+NL+
+      '格式（===分隔）：'+NL+'[发件人] 网名'+NL+'[内容] 私信'+NL+'===';
+      const res=await API.ai.chat({messages:[{role:'user',content:prompt}]});
+      if(res&&res.text)raw=res.text;
+    }
+    if(raw){
+      const blocks=raw.split('===').filter(b=>b.trim());
+      blocks.forEach(b=>{
+        const m1=b.match(/\[发件人\]\s*(.+)/)||b.match(/发件人[:：]\s*(.+)/);
+        const m2=b.match(/\[内容\]\s*([\s\S]+)/)||b.match(/内容[:：]\s*(.+)/);
+        if(m1&&m2){
+          const senderName=m1[1].trim(), msgTxt=m2[1].trim();
+          if(!blockedUsers.includes(senderName)){
+            randomDms.unshift({id:'rdm_'+Date.now()+Math.random(), sender:senderName, text:msgTxt, read: false});
+            pushNotif('dm', '📬 收到新的陌生人私信', '来自 @'+senderName+' 的加密私信："'+msgTxt+'"', senderName);
+          }
+        }
+      });
+      saveKV('randomDms',randomDms);
+      renderRandomDms();
+      updateRedDots();
+    }
+  }catch(e){}
+}
+async function fetchNewDms(){
+  const btn = $('btnFetchDm');
+  if(btn){ btn.disabled = true; btn.innerText = '⏳ 接收中...'; }
+  toast('🔄 正在刷新接收新私信中...');
+  try{
+    let raw='';
+    const count = Math.floor(Math.random()*3)+1;
+    if(API&&API.ai&&typeof API.ai.chat==='function'){
+      const prompt='请生成'+count+'条两性暗室论坛陌生路人给用户发的私信（包含骚扰、两性话题探讨、垃圾广告、私密树洞、搭讪等，每条15字以内）。'+NL+
+      '【网名铁律】：网名必须随机真实（如 momo, 熬夜冠军 等），严禁剧本网名！'+NL+
+      '格式（===分隔）：'+NL+'[发件人] 网名'+NL+'[内容] 私信内容'+NL+'===';
+      const res=await API.ai.chat({messages:[{role:'user',content:prompt}]});
+      if(res&&res.text)raw=res.text;
+    }
+    if(raw){
+      const blocks=raw.split('===').filter(b=>b.trim());
+      let added=0;
+      blocks.forEach(b=>{
+        const m1=b.match(/\[发件人\]\s*(.+)/)||b.match(/发件人[:：]\s*(.+)/);
+        const m2=b.match(/\[内容\]\s*([\s\S]+)/)||b.match(/内容[:：]\s*([\s\S]+)/);
+        if(m1&&m2){
+          const sName=m1[1].trim(), sTxt=m2[1].trim();
+          if(!blockedUsers.includes(sName)){
+            randomDms.unshift({id:'rdm_'+Date.now()+Math.random(), sender:sName, text:sTxt, read: false});
+            added++;
+            pushNotif('dm', '📬 收到新的陌生人私信', '来自 @'+sName+' 的加密私信："'+sTxt+'"', sName);
+          }
+        }
+      });
+      if(added>0){
+        saveKV('randomDms',randomDms);
+        renderRandomDms();
+        updateRedDots();
+        toast('✅ 接收成功，收到 '+added+' 条新私信');
+      }
+    }
+  }catch(e){toast('接收私信失败');}
+  if(btn){ btn.disabled = false; btn.innerText = '🔄 接收新私信'; }
+}
+function scrollChatToBottom(){setTimeout(()=>{const b=$('chatBox');if(b)b.scrollTop=b.scrollHeight;const inp=$('chatInp');if(inp)inp.scrollIntoView({block:'end',behavior:'smooth'});},300);}
+const juanFAQ=[
+  {q:'💰 哪些情况会消耗 AI 额度 / Token？',a:'丝绒暗室中只有触发 AI 模型生成内容时才会消耗额度：'+NL+'• 🎲 点击【清空并刷新 / 想看新帖】调用模型生成论坛新帖'+NL+'• ✨ 点击【想看新评论】或回复楼层触发 AI 网友及角色回应'+NL+'• ⚡ 开启【随机匹配信道】调用模型生成路人破冰开场白及后续匹配聊天'+NL+'• 💬 与私信信道中的角色/网友聊天互动'+NL+'• ⚖️ 裁决庭【刷新案件】或点击【向卷卷/角色求助】'+NL+'※ 纯本地操作（如本地发帖、切换页面、打卡点赞、手动拉黑等）完全不消耗额度！'},
+  {q:'⚖️ 裁决庭是什么？怎么玩？',a:'裁决庭是暗室风控与社区秩序的陪审审判系统：'+NL+'• 🔍 审阅违规与合规言论案卷（如涉未成年、恶意网暴、垃圾广告等）'+NL+'• ⚖️ 判定正确 +10 裁决积分，误判 -5 积分'+NL+'• 🏅 积累积分可提升身份，解锁【暗室执法人】等至高勋章头衔'+NL+'• 🚩 遭遇骚扰时提交举报，案件将直接录入裁决庭由你和风控共同审裁！'},
+  {q:'🔮 入驻角色会出现在【随机匹配】里吗？',a:'绝对不会！防 OOC 铁律：'+NL+'• 🔮 匹配信道 100% 隔离角色卡！这里是纯粹的匿名路人网友探索区，由 AI 实时演绎各种接地气网民（搭讪、吐槽、倾吐心事等）。'+NL+'• 🎭 入驻角色卡只会在【大厅发帖】、【楼层互动】以及【私信信道】中出现，绝不混淆人设！'},
+  {q:'🎭 入驻角色在暗室里会做什么？规则是什么？',a:'• 📝 结合人设发帖：刷新大厅时角色会结合自身性格、记忆与喜好自然发表动态'+NL+'• 💬 动态人设回复：角色会根据自身人设与兴趣决定是否回复楼层，完全遵循自身性格，绝不生硬造作！'+NL+'• 🔒 隐匿身份：角色在论坛发言时严禁详细暴露真实全名与具体真实身份'+NL+'• 📤 接收转发：你可以把暗室里的好帖一键转发给角色私聊讨论'+NL+'• 🆘 紧急守护：私信遇骚扰时可点击【向角色求救】，角色会替你霸气怼回去！'},
+  {q:'🔒 匿名模式与黑名单拉黑指南',a:'• 🔒 开启匿名：顶部点击【匿名: 开】，发帖评论均显示为「匿名丝绒客」'+NL+'• 🚫 一键拉黑：匹配或私信遭遇变态骚扰，点击【🚫 拉黑】即可彻底从你的全网屏蔽并断开连接'}
+];
+/* 精准控制：与角色/卷卷聊天时隐藏求助与求救按键，仅与陌生路人聊天时显示 */
+function updateHelpButtonsState(){
+  const actBar = $('dmActBar');
+  if(!actBar) return;
+  
+  const isJuan = curDmTarget.includes('卷卷');
+  const isChar = allChars.some(c => c.name === curDmTarget || c.id === curDmTarget);
+  
+  if(isJuan || isChar){
+    actBar.style.display = 'none';
+    return;
+  }
+  
+  actBar.style.display = 'flex';
+  const btnJ = $('btnHelpJuan'), btnC = $('btnHelpChar');
+  if(!btnJ || !btnC) return;
+  const state = dmHelpState[curDmTarget];
+  if(state === 'juan'){
+    btnJ.disabled = true; btnJ.innerText = '🛡️ 已由卷卷立案审查';
+    btnC.disabled = true; btnC.innerText = '🆘 已不可求救';
+  } else if(state === 'char'){
+    btnC.disabled = true; btnC.innerText = '🆘 已由角色守护';
+    btnJ.disabled = true; btnJ.innerText = '🛡️ 已不可求助';
+  } else {
+    btnJ.disabled = false; btnJ.innerText = '🛡️ 向卷卷求助';
+    btnC.disabled = false; btnC.innerText = '🆘 向角色求救';
+  }
+}
+/* 抓取最近 3 条私信记录作为风控证据，增加真实性 */
+function getDmEvidence() {
+  const msgs = dmHistory[curDmTarget] || [];
+  if (msgs.length === 0) return '私信对话违规举报';
+  return msgs.slice(-3).map(m => m.sender + ': ' + m.text).join(' | ');
+}
+function openDm(target){
+  curDmTarget=target;
+  $('chatTitle').innerText='@'+target;
+  if(!dmHistory[target]){
+    const rdm=randomDms.find(d=>d.sender===target)||defaultRandomDms.find(d=>d.sender===target);
+    dmHistory[target]=[{sender:target,text:rdm?rdm.text:'你好！这里是 '+target+' 的加密信道。', time:getTimeStr()}];
+  }
+  renderChat();
+  updateHelpButtonsState();
+  if(target.includes('卷卷'))renderJuanFAQ();
+  go('dmChat');
+}
+function renderJuanFAQ(){const box=$('chatBox');if(!box)return;let h='<div style="margin-top:8px;padding:10px;background:var(--panel);border:1px solid var(--border);border-radius:12px;"><div style="font-size:11px;font-weight:800;color:var(--accent);margin-bottom:8px;">📋 常见问题（点击展开）</div>';juanFAQ.forEach((item,i)=>{h+='<div style="margin-bottom:6px;"><div style="font-size:11px;font-weight:700;color:var(--text);cursor:pointer;padding:6px 8px;background:var(--card);border:1px solid var(--border);border-radius:8px;" onclick="toggleFaqItem('+i+')">'+item.q+'</div><div id="faqA_'+i+'" style="display:none;font-size:10.5px;color:var(--text2);line-height:1.5;padding:6px 8px;white-space:pre-wrap;">'+item.a+'</div></div>';});h+='</div>';box.innerHTML+=h;box.scrollTop=box.scrollHeight;}
+function toggleFaqItem(i){const el=$('faqA_'+i);if(el)el.style.display=el.style.display==='none'?'block':'none';}
+function renderChat(){
+  const msgs=dmHistory[curDmTarget]||[];
+  $('chatBox').innerHTML=msgs.map(m=>{
+    const isMe=m.sender===getMyName();
+    const isAdmin=m.sender.includes('管理员');
+    let rc=isMe?'me':(isAdmin?'other admin':'other');
+    const tStr = m.time || getTimeStr();
+    const readHtml = isMe ? '<span style="font-size:8px;opacity:0.7;">已读</span>' : '';
+    return '<div class="msg-row '+rc+'">'+
+      '<div class="msg-avatar">'+aviHtml(m.sender)+'</div>'+
+      '<div class="msg-content-wrap">'+
+        '<div class="msg-sender-name">'+escapeHtml(m.sender)+'</div>'+
+        '<div class="msg-bubble">'+escapeHtml(m.text)+'<div class="msg-meta"><span>'+tStr+'</span>'+readHtml+'</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  $('chatBox').scrollTop=$('chatBox').scrollHeight;
+}
+function showTypingIndicator(senderName){
+  removeTypingIndicator();
+  const box=$('chatBox');if(!box)return;
+  const row=document.createElement('div');
+  row.className='msg-row other';
+  row.id='typingIndicatorRow';
+  row.innerHTML='<div class="msg-avatar">'+aviHtml(senderName)+'</div><div class="msg-content-wrap"><div class="msg-sender-name">'+escapeHtml(senderName)+'</div><div class="msg-bubble" style="opacity:0.75;font-style:italic;color:var(--accent);"><span>对方正在输入中</span><span class="typing-dots"></span></div></div>';
+  box.appendChild(row);
+  box.scrollTop=box.scrollHeight;
+}
+function removeTypingIndicator(){
+  const el='typingIndicatorRow';
+  const row=document.getElementById(el);
+  if(row&&row.parentNode)row.parentNode.removeChild(row);
+}
+/* 私信聊天：入驻角色解开匿名防暴露限制，全量展现 100% 真实人设灵魂 */
+async function sendDm(){
+  const inp=$('chatInp'),txt=inp.value.trim();if(!txt)return;
+  if(!dmHistory[curDmTarget])dmHistory[curDmTarget]=[];
+  dmHistory[curDmTarget].push({sender:getMyName(),text:txt, time:getTimeStr()});
+  inp.value='';renderChat();
+  
+  showTypingIndicator(curDmTarget);
+  
+  try{
+    let reply = '';
+    const charObj = allChars.find(c => c.name === curDmTarget || c.id === curDmTarget);
+    
+    // 机制 A：如果是入驻角色，解开匿名防暴露束缚，完全以角色原本的性格与记忆进行私密沟通
+    if(charObj && API && API.ai && typeof API.ai.generate === 'function'){
+      const history = dmHistory[curDmTarget] || [];
+      const historyText = history.slice(-6).map(h => (h.sender === getMyName() ? '对方' : '你') + ': ' + h.text).join(NL);
+      
+      const pRole = `场景：你现在正与对方进行一对一私密沟通。
+【最近私信对话记录】：
+${historyText}
+【灵魂铁律】：
+1. 必须 100% 展现你原本的性格语气、口吻特色、情绪习惯与真实人设！你面对的就是用户本人，完全无需任何掩饰与伪装。
+2. 精准针对上文中对方最新发出的内容进行回复（20-50字），生动自然，严禁机械说教。`;
+const res = await API.ai.generate({
+        characterId: charObj.id,
+        appTags: ['velvet', 'forum'],
+        instruction: pRole
+      });
+      if(res && res.text) reply = res.text.trim();
+    } 
+    // 机制 B：如果是普通路人，走 ai.chat，带上多轮对话历史，保持防视角颠倒与路网风格
+    else if(API && API.ai && typeof API.ai.chat === 'function'){
+      const apiMessages = [];
+      apiMessages.push({
+        role: 'system',
+        content: `你是两性隐秘论坛的普通路人网友【${curDmTarget}】。
+【绝对视角锁定】：
+1. 必须 100% 锁定你是上文中属于【${curDmTarget}】发言的作者！严禁角色颠倒，严禁自称AI、程序或心理咨询师，绝不出现“我理解你/加油”等圣母安慰腔。你就是产生情绪/困惑的当事人。
+2. 保持真实网友的粗鲁、随意、或随性风格。简短回应（15-40字）。`
+      });
+      const history = dmHistory[curDmTarget] || [];
+      history.forEach(h => {
+        if (h.sender === getMyName()) {
+          apiMessages.push({ role: 'user', content: h.text });
+        } else {
+          apiMessages.push({ role: 'assistant', content: h.text });
+        }
+      });
+      const res = await API.ai.chat({ messages: apiMessages });
+      if(res && res.text) reply = res.text.trim();
+    }
+    
+    removeTypingIndicator();
+    if(reply){
+      dmHistory[curDmTarget].push({sender:curDmTarget,text:reply, time:getTimeStr()});
+      renderChat();
+    }
+  }catch(e){
+    removeTypingIndicator();
+  }
+}
+async function dmAskJuan(){
+  if(dmHelpState[curDmTarget]){ toast('该信道已选择求助方式'); return; }
+  dmHelpState[curDmTarget] = 'juan';
+  saveKV('dmHelpState', dmHelpState);
+  updateHelpButtonsState();
+  toast('🛡️ 卷卷正在审查此信道...');
+  showTypingIndicator('卷卷 (社区管理员)');
+  const msgs=dmHistory[curDmTarget]||[];
+  const recent=msgs.slice(-6).map(m=>m.sender+': '+m.text).join(NL);
+  try{
+    let raw='';
+    if(API&&API.ai&&typeof API.ai.chat==='function'){
+      const prompt='你是暗室社区管理员【卷卷】。用户举报 @'+curDmTarget+' 的私信骚扰。信道记录：'+NL+recent+NL+'请以管理员身份判明是否违规并输出处理通知。严禁暴露虚拟身份。';
+      const res=await API.ai.chat({messages:[{role:'user',content:prompt}]});
+      if(res&&res.text)raw=res.text;
+    }
+    removeTypingIndicator();
+    if(!dmHistory[curDmTarget])dmHistory[curDmTarget]=[];
+    dmHistory[curDmTarget].push({sender:'卷卷 (社区管理员)',text:raw||'🛡️ 已调取记录核查，若存在违规已执行降权处分。', time:getTimeStr()});
+    $('bulletinText').innerText='【风控处分】用户 @'+curDmTarget+' 因违规行为已被执行降权禁言处分';
+    score+=10;
+    saveKV('score', score);
+    $('scoreText').innerText=score;
+    cases.unshift({
+      id:'case_'+Date.now(), 
+      target:'@'+curDmTarget,
+      reason:'被检举：私信信道骚扰',
+      evidence:recent.slice(0,80)+(recent.length>80?'...':''),
+      isViolationTarget: true,
+      result:'卷卷立案封禁该账号 +10积分',
+      judged:true,
+      userChoice: true
+    });
+    saveKV('cases', cases);
+    renderChat();
+    renderMyProfile();
+    toast('🛡️ 卷卷已介入处理并封禁该账号');
+    pushNotif('curator', '🛡️ 管理员处理通知', '卷卷已成功为你立案封禁骚扰者 @'+curDmTarget+'，裁决积分 +10');
+  }catch(e){
+    removeTypingIndicator();
+    toast('求助处理失败');
+  }
+}
+async function dmAskChar(){
+  if(dmHelpState[curDmTarget]){ toast('该信道已选择求助方式'); return; }
+  if(selCharIds.length===0){toast('请先入驻角色');return;}
+  if(selCharIds.length===1){doCharRescue(selCharIds[0]);}
+  else{
+    $('charHelpList').innerHTML=selCharIds.map(id=>{
+      const c=allChars.find(x=>x.id===id),nm=c?c.name:id;
+      return '<div class="card" onclick="closeModal(\'mdCharHelp\');doCharRescue(\''+id+'\')">'+'<div style="display:flex;align-items:center;gap:10px;"><div class="avi">'+aviHtml(nm)+'</div><span style="font-size:12px;font-weight:700;">'+escapeHtml(nm)+'</span></div></div>';
+    }).join('');
+    openModal('mdCharHelp');
+  }
+}
+async function doCharRescue(charId){
+  dmHelpState[curDmTarget] = 'char';
+  saveKV('dmHelpState', dmHelpState);
+  updateHelpButtonsState();
+  const co=allChars.find(c=>c.id===charId),cn=co?co.name:charId;
+  
+  const chatInp = $('chatInp'), chatSendBtn = $('chatSendBtn');
+  if(chatInp){
+    chatInp.disabled = true;
+    chatInp.placeholder = '🔒 手机已被 ' + cn + ' 接管中，请稍候...';
+  }
+  if(chatSendBtn) chatSendBtn.disabled = true;
+  
+  const oldBanner = $('takeoverBanner'); if(oldBanner) oldBanner.remove();
+  const banner = document.createElement('div');
+  banner.id = 'takeoverBanner';
+  banner.style.cssText = 'padding:6px 12px;background:rgba(255,166,210,0.18);border:1px solid var(--accent);border-radius:10px;font-size:10px;color:var(--accent);font-weight:800;text-align:center;margin-bottom:8px;box-shadow:0 0 12px var(--glow);animation:fadeInUp 0.3s ease;';
+  banner.innerText = '🛡️ ' + cn + ' 正在强行接管你的设备，准备为你出头...';
+  const chatBoxEl = $('chatBox');
+  if(chatBoxEl) chatBoxEl.insertBefore(banner, chatBoxEl.firstChild);
+  
+  toast('🆘 '+cn+' 正在接管信道...');
+  showTypingIndicator(cn+' (守护)');
+  const msgs=dmHistory[curDmTarget]||[];
+  const recent=msgs.slice(-6).map(m=>m.sender+': '+m.text).join(NL);
+  try{
+    let reply='';
+    if(API&&API.ai&&typeof API.ai.generate==='function'){
+      const prompt='场景：你和用户在同一个社区，有人通过私信骚扰用户。对方 @'+curDmTarget+' 正在骚扰用户。最近记录：'+NL+recent+NL+'请结合你对用户的了解和关系，以你的真实人设性格替用户直接怼回去保护用户。像现实中帮朋友出头一样说话，严禁提及网络、线上等虚拟词，严禁OOC。50-100字。';
+      const res=await API.ai.generate({characterId:charId, instruction:prompt});
+      if(res&&res.text)reply=res.text;
+    }else if(API&&API.ai&&typeof API.ai.chat==='function'){
+      const prompt='对方说了：'+recent+NL+'替用户强势回复保护用户，50-100字。';
+      const res=await API.ai.chat({messages:[{role:'system',content:'你是'+cn+'。有人在社区私信骚扰你的朋友，你要帮朋友怼回去。'},{role:'user',content:prompt}]});
+      if(res&&res.text)reply=res.text;
+    }
+    removeTypingIndicator();
+    if(!dmHistory[curDmTarget])dmHistory[curDmTarget]=[];
+    dmHistory[curDmTarget].push({sender:cn+' (守护)',text:reply||'别怕，有我在！谁敢骚扰你我都不会放过！', time:getTimeStr()});
+    renderChat();
+  }catch(e){
+    removeTypingIndicator();
+  }
+  const tb = $('takeoverBanner'); if(tb) tb.remove();
+  if(chatInp){
+    chatInp.disabled = false;
+    chatInp.placeholder = '发送私密消息...';
+  }
+  if(chatSendBtn) chatSendBtn.disabled = false;
+  toast('✨ 手机已交还给你');
+}
+let upFrom='feed';
+function openUserProfile(name,from){
+  if(!name||name===getMyName()||name==='匿名丝绒客'||name==='匿名网友')return;
+  upFrom=from||'feed';
+  $('upTitle').innerText='@'+name;
+  $('upBack').onclick=()=>go(upFrom==='detail'?'detail':'feed');
+  const userPosts=posts.filter(p=>p.author===name),userCmts=[];
+  posts.forEach(p=>(p.comments||[]).forEach(c=>{if(c.author===name)userCmts.push({postTitle:p.title,text:c.text});}));
+  const sn=name.replace(/'/g,"\\'");
+  const uBadge = getNpcBadge(name);
+  $('upContent').innerHTML='<div class="card" style="flex-direction:row;align-items:center;gap:12px;cursor:default;"><div class="avi avi-lg">'+aviHtml(name)+'</div><div style="flex:1;"><div style="font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px;"><span>'+escapeHtml(name)+'</span><span class="badge-tag">'+uBadge+'</span></div><div style="font-size:10px;color:var(--text2);margin-top:2px;">暗室社区成员</div></div><button class="btn btn-solid" style="padding:6px 12px;font-size:11px;" onclick="openDm(\''+sn+'\')">💬 发私信</button></div><div style="font-size:11px;font-weight:700;color:var(--accent);">📝 TA 的发帖 ('+userPosts.length+')</div>'+(userPosts.length>0?userPosts.map(p=>'<div class="card" onclick="openDetail(\''+p.id+'\')">'+'<div class="card-title">'+escapeHtml(p.title)+'</div><div class="card-body">'+escapeHtml(p.body)+'</div></div>').join(''):'<div style="text-align:center;padding:10px;font-size:10px;color:var(--text2);">暂无发帖</div>')+'<div style="font-size:11px;font-weight:700;color:var(--accent);">💬 TA 的评论 ('+userCmts.length+')</div>'+(userCmts.length>0?userCmts.slice(0,10).map(c=>'<div class="cmt-card"><div style="font-size:9px;color:var(--text2);margin-bottom:2px;">回复于: '+escapeHtml(c.postTitle)+'</div><div class="cmt-text">'+escapeHtml(c.text)+'</div></div>').join(''):'<div style="text-align:center;padding:10px;font-size:10px;color:var(--text2);">暂无评论</div>');
+  $('upDmInp').value='';$('upDmInp').placeholder='给 @'+name+' 发一条私信...';$('upDmBar').dataset.target=name;
+  go('userProfile');
+}
+function sendUserDm(){const name=$('upDmBar').dataset.target,txt=$('upDmInp').value.trim();if(!txt||!name)return;if(!dmHistory[name])dmHistory[name]=[{sender:name,text:'你好，这里是 '+name+' 的信道。', time:getTimeStr()}];dmHistory[name].push({sender:getMyName(),text:txt, time:getTimeStr()});$('upDmInp').value='';toast('私信已发送给 @'+name);openDm(name);}
+let pendingAviIdx=-1;
+function openAvatarPicker(){pendingAviIdx=-1;const grid=$('aviGridBox'),cs=myProfileData.seed||myProfileData.name||'丝绒客';let html='';for(let i=0;i<avatarGrads.length;i++){const g=avatarGrads[i];html+='<div class="avi-opt '+(cs===('grad_'+i)?'sel':'')+'" style="background:linear-gradient(135deg,'+g[0]+','+g[1]+');" onclick="pickAvi('+i+',this)"></div>';}html+='<div class="avi-opt avi-opt-upload" onclick="uploadAvatar()" title="上传自定义图片">+</div>';grid.innerHTML=html;openModal('mdAvatarPick');}
+function pickAvi(idx,el){pendingAviIdx=idx;document.querySelectorAll('#aviGridBox .avi-opt').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');}
+function confirmAvatar(){if(pendingAviIdx>=0){myProfileData.seed='grad_'+pendingAviIdx;myProfileData.customAvatar=null;}saveKV('myProfileData',myProfileData);renderMyProfile();closeModal('mdAvatarPick');toast('头像已更新');}
+/* 规范大文件上传：支持 API.media.put 落盘换取 media-store:// 引用 */
+async function uploadAvatar(){
+  const inp=document.createElement('input');
+  inp.type='file';
+  inp.accept='image/*';
+  inp.onchange=async()=>{
+    const f=inp.files[0];
+    if(!f)return;
+    const reader=new FileReader();
+    reader.onload=async()=>{
+      const dataUrl = reader.result;
+      try{
+        if(API && API.media && typeof API.media.put === 'function'){
+          const stored = await API.media.put({ dataUrl });
+          myProfileData.customAvatarRef = stored.ref;
+          myProfileData.customAvatar = dataUrl;
+        } else {
+          myProfileData.customAvatar = dataUrl;
+        }
+      }catch(e){
+        myProfileData.customAvatar = dataUrl;
+      }
+      myProfileData.seed='custom';
+      await saveKV('myProfileData',myProfileData);
+      renderMyProfile();
+      closeModal('mdAvatarPick');
+      toast('自定义头像已上传');
+    };
+    reader.readAsDataURL(f);
+  };
+  inp.click();
+}
+function openEditProfile(){$('editNameInp').value=getMyName();$('editBioInp').value=myProfileData.bio||'';openModal('mdEditProf');}
+function saveMyProfile(){const n=$('editNameInp').value.trim(),b=$('editBioInp').value.trim();if(n)myProfileData.name=n;myProfileData.bio=b;saveKV('myProfileData',myProfileData);renderMyProfile();closeModal('mdEditProf');toast('个人资料已保存');}
+async function renderMyProfile(){
+  const nameEl=$('profName');
+  if(!nameEl)return;
+  nameEl.innerText=getMyName();
+  var bioEl=$('profBio'); if(bioEl) bioEl.innerText=myProfileData.bio||'沉溺于夜色，捕捉所有未公开的心事。';
+  
+  const badgeObj = getBadge(score);
+  var bgEl=$('profBadge'); if(bgEl) bgEl.innerText = badgeObj.title;
+  var pBox=$('badgeProgressBox');
+  if(pBox){
+    if(badgeObj.next === badgeObj.prev){
+      pBox.innerHTML = '<div style="font-size:9px;color:var(--accent);font-weight:700;">👑 已经达到最高暗室勋章头衔！</div>';
+    }else{
+      const currentProgress = score - badgeObj.prev;
+      const totalNeed = badgeObj.next - badgeObj.prev;
+      const pct = Math.min(100, Math.max(0, (currentProgress / totalNeed) * 100));
+      pBox.innerHTML = '<div style="display:flex;justify-content:space-between;font-size:8.5px;color:var(--text2);">' +
+        '<span>勋章积分: ' + score + ' 分</span><span>下一阶: ' + badgeObj.next + ' 分</span>' +
+      '</div>' +
+      '<div class="progress-bar-bg"><div class="progress-bar-fill" style="width:' + pct + '%;"></div></div>';
+    }
+  }
+var box=$('myAvatarBox');
+  if(!box)return;
+  
+  if(myProfileData.customAvatarRef && API && API.media && typeof API.media.get === 'function'){
+    try{
+      const media = await API.media.get({ ref: myProfileData.customAvatarRef });
+      if(media && media.dataUrl){
+        box.innerHTML='<img src="'+media.dataUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />';
+        return;
+      }
+    }catch(e){}
+  }
+  
+  if(myProfileData.customAvatar) box.innerHTML='<img src="'+myProfileData.customAvatar+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />';
+  else if(myProfileData.seed&&myProfileData.seed.startsWith('grad_')){const idx=parseInt(myProfileData.seed.split('_')[1])||0,g=avatarGrads[idx%avatarGrads.length];box.innerHTML='<div style="width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,'+g[0]+','+g[1]+');"></div>';}
+  else box.innerHTML=aviHtml(myProfileData.seed||getMyName());
+}
+function renderHistory(){
+  const box=$('historyBox');
+  if(!box)return;
+  if(!Array.isArray(posts)) posts=[];
+  const mn=getMyName();
+  const my=posts.filter(p=>p.isSelf || (p.author===mn));
+  if(my.length===0){box.innerHTML='<div style="text-align:center;padding:20px;font-size:11px;color:var(--text2);">暂无发布记录</div>';return;}
+  box.innerHTML=my.map(p=>'<div class="card" onclick="openDetail(\''+p.id+'\')">'+'<div class="card-title">'+escapeHtml(p.title)+'</div><div class="card-body">'+escapeHtml(p.body)+'</div></div>').join('');
+}
+let _st=null;
+function savePostsLater(){if(_st)clearTimeout(_st);_st=setTimeout(()=>saveKV('posts',posts),1500);}
+(async function loadAppIcon(){
+  try{
+    if(API && API.app && typeof API.app.getAssetUrl === 'function'){
+      const url = await API.app.getAssetUrl('icon.png');
+      if(url){
+        cachedGlobalIconUrl = url;
+        const sImg = $('splashIconImg'), sSvg = $('splashFallbackSvg');
+        if(sImg && sSvg){ sImg.src = url; sImg.style.display = 'block'; sSvg.style.display = 'none'; }
+        
+        const hImg = $('hdrIconImg'), hSvg = $('hdrFallbackSvg');
+        if(hImg && hSvg){ hImg.src = url; hImg.style.display = 'block'; hSvg.style.display = 'none'; }
+        const mrImg = $('matchRadarIconImg'), mrSvg = $('matchRadarFallbackSvg');
+        if(mrImg && mrSvg){ mrImg.src = url; mrImg.style.display = 'block'; mrSvg.style.display = 'none'; }
+        document.querySelectorAll('.juan-global-icon').forEach(img=>{ img.src=url; img.style.display='block'; });
+        document.querySelectorAll('.juan-global-svg').forEach(svg=>{ svg.style.display='none'; });
+      }
+    }
+  }catch(e){}
+})();
+async function init(){
+  try{
+    if(API && API.app && typeof API.app.getLaunchContext === 'function'){
+      const lc = await API.app.getLaunchContext();
+      if(lc && lc.characterId){
+        if(!Array.isArray(selCharIds)) selCharIds = [];
+        if(!selCharIds.includes(lc.characterId)) selCharIds.push(lc.characterId);
+      }
+    }
+    
+    const p = await loadStoredKV('posts', null); if(p&&Array.isArray(p)&&p.length>0)posts=p;
+    const c = await loadStoredKV('selectedCharIds', null); if(c&&Array.isArray(c))selCharIds=c;
+    const mp = await loadStoredKV('myProfileData', null); if(mp&&typeof mp==='object'&&!Array.isArray(mp))myProfileData=mp;
+    const rd = await loadStoredKV('randomDms', null); if(rd&&Array.isArray(rd))randomDms=rd;
+    const sc = await loadStoredKV('score', null); if(sc!==null)score=sc;
+    const nf = await loadStoredKV('notifications', null); if(nf&&Array.isArray(nf))notifications=nf;
+    const bu = await loadStoredKV('blockedUsers', null); if(bu&&Array.isArray(bu))blockedUsers=bu;
+    const hs = await loadStoredKV('dmHelpState', null); if(hs&&typeof hs==='object')dmHelpState=hs;
+    
+    const cs = await loadStoredKV('cases', null); 
+    if(cs&&Array.isArray(cs)&&cs.length>0){
+      cases=cs.map(item=>({
+        ...item,
+        judged: item.judged === true,
+        userChoice: item.userChoice !== undefined ? item.userChoice : null,
+        reason: (item.reason||'被网友检举违规').replace(/误报|绝非|肯定|已确诊|已被/g, '涉嫌')
+      }));
+    } else {
+      cases = defaultCases;
+    }
+renderFeed();
+    renderMyProfile();
+    renderHistory();
+    renderThemeGrid();
+    renderCases();
+    updateRedDots();
+await loadChars();
+    renderFeed();
+    renderDmList();
+const hasAutoRefreshed = await loadStoredKV('hasAutoRefreshed', false);
+    if(!hasAutoRefreshed){
+      await saveKV('hasAutoRefreshed', true);
+      fetchPosts('ALL',8,'replace');
+    }
+    const fd = await loadStoredKV('firstLaunchDone', false);
+    if(!fd&&allChars.length>0){openModal('mdCharPick');await saveKV('firstLaunchDone',true);}
+  }catch(e){}
+setTimeout(()=>{
+    const s=$('splash');
+    if(s) s.classList.add('splash-out');
+  }, 2200);
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "id": "empathy.doll",
+  "name": "共感",
+  "version": "1.1.0",
+  "sdkVersion": "1.0",
+  "author": "梵笙and工坊",
+  "description": "连接char的共感APP，触碰部位同步生成说出口的话与内心独白，可弹窗探听当下的真实想法。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "characters.read",
+    "user.profile.read",
+    "ai.generate",
+    "ui.toast"
+  ],
+  "primaryTags": []
+}

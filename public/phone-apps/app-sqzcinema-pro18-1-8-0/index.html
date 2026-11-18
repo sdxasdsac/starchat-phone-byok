@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>SQZcinema Pro</title>
+  <style>
+    :root { --accent: #6366f1; --bg: #0f172a; --card: #1e293b; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; background: var(--bg); color: #f8fafc; font-family: system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .status-bar { height: var(--ai-phone-app-safe-top, 24px); background: #000; }
+    .view-box { width: 100%; aspect-ratio: 16/9; background: #000; position: relative; flex: 0 0 auto; }
+    video { width: 100%; height: 100%; display: block; }
+    canvas#shot { display: none; }
+    .nav-tabs { display: flex; background: var(--card); padding: 8px; gap: 6px; border-bottom: 1px solid #334155; flex-wrap: wrap; }
+    .tab-btn { flex: 1; min-width: 0; background: #334155; border: 1px solid #475569; color: white; padding: 10px 4px; border-radius: 8px; font-size: 12px; font-weight: bold; text-align: center; cursor: pointer; }
+    .tab-btn:active { background: var(--accent); }
+    .tab-btn.on { background: var(--accent); }
+    .tab-btn.full { flex: 1 0 100%; }
+    .char-row { display: flex; gap: 6px; padding: 0 8px 8px; background: var(--card); border-bottom: 1px solid #334155; }
+    .char-btn { flex: 1; min-width: 0; background: #1e293b; border: 1px solid #475569; color: #e2e8f0; padding: 9px 8px; border-radius: 8px; font-size: 12px; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .char-btn b { color: #38d39f; }
+    .room-status { padding: 6px 12px; background: #0b1220; color: #94a3b8; font-size: 12px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e293b; }
+    .room-status .code { color: #38d39f; font-weight: bold; letter-spacing: 2px; }
+    .room-status .vision-on { color: #10b981; }
+    .room-status .vision-off { color: #f59e0b; }
+    .chat-scroll { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .message { font-size: 14px; line-height: 1.4; word-break: break-all; }
+    .message b { color: var(--accent); margin-right: 4px; }
+    .message.ai b { color: #10b981; }
+    .message.sys { color: #94a3b8; font-size: 12px; font-style: italic; }
+    .input-bar { padding: 10px; background: var(--card); display: flex; gap: 8px; flex: 0 0 auto; }
+    #danmu-input { flex: 1; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px; color: white; outline: none; min-width: 0; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+    .modal { background: var(--card); width: 100%; max-width: 360px; border-radius: 12px; padding: 18px; max-height: 86vh; overflow-y: auto; }
+    .modal h3 { margin: 0 0 14px 0; font-size: 17px; }
+    .modal input { width: 100%; background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 6px; margin-bottom: 12px; }
+    .modal label { display: block; color: #94a3b8; font-size: 12px; margin: 0 0 4px 2px; }
+    .modal .divider { height: 1px; background: #334155; margin: 14px 0; }
+    .modal .hint { color: #94a3b8; font-size: 12px; margin: -6px 0 12px; line-height: 1.5; }
+    .modal .field { margin-bottom: 12px; }
+    .row-flex { display: flex; gap: 8px; align-items: stretch; }
+    .row-flex > input { margin-bottom: 0; }
+    .pick-row { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #334155; border-radius: 8px; margin-bottom: 8px; background: #0f172a; }
+    .pick-row input { width: auto; margin: 0; padding: 0; }
+    .pick-row .meta { flex: 1; min-width: 0; }
+    .pick-row .meta span { display: block; font-size: 12px; color: #94a3b8; margin-top: 3px; }
+    .list-box { border: 1px solid #334155; border-radius: 8px; background: #0f172a; max-height: 34vh; overflow-y: auto; }
+    .list-item { padding: 10px; border-bottom: 1px solid #1e293b; cursor: pointer; }
+    .list-item:last-child { border-bottom: none; }
+    .list-item:active { background: #1e293b; }
+    .list-item b { display: block; font-size: 13px; color: #e2e8f0; font-weight: 600; overflow-wrap: anywhere; }
+    .list-item span { display: block; font-size: 11px; color: #7d8ba1; margin-top: 4px; overflow-wrap: anywhere; }
+    .list-item .tag { color: #38d39f; font-size: 11px; }
+    .list-empty { padding: 14px; text-align: center; color: #64748b; font-size: 12px; }
+    .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .chip { background: #334155; border-radius: 20px; padding: 5px 12px; font-size: 12px; cursor: pointer; }
+    .chip.on { background: var(--accent); }
+    .mini-note { color: #7d8ba1; font-size: 11px; line-height: 1.5; margin: 8px 0 0; }
+
+    /* ── 底部导航 + 两个页面 ── */
+    .page-cinema { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .page-tickets { flex: 1; display: none; flex-direction: column; min-height: 0; }
+    .tickets-scroll { flex: 1; overflow-y: auto; padding: 14px 14px 4px; }
+    .bottom-nav { display: flex; flex: 0 0 auto; background: var(--card); border-top: 1px solid #334155; }
+    .bottom-nav .nav-item { flex: 1; text-align: center; padding: 9px 0; font-size: 12px; font-weight: bold; color: #94a3b8; cursor: pointer; border-top: 2px solid transparent; padding-bottom: calc(9px + var(--ai-phone-app-safe-bottom, 0px)); }
+    .bottom-nav .nav-item.on { color: #fff; border-top-color: var(--accent); background: #172033; }
+    .bottom-nav .nav-item span { display: block; font-size: 17px; line-height: 1.15; margin-bottom: 1px; }
+
+    /* ── 票根 ── */
+    .tickets-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px 12px; }
+    .tickets-head strong { font-size: 14px; }
+    .tickets-head .cnt { color: #94a3b8; font-size: 12px; font-weight: normal; margin-left: 6px; }
+    .ticket { position: relative; display: flex; background: #eef2f7; color: #0f172a; border-radius: 12px; margin-bottom: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+    .ticket .stub { flex: 0 0 72px; background: linear-gradient(160deg, #6366f1, #4338ca); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px 4px; border-radius: 12px 0 0 12px; }
+    .ticket .stub .vert { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 3px; font-size: 13px; font-weight: 700; }
+    .ticket .stub .no { font-size: 9px; opacity: .85; letter-spacing: 1px; }
+    .ticket .ticket-perf { position: absolute; left: 64px; top: 0; bottom: 0; width: 16px; z-index: 2; pointer-events: none; }
+    .ticket .ticket-perf::before, .ticket .ticket-perf::after { content: ''; position: absolute; left: 0; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); }
+    .ticket .ticket-perf::before { top: -8px; }
+    .ticket .ticket-perf::after { bottom: -8px; }
+    .ticket .cut { position: absolute; left: 71px; top: 8px; bottom: 8px; border-left: 2px dashed #c3cddd; }
+    .ticket .body { flex: 1; min-width: 0; padding: 13px 14px 12px 22px; }
+    .ticket .movie { font-size: 15px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+    .ticket .theme { margin-top: 6px; font-size: 12.5px; line-height: 1.55; color: #334155; overflow-wrap: anywhere; }
+    .ticket .meta-label { font-size: 10px; letter-spacing: 1px; color: #7c8aa0; margin: 11px 0 5px; }
+    .ticket .who { display: flex; flex-wrap: wrap; gap: 5px; }
+    .ticket .who span { font-size: 11.5px; background: #dbe3ee; color: #26364d; border-radius: 20px; padding: 3px 9px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ticket .who span.me { background: #6366f1; color: #fff; }
+    .ticket .who span.ai { background: #0f766e; color: #fff; }
+    .ticket .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; padding-top: 9px; border-top: 1px dashed #c3cddd; font-size: 11px; color: #5b6a80; }
+    .ticket .del { color: #b91c1c; cursor: pointer; padding: 2px 4px; }
+    .ticket-empty { text-align: center; color: #64748b; font-size: 12.5px; line-height: 1.9; padding: 34px 16px; }
+    .ticket-empty b { display: block; color: #cbd5e1; font-size: 30px; margin-bottom: 12px; font-weight: normal; }
+    .ticket .foot .acts { display: flex; gap: 12px; flex: 0 0 auto; }
+    .ticket .foot .act { color: #4338ca; cursor: pointer; padding: 2px; font-weight: 600; }
+    .check-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+    .check-row input { width: auto; margin: 2px 0 0; padding: 0; }
+    .check-row span { color: #cbd5e1; font-size: 12.5px; line-height: 1.45; }
+
+    /* 房间里收到的票根气泡 */
+    .ticket-msg { border-left: 3px solid var(--accent); background: #16203a; border-radius: 8px; padding: 9px 11px; }
+    .ticket-msg .tm-title { font-size: 13.5px; font-weight: 700; color: #e2e8f0; }
+    .ticket-msg .tm-theme { font-size: 12px; color: #a9b7cc; margin-top: 4px; line-height: 1.5; }
+    .ticket-msg .tm-foot { font-size: 11px; color: #7d8ba1; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="status-bar"></div>
+  <div class="page-cinema" id="page-cinema">
+  <div class="view-box">
+    <video id="p" controls playsinline></video>
+    <canvas id="shot"></canvas>
+  </div>
+  <div class="nav-tabs">
+    <div class="tab-btn" id="open-video">视频源</div>
+    <div class="tab-btn" id="open-room">联机房间</div>
+    <div class="tab-btn" id="open-browser">浏览器</div>
+    <div class="tab-btn" id="open-vision">AI视觉</div>
+  </div>
+  <div class="char-row">
+    <button class="char-btn" id="open-chars">角色：<b id="char-summary">未选择</b>（点这里选，可多选）</button>
+  </div>
+  <div class="room-status">
+    <span id="room-status-text">未联机</span>
+    <span id="room-status-code"></span>
+  </div>
+  <div class="chat-scroll" id="chat-list">
+    <div class="message sys">系统：环境检查中...</div>
+  </div>
+  <div class="input-bar">
+    <input type="text" id="danmu-input" placeholder="输入弹幕...">
+    <button class="tab-btn" style="flex:0.3;" id="send-btn">发送</button>
+    <button class="tab-btn" style="flex:0.35; background:#10b981;" id="ai-btn">AI吐槽</button>
+  </div>
+  </div><!-- /page-cinema -->
+
+  <!-- 票根页 -->
+  <div class="page-tickets" id="page-tickets">
+    <div class="tickets-scroll">
+      <div class="tickets-head">
+        <strong>观影记录<span class="cnt" id="tickets-count"></span></strong>
+        <button class="tab-btn" style="flex:0 0 auto; width:auto; padding:8px 12px; background:#10b981;" id="make-ticket">+ 存一张票根</button>
+      </div>
+      <div id="tickets-list"></div>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <div class="bottom-nav">
+    <div class="nav-item on" id="nav-cinema"><span>🎬</span>影院</div>
+    <div class="nav-item" id="nav-tickets"><span>🎟️</span>票根</div>
+  </div>
+
+  <!-- 视频源 -->
+  <div class="overlay" id="modal-video">
+    <div class="modal">
+      <h3>视频源设置</h3>
+      <input type="text" id="inp-url" placeholder="粘贴视频直链 (mp4/m3u8)">
+      <button class="tab-btn" style="width:100%; background:var(--accent)" id="confirm-video">加载直链并广播</button>
+      <div class="divider"></div>
+      <label class="hint">或选择本地视频文件（仅本机可见，联机同伴需各自加载同一视频）</label>
+      <input type="file" id="inp-file" accept="video/*" style="width:100%; color:#94a3b8; font-size:13px; margin-bottom:12px;">
+      <button class="tab-btn" style="width:100%; background:#10b981;" id="confirm-file">播放本地视频</button>
+      <button class="tab-btn" style="width:100%; margin-top:8px" onclick="closeAll()">取消</button>
+    </div>
+  </div>
+
+  <!-- 联机房间 -->
+  <div class="overlay" id="modal-room">
+    <div class="modal">
+      <h3>联机房间</h3>
+      <div class="field">
+        <label>我的昵称（联机时显示给别人看）</label>
+        <input type="text" id="inp-nick" placeholder="给自己起个昵称...">
+      </div>
+      <button class="tab-btn" style="width:100%; background:var(--accent)" id="create-room">创建新房间</button>
+      <div class="divider"></div>
+      <input type="text" id="inp-room" placeholder="输入房号加入朋友房间">
+      <button class="tab-btn" style="width:100%; background:var(--accent)" id="join-room">加入房间</button>
+      <div class="divider"></div>
+      <button class="tab-btn" style="width:100%; display:none;" id="leave-room">退出当前房间</button>
+      <button class="tab-btn" style="width:100%; margin-top:8px" id="close-room">关闭</button>
+    </div>
+  </div>
+
+  <!-- 内置浏览器 -->
+  <div class="overlay" id="modal-browser">
+    <div class="modal">
+      <h3>内置浏览器</h3>
+      <p class="hint">粘贴一个网页地址，APP 会抓取页面并找出里面的视频直链（mp4 / m3u8）。只做解析，不渲染网页。</p>
+      <div class="row-flex">
+        <input type="text" id="inp-page" placeholder="https://example.com/play/123">
+        <button class="tab-btn" style="flex:0 0 auto; width:auto; padding:0 14px; background:var(--accent)" id="open-page">打开</button>
+      </div>
+      <div class="chip-row" style="margin-top:12px;">
+        <span class="chip" id="tab-found">解析结果</span>
+        <span class="chip" id="tab-history">历史</span>
+        <span class="chip" id="tab-fav">收藏</span>
+      </div>
+      <div class="list-box" id="browser-list"><div class="list-empty">还没有内容，先打开一个地址试试。</div></div>
+      <div class="row-flex" style="margin-top:12px;">
+        <button class="tab-btn" style="flex:1" id="fav-current">收藏当前视频</button>
+        <button class="tab-btn" style="flex:0.6" id="close-browser">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 角色多选 -->
+  <div class="overlay" id="modal-chars">
+    <div class="modal">
+      <h3>选择角色（可多选）</h3>
+      <p class="hint">选 1 个：角色单独吐槽。选多个：一次生成多人同台，按「名字：内容」逐行返回，每人一句。</p>
+      <div id="char-picks"></div>
+      <div class="divider"></div>
+      <button class="tab-btn" style="width:100%; background:var(--accent)" id="save-chars">保存选择</button>
+      <button class="tab-btn" style="width:100%; margin-top:8px" id="close-chars">关闭（自动保存）</button>
+      <p class="mini-note" id="char-tip"></p>
+    </div>
+  </div>
+
+  <!-- AI视觉设置 -->
+  <div class="overlay" id="modal-vision">
+    <div class="modal">
+      <h3>AI 视觉吐槽</h3>
+      <p class="hint">宿主 ai.generate 不支持看图。这里填一个支持视觉的 OpenAI 兼容接口（如 GPT-4o / Gemini / 通义千问 VL），AI 才能真正看到画面吐槽。配置只存在本机，不上传。</p>
+      <div class="field">
+        <label>视觉接口 Base URL</label>
+        <input type="text" id="inp-vision-base" placeholder="https://api.openai.com/v1">
+      </div>
+      <div class="field">
+        <label>API Key</label>
+        <input type="password" id="inp-vision-key" placeholder="sk-...">
+      </div>
+      <div class="field">
+        <label>视觉模型名</label>
+        <div style="display:flex;gap:8px;">
+          <select id="inp-vision-model" style="flex:1;min-width:0;background:#0f172a;border:1px solid #334155;border-radius:6px;color:white;padding:12px;font-size:14px;">
+            <option value="">先填 Base URL + Key，再点右侧拉取</option>
+          </select>
+          <button class="tab-btn" type="button" style="flex:0 0 auto;width:auto;padding:0 14px;background:#334155;" id="fetch-models-btn">拉取模型</button>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <input type="checkbox" id="inp-vision-enable" style="width:auto;margin:0;">
+        <span style="color:#eef1f7;font-size:14px;">启用视觉吐槽（关掉则退回纯文本陪看）</span>
+      </label>
+      <button class="tab-btn" style="width:100%; background:var(--accent)" id="save-vision">保存</button>
+      <button class="tab-btn" style="width:100%; margin-top:8px" id="close-vision">关闭（自动保存）</button>
+    </div>
+  </div>
+
+  <!-- 存票根 -->
+  <div class="overlay" id="modal-ticket">
+    <div class="modal">
+      <h3>存一张票根</h3>
+      <div class="field">
+        <label>片名</label>
+        <input type="text" id="inp-ticket-title" placeholder="这场看的是什么">
+      </div>
+      <p class="hint">主题由你选中的第一个角色用一句话概括（依据片名 + 最近的弹幕吐槽）。一起观影的人会自动记下：你、房间里其他用户，以及各自的角色。</p>
+      <label class="check-row"><input type="checkbox" id="ticket-memo" checked><span>让 AI 记住这场电影：写入角色记忆库（长期记忆 + 短期事件流），之后在别的 APP 里聊天 TA 也记得</span></label>
+      <label class="check-row"><input type="checkbox" id="ticket-chat" checked><span>同时写进与第一个角色的聊天记录（聊天室能看到这条观影事件）</span></label>
+      <button class="tab-btn" style="width:100%; background:var(--accent)" id="confirm-ticket">生成票根</button>
+      <button class="tab-btn" style="width:100%; margin-top:8px" onclick="closeAll()">取消</button>
+    </div>
+  </div>
+
+  <!-- 分享票根 -->
+  <div class="overlay" id="modal-share">
+    <div class="modal">
+      <h3>分享票根</h3>
+      <p class="hint">把票根做成聊天卡片发给某个角色。也可以反过来——以 TA 的身份把票根递给你看。</p>
+      <div class="field">
+        <label>发给谁</label>
+        <select id="share-target" style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:6px;color:white;padding:12px;font-size:14px;"></select>
+      </div>
+      <div class="field">
+        <label>以谁的身份送出</label>
+        <div class="chip-row" style="margin:0;">
+          <span class="chip on" id="share-as-me">我</span>
+          <span class="chip" id="share-as-char">TA</span>
+        </div>
+      </div>
+      <label class="check-row"><input type="checkbox" id="share-reply" checked><span>送出后让 TA 回一句</span></label>
+      <button class="tab-btn" style="width:100%; background:var(--accent)" id="confirm-share">送出票根</button>
+      <button class="tab-btn" style="width:100%; margin-top:8px" onclick="closeAll()">取消</button>
+    </div>
+  </div>
+
+  <script>
+    const api = window.AiPhone;
+    const player = document.getElementById('p');
+    const shotCanvas = document.getElementById('shot');
+    const chatList = document.getElementById('chat-list');
+
+    // ── 状态 ──
+    // room: api.room.create/join 返回的房间信息 { code, isHost, selfUserId, players, ... }
+    let room = null;
+    // 防止「收到远端同步 → 本地播放器事件 → 又广播同步」的死循环
+    let applyingRemote = false;
+    // 视觉配置：{ baseUrl, apiKey, model, enabled }
+    let visionCfg = { baseUrl: '', apiKey: '', model: '', enabled: false };
+    // 角色列表缓存（含 persona/personality，供视觉接口注入人设）
+    let charList = [];
+    // 已选角色 id 数组：1 个 = 单人吐槽；≥2 = 多人同台
+    let selectedCharIds = [];
+    // 用户昵称（联机时显示，不一定要用户名）
+    let myNick = '';
+    // 内置浏览器：最近一次解析的页面与结果
+    let browserSourceUrl = '';
+    let browserFound = [];
+    let browserTab = 'found';
+    let browserTitle = '';
+    // 观影记录：页面切换 + 票根数据
+    let view = 'cinema';
+    // 房间里其他玩家带进来的角色名（从广播里累积），仅用于票根署名
+    let peerAiNames = [];
+    // 最近的非系统发言，作为 AI 概括主题的线索
+    let recentLines = [];
+    // AI 互相接话的链式深度上限（超过就停，避免两家 AI 无限刷屏）
+    const MAX_CHAIN_DEPTH = 4;
+    // 分享票根弹窗状态
+    let shareTicketId = '';
+    let shareIdentity = 'me';
+    // 票根缓存：按 id 取回，供分享用
+    let ticketCache = {};
+
+    const NICK_DB_COLLECTION = 'user_nick';
+    const NICK_DB_ID = 'main';
+    const VISION_DB_COLLECTION = 'vision_config';
+    const VISION_DB_ID = 'main';
+    const UI_DB_COLLECTION = 'ui_state';
+    const UI_DB_ID = 'main';
+    const HISTORY_DB_COLLECTION = 'browser_history';
+    const FAV_DB_COLLECTION = 'browser_fav';
+    const RECORD_DB_COLLECTION = 'watch_records';
+    // 开发版主标签：sqzcinema18（正式版请改回 sqzcinema，并与 presets.json 的 tags 保持一致）
+    const APP_TAGS_SOLO = ['sqzcinema18', 'watch', 'solo'];
+    const APP_TAGS_MULTI = ['sqzcinema18', 'watch', 'multi'];
+    const MAX_SPEAKERS_PER_TURN = 6;
+    // network.fetch 请求体上限 131072 字符，抓帧 dataURL 留足余量
+    const FRAME_MAX_CHARS = 110000;
+
+    function closeAll() { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); }
+    function toast(t) { try { api.ui.toast(t).catch(() => {}); } catch (e) {} }
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    function addMsg(s, t, type) {
+      const div = document.createElement('div');
+      div.className = `message ${type || ''}`;
+      div.innerHTML = `<b>${escapeHtml(s)}:</b><span>${escapeHtml(t)}</span>`;
+      chatList.appendChild(div);
+      chatList.scrollTop = chatList.scrollHeight;
+      if (type !== 'sys') {
+        recentLines.push(`${s}：${t}`);
+        if (recentLines.length > 12) recentLines = recentLines.slice(-12);
+      }
+    }
+    function newId(prefix) {
+      return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    // ── 私有数据（没有 upsert，先 list 找记录再 update / create）──
+    async function dbRead(collection, id) {
+      try {
+        const rows = (await api.db.list(collection, { limit: 50 })) || [];
+        return rows.find(r => String(r.id) === String(id)) || null;
+      } catch (e) { return null; }
+    }
+    async function dbWrite(collection, id, payload) {
+      try {
+        await api.db.update(collection, id, payload);
+      } catch (e) {
+        try { await api.db.create(collection, { id: id, ...payload }); } catch (e2) {}
+      }
+    }
+
+    function nameOf(charId) {
+      const found = charList.find(c => String(c.id) === String(charId));
+      return found ? found.name : 'AI';
+    }
+    function charsOf(ids) {
+      return ids.map(id => ({ id: id, name: nameOf(id) }));
+    }
+    function updateCharSummary() {
+      const el = document.getElementById('char-summary');
+      if (!charList.length) { el.textContent = '没有角色'; return; }
+      if (!selectedCharIds.length) { el.textContent = '未选择'; return; }
+      const names = selectedCharIds.map(nameOf);
+      el.textContent = selectedCharIds.length === 1
+        ? names[0]
+        : `${names.join('、')}（${selectedCharIds.length}人同台）`;
+    }
+
+    function updateRoomStatus() {
+      const txt = document.getElementById('room-status-text');
+      const codeEl = document.getElementById('room-status-code');
+      const leaveBtn = document.getElementById('leave-room');
+      const visionTag = (visionCfg.enabled && visionCfg.baseUrl && visionCfg.apiKey && visionCfg.model)
+        ? '<span class="vision-on"> · 视觉开</span>'
+        : '<span class="vision-off"> · 视觉关</span>';
+      const charTag = selectedCharIds.length > 1 ? `<span class="vision-on"> · ${selectedCharIds.length}人</span>` : '';
+      if (room) {
+        const n = Array.isArray(room.players) ? room.players.length : 0;
+        txt.innerHTML = `${escapeHtml(room.isHost ? '房主' : '成员')} · 在线 ${n} 人${charTag}${visionTag}`;
+        codeEl.innerHTML = `房号 <span class="code">${escapeHtml(room.code)}</span>`;
+        leaveBtn.style.display = 'block';
+      } else {
+        txt.innerHTML = `未联机${charTag}${visionTag}`;
+        codeEl.textContent = '';
+        leaveBtn.style.display = 'none';
+      }
+    }
+
+    // ── 联机事件（必须在 manifest.extensions.events 里声明，否则订阅会抛错）──
+    api.on('room.message', (msg) => {
+      if (!msg || !msg.from) return;
+      handleRemoteData(msg.from.name, msg.payload);
+    });
+    api.on('room.players', (data) => {
+      if (room && data && Array.isArray(data.players)) room.players = data.players;
+      if (room) addMsg('系统', `当前在线: ${(data && data.players ? data.players.length : 0)} 人`, 'sys');
+      updateRoomStatus();
+    });
+    api.on('room.closed', (data) => {
+      const reason = (data && data.reason) ? data.reason : '';
+      addMsg('系统', `房间已断开${reason ? '：' + reason : ''}`, 'sys');
+      room = null;
+      updateRoomStatus();
+    });
+
+    async function createRoom() {
+      const nick = document.getElementById('inp-nick').value.trim();
+      if (nick) await saveNick(nick);
+      toast('创建房间中...');
+      try {
+        room = await api.room.create({ title: 'SQZcinema 观影房', maxPlayers: 12 });
+        toast('房间已创建');
+        addMsg('系统', `已创建房间：${room.code}（本机房间，${Math.max(0, (room.players || []).length - 1)} 位角色已入场，选好角色就能一起看）`, 'sys');
+        updateRoomStatus();
+        closeAll();
+      } catch (e) {
+        toast(e.message || '创建失败');
+        addMsg('错误', e.message || '创建失败（联机需要站点启用账号模式并配置 Supabase）', 'sys');
+      }
+    }
+
+    async function joinRoom() {
+      const code = document.getElementById('inp-room').value.trim();
+      if (!code) { toast('请输入房号'); return; }
+      const nick = document.getElementById('inp-nick').value.trim();
+      if (nick) await saveNick(nick);
+      toast('加入房间中...');
+      try {
+        room = await api.room.join({ code: code });
+        toast('已加入房间');
+        addMsg('系统', `已加入房间：${room.code}`, 'sys');
+        updateRoomStatus();
+        closeAll();
+      } catch (e) {
+        toast(e.message || '加入失败');
+        addMsg('错误', e.message || '加入失败（联机需要站点启用账号模式并配置 Supabase）', 'sys');
+      }
+    }
+
+    async function broadcast(payload) {
+      if (!room) return;
+      try { await api.room.send(payload); } catch (e) { console.error('broadcast', e); }
+    }
+
+    function handleRemoteData(sender, data) {
+      if (!data || typeof data !== 'object') return;
+      if (data.type === 'LOAD') {
+        applyingRemote = true;
+        loadVideo(data.url);
+        window.setTimeout(() => { applyingRemote = false; }, 600);
+        addMsg('系统', `${sender} 切换了视频源`, 'sys');
+        return;
+      }
+      if (data.type === 'CHAT') {
+        const displayName = data.nick || sender;
+        if (data.isAI) {
+          const aiName = data.as ? `${data.as}（${displayName}的AI）` : `${displayName}的AI`;
+          addMsg(aiName, data.text, 'ai');
+          if (data.as && peerAiNames.indexOf(String(data.as)) < 0) peerAiNames.push(String(data.as));
+        } else {
+          addMsg(displayName, data.text, '');
+        }
+        // 聊天互通：收到任何消息都可能触发本地 AI 回复（含 AI 回复 AI）
+        const depth = typeof data.depth === 'number' ? data.depth : 0;
+        if (depth < MAX_CHAIN_DEPTH && selectedCharIds.length) {
+          // 角色之间也互相接话：带上对方角色名，让自家角色能喊名字回应
+          const replyChance = data.isAI ? 0.45 : 0.6;
+          if (Math.random() < replyChance) {
+            const ctx = {
+              who: data.isAI ? `${data.as || 'AI'}（${displayName}的）` : displayName,
+              text: data.text,
+              isAI: data.isAI,
+              peerChar: data.as || '',
+              depth: depth,
+            };
+            window.setTimeout(() => triggerAI('', ctx), 1000 + Math.random() * 2000);
+          }
+        }
+        return;
+      }
+      if (data.type === 'TICKET') {
+        // 房间里别人分享的票根
+        addTicketMsg(data.nick || sender, data.ticket || {});
+        return;
+      }
+      if (data.type === 'SYNC') {
+        // 只有房主是播放进度的权威源；非房主套用房主的同步指令
+        if (room && !room.isHost) {
+          applyingRemote = true;
+          if (typeof data.time === 'number' && Math.abs(player.currentTime - data.time) > 2) {
+            try { player.currentTime = data.time; } catch (e) {}
+          }
+          if (data.paused) { player.pause(); } else { player.play().catch(() => {}); }
+          window.setTimeout(() => { applyingRemote = false; }, 300);
+        }
+      }
+    }
+
+    // ── 播放同步：仅房主广播，且忽略远端同步触发的本地事件 ──
+    function onPlayerChange() {
+      if (!room || applyingRemote) return;
+      if (!room.isHost) return; // 非房主不广播进度，避免多方互相打架
+      broadcast({ type: 'SYNC', time: player.currentTime, paused: player.paused });
+    }
+    player.addEventListener('play', onPlayerChange);
+    player.addEventListener('pause', onPlayerChange);
+    player.addEventListener('seeked', onPlayerChange);
+
+    // ── 视频加载：三段式策略保证所有直链都能抓帧 ──
+    // 1) 直接带 CORS 加载 → 成功则抓帧可用
+    // 2) CORS 失败 → 用 CORS 代理包裹 URL 直接流式播放（代理加 CORS 头，canvas 可抓帧）
+    // 3) 代理也失败 → 不带 CORS 直接加载（视频能放，但无法视觉吐槽）
+    // local=true 时为本地 blob URL（同源，抓帧必定可用）。
+    let currentVideoUrl = '';
+    let loadStage = '';
+    let proxyIdx = 0;
+    let frameAllowed = false;
+    let currentBlobUrl = null;
+    const CORS_PROXIES = [
+      (u) => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+      (u) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+      (u) => 'https://api.codetabs.com/v1/proxy/?quest=' + encodeURIComponent(u),
+      (u) => 'https://cors.eu.org/' + u,
+    ];
+    function revokeBlobUrl() {
+      if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); currentBlobUrl = null; }
+    }
+    function loadVideo(url, opts) {
+      opts = opts || {};
+      if (!opts.keepBlob) revokeBlobUrl();
+      currentVideoUrl = url;
+      proxyIdx = 0;
+      if (opts.local) {
+        loadStage = 'local';
+        frameAllowed = true;
+        player.crossOrigin = 'anonymous';
+        player.src = url;
+        player.load();
+        player.play().catch(() => {});
+        return;
+      }
+      frameAllowed = false;
+      loadStage = 'direct';
+      player.crossOrigin = 'anonymous';
+      player.src = url;
+      player.load();
+      player.play().catch(() => {});
+    }
+    player.addEventListener('loadeddata', () => {
+      if (loadStage === 'direct' || loadStage === 'proxy') frameAllowed = true;
+    });
+    player.addEventListener('error', () => {
+      if (loadStage === 'direct') {
+        tryNextProxy();
+      } else if (loadStage === 'proxy') {
+        proxyIdx++;
+        if (proxyIdx < CORS_PROXIES.length) {
+          tryNextProxy();
+        } else {
+          loadStage = 'nocors';
+          frameAllowed = false;
+          player.removeAttribute('crossorigin');
+          player.src = currentVideoUrl;
+          player.load();
+          player.play().catch(() => {});
+          addMsg('系统', '所有代理均加载失败，视觉吐槽不可用（纯文本陪看仍可用）', 'sys');
+        }
+      }
+    });
+    // 阶段 2：逐个尝试 CORS 代理，直接把代理 URL 设为 video src（流式播放，不需要下载整个文件）
+    function tryNextProxy() {
+      // m3u8 流媒体：代理无法中转分片，直接跳到阶段 3
+      if (/\.m3u8(\?|$)/i.test(currentVideoUrl)) {
+        loadStage = 'nocors';
+        frameAllowed = false;
+        player.removeAttribute('crossorigin');
+        player.src = currentVideoUrl;
+        player.load();
+        player.play().catch(() => {});
+        addMsg('系统', 'm3u8 流媒体不支持代理抓帧，视觉吐槽不可用（纯文本陪看仍可用）', 'sys');
+        return;
+      }
+      if (proxyIdx === 0) addMsg('系统', '视频源不支持跨域，正在通过代理加载…', 'sys');
+      const proxyUrl = CORS_PROXIES[proxyIdx](currentVideoUrl);
+      loadStage = 'proxy';
+      frameAllowed = false;
+      player.crossOrigin = 'anonymous';
+      player.src = proxyUrl;
+      player.load();
+      player.play().catch(() => {});
+      // 如果成功，loadeddata 事件会把 frameAllowed 设为 true
+    }
+
+    // ── 视频源：直链 ──
+    document.getElementById('confirm-video').addEventListener('click', () => {
+      const url = document.getElementById('inp-url').value.trim();
+      if (!url) return;
+      loadVideo(url);
+      broadcast({ type: 'LOAD', url: url });
+      addMsg('系统', '已加载视频源并广播', 'sys');
+      closeAll();
+    });
+
+    // ── 视频源：本地文件 ──
+    document.getElementById('confirm-file').addEventListener('click', () => {
+      const fileInput = document.getElementById('inp-file');
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) { toast('请先选择一个视频文件'); return; }
+      if (!file.type.startsWith('video/')) { toast('请选择视频文件'); return; }
+      revokeBlobUrl();
+      currentBlobUrl = URL.createObjectURL(file);
+      loadVideo(currentBlobUrl, { local: true, keepBlob: true });
+      addMsg('系统', `已加载本地视频：${file.name}（仅本机可见，联机同伴需各自加载同一视频文件才能同步画面）`, 'sys');
+      closeAll();
+    });
+
+    // ── 抓取当前视频帧为 JPEG dataURL ──
+    // 只有以 crossOrigin="anonymous" 成功加载的源（frameAllowed=true）才能抓帧；
+    // 否则 canvas 会被污染，toDataURL 抛 SecurityError。
+    // network.fetch 请求体上限 131072 字符，所以按 640/480/360 逐级降档，超限就换更小的一档。
+    function grabFrame() {
+      if (!frameAllowed) return null;
+      try {
+        const w = player.videoWidth || 0;
+        const h = player.videoHeight || 0;
+        if (!w || !h) return null;
+        const ctx = shotCanvas.getContext('2d');
+        const plans = [[640, 0.5], [480, 0.45], [360, 0.4]];
+        for (let i = 0; i < plans.length; i++) {
+          const maxW = plans[i][0];
+          const quality = plans[i][1];
+          const scale = Math.min(1, maxW / w);
+          shotCanvas.width = Math.max(1, Math.round(w * scale));
+          shotCanvas.height = Math.max(1, Math.round(h * scale));
+          ctx.drawImage(player, 0, 0, shotCanvas.width, shotCanvas.height);
+          const dataUrl = shotCanvas.toDataURL('image/jpeg', quality);
+          if (dataUrl.length <= FRAME_MAX_CHARS) return dataUrl;
+        }
+        return null; // 三轮都超限：宁可不带画面，也不要撞请求体上限
+      } catch (e) {
+        return null; // 极少数情况仍被污染
+      }
+    }
+
+    // ── 弹幕 ──
+    async function sendChat() {
+      const input = document.getElementById('danmu-input');
+      const text = input.value.trim();
+      if (!text) return;
+      if (!room) { toast('请先创建或加入房间'); return; }
+      input.value = '';
+      const name = getDisplayName();
+      addMsg(name, text, '');
+      await broadcast({ type: 'CHAT', text: text, isAI: false, nick: name });
+      triggerAI(text);
+    }
+    document.getElementById('send-btn').addEventListener('click', sendChat);
+    document.getElementById('danmu-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+
+    // 「AI吐槽」按钮：每个玩家都能召唤自己的 AI 针对当前画面发言
+    document.getElementById('ai-btn').addEventListener('click', () => {
+      if (!room) { toast('请先创建或加入房间'); return; }
+      triggerAI('');
+    });
+
+    // ── 昵称持久化 ──
+    async function loadNick() {
+      const row = await dbRead(NICK_DB_COLLECTION, NICK_DB_ID);
+      if (row && row.nick) myNick = String(row.nick);
+    }
+    async function saveNick(nick) {
+      myNick = nick;
+      await dbWrite(NICK_DB_COLLECTION, NICK_DB_ID, { nick: nick });
+    }
+    // 获取显示名：优先昵称，其次联机身份 id（room.selfName 不在 SDK 约定里，不依赖它）
+    function getDisplayName() {
+      if (myNick) return myNick;
+      if (room && room.selfUserId) return '我(' + String(room.selfUserId).slice(-4) + ')';
+      return '我';
+    }
+  // ── 以下是多角色吐槽 / 视觉 / 内置浏览器部分 ──
+
+    // ══════════ 多角色同台吐槽 ══════════
+    // 命中规则：条目 tags 必须全部出现在本次 appTags 里。
+    // 单人 → ['sqzcinema','watch','solo'] 只命中单人条目；
+    // 多人 → ['sqzcinema','watch','multi'] 只命中多人条目，两套输出要求不会打架。
+    let aiBusy = false;
+    async function triggerAI(userText, context) {
+      if (!room || aiBusy) return;
+      aiBusy = true;
+      const aiBtn = document.getElementById('ai-btn');
+      const oldLabel = aiBtn.textContent;
+      aiBtn.textContent = '生成中…';
+      aiBtn.disabled = true;
+      try {
+        await doTriggerAI(userText, context);
+      } finally {
+        aiBusy = false;
+        aiBtn.disabled = false;
+        aiBtn.textContent = oldLabel;
+      }
+    }
+
+    // 把「名字：内容」逐行拆成多条发言。
+    // - 名字对得上参演角色 → 归给那个角色；
+    // - 名字对不上、但上一行有说话人 → 当作那人的续行（模型偶尔会换行）；
+    // - 开头就对不上 → 归给第一个角色，避免整段丢失。
+    function normalizeSpeakerKey(value) {
+      return String(value || '')
+        .replace(/[\s\u3000]/g, '')
+        .replace(/[「」【】\[\]（）()<>《》"'’‘“”：:，,。.!！?？*\-—_]/g, '')
+        .toLowerCase();
+    }
+    function parseMultiSpeak(rawText, chars) {
+      const lines = String(rawText || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+      const byName = new Map();
+      chars.forEach(char => byName.set(normalizeSpeakerKey(char.name), char));
+      const collected = [];
+      let last = null;
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].replace(/^[\-•*·]\s*/, '');
+        const match = line.match(/^([^：:]{1,24})[：:]\s*(.+)$/);
+        let speaker = null;
+        let body = line;
+        if (match) {
+          const key = normalizeSpeakerKey(match[1]);
+          speaker = byName.get(key) || null;
+          if (!speaker && key) {
+            // 容错：「角色名（我的AI）」「[角色名]」这类写法，或名字被模型改写少量字
+            for (let j = 0; j < chars.length; j++) {
+              const charKey = normalizeSpeakerKey(chars[j].name);
+              if (charKey && (key.includes(charKey) || charKey.includes(key))) { speaker = chars[j]; break; }
+            }
+          }
+          if (speaker) body = match[2].trim();
+        }
+        if (!body) continue;
+        if (speaker) {
+          last = { charId: speaker.id, name: speaker.name, text: body };
+          collected.push(last);
+        } else if (last) {
+          last.text = (last.text + ' ' + line).trim();
+        } else {
+          last = { charId: chars[0].id, name: chars[0].name, text: line };
+          collected.push(last);
+        }
+      }
+      // 同一个角色多行 → 合并成一条，避免刷屏
+      const merged = [];
+      for (let i = 0; i < collected.length; i++) {
+        const item = collected[i];
+        const prev = merged.find(x => x.charId === item.charId);
+        if (prev) prev.text = (prev.text + ' ' + item.text).trim();
+        else merged.push({ charId: item.charId, name: item.name, text: item.text });
+      }
+      return merged.slice(0, MAX_SPEAKERS_PER_TURN);
+    }
+
+    async function generateForCharacters(instruction) {
+      if (selectedCharIds.length === 1) {
+        const res = await api.ai.generate({
+          characterId: selectedCharIds[0],
+          appTags: APP_TAGS_SOLO,
+          instruction: instruction,
+        });
+        const text = String((res && res.text) || '').trim();
+        return text ? [{ charId: selectedCharIds[0], name: nameOf(selectedCharIds[0]), text: text }] : [];
+      }
+      // 多角色：宿主组装全部参演角色的人设/记忆/世界书，返回原始文本，格式由预设约定
+      const res = await api.ai.generate({
+        characterIds: selectedCharIds.slice(),
+        appTags: APP_TAGS_MULTI,
+        instruction: instruction,
+      });
+      const raw = String((res && res.text) || '');
+      const parsed = parseMultiSpeak(raw, charsOf(selectedCharIds));
+      if (!parsed.length && raw.trim()) {
+        return [{ charId: selectedCharIds[0], name: nameOf(selectedCharIds[0]), text: raw.trim() }];
+      }
+      return parsed;
+    }
+
+    async function doTriggerAI(userText, context) {
+      if (!room) return;
+      if (!selectedCharIds.length) {
+        addMsg('系统', '还没选角色：点上方「角色」按钮选一个或多个角色，AI 才会开口', 'sys');
+        return;
+      }
+      const depth = context ? (context.depth || 0) + 1 : 0;
+
+      let promptText;
+      if (context) {
+        const whoLabel = context.isAI ? `${context.who}的AI` : context.who;
+        if (context.isAI && context.peerChar) {
+          // 角色之间的接话：允许喊对方名字，让两家 AI 有来有回
+          promptText = `${whoLabel}刚才说：「${context.text}」。同场还有一位角色叫「${context.peerChar}」，你可以喊TA的名字接一句，也可以顺着画面聊。`;
+        } else if (context.isAI) {
+          promptText = `${whoLabel}刚才说：「${context.text}」，你接一句。`;
+        } else {
+          promptText = `${whoLabel}说了：「${context.text}」，你回应一下。`;
+        }
+      } else if (userText) {
+        promptText = `朋友看视频时发了弹幕：「${userText}」，你回应一下。`;
+      } else {
+        promptText = '主动对当前画面说一句话。';
+      }
+
+      // 视觉：一次抓帧 + 一次描述，多人共用同一段画面上下文（省 token）
+      let sceneDesc = '';
+      let usedVision = false;
+      const visionReady = visionCfg.enabled && visionCfg.baseUrl && visionCfg.apiKey && visionCfg.model;
+      if (visionReady) {
+        const frame = grabFrame();
+        if (frame) {
+          try {
+            sceneDesc = await describeFrame(frame);
+            usedVision = !!sceneDesc;
+          } catch (e) {
+            addMsg('系统', `视觉描述失败：${e.message || e}，本次无画面上下文`, 'sys');
+          }
+        } else if (!frameAllowed) {
+          addMsg('系统', '当前视频源不支持抓帧，本次无画面上下文', 'sys');
+        } else {
+          addMsg('系统', '画面帧过大已自动压缩仍超限，本次无画面上下文', 'sys');
+        }
+      }
+
+      let instruction = sceneDesc ? `当前画面：${sceneDesc}。${promptText}` : promptText;
+      if (selectedCharIds.length > 1) {
+        const names = charsOf(selectedCharIds).map(c => c.name).join('、');
+        instruction += `\n本次同台的是：${names}。请按「名字：内容」的格式逐行输出，每人一句。`;
+      }
+
+      let lines = [];
+      try {
+        lines = await generateForCharacters(instruction);
+      } catch (e) {
+        console.error('triggerAI', e);
+        addMsg('系统', `生成失败：${e.message || e}`, 'sys');
+        return;
+      }
+      if (!lines.length) return;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const tag = usedVision ? `${line.name}(看图)` : line.name;
+        addMsg(`${tag}（我的AI）`, line.text, 'ai');
+        await broadcast({ type: 'CHAT', text: line.text, isAI: true, as: line.name, depth: depth });
+      }
+    }
+
+    // ══════════ 角色多选 ══════════
+    function renderCharPicks() {
+      const box = document.getElementById('char-picks');
+      if (!charList.length) {
+        box.innerHTML = '<div class="list-empty">没有可用的角色卡，先去桌面「角色」里创建或导入一张。</div>';
+        return;
+      }
+      box.innerHTML = charList.map(char => {
+        const tags = Array.isArray(char.tags) && char.tags.length
+          ? char.tags.join(' / ')
+          : String(char.personality || char.persona || '角色卡').replace(/\s+/g, ' ').slice(0, 30);
+        const checked = selectedCharIds.indexOf(String(char.id)) >= 0 ? 'checked' : '';
+        return `<label class="pick-row">
+          <input type="checkbox" value="${escapeHtml(char.id)}" ${checked}>
+          <span class="meta"><b style="color:#e2e8f0;font-size:14px;">${escapeHtml(char.name)}</b><span>${escapeHtml(tags)}</span></span>
+        </label>`;
+      }).join('');
+    }
+    function readCheckedCharIds() {
+      const checked = Array.from(document.querySelectorAll('#char-picks input[type="checkbox"]'))
+        .filter(el => el.checked)
+        .map(el => String(el.value));
+      // 按角色列表顺序排列，保证同一组合每次的出场顺序一致
+      return charList.map(c => String(c.id)).filter(id => checked.indexOf(id) >= 0);
+    }
+    async function persistSelectedChars() {
+      await dbWrite(UI_DB_COLLECTION, UI_DB_ID, { charIds: selectedCharIds.slice() });
+    }
+    async function saveCharsFromForm() {
+      const next = readCheckedCharIds();
+      selectedCharIds = next;
+      await persistSelectedChars();
+      updateCharSummary();
+      updateRoomStatus();
+      addMsg('系统', next.length
+        ? `已选 ${next.length} 个角色：${next.map(nameOf).join('、')}${next.length > 1 ? '（多人同台，按「名字：内容」逐行发言）' : ''}`
+        : '已清空角色选择，AI 不会开口', 'sys');
+    }
+
+    // ══════════ 视觉吐槽 ══════════
+    // 视觉接口只负责「描述画面」，不生成回复；描述再交给 ai.generate，
+    // 这样回复既有画面上下文，又带角色人设 + 记忆库 + 聊天历史。
+    async function describeFrame(frameDataUrl) {
+      const base = visionCfg.baseUrl.replace(/\/+$/, '');
+      const url = `${base}/chat/completions`;
+      const userPrompt = '用一句话简短描述这个视频画面里正在发生什么（不超过30字，只描述画面，不要发表评论）。';
+      const body = {
+        model: visionCfg.model,
+        messages: [
+          { role: 'user', content: [
+            { type: 'text', text: userPrompt },
+            { type: 'image_url', image_url: { url: frameDataUrl } },
+          ] },
+        ],
+        max_tokens: 80,
+      };
+      const res = await api.network.fetch({
+        url: url,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${visionCfg.apiKey}`,
+        },
+        body: body,
+        proxy: true,
+        timeoutMs: 30000,
+      });
+      if (!res || res.ok === false || (res.status && res.status >= 400)) {
+        let errMsg = `视觉接口错误 HTTP ${res ? res.status : '?'}`;
+        const errText = (res && (res.text || '')) || (res && res.statusText) || '';
+        if (res && res.json && res.json.error) {
+          const e = res.json.error;
+          errMsg = typeof e === 'string' ? e : (e.message || errMsg);
+        } else if (errText) {
+          errMsg = `${errMsg}：${String(errText).slice(0, 150)}`;
+        }
+        throw new Error(errMsg);
+      }
+      let data = (res && res.json) || null;
+      if (!data) {
+        const text = (res && res.text) || '';
+        if (!text) throw new Error('视觉接口未返回内容');
+        try { data = JSON.parse(text); } catch (e) { throw new Error('视觉接口返回非 JSON：' + String(text).slice(0, 150)); }
+      }
+      const out = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+      return String(out || '').trim();
+    }
+
+    async function loadVisionConfig() {
+      const row = await dbRead(VISION_DB_COLLECTION, VISION_DB_ID);
+      if (row) {
+        visionCfg = {
+          baseUrl: String(row.baseUrl || ''),
+          apiKey: String(row.apiKey || ''),
+          model: String(row.model || ''),
+          enabled: row.enabled === true,
+        };
+      }
+    }
+    async function saveVisionConfig(cfg) {
+      await dbWrite(VISION_DB_COLLECTION, VISION_DB_ID, cfg);
+      visionCfg = cfg;
+    }
+    async function saveVisionFromForm() {
+      const cfg = {
+        baseUrl: document.getElementById('inp-vision-base').value.trim(),
+        apiKey: document.getElementById('inp-vision-key').value.trim(),
+        model: document.getElementById('inp-vision-model').value.trim(),
+        enabled: document.getElementById('inp-vision-enable').checked,
+      };
+      await saveVisionConfig(cfg);
+      addMsg('系统', cfg.enabled ? `视觉吐槽已启用：${cfg.model}` : '视觉吐槽已关闭（退回纯文本陪看）', 'sys');
+      updateRoomStatus();
+    }
+
+    // ── 拉取模型列表（OpenAI 兼容 /models 端点）──
+    async function fetchModels() {
+      const base = document.getElementById('inp-vision-base').value.trim().replace(/\/+$/, '');
+      const key = document.getElementById('inp-vision-key').value.trim();
+      const sel = document.getElementById('inp-vision-model');
+      if (!base) { toast('请先填 Base URL'); return; }
+      if (!key) { toast('请先填 API Key'); return; }
+      const btn = document.getElementById('fetch-models-btn');
+      const oldText = btn.textContent;
+      btn.textContent = '拉取中…';
+      btn.disabled = true;
+      try {
+        const res = await api.network.fetch({
+          url: `${base}/models`,
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${key}` },
+          proxy: true,
+          timeoutMs: 15000,
+        });
+        if (!res || res.ok === false || (res.status && res.status >= 400)) {
+          let errMsg = `拉取失败 HTTP ${res ? res.status : '?'}`;
+          if (res && res.json && res.json.error) {
+            const e = res.json.error;
+            errMsg = typeof e === 'string' ? e : (e.message || errMsg);
+          } else if (res && res.text) {
+            errMsg = `${errMsg}：${String(res.text).slice(0, 150)}`;
+          }
+          throw new Error(errMsg);
+        }
+        let data = (res && res.json) || null;
+        if (!data) {
+          const text = (res && res.text) || '';
+          if (!text) throw new Error('接口未返回内容');
+          try { data = JSON.parse(text); } catch (e) { throw new Error('返回非 JSON：' + String(text).slice(0, 150)); }
+        }
+        const models = Array.isArray(data.data) ? data.data.map(m => m.id).filter(Boolean) : [];
+        if (!models.length) { toast('未拉取到模型'); return; }
+        const savedModel = visionCfg.model;
+        sel.innerHTML = models.map(id =>
+          `<option value="${escapeHtml(id)}"${id === savedModel ? ' selected' : ''}>${escapeHtml(id)}</option>`
+        ).join('');
+        toast(`已拉取 ${models.length} 个模型`);
+      } catch (e) {
+        toast(e.message || '拉取失败');
+        addMsg('系统', `拉取模型失败：${e.message || e}`, 'sys');
+      } finally {
+        btn.textContent = oldText;
+        btn.disabled = false;
+      }
+    }
+
+    // ══════════ 内置浏览器（解析式）══════════
+    // 说明：宿主 iframe 是 sandbox="allow-scripts allow-downloads"，不能内嵌渲染别的网页
+    // （主流站点的 X-Frame-Options / CSP frame-ancestors 也会拒绝被框）。
+    // 所以这里做的是「解析器」：抓页面 HTML → 找出可播的媒体直链 → 交给本 APP 的播放器，
+    // 顺带把页面标题、历史、收藏记下来。
+    function absolutize(raw, pageUrl) {
+      try { return new URL(String(raw || '').trim(), pageUrl).toString(); } catch (e) { return ''; }
+    }
+    function shortUrl(value) {
+      const text = String(value || '');
+      try {
+        const url = new URL(text);
+        return url.host + url.pathname.slice(0, 60) + (url.search ? '…' : '');
+      } catch (e) {
+        return text.slice(0, 80);
+      }
+    }
+    function extractMedia(html, pageUrl) {
+      const media = [];
+      const frames = [];
+      const seen = Object.create(null);
+      const push = (raw, label) => {
+        const url = absolutize(raw, pageUrl);
+        if (!url || !/^https?:/i.test(url) || seen[url]) return;
+        seen[url] = true;
+        media.push({ url: url, label: label });
+      };
+      // 1) 页面自带的播放器标签
+      html.replace(/<(?:video|source|audio)[^>]*\ssrc\s*=\s*["']([^"']+)["']/gi, (m, u) => { push(u, '页面播放器'); return m; });
+      // 2) og:video 之类的元标签
+      html.replace(/<meta[^>]*>/gi, (tag) => {
+        if (/(?:property|name)\s*=\s*["'](?:og:video(?::url|:secure_url)?|twitter:player:stream|video_src)["']/i.test(tag)) {
+          const content = tag.match(/content\s*=\s*["']([^"']+)["']/i);
+          if (content) push(content[1], 'og:video');
+        }
+        return tag;
+      });
+      // 3) 正文/JSON 里的裸媒体链接（先把 JSON 转义斜杠还原）
+      const cleaned = html.replace(/\\\//g, '/');
+      const re = /https?:\/\/[^\s"'<>\\]+?\.(?:mp4|webm|m3u8|mov|mkv|m4v)(?:\?[^\s"'<>\\]*)?/gi;
+      let hit;
+      while ((hit = re.exec(cleaned)) !== null) push(hit[0], '页面中的媒体链接');
+      // 4) iframe：不能内嵌，但能再挖一层
+      html.replace(/<iframe[^>]*\ssrc\s*=\s*["']([^"']+)["']/gi, (m, u) => {
+        const url = absolutize(u, pageUrl);
+        if (url && /^https?:/i.test(url) && frames.indexOf(url) < 0) frames.push(url);
+        return m;
+      });
+      const titleMatch = html.match(/<title[^>]*>([\s\S]{0,200}?)<\/title>/i);
+      const title = titleMatch ? titleMatch[1].replace(/\s+/g, ' ').trim() : '';
+      return { media: media, frames: frames, title: title };
+    }
+
+    async function tryDigFrame(url) {
+      try {
+        const res = await api.network.fetch({ url: url, method: 'GET', proxy: true, timeoutMs: 25000 });
+        if (!res || res.ok === false || (res.status && res.status >= 400)) return null;
+        const html = String((res && res.text) || '');
+        if (!html.trim()) return null;
+        return extractMedia(html.slice(0, 800000), url);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function openBrowserPage(rawUrl, depth) {
+      depth = depth || 0;
+      let url = String(rawUrl || '').trim();
+      if (!url) { toast('请先填一个地址'); return; }
+      if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+      const box = document.getElementById('browser-list');
+      box.innerHTML = '<div class="list-empty">解析中…（抓取页面通常几秒内完成）</div>';
+      try {
+        const res = await api.network.fetch({ url: url, method: 'GET', proxy: true, timeoutMs: 30000 });
+        if (!res || res.ok === false || (res.status && res.status >= 400)) {
+          const extra = res && res.text ? '：' + String(res.text).slice(0, 120) : '';
+          throw new Error(`HTTP ${res ? res.status : '?'}${extra}`);
+        }
+        const html = String((res && res.text) || '');
+        if (!html.trim()) throw new Error('页面没有返回内容（可能是纯 JS 动态渲染的站点）');
+        const parsed = extractMedia(html.slice(0, 800000), url);
+        if (!parsed.media.length && parsed.frames.length && depth < 2) {
+          const maxFrames = Math.min(parsed.frames.length, 2);
+          for (let i = 0; i < maxFrames; i++) {
+            const inner = await tryDigFrame(parsed.frames[i]);
+            if (inner && inner.media.length) {
+              parsed.media = inner.media;
+              parsed.title = parsed.title || inner.title;
+              break;
+            }
+          }
+        }
+        browserSourceUrl = url;
+        browserTitle = parsed.title || '';
+        browserFound = parsed.media;
+        document.getElementById('inp-page').value = url;
+        await pushBrowserHistory(url, parsed.title);
+        if (parsed.media.length) {
+          addMsg('系统', `解析到 ${parsed.media.length} 条媒体地址（来自「${parsed.title || shortUrl(url)}」）。点一条即可播放；联机时会同时广播给房间。`, 'sys');
+        } else {
+          addMsg('系统', `页面「${parsed.title || shortUrl(url)}」里没找到可播直链。动态渲染或加密分片的站点解析不出来——请在那个页面里复制直链，回来用「视频源」粘贴播放。`, 'sys');
+        }
+        browserTab = 'found';
+        await renderBrowserList();
+      } catch (e) {
+        box.innerHTML = `<div class="list-empty">解析失败：${escapeHtml(e.message || String(e))}</div>`;
+      }
+    }
+
+    async function listRows(collection, limit) {
+      try { return (await api.db.list(collection, { limit: limit || 50 })) || []; } catch (e) { return []; }
+    }
+    async function pushBrowserHistory(url, title) {
+      const rows = await listRows(HISTORY_DB_COLLECTION, 60);
+      if (rows.some(row => String(row.url) === url)) return;
+      try {
+        await api.db.create(HISTORY_DB_COLLECTION, {
+          url: url,
+          title: String(title || '').slice(0, 120),
+          at: new Date().toISOString(),
+        });
+      } catch (e) { return; }
+      const next = await listRows(HISTORY_DB_COLLECTION, 60);
+      if (next.length > 40) {
+        for (let i = 40; i < next.length; i++) {
+          try { await api.db.delete(HISTORY_DB_COLLECTION, next[i].id); } catch (e) {}
+        }
+      }
+    }
+    async function saveCurrentAsFavorite() {
+      if (!currentVideoUrl) { toast('还没有播放中的视频'); return; }
+      const rows = await listRows(FAV_DB_COLLECTION, 60);
+      if (rows.some(row => String(row.url) === currentVideoUrl)) { toast('已经收藏过了'); return; }
+      try {
+        await api.db.create(FAV_DB_COLLECTION, {
+          url: currentVideoUrl,
+          label: shortUrl(currentVideoUrl),
+          at: new Date().toISOString(),
+        });
+        toast('已收藏');
+      } catch (e) {
+        toast('收藏失败');
+      }
+    }
+
+    async function renderBrowserList() {
+      const box = document.getElementById('browser-list');
+      ['found', 'history', 'fav'].forEach(tab => {
+        const el = document.getElementById('tab-' + tab);
+        if (el) el.classList.toggle('on', browserTab === tab);
+      });
+      if (browserTab === 'found') {
+        if (!browserFound.length) {
+          box.innerHTML = '<div class="list-empty">还没有解析结果，先在上面打开一个地址。</div>';
+          return;
+        }
+        box.innerHTML = browserFound.map((item, index) => `<div class="list-item" data-kind="media" data-index="${index}">
+          <b>${escapeHtml(item.label)}</b><span class="tag">${escapeHtml(shortUrl(item.url))}</span>
+        </div>`).join('');
+        return;
+      }
+      const rows = await listRows(browserTab === 'fav' ? FAV_DB_COLLECTION : HISTORY_DB_COLLECTION, 50);
+      if (!rows.length) {
+        box.innerHTML = `<div class="list-empty">${browserTab === 'fav' ? '还没有收藏的视频。' : '还没有历史记录。'}</div>`;
+        return;
+      }
+      box.innerHTML = rows.map(row => `<div class="list-item" data-kind="saved" data-url="${escapeHtml(row.url)}">
+        <b>${escapeHtml(row.title || row.label || shortUrl(row.url))}</b><span>${escapeHtml(shortUrl(row.url))}</span>
+      </div>`).join('');
+    }
+
+    function playFoundMedia(url, label) {
+      loadVideo(url);
+      broadcast({ type: 'LOAD', url: url });
+      addMsg('系统', `已播放（${label}）：${shortUrl(url)}${room ? '（已广播给房间）' : ''}`, 'sys');
+      closeAll();
+    }
+    document.getElementById('browser-list').addEventListener('click', (event) => {
+      const item = event.target.closest ? event.target.closest('.list-item') : null;
+      if (!item) return;
+      const kind = item.getAttribute('data-kind');
+      if (kind === 'media') {
+        const found = browserFound[Number(item.getAttribute('data-index'))];
+        if (found) playFoundMedia(found.url, found.label);
+        return;
+      }
+      const url = item.getAttribute('data-url');
+      if (url) playFoundMedia(url, '历史/收藏');
+    });
+
+    // ══════════ 观影记录（票根）══════════
+    function switchView(next) {
+      view = next;
+      document.getElementById('page-cinema').style.display = next === 'cinema' ? 'flex' : 'none';
+      document.getElementById('page-tickets').style.display = next === 'tickets' ? 'flex' : 'none';
+      document.getElementById('nav-cinema').classList.toggle('on', next === 'cinema');
+      document.getElementById('nav-tickets').classList.toggle('on', next === 'tickets');
+      if (next === 'tickets') renderTickets();
+    }
+
+    async function listRecords() {
+      const rows = await listRows(RECORD_DB_COLLECTION, 100);
+      return rows.slice().sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')));
+    }
+
+    // 默认片名：优先后台解析到的网页标题，其次视频直链的文件名
+    function guessTitle() {
+      const raw = currentVideoUrl || '';
+      if (!raw) return browserTitle || '';
+      try {
+        const url = new URL(raw);
+        const seg = url.pathname.split('/').filter(Boolean).pop() || '';
+        const name = decodeURIComponent(seg).replace(/\.[a-z0-9]{2,5}$/i, '');
+        return name || browserTitle || '';
+      } catch (e) {
+        return browserTitle || '';
+      }
+    }
+
+    // 同行的人：我 + 房间里其他用户；角色：本机所选 + 房间里听过的其他玩家的角色
+    function collectParticipants() {
+      const users = [{ name: getDisplayName(), me: true }];
+      if (room && Array.isArray(room.players)) {
+        room.players.forEach(player => {
+          const name = String((player && player.name) || '').trim();
+          if (!name) return;
+          if (room.selfUserId && String(player.userId) === String(room.selfUserId)) return;
+          if (users.some(item => item.name === name)) return;
+          users.push({ name: name });
+        });
+      }
+      const chars = [];
+      selectedCharIds.forEach(id => {
+        const name = nameOf(id);
+        if (!chars.some(item => item.name === name)) chars.push({ name: name });
+      });
+      peerAiNames.forEach(name => {
+        if (!chars.some(item => item.name === name)) chars.push({ name: name });
+      });
+      return { users: users, chars: chars };
+    }
+
+    // 主题：交给第一个选中的角色，用一句话概括（复用单人观影预设：短、不带前缀）
+    async function summarizeTheme(title, hints) {
+      const charId = selectedCharIds[0];
+      if (!charId) return '';
+      const instruction = [
+        `我们刚一起看完《${title}》。`,
+        hints ? `观影过程中的弹幕与吐槽：${hints}` : '',
+        '请用一句话概括这部片子的主题（不超过20字），只输出这句话本身，不要引号、不要书名号、不要任何前缀。'
+      ].filter(Boolean).join('\n');
+      const res = await api.ai.generate({ characterId: charId, appTags: APP_TAGS_SOLO, instruction: instruction });
+      return String((res && res.text) || '').trim().replace(/^[「『"'《]|[」』"'》]$/g, '').slice(0, 60);
+    }
+
+    function ticketDateText(iso) {
+      const date = new Date(iso || Date.now());
+      if (Number.isNaN(date.getTime())) return '';
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${date.getFullYear()}.${pad(date.getMonth() + 1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    async function renderTickets() {
+      const list = document.getElementById('tickets-list');
+      if (!list) return;
+      const records = await listRecords();
+      const countEl = document.getElementById('tickets-count');
+      if (countEl) countEl.textContent = records.length ? ` ${records.length} 张` : '';
+      if (!records.length) {
+        list.innerHTML = '<div class="ticket-empty"><b>🎟️</b>还没有票根。<br>看片时点「+ 存一张票根」，<br>这里会留下一张写着主题和同行人的电影票。</div>';
+        return;
+      }
+      ticketCache = {};
+      list.innerHTML = records.map(rec => {
+        ticketCache[String(rec.id)] = rec;
+        const users = Array.isArray(rec.users) ? rec.users : [];
+        const chars = Array.isArray(rec.chars) ? rec.chars : [];
+        const no = String(rec.id || '').replace(/[^a-z0-9]/gi, '').slice(-6).toUpperCase();
+        return `<div class="ticket">
+          <div class="stub"><span class="vert">票根</span><span class="no">${escapeHtml(no)}</span></div>
+          <div class="ticket-perf"></div><div class="cut"></div>
+          <div class="body">
+            <div class="movie">${escapeHtml(rec.title || '未命名影片')}</div>
+            <div class="theme">${escapeHtml(rec.theme || '（这场没有留下主题）')}</div>
+            <div class="meta-label">同行的人</div>
+            <div class="who">${users.length
+              ? users.map(name => `<span class="me">${escapeHtml(name)}</span>`).join('')
+              : '<span class="me">我</span>'}</div>
+            ${chars.length ? `<div class="meta-label">一起观影的角色</div><div class="who">${chars.map(name => `<span class="ai">${escapeHtml(name)}</span>`).join('')}</div>` : ''}
+            <div class="foot"><span>SQZcinema 影厅 · ${escapeHtml(ticketDateText(rec.date))}</span><span class="acts"><span class="act" data-share="${escapeHtml(rec.id)}">分享</span><span class="act" data-room="${escapeHtml(rec.id)}">发到房间</span><span class="del" data-del="${escapeHtml(rec.id)}">删除</span></span></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function makeTicket() {
+      const input = document.getElementById('inp-ticket-title');
+      const title = input.value.trim();
+      if (!title) { toast('先给这场电影起个名字'); return; }
+      const btn = document.getElementById('confirm-ticket');
+      const oldLabel = btn.textContent;
+      btn.textContent = '生成中…';
+      btn.disabled = true;
+      let theme = '';
+      try {
+        theme = await summarizeTheme(title, recentLines.slice(-8).join('；'));
+      } catch (e) {
+        addMsg('系统', `主题总结失败（票根照常保存）：${e.message || e}`, 'sys');
+      }
+      const people = collectParticipants();
+      const record = {
+        id: newId('ticket'),
+        title: title,
+        theme: theme,
+        url: currentVideoUrl || '',
+        date: new Date().toISOString(),
+        users: people.users.map(item => item.name),
+        chars: people.chars.map(item => item.name),
+      };
+      try {
+        await api.db.create(RECORD_DB_COLLECTION, record);
+      } catch (e) {
+        toast('票根保存失败');
+      }
+      btn.textContent = oldLabel;
+      btn.disabled = false;
+      closeAll();
+      addMsg('系统', `票根已存入观影记录：${title}${theme ? ' · ' + theme : ''}（点底部「票根」查看）`, 'sys');
+      switchView('tickets');
+      await writeTicketMemory(record, {
+        memo: document.getElementById('ticket-memo').checked,
+        chat: document.getElementById('ticket-chat').checked,
+      });
+    }
+
+    // ── 让角色记住这场电影 ──
+    function ticketMemoryText(rec) {
+      const watchers = (rec.users || []).filter(Boolean).join('、') || '我';
+      const casts = (rec.chars || []).filter(Boolean).join('、');
+      const who = casts ? `${watchers}，还有${casts}` : watchers;
+      const theme = rec.theme ? `，主题是「${rec.theme}」` : '';
+      return { who: who, theme: theme, line: `${who}一起看了《${rec.title}》${theme}。` };
+    }
+
+    // 写记忆：长期记忆（记忆库可见）+ 短期事件流（其他 APP 的生成链路都能读到）
+    // 短期事件流是关键——它是宿主给所有 APP 共享的近期事件，所以「在别的软件聊天时也记得」。
+    async function writeTicketMemory(rec, opts) {
+      const doMemo = !opts || opts.memo !== false;
+      const doChat = !!(opts && opts.chat);
+      const targets = selectedCharIds.slice();
+      if (!targets.length) { addMsg('系统', '没选角色，这场没写进记忆（点上方「角色」选一个即可）', 'sys'); return; }
+      if (!doMemo && !doChat) return;
+      const text = ticketMemoryText(rec);
+      const errors = [];
+      if (doMemo) {
+        for (let i = 0; i < targets.length; i++) {
+          const charId = targets[i];
+          try {
+            await api.memory.addTimeline({
+              characterId: charId,
+              appLabel: 'SQZcinema',
+              detail: 'watch_movie',
+              summary: text.line,
+              appEventId: rec.id,
+              data: { ticketId: rec.id, title: rec.title },
+            });
+          } catch (e) { errors.push('短期事件流：' + (e.message || e)); }
+          try {
+            await api.memory.add({
+              characterId: charId,
+              type: 'long_term',
+              content: `我和${text.who}一起看了《${rec.title}》${text.theme || ''}。`,
+              importance: 0.5,
+              reason: 'SQZcinema 观影记录',
+            });
+          } catch (e) { errors.push('长期记忆：' + (e.message || e)); }
+        }
+      }
+      if (doChat) {
+        try {
+          await api.chat.writeHistory({
+            characterId: targets[0],
+            role: 'user',
+            content: `[观影：${text.line}]`,
+          });
+        } catch (e) { errors.push('聊天记录：' + (e.message || e)); }
+      }
+      if (errors.length) {
+        addMsg('系统', `记忆写入部分失败（票根已保存）：${errors.slice(0, 2).join('；')}。若提示「未声明权限」，请在 manifest.permissions 里加上 memory.write / chat.write。`, 'sys');
+      } else {
+        addMsg('系统', `已让 ${targets.length} 个角色记住这场电影，之后在别的 APP 里聊天 TA 也会记得。`, 'sys');
+      }
+    }
+
+    // ── 票根卡片：发给角色 ──
+    function ticketCardData(rec, byWho) {
+      const users = (rec.users || []).filter(Boolean).join('、') || '我';
+      const casts = (rec.chars || []).filter(Boolean).join('、') || '（没带角色）';
+      return {
+        summary: `${byWho}分享了观影票根：《${rec.title}》${rec.theme ? '（' + rec.theme + '）' : ''}`,
+        historyText: `[票根：${byWho}分享了《${rec.title}》的观影票根；主题：${rec.theme || '未记录'}；同行的人：${users}；一起观影的角色：${casts}]`,
+        card: {
+          appLabel: 'SQZcinema 影厅',
+          title: '观影票根',
+          subtitle: rec.title || '未命名影片',
+          body: rec.theme || '（这场没有留下主题）',
+          status: ticketDateText(rec.date),
+          accentColor: '#6366f1',
+          sections: [
+            { title: '本场', rows: [
+              { label: '片名', value: rec.title || '未命名影片' },
+              { label: '主题', value: rec.theme || '未记录' },
+            ] },
+            { title: '同场', rows: [
+              { label: '同行的人', value: users },
+              { label: '一起观影的角色', value: casts },
+            ] },
+          ],
+          actions: [{ label: '查看票根' }],
+        },
+      };
+    }
+
+    async function shareTicketToCharacter(rec, targetId, asChar, wantReply) {
+      const targetName = nameOf(targetId);
+      const byWho = asChar ? targetName : getDisplayName();
+      const data = ticketCardData(rec, byWho);
+      try {
+        await api.chat.sendCard({
+          characterId: targetId,
+          role: asChar ? 'assistant' : 'user',
+          historyRole: 'user',
+          summary: data.summary,
+          historyText: data.historyText,
+          card: data.card,
+        });
+        addMsg('系统', `票根已以「${byWho}」的身份发给 ${targetName}（去聊天室看看）`, 'sys');
+      } catch (e) {
+        addMsg('系统', `票根发送失败：${e.message || e}。若提示「未声明权限」，请在 manifest.permissions 里加上 chat.sendCard。`, 'sys');
+        return;
+      }
+      if (wantReply) {
+        try {
+          await api.chat.requestReply({ characterId: targetId });
+        } catch (e) {
+          addMsg('系统', `请 TA 回一句失败：${e.message || e}`, 'sys');
+        }
+      }
+    }
+
+    // ── 票根卡片：发到房间 ──
+    async function shareTicketToRoom(rec) {
+      if (!room) { toast('还没联机：先在「联机房间」创建或加入房间'); return; }
+      const byWho = getDisplayName();
+      await broadcast({ type: 'TICKET', nick: byWho, ticket: {
+        title: rec.title,
+        theme: rec.theme,
+        users: rec.users || [],
+        chars: rec.chars || [],
+        date: rec.date,
+      } });
+      addTicketMsg(byWho, rec);
+      addMsg('系统', '票根已发到房间，所有人都看得到', 'sys');
+    }
+
+    // 房间里收到别人的票根（本地渲染成一张小票根）
+    function addTicketMsg(sender, ticket) {
+      const div = document.createElement('div');
+      div.className = 'message ticket-msg';
+      const users = (ticket.users || []).filter(Boolean).join('、');
+      const casts = (ticket.chars || []).filter(Boolean).join('、');
+      div.innerHTML = `<div class="tm-title">🎟️ ${escapeHtml(ticket.title || '未命名影片')}</div>
+        <div class="tm-theme">${escapeHtml(ticket.theme || '（没写主题）')}</div>
+        <div class="tm-foot">来自 ${escapeHtml(sender)}${users ? ' · 同行：' + escapeHtml(users) : ''}${casts ? ' · 角色：' + escapeHtml(casts) : ''}</div>`;
+      chatList.appendChild(div);
+      chatList.scrollTop = chatList.scrollHeight;
+    }
+
+    // ── 分享弹窗 ──
+    function setShareIdentity(next) {
+      shareIdentity = next === 'char' ? 'char' : 'me';
+      document.getElementById('share-as-me').classList.toggle('on', shareIdentity === 'me');
+      document.getElementById('share-as-char').classList.toggle('on', shareIdentity === 'char');
+    }
+    function openShareModal(ticketId) {
+      const rec = ticketCache[String(ticketId)];
+      if (!rec) { toast('找不到这张票根'); return; }
+      if (!charList.length) { toast('没有可分享的角色，先去桌面「角色」创建一张'); return; }
+      shareTicketId = String(ticketId);
+      const prefer = selectedCharIds[0] && charList.some(c => String(c.id) === String(selectedCharIds[0]))
+        ? String(selectedCharIds[0])
+        : String(charList[0].id);
+      document.getElementById('share-target').innerHTML = charList.map(c =>
+        `<option value="${escapeHtml(c.id)}"${String(c.id) === prefer ? ' selected' : ''}>${escapeHtml(c.name)}</option>`
+      ).join('');
+      setShareIdentity('me');
+      document.getElementById('modal-share').style.display = 'flex';
+    }
+    async function confirmShare() {
+      const rec = ticketCache[shareTicketId];
+      if (!rec) { closeAll(); return; }
+      const targetId = document.getElementById('share-target').value;
+      const wantReply = document.getElementById('share-reply').checked;
+      const asChar = shareIdentity === 'char';
+      closeAll();
+      await shareTicketToCharacter(rec, targetId, asChar, wantReply);
+    }
+
+    // ══════════ 初始化 ══════════
+    window.addEventListener('pagehide', () => {
+      if (room) { try { api.room.leave().catch(() => {}); } catch (e) {} room = null; }
+      revokeBlobUrl();
+    });
+
+    window.onload = async () => {
+      document.getElementById('open-video').onclick = () => { document.getElementById('modal-video').style.display = 'flex'; };
+      document.getElementById('open-room').onclick = () => {
+        document.getElementById('inp-nick').value = myNick;
+        document.getElementById('modal-room').style.display = 'flex';
+      };
+      document.getElementById('close-room').onclick = async () => {
+        const nick = document.getElementById('inp-nick').value.trim();
+        if (nick && nick !== myNick) await saveNick(nick);
+        closeAll();
+      };
+      document.getElementById('open-chars').onclick = () => {
+        renderCharPicks();
+        document.getElementById('char-tip').textContent = charList.length
+          ? `已选 ${selectedCharIds.length} 个。选多个时，脚本会按「名字：内容」逐行解析成多条发言并广播给房间。`
+          : '';
+        document.getElementById('modal-chars').style.display = 'flex';
+      };
+      document.getElementById('save-chars').onclick = async () => { await saveCharsFromForm(); closeAll(); };
+      document.getElementById('close-chars').onclick = async () => { await saveCharsFromForm(); closeAll(); };
+      document.getElementById('open-browser').onclick = async () => {
+        document.getElementById('modal-browser').style.display = 'flex';
+        await renderBrowserList();
+      };
+      document.getElementById('close-browser').onclick = () => closeAll();
+      document.getElementById('open-page').onclick = () => {
+        openBrowserPage(document.getElementById('inp-page').value);
+      };
+      document.getElementById('inp-page').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') openBrowserPage(document.getElementById('inp-page').value);
+      });
+      document.getElementById('tab-found').onclick = async () => { browserTab = 'found'; await renderBrowserList(); };
+      document.getElementById('tab-history').onclick = async () => { browserTab = 'history'; await renderBrowserList(); };
+      document.getElementById('tab-fav').onclick = async () => { browserTab = 'fav'; await renderBrowserList(); };
+      document.getElementById('fav-current').onclick = saveCurrentAsFavorite;
+
+      document.getElementById('open-vision').onclick = () => {
+        document.getElementById('inp-vision-base').value = visionCfg.baseUrl;
+        document.getElementById('inp-vision-key').value = visionCfg.apiKey;
+        document.getElementById('inp-vision-enable').checked = visionCfg.enabled;
+        // 下拉框恢复：已保存的模型若不在当前列表里，补一条进去再选中
+        const sel = document.getElementById('inp-vision-model');
+        if (visionCfg.model) {
+          const exists = Array.from(sel.options).some(o => o.value === visionCfg.model);
+          if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = visionCfg.model;
+            opt.textContent = visionCfg.model;
+            sel.appendChild(opt);
+          }
+          sel.value = visionCfg.model;
+        }
+        document.getElementById('modal-vision').style.display = 'flex';
+      };
+      document.getElementById('fetch-models-btn').addEventListener('click', fetchModels);
+      document.getElementById('save-vision').addEventListener('click', async () => { await saveVisionFromForm(); closeAll(); });
+      document.getElementById('close-vision').addEventListener('click', async () => { await saveVisionFromForm(); closeAll(); });
+
+      document.getElementById('create-room').onclick = createRoom;
+      document.getElementById('join-room').onclick = joinRoom;
+      document.getElementById('leave-room').onclick = () => {
+        if (!room) return;
+        try { api.room.leave().catch(() => {}); } catch (e) {}
+        addMsg('系统', '已退出房间', 'sys');
+        room = null;
+        updateRoomStatus();
+        closeAll();
+      };
+
+      // 读取本机配置
+      await loadVisionConfig();
+      await loadNick();
+
+      try {
+        charList = (await api.characters.list()) || [];
+      } catch (e) {
+        charList = [];
+      }
+      const uiRow = await dbRead(UI_DB_COLLECTION, UI_DB_ID);
+      if (uiRow && Array.isArray(uiRow.charIds)) {
+        const valid = charList.map(c => String(c.id));
+        selectedCharIds = uiRow.charIds.map(String).filter(id => valid.indexOf(id) >= 0);
+      }
+      if (!selectedCharIds.length && !uiRow && charList.length) {
+        selectedCharIds = [String(charList[0].id)]; // 首次打开默认选第一个角色
+      }
+      if (!charList.length) {
+        addMsg('系统', '没读到角色卡：先到桌面「角色」里创建或导入一张，再回来选角色。', 'sys');
+      }
+      updateCharSummary();
+
+      const visionHint = visionCfg.enabled
+        ? '视觉吐槽已就绪'
+        : '未配置视觉（点「AI视觉」可开启看图吐槽，否则 AI 只能根据弹幕纯文本陪看）';
+      addMsg('系统', `环境就绪，${visionHint}。`, 'sys');
+      addMsg('系统', '玩法：① 上方「角色」可多选，多个角色会按「名字：内容」同台发言并广播给全房；② 「浏览器」粘贴网页地址可解析出视频直链直接播放；③ 看完点底部「票根 → 存一张票根」，AI 会写下一句主题，并记下同行的人和角色。', 'sys');
+
+      // 底部导航 + 票根
+      document.getElementById('nav-cinema').onclick = () => switchView('cinema');
+      document.getElementById('nav-tickets').onclick = () => switchView('tickets');
+      document.getElementById('make-ticket').onclick = () => {
+        document.getElementById('inp-ticket-title').value = guessTitle();
+        document.getElementById('modal-ticket').style.display = 'flex';
+      };
+      document.getElementById('confirm-ticket').onclick = makeTicket;
+      document.getElementById('tickets-list').addEventListener('click', async (event) => {
+        const node = event.target;
+        const delEl = node && node.closest ? node.closest('[data-del]') : null;
+        if (delEl) {
+          const id = delEl.getAttribute('data-del');
+          try { await api.db.delete(RECORD_DB_COLLECTION, id); } catch (e) {}
+          await renderTickets();
+          return;
+        }
+        const shareEl = node && node.closest ? node.closest('[data-share]') : null;
+        if (shareEl) { openShareModal(shareEl.getAttribute('data-share')); return; }
+        const roomEl = node && node.closest ? node.closest('[data-room]') : null;
+        if (roomEl) {
+          const rec = ticketCache[String(roomEl.getAttribute('data-room'))];
+          if (rec) await shareTicketToRoom(rec);
+        }
+      });
+
+      // 分享弹窗
+      document.getElementById('share-as-me').onclick = () => setShareIdentity('me');
+      document.getElementById('share-as-char').onclick = () => setShareIdentity('char');
+      document.getElementById('confirm-share').onclick = confirmShare;
+      await renderTickets();
+      updateRoomStatus();
+    };
+  </script>
+</body>
+</html>

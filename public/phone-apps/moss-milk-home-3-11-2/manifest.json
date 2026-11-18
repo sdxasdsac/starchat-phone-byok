@@ -1,0 +1,31 @@
+{
+  "sdkVersion": "1.0",
+  "id": "moss.milk.home",
+  "name": "共筑小窝",
+  "version": "3.11.2",
+  "author": "仓鼠",
+  "description": "粉白蓝黄的小家。和角色一起建造、换装、散步，在家具旁分享日常。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "world.read",
+    "ai.generate",
+    "ai.chat",
+    "voice.readProfiles",
+    "voice.tts",
+    "chat.sendCard",
+    "memory.readCore",
+    "memory.readLongTerm",
+    "memory.readShortTerm",
+    "chat.read"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ]
+  }
+}

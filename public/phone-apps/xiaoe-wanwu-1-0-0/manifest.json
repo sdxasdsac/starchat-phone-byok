@@ -1,0 +1,11 @@
+{
+  "id": "starchat.xiaoe.wanwu",
+  "name": "小饿万物",
+  "version": "1.0.0",
+  "sdkVersion": "1.0",
+  "author": "—",
+  "description": "外卖点单小应用：按分类挑吃的、加购物车、结算时可以选择角色代付或自己支付，还能用「AI 造物」生成专属商品。",
+  "icon": "",
+  "entry": "index.html",
+  "permissions": ["app.data.read", "app.data.write", "ui.toast"]
+}

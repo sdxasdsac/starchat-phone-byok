@@ -1,0 +1,30 @@
+{
+  "id": "avalon.board-game",
+  "name": "阿瓦隆",
+  "version": "3.0.21",
+  "sdkVersion": "1.0",
+  "author": "工坊",
+  "description": "经典桌游阿瓦隆，支持5-10人局。从你的角色列表中选择AI玩家，与他们一起进行身份推理、组队出征、刺杀梅林的策略对决。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "ai.generate",
+    "ui.toast"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": []
+}

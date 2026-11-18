@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TA的手机</title>
+<style>
+  :root {
+    --bg-dark: #090d16;
+    --bg-card: #1e293b;
+    --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.35);
+    --text-light: #f8fafc;
+    --text-dim: #94a3b8;
+    --danger: #f43f5e;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --purple: #a855f7;
+    --key-bg: rgba(255, 255, 255, 0.08);
+    --key-active: rgba(255, 255, 255, 0.22);
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(circle at top, #1e293b 0%, #070a12 100%);
+    color: var(--text-light);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 顶部状态栏 */
+  .status-bar {
+    padding: calc(var(--ai-phone-app-bar-top, 24px) + 8px) 16px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    z-index: 10;
+  }
+
+  .character-switcher-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* 锁屏界面 */
+  .lock-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 24px calc(var(--ai-phone-app-safe-bottom, 20px) + 12px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .lock-screen.hidden {
+    display: none;
+  }
+
+  .lock-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .char-avatar-box {
+    position: relative;
+    width: 66px;
+    height: 66px;
+  }
+
+  .char-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 16px var(--accent-glow);
+  }
+
+  .lock-icon-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: var(--bg-dark);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    border: 1px solid var(--accent);
+  }
+
+  .lock-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-light);
+  }
+
+  .inspect-mode-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(244, 63, 94, 0.12);
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    color: #fda4af;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: all 0.2s;
+  }
+
+  .inspect-mode-pill.notified {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+  }
+
+  .pin-dots {
+    display: flex;
+    gap: 16px;
+    margin: 12px 0;
+  }
+
+  .dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    background: transparent;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .dot.filled {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent);
+    transform: scale(1.15);
+  }
+
+  .pin-dots.error {
+    animation: shake 0.4s ease-in-out;
+  }
+  .pin-dots.error .dot {
+    background: var(--danger);
+    border-color: var(--danger);
+    box-shadow: 0 0 10px var(--danger);
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-12px); }
+    40%, 80% { transform: translateX(12px); }
+  }
+
+  .keypad {
+    width: 100%;
+    max-width: 290px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .key-btn {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--key-bg);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: all 0.15s;
+  }
+
+  .key-btn:active {
+    background: var(--key-active);
+    transform: scale(0.92);
+  }
+
+  .key-btn.action-btn {
+    font-size: 12px;
+    font-weight: normal;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+  }
+  .key-btn.action-btn:active {
+    color: #fff;
+  }
+
+  .lock-footer-tips {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* 解锁后内容界面 */
+  .unlocked-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #090d16;
+  }
+
+  .unlocked-screen.hidden {
+    display: none;
+  }
+
+  .phone-header {
+    background: #1e293b;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .phone-title-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .phone-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .phone-name {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .lock-again-btn {
+    background: rgba(244, 63, 94, 0.15);
+    color: #fb7185;
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    padding: 4px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  /* 9 大导航标签栏 */
+  .app-tabs {
+    display: flex;
+    background: #111827;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .app-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-item {
+    flex-shrink: 0;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-dim);
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .tab-item.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .content-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .secret-card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .card-sub-info {
+    font-size: 11px;
+    color: var(--warning);
+    margin-top: -2px;
+  }
+
+  .card-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e2e8f0;
+    white-space: pre-wrap;
+  }
+
+  /* 加密相册：文字下方的真·照片（生图接口生成，一次生成永久保存） */
+  .photo-shot {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .photo-img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    background: #0b1220;
+  }
+
+  .photo-badge {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: rgba(9, 13, 22, 0.68);
+    color: #cbd5e1;
+    font-size: 10px;
+    backdrop-filter: blur(6px);
+  }
+
+  .photo-gen-btn {
+    width: 100%;
+    padding: 22px 12px;
+    border: 1px dashed rgba(56, 189, 248, 0.35);
+    border-radius: 10px;
+    background: rgba(56, 189, 248, 0.06);
+    color: var(--accent);
+    font-size: 13px;
+    line-height: 1.6;
+    cursor: pointer;
+  }
+  .photo-gen-btn:active {
+    background: rgba(56, 189, 248, 0.16);
+  }
+  .photo-gen-btn[disabled] {
+    color: var(--text-dim);
+    border-color: rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .photo-loading {
+    padding: 34px 12px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .voice-play-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 12px;
+    width: fit-content;
+  }
+  .voice-play-bar:active {
+    background: rgba(56, 189, 248, 0.2);
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  }
+
+  .card-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--accent);
+  }
+
+  .btn-send-to-chat {
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--accent);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+  }
+
+  .btn-send-to-chat:active {
+    background: var(--accent);
+    color: #000;
+  }
+
+  .action-buttons-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .btn-generate-more {
+    flex: 1;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+
+  .btn-generate-more:active {
+    transform: scale(0.98);
+  }
+
+  /* 角色选择浮层 */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: flex-end;
+    z-index: 100;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.hidden {
+    display: none;
+  }
+
+  .modal-sheet {
+    width: 100%;
+    background: #1e293b;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    padding: 20px 16px calc(var(--ai-phone-app-safe-bottom, 20px) + 16px);
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .char-list-scroll {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .char-select-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+  }
+  .char-select-item:active {
+    background: rgba(255, 255, 255, 0.1);
+  }
+</style>
+</head>
+<body>
+
+  <!-- 顶部状态栏 -->
+  <div class="status-bar">
+    <span id="live-time">12:00</span>
+    <button class="character-switcher-btn" onclick="openCharSelector()">切换角色 ▾</button>
+  </div>
+
+  <!-- 1. 锁屏界面 -->
+  <div class="lock-screen" id="lock-screen">
+    <div class="lock-header">
+      <div class="char-avatar-box">
+        <img id="lock-avatar" class="char-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=lock" alt="头像">
+        <div class="lock-icon-badge">🔒</div>
+      </div>
+      <div class="lock-title" id="lock-char-name">TA 的手机</div>
+      
+      <div class="inspect-mode-pill" id="mode-pill" onclick="toggleInspectMode()">
+        <span id="mode-icon">🤫</span>
+        <span id="mode-text">模式：悄悄偷看 (解锁后TA会察觉)</span>
+      </div>
+    </div>
+
+    <!-- 密码点点 -->
+    <div class="pin-dots" id="pin-dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+
+    <!-- 拨号按键 -->
+    <div class="keypad">
+      <button class="key-btn" onclick="pressKey('1')">1</button>
+      <button class="key-btn" onclick="pressKey('2')">2</button>
+      <button class="key-btn" onclick="pressKey('3')">3</button>
+      <button class="key-btn" onclick="pressKey('4')">4</button>
+      <button class="key-btn" onclick="pressKey('5')">5</button>
+      <button class="key-btn" onclick="pressKey('6')">6</button>
+      <button class="key-btn" onclick="pressKey('7')">7</button>
+      <button class="key-btn" onclick="pressKey('8')">8</button>
+      <button class="key-btn" onclick="pressKey('9')">9</button>
+      <button class="key-btn action-btn" onclick="resetSecretPin()">🔄 换密码</button>
+      <button class="key-btn" onclick="pressKey('0')">0</button>
+      <button class="key-btn action-btn" onclick="deleteKey()">⌫</button>
+    </div>
+
+    <div class="lock-footer-tips">
+      去聊天里找TA套话获取数字密码<br>
+      <span style="opacity: 0.7;">（TA 在剧情里说过的密码会直接同步到这里）</span>
+    </div>
+  </div>
+
+  <!-- 2. 解锁后内容页面 (扩展至9大模块) -->
+  <div class="unlocked-screen hidden" id="unlocked-screen">
+    <div class="phone-header">
+      <div class="phone-title-box">
+        <img id="unlocked-avatar" class="phone-avatar" src="" alt="头像">
+        <div>
+          <div class="phone-name" id="unlocked-name">TA 的手机已解锁</div>
+          <div style="font-size: 11px; color: var(--text-dim);" id="unlocked-status-tip">🔓 隐私内容已解密</div>
+        </div>
+      </div>
+      <button class="lock-again-btn" onclick="lockPhone()">🔒 退出锁定</button>
+    </div>
+
+    <!-- 9 大分类标签导航 -->
+    <div class="app-tabs">
+      <div class="tab-item active" onclick="switchTab('notes', this)">📝 备忘录</div>
+      <div class="tab-item" onclick="switchTab('voice', this)">🎙️ 语音录音</div>
+      <div class="tab-item" onclick="switchTab('drafts', this)">💬 未发草稿</div>
+      <div class="tab-item" onclick="switchTab('searches', this)">🔍 搜索记录</div>
+      <div class="tab-item" onclick="switchTab('files', this)">📁 秘密文件</div>
+      <div class="tab-item" onclick="switchTab('shows', this)">🎬 最近在追的剧</div>
+      <div class="tab-item" onclick="switchTab('books', this)">📚 最近在看的书</div>
+      <div class="tab-item" onclick="switchTab('wishlist', this)">🛒 心愿购物车</div>
+      <div class="tab-item" onclick="switchTab('photos', this)">📷 加密相册</div>
+    </div>
+
+    <!-- 动态内容区 (持续累加，永久保留) -->
+    <div class="content-body" id="content-body">
+      <!-- 动态卡片 -->
+    </div>
+  </div>
+
+  <!-- 角色选择浮层 -->
+  <div class="modal-overlay hidden" id="char-modal">
+    <div class="modal-sheet">
+      <div style="font-size: 15px; font-weight: 600; text-align: center; margin-bottom: 8px;">选择要查谁的手机</div>
+      <div class="char-list-scroll" id="char-list-scroll"></div>
+      <button class="btn-generate-more" style="background: #334155; margin-top: 4px;" onclick="closeCharSelector()">取消</button>
+    </div>
+  </div>
+
+  <script>
+    let currentCharacter = null;
+    let allCharacters = [];
+    let currentEnteredPin = "";
+    let correctPin = "";
+    /** 所有可解锁的密码：剧情里 TA 说过的 + 用户手动改的 + 当前生成/沿用的 */
+    let validPins = [];
+    let launchCtx = null;
+    let activeTab = "notes";
+    let isSneakMode = true;
+    let userName = "你";
+    /** 用户性别（男/女），写相册描述和生成画面时都要用到，避免把男女画反 */
+    let userGender = "";
+    /** 加密相册生图单价（会员 15 / 非会员 25，由服务端账单状态决定） */
+    let photoFee = 25;
+
+    const typeLabels = {
+      notes: '私密备忘',
+      voice: '语音录音',
+      drafts: '未发草稿',
+      searches: '搜索记录',
+      files: '秘密文件',
+      shows: '在追的剧',
+      books: '在看的书',
+      wishlist: '购物车心愿',
+      photos: '加密相册'
+    };
+
+    function updateClock() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('live-time').innerText = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function toggleInspectMode() {
+      isSneakMode = !isSneakMode;
+      const pill = document.getElementById('mode-pill');
+      const icon = document.getElementById('mode-icon');
+      const text = document.getElementById('mode-text');
+
+      if (isSneakMode) {
+        pill.classList.remove('notified');
+        icon.innerText = '🤫';
+        text.innerText = '模式：悄悄偷看 (解锁后TA会察觉)';
+      } else {
+        pill.classList.add('notified');
+        icon.innerText = '📢';
+        text.innerText = '模式：已打招呼 (光明正大看)';
+      }
+    }
+
+    async function init() {
+      if (!window.AiPhone) return;
+
+      try {
+        const launchContext = await AiPhone.app.getLaunchContext();
+        launchCtx = launchContext || null;
+        allCharacters = await AiPhone.characters.list();
+
+        try {
+          const profile = await AiPhone.user.getProfile();
+          if (profile && profile.name) userName = profile.name;
+          if (profile && profile.gender) userGender = profile.gender;
+        } catch (e) {}
+
+        void loadPhotoFee();
+
+        if (allCharacters.length === 0) {
+          document.getElementById('lock-char-name').innerText = "未找到角色";
+          return;
+        }
+
+        if (launchContext && launchContext.characterId) {
+          currentCharacter = allCharacters.find(c => c.id === launchContext.characterId) || allCharacters[0];
+        } else {
+          currentCharacter = allCharacters[0];
+        }
+
+        await setupCharacterLock(currentCharacter);
+      } catch (err) {
+        console.error("初始化失败", err);
+      }
+    }
+
+    const CN_PIN_DIGITS = { 零: '0', 〇: '0', 一: '1', 二: '2', 三: '3', 四: '4', 五: '5', 六: '6', 七: '7', 八: '8', 九: '9' };
+
+    /** 从一段文字里找「密码」后的 4~8 位数字：支持全角、空格/横线分隔、中文数字 */
+    function findPinInText(raw) {
+      const s = String(raw || '').replace(/[０-９]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0));
+      const hits = [];
+      // 1) 标准标记 [锁屏密码:1234]
+      for (const m of s.matchAll(/\[锁屏密码[:：]\s*([0-9]{4,8})\]/g)) {
+        hits.push({ pin: m[1], index: m.index });
+      }
+      // 2) 普通阿拉伯数字：允许 0 5 1 2 / 0512-1 这类分隔写法
+      for (const m of s.matchAll(/([0-9](?:[\s\-—_.·]*[0-9]){3,7})/g)) {
+        const pin = m[1].replace(/[^0-9]/g, '');
+        if (pin.length < 4 || pin.length > 8) continue;
+        const before = s.slice(Math.max(0, m.index - 16), m.index);
+        if (!/(密码|锁屏|解锁|passcode|pin)/i.test(before)) continue;
+        // 排除「年/月/日/元/岁」这类明显不是密码的数字
+        if (/(年|月|日|元|块|岁|楼|号|次|个)/.test(s.slice(m.index + m[0].length, m.index + m[0].length + 2))) continue;
+        hits.push({ pin, index: m.index });
+      }
+      // 3) 中文数字：密码是五二一一
+      for (const m of s.matchAll(/([零〇一二三四五六七八九]{4,8})/g)) {
+        const before = s.slice(Math.max(0, m.index - 16), m.index);
+        if (!/(密码|锁屏|解锁)/.test(before)) continue;
+        const pin = m[1].split('').map((ch) => CN_PIN_DIGITS[ch] || '').join('');
+        if (pin.length >= 4) hits.push({ pin, index: m.index });
+      }
+      if (!hits.length) return '';
+      // 同一段里取最后出现的那个（通常是最终敲定的密码）
+      hits.sort((a, b) => a.index - b.index);
+      return hits[hits.length - 1].pin;
+    }
+
+    /**
+     * 读取当前会话里角色说过的所有锁屏密码（4~8 位数字），按时间从新到旧。
+     * 这样无论是「最新说过的密码」还是「之前提过的旧密码」，用户输入都能解开，
+     * 不会出现「TA 明明说过 5211，锁屏却怎么都打不开」。
+     */
+    async function readStoryPins() {
+      const convId = launchCtx && (launchCtx.conversationId || launchCtx.sessionId);
+      if (!convId || !window.AiPhone || !AiPhone.chat || typeof AiPhone.chat.readHistory !== 'function') return [];
+      const found = [];
+      for (const mode of ['story', 'phone']) {
+        try {
+          const h = await AiPhone.chat.readHistory({ sessionId: convId, limit: 200, mode });
+          (h.messages || []).forEach((m) => {
+            if (!m || m.role !== 'assistant' || typeof m.content !== 'string') return;
+            const pin = findPinInText(m.content);
+            if (!pin) return;
+            found.push({ pin, at: String(m.createdAt || m.created_at || '') });
+          });
+        } catch (e) {}
+      }
+      found.sort((a, b) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0));
+      const seen = new Set();
+      const out = [];
+      for (const f of found) {
+        if (seen.has(f.pin)) continue;
+        seen.add(f.pin);
+        out.push(f);
+      }
+      return out;
+    }
+
+    /** 兼容旧调用：只要最新那一个 */
+    async function readStoryPin() {
+      const list = await readStoryPins();
+      return list.length ? list[0] : null;
+    }
+
+    async function savePin(char, pin, source) {
+      const records = await AiPhone.db.list('char_pins', { limit: 100 });
+      const found = records.find(r => r.characterId === char.id);
+      const row = { pin, source, updatedAt: new Date().toISOString() };
+      if (found) {
+        await AiPhone.db.update('char_pins', found.id, Object.assign({}, row));
+      } else {
+        await AiPhone.db.create('char_pins', Object.assign({ characterId: char.id }, row));
+      }
+    }
+
+    /**
+     * 把密码写进角色的长期记忆，并附带「不能一问就给」的分级透露规则。
+     * 必须走 memory.write（会同步到服务端记忆库、进入模型上下文）；
+     * 以前的 addTimeline 只存在本地 localStorage，角色根本收不到，所以才会乱说密码。
+     */
+    async function rememberSecretPin(char, pin) {
+      if (!char || !pin || !window.AiPhone || !AiPhone.memory) return;
+      try {
+        const records = await AiPhone.db.list('char_pins', { limit: 100 });
+        const found = records.find(r => r.characterId === char.id);
+        if (found && found.memoryPin === pin) return; // 已经同步过同一个密码，不重复写
+        await AiPhone.memory.write({
+          characterId: char.id,
+          title: '手机锁屏密码（秘密）',
+          content:
+            `[秘密设定 · 你的手机锁屏密码是「${pin}」。这是隐私，请严格按亲密度分级透露：\n` +
+            '1. 绝不主动提起密码，用户第一次问不要直接回答；\n' +
+            '2. 关系还不亲密、好感不足时：可以反问「你要这个做什么」、调侃、害羞推脱、转移话题，或只给暗示（几位数、是生日/纪念日/第一次见面的日子、和你有关）；\n' +
+            '3. 用户反复追问、态度真诚、或你们已经很亲密时：先给更明确的提示，仍然被追问才可以说出密码；\n' +
+            '4. 被威胁、被强迫、或你正在生气时：宁可拒绝、撒娇、给模糊暗示，也不要直接说；\n' +
+            '5. 一旦你决定告诉对方，必须说这个数字本身，不要编造别的数字，也不要只说「我发给你」之类的空话。\n' +
+            '请根据当下的关系和情绪自然决定说到哪一步。]',
+        });
+        if (found) {
+          await AiPhone.db.update('char_pins', found.id, Object.assign({}, found, { memoryPin: pin }));
+        } else {
+          await AiPhone.db.create('char_pins', { characterId: char.id, pin, source: 'auto', memoryPin: pin, updatedAt: new Date().toISOString() });
+        }
+      } catch (e) {
+        console.warn('同步密码记忆失败', e);
+      }
+    }
+
+    async function setupCharacterLock(char) {
+      currentCharacter = char;
+      currentEnteredPin = "";
+      updateDots();
+
+      document.getElementById('lock-char-name').innerText = `${char.name} 的手机`;
+      if (char.avatar) {
+        document.getElementById('lock-avatar').src = char.avatar;
+      }
+
+      const records = await AiPhone.db.list('char_pins', { limit: 100 });
+      const found = records.find(r => r.characterId === char.id);
+      const storyPins = await readStoryPins();
+      console.log('[TA的手机] 密码来源', {
+        storyPins,
+        saved: found ? { pin: found.pin, source: found.source, updatedAt: found.updatedAt } : null,
+      });
+
+      // 剧情里 TA 说过的每一个密码都算有效密码（新到旧）。
+      // 玩家既可能记住最新那个，也可能记得最早的，两种都应该能开。
+      const candidates = storyPins.map((s) => s.pin);
+
+      // 用户手动改过密码，且比所有剧情密码都新 → 手动密码优先
+      if (found && found.pin && found.source === 'manual') {
+        const manualAt = String(found.updatedAt || '');
+        const newestStoryAt = storyPins.length ? storyPins[0].at : '';
+        const storyNewer = newestStoryAt && (!manualAt || newestStoryAt > manualAt);
+        if (!storyNewer) {
+          correctPin = found.pin;
+          validPins = [...new Set([found.pin, ...candidates])];
+          renderPinDots();
+          void rememberSecretPin(char, found.pin);
+          return;
+        }
+      }
+
+      if (candidates.length) {
+        // 界面按最新密码的位数显示密码点
+        correctPin = candidates[0];
+        validPins = [...new Set([...candidates, ...(found && found.pin ? [found.pin] : [])])];
+        if (!found || found.pin !== correctPin || found.source !== 'story') {
+          try { await savePin(char, correctPin, 'story'); } catch (e) {}
+        }
+        renderPinDots();
+        // 让 TA 记住这个密码，并按亲密度分级透露（不能一问就给）
+        void rememberSecretPin(char, correctPin);
+        return;
+      }
+
+      if (found && found.pin) {
+        correctPin = found.pin;
+        validPins = [found.pin];
+        renderPinDots();
+        void rememberSecretPin(char, found.pin);
+      } else {
+        // 剧情里从没说过密码：生成一个并让 TA 知道，同时提示玩家去问 TA
+        const pin = await generateAndAssignPin(char);
+        validPins = pin ? [pin] : [];
+        if (window.AiPhone && AiPhone.ui && AiPhone.ui.toast) {
+          void AiPhone.ui.toast('TA 还没在剧情里告诉过你密码，去聊天里问 TA 吧');
+        }
+      }
+    }
+
+    async function generateAndAssignPin(char, source = 'auto') {
+      const newPin = String(Math.floor(1000 + Math.random() * 9000));
+      correctPin = newPin;
+      // 用户主动换密码：只认这个新密码（旧密码作废）
+      validPins = [newPin];
+
+      try {
+        await savePin(char, newPin, source);
+      } catch (e) {
+        console.warn("保存锁屏密码失败", e);
+      }
+
+      try {
+        await AiPhone.memory.addTimeline({
+          characterId: char.id,
+          appLabel: '手机锁屏',
+          appEventId: `lock_pin_${char.id}`,
+          detail: 'phone_password_setting',
+          summary: `[事件：${userName}给你的手机设定了锁屏密码。]`,
+          data: { pin: newPin }
+        });
+      } catch (e) {
+        console.warn("写入密码事件失败", e);
+      }
+
+      // 关键：把密码写进模型能读到的长期记忆（含分级透露规则），避免一问就给
+      await rememberSecretPin(char, newPin);
+
+      renderPinDots();
+      return newPin;
+    }
+
+    /** 密码点数量：取所有有效密码里最长的位数（至少 4 位） */
+    function renderPinDots() {
+      const lens = validPins.map((p) => String(p).length);
+      const n = Math.max(4, correctPin ? correctPin.length : 0, ...(lens.length ? lens : [0]));
+      const box = document.getElementById('pin-dots');
+      if (!box) return;
+      if (box.children.length !== n) {
+        box.innerHTML = '';
+        for (let i = 0; i < n; i++) {
+          const d = document.createElement('div');
+          d.className = 'dot';
+          box.appendChild(d);
+        }
+      }
+      updateDots();
+    }
+
+    function maxPinLength() {
+      const lens = validPins.map((p) => String(p).length);
+      return Math.max(4, ...(lens.length ? lens : [4]));
+    }
+
+    function pressKey(num) {
+      if (currentEnteredPin.length >= maxPinLength()) return;
+      currentEnteredPin += num;
+      updateDots();
+
+      // 完全命中某个有效密码 → 立刻解锁（4 位密码不用再等第 5 位）
+      if (validPins.includes(currentEnteredPin)) {
+        validatePin();
+        return;
+      }
+      // 没有任何有效密码以当前输入开头 → 直接判错，不用等输满
+      const possible = validPins.some((p) => String(p).startsWith(currentEnteredPin));
+      if (!possible) {
+        validatePin();
+      }
+    }
+
+    function deleteKey() {
+      if (currentEnteredPin.length > 0) {
+        currentEnteredPin = currentEnteredPin.slice(0, -1);
+        updateDots();
+      }
+    }
+
+    function updateDots() {
+      const dots = document.querySelectorAll('#pin-dots .dot');
+      dots.forEach((dot, index) => {
+        if (index < currentEnteredPin.length) {
+          dot.classList.add('filled');
+        } else {
+          dot.classList.remove('filled');
+        }
+      });
+    }
+
+    async function validatePin() {
+      // 剧情里 TA 说过的任意一个密码、用户手动改的密码、以及当前沿用的密码，都算正确
+      const accepted = validPins.length ? validPins : correctPin ? [correctPin] : [];
+      if (accepted.includes(currentEnteredPin)) {
+        try {
+          if (isSneakMode) {
+            await AiPhone.memory.addTimeline({
+              characterId: currentCharacter.id,
+              appLabel: '手机防盗',
+              appEventId: `inspect_sneak_${Date.now()}`,
+              detail: 'phone_sneak_inspected',
+              summary: `[突发事件：${userName}刚才在你不知情的情况下，偷偷输入正确密码解锁了你的手机，并翻看了你的私密备忘录、语音录音、追剧看书和文件隐私！你察觉到了这件事，在接下来的聊天中，你可以表现出害羞、紧张、疑惑或质问TA为什么要偷看你的手机。]`,
+              data: { time: new Date().toISOString(), mode: 'sneak' }
+            });
+          } else {
+            await AiPhone.memory.addTimeline({
+              characterId: currentCharacter.id,
+              appLabel: '手机分享',
+              appEventId: `inspect_notified_${Date.now()}`,
+              detail: 'phone_notified_inspected',
+              summary: `[事件：${userName}刚才解锁查看了你的手机，这件事已经提前跟你打过招呼了。]`,
+              data: { time: new Date().toISOString(), mode: 'notified' }
+            });
+          }
+        } catch (e) {
+          console.warn("写入查手机事件失败", e);
+        }
+
+        if (window.AiPhone) {
+          await AiPhone.ui.toast(isSneakMode ? `🔓 解锁成功！TA已暗中察觉被偷看...` : `🔓 密码正确，已解锁 ${currentCharacter.name} 的手机`);
+        }
+        openUnlockedView();
+      } else {
+        const dotsContainer = document.getElementById('pin-dots');
+        dotsContainer.classList.add('error');
+        if (window.AiPhone) await AiPhone.ui.toast("❌ 密码错误！去聊天里找TA套话试试");
+
+        setTimeout(() => {
+          dotsContainer.classList.remove('error');
+          currentEnteredPin = "";
+          updateDots();
+        }, 500);
+      }
+    }
+
+    async function resetSecretPin() {
+      if (!currentCharacter) return;
+      const ok = await AiPhone.ui.confirm({
+        title: "更换锁屏密码",
+        message: `要为「${currentCharacter.name}」换一套新的 4 位锁屏密码吗？换过之后以新密码为准（不再跟随剧情里说过的旧密码），TA 会在记忆里同步知道新密码。`
+      });
+      if (ok) {
+        await generateAndAssignPin(currentCharacter, 'manual');
+        currentEnteredPin = "";
+        renderPinDots();
+        await AiPhone.ui.toast(`已为 ${currentCharacter.name} 生成新密码，去聊天套话吧！`);
+      }
+    }
+
+    async function openUnlockedView() {
+      document.getElementById('lock-screen').classList.add('hidden');
+      const unlockedScreen = document.getElementById('unlocked-screen');
+      unlockedScreen.classList.remove('hidden');
+
+      document.getElementById('unlocked-name').innerText = `${currentCharacter.name} 的手机`;
+      document.getElementById('unlocked-status-tip').innerText = isSneakMode ? '🤫 偷看模式 · TA已察觉' : '📢 正式查看 · 已获知情';
+      if (currentCharacter.avatar) {
+        document.getElementById('unlocked-avatar').src = currentCharacter.avatar;
+      }
+
+      await loadSecrets(activeTab, false);
+    }
+
+    function lockPhone() {
+      document.getElementById('unlocked-screen').classList.add('hidden');
+      document.getElementById('lock-screen').classList.remove('hidden');
+      currentEnteredPin = "";
+      updateDots();
+    }
+
+    async function switchTab(tab, el) {
+      activeTab = tab;
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      await loadSecrets(tab, false);
+    }
+
+    // 从私有 DB 读取并支持纯追加
+    async function loadSecrets(type, appendNew = false) {
+      const container = document.getElementById('content-body');
+
+      // 1. 先读现有数据库内容
+      let allRecords = [];
+      try {
+        allRecords = await AiPhone.db.list('char_phone_data', { limit: 500 });
+      } catch (e) {}
+
+      let currentItems = allRecords.filter(r => r.characterId === currentCharacter.id && r.category === type);
+      // 按时间倒序
+      currentItems.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+
+      // 如果既没有旧数据，或者用户明确点击追加生成
+      if (currentItems.length === 0 || appendNew) {
+        if (currentItems.length === 0) {
+          container.innerHTML = `<div style="text-align: center; color: var(--text-dim); padding: 30px 0;">🔍 首次翻找 ${currentCharacter.name} 的【${typeLabels[type]}】...</div>`;
+        }
+
+        const newItems = await fetchMoreFromAI(type);
+        if (newItems && newItems.length > 0) {
+          for (const item of newItems) {
+            const saved = await AiPhone.db.create('char_phone_data', {
+              characterId: currentCharacter.id,
+              category: type,
+              title: item.title || typeLabels[type],
+              content: item.content || '',
+              subInfo: item.subInfo || '',
+              time: item.time || '刚刚',
+              createdAt: new Date().toISOString()
+            });
+            currentItems.unshift(saved);
+          }
+        }
+      }
+
+      renderSecretList(currentItems, type);
+    }
+
+    // AI 生成新内容
+    async function fetchMoreFromAI(type) {
+      try {
+        let promptText = "";
+        if (type === 'notes') {
+          promptText = `请以当前角色身份，写 3 条留在手机备忘录里的私密笔记（包括关于用户的真实想法、小心思、生活碎碎念）。格式：[{"title":"备忘主题","content":"具体内容","time":"记录时间"}]`;
+        } else if (type === 'voice') {
+          promptText = `请以当前角色身份，写 3 条录音机里的语音备忘录（如喝醉时的碎碎念、睡前悄悄话、自言自语的小抱怨或心事）。格式：[{"title":"录音标题","content":"录音的语音台词内容","subInfo":"⏱️ 0:38 · 情绪: 害羞/微醺/认真","time":"录制时间"}]`;
+        } else if (type === 'drafts') {
+          promptText = `请以当前角色身份，写 3 条想发给用户但犹豫删掉/留在草稿箱里的真心话。格式：[{"title":"未发出草稿","content":"想说但删掉的内容","time":"撰写时间"}]`;
+        } else if (type === 'searches') {
+          promptText = `请以当前角色身份，写 4 条最近在手机上偷偷搜索的关键词与心理活动。格式：[{"title":"搜索词","content":"搜索原因或心理活动","time":"最近"}]`;
+        } else if (type === 'files') {
+          promptText = `请以当前角色身份，写 3 条手机文件管理器里的私密文件（如：秘密计划.txt、旅行攻略草稿、私人日记文档、开销清单等）。格式：[{"title":"文件名 (如: 关于TA的观察.txt)","content":"文档正文内容","subInfo":"📄 3.2 KB · 仅自己可见","time":"修改时间"}]`;
+        } else if (type === 'shows') {
+          promptText = `请以当前角色身份，写 3 条最近在追的电视剧/动漫/电影记录。格式：[{"title":"剧名 (如: 《某某恋爱剧》)","content":"剧情感想或偷偷写下的弹幕短评(与用户有关的联想更好)","subInfo":"🎬 观看进度: 第8集 / 准备二刷","time":"近期在看"}]`;
+        } else if (type === 'books') {
+          promptText = `请以当前角色身份，写 3 条最近在读的书籍与划线笔记。格式：[{"title":"书名 (如: 《某某诗集/小说》)","content":"摘录的心动划线句子与个人读书感悟","subInfo":"📖 读到 64% · 偷偷收藏段落","time":"阅读中"}]`;
+        } else if (type === 'wishlist') {
+          promptText = `请以当前角色身份，写 3 条购物车里偷偷加购但没买的心愿物品。格式：[{"title":"心愿商品","content":"收藏原因与心里的小期待","subInfo":"🛒 待结算","time":"近期加购"}]`;
+        } else if (type === 'photos') {
+          const charGender = (currentCharacter && currentCharacter.gender) || '';
+          const genderRule = `照片里出现你自己时，你必须是${charGender || '人设设定的'}性别；出现用户时，用户是${userGender || '人设设定的'}性别；男女人物绝不可写反、也不要把男性写成女性。`;
+          promptText = `请以当前角色身份，写 3 条加密相册里私密照片的文字描述（如偷拍用户的某个瞬间、私房自拍等）。${genderRule}格式：[{"title":"照片名称","content":"照片画面描述与当时心情","subInfo":"📷 仅加密相册可见","time":"拍摄时间"}]`;
+        }
+
+        const res = await AiPhone.ai.generate({
+          characterId: currentCharacter.id,
+          instruction: `${promptText}\n请严格只输出标准 JSON 数组文本，不要包含 Markdown 语法或多余废话。`
+        });
+
+        const cleanText = res.text.replace(/```json|```/g, '').trim();
+        return JSON.parse(cleanText);
+      } catch (err) {
+        console.error("生成失败", err);
+        return [{
+          title: "私密记录",
+          content: "未能读取到新记录，请确保已配置 AI 模型。",
+          time: "刚刚"
+        }];
+      }
+    }
+
+    function renderSecretList(items, type) {
+      const container = document.getElementById('content-body');
+      let html = "";
+
+      if (items.length === 0) {
+        html += `<div style="text-align: center; color: var(--text-dim); padding: 30px 0;">空空如也，点击下方按钮翻找更多记录</div>`;
+      } else {
+        items.forEach((item) => {
+          const itemStr = encodeURIComponent(JSON.stringify(item));
+          const isVoice = type === 'voice';
+          const isPhoto = type === 'photos';
+
+          html += `
+            <div class="secret-card">
+              <div class="card-header">
+                <span class="card-tag">${item.title || typeLabels[type]}</span>
+                <span>${item.time || '最近'}</span>
+              </div>
+              ${item.subInfo ? `<div class="card-sub-info">${item.subInfo}</div>` : ''}
+              
+              <div class="card-content">${item.content}</div>
+
+              ${isPhoto ? photoBlockHtml(item) : ''}
+
+              ${isVoice ? `
+                <div class="voice-play-bar" onclick="playVoiceText('${encodeURIComponent(item.content)}')">
+                  <span>▶</span> <span>试听录音内容</span>
+                </div>
+              ` : ''}
+
+              <div class="card-footer">
+                <span style="font-size:10px; color:var(--text-dim);">${typeLabels[type]} · 已保存</span>
+                <button class="btn-send-to-chat" onclick="sendToChat('${itemStr}', '${typeLabels[type]}')">
+                  <span>📤 发到聊天质问TA</span>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      const missingPhotos = type === 'photos' ? items.filter((i) => !i.imageUrl).length : 0;
+
+      html += `
+        <div class="action-buttons-group">
+          ${missingPhotos > 0 ? `
+            <button class="btn-generate-more" style="background: linear-gradient(135deg, #0f766e, #0d9488);" onclick="generateAllPhotos()">
+              📷 一键冲印 ${missingPhotos} 张照片（约 ${missingPhotos * photoFee} 星币）
+            </button>
+          ` : ''}
+          <button class="btn-generate-more" onclick="loadSecrets('${type}', true)">
+            ✨ 翻找更多并追加保存 (共 ${items.length} 条)
+          </button>
+        </div>
+      `;
+      container.innerHTML = html;
+    }
+
+    /* ---------------- 加密相册：真·照片（调用生图接口，永久保存） ---------------- */
+
+    /** 会员 15 星币/张、非会员 25 星币/张，取服务端钱包状态 */
+    async function loadPhotoFee() {
+      try {
+        const res = await fetch('/api/billing/state', { credentials: 'same-origin', cache: 'no-store' });
+        const data = await res.json();
+        const until = data && data.wallet && data.wallet.member_until;
+        photoFee = until && new Date(until).getTime() > Date.now() ? 15 : 25;
+      } catch (e) {}
+    }
+
+    function photoBlockHtml(item) {
+      if (item.imageUrl) {
+        return `<div class="photo-shot" data-id="${item.id}"><img class="photo-img" src="${item.imageUrl}" alt="相册照片" loading="lazy"><div class="photo-badge">照片 · 已冲印保存</div></div>`;
+      }
+      return `<div class="photo-shot" data-id="${item.id}"><button class="photo-gen-btn" onclick="generatePhoto('${item.id}', this)">🔓 冲印这张照片（约 ${photoFee + 1} 星币）<br><span style="font-size:11px;color:var(--text-dim);">先用 AI 构思画面，再生成照片，永久保存</span></button></div>`;
+    }
+
+    /** 模板兜底：AI 改写失败时，用文字描述 + 角色设定直接拼提示词（接口上限 500 字） */
+    function buildPhotoPrompt(item) {
+      const scene = String(item.content || item.title || '').replace(/\s+/g, ' ').slice(0, 180);
+      const look = String((currentCharacter && (currentCharacter.description || currentCharacter.persona)) || '')
+        .replace(/\s+/g, ' ')
+        .slice(0, 80);
+      let p = '手机相册里的真实照片，生活随拍感，自然光，真实质感，轻微胶片颗粒，构图自然，无文字无水印。';
+      p += '画面内容：' + scene + '。';
+      if (look) p += '人物外貌：' + look + '。';
+      return p.slice(0, 460);
+    }
+
+    /**
+     * 不是把叙述原文直接丢给生图接口，而是先交给服务端润色成画面提示词：
+     * 服务端会用站长提供的风格素材（手机随手拍风格库）+ 角色卡外貌来改写，
+     * 和聊天发图 / 朋友圈配图是同一套风格，出图才有一致的感觉。
+     * 这次润色走小手机 AI 通道，按 token 计费（保底 1 星币，BYOK 用户免费）。
+     */
+    async function craftPhotoPrompt(item) {
+      const scene = String(item.content || item.title || '').replace(/\s+/g, ' ').slice(0, 200);
+      const res = await fetch('/api/phone/album-photo-prompt', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterId: currentCharacter ? currentCharacter.id : undefined,
+          text: scene,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || data.ok === false || !data.prompt) {
+        throw new Error((data && data.message) || '画面提示词生成失败');
+      }
+      return String(data.prompt);
+    }
+
+    async function generatePhoto(id, el) {
+      const box = el ? (el.classList && el.classList.contains('photo-shot') ? el : el.parentElement) : null;
+      if (box && box.dataset.busy === '1') return false;
+      if (box) {
+        box.dataset.busy = '1';
+        box.innerHTML = '<div class="photo-loading">正在冲印照片…</div>';
+      }
+      try {
+        const records = await AiPhone.db.list('char_phone_data', { limit: 500 });
+        const rec = records.find((r) => r.id === id);
+        if (!rec) throw new Error('找不到这条照片记录');
+        if (rec.imageUrl) {
+          if (box) box.innerHTML = `<img class="photo-img" src="${rec.imageUrl}" alt="相册照片"><div class="photo-badge">照片 · 已冲印保存</div>`;
+          return true;
+        }
+
+        // 1) 先把叙述改写成画面提示词（已改写过的直接复用，重试不再花第二次钱）
+        let prompt = rec.imagePrompt || '';
+        if (!prompt) {
+          if (box) box.innerHTML = '<div class="photo-loading">正在琢磨这张照片的画面…</div>';
+          try {
+            prompt = await craftPhotoPrompt(rec);
+          } catch (e) {
+            prompt = buildPhotoPrompt(rec);
+          }
+          try {
+            await AiPhone.db.update('char_phone_data', id, { imagePrompt: prompt });
+            rec.imagePrompt = prompt;
+          } catch (e) {}
+        }
+
+        // 2) 用提示词生图
+        if (box) box.innerHTML = '<div class="photo-loading">正在冲印照片…</div>';
+        const res = await fetch('/api/image/generate', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt, size: '1024x1536' }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data || data.ok === false || !data.url) {
+          throw new Error((data && data.message) || '生图失败，请稍后再试');
+        }
+
+        await AiPhone.db.update('char_phone_data', id, { imageUrl: data.url });
+        const fee = Number(data.fee) || 0;
+        if (box) {
+          box.dataset.busy = '0';
+          box.innerHTML = `<img class="photo-img" src="${data.url}" alt="相册照片"><div class="photo-badge">${fee > 0 ? '照片 · 消耗 ' + fee + ' 星币' : '照片 · 已冲印保存'}</div>`;
+        }
+        if (fee > 0) await AiPhone.ui.toast(`已冲印照片，消耗 ${fee} 星币`);
+        return true;
+      } catch (e) {
+        const msg = (e && e.message) || '生图失败，请稍后再试';
+        if (box) {
+          box.dataset.busy = '0';
+          box.innerHTML = `<button class="photo-gen-btn" onclick="generatePhoto('${id}', this)">⚠️ ${msg}<br><span style="font-size:11px;color:var(--text-dim);">点此重试（${photoFee} 星币）</span></button>`;
+        }
+        await AiPhone.ui.toast(msg);
+        return false;
+      }
+    }
+
+    async function generateAllPhotos() {
+      if (!currentCharacter) return;
+      const records = await AiPhone.db.list('char_phone_data', { limit: 500 });
+      const todo = records.filter((r) => r.characterId === currentCharacter.id && r.category === 'photos' && !r.imageUrl);
+      if (!todo.length) {
+        await AiPhone.ui.toast('相册里的照片都已经冲印好了');
+        return;
+      }
+      const ok = await AiPhone.ui.confirm({
+        title: '一键冲印相册照片',
+        message: `将为 ${todo.length} 张照片生成真实画面：每张 ${photoFee} 星币，另加 1 星币把文字改写成画面提示词（共约 ${todo.length * (photoFee + 1)} 星币）。生成后永久保存，不会重复扣费。是否继续？`,
+      });
+      if (!ok) return;
+
+      let done = 0;
+      for (const rec of todo) {
+        const box = document.querySelector('.photo-shot[data-id="' + rec.id + '"]');
+        const okOne = await generatePhoto(rec.id, box);
+        if (okOne) done += 1;
+      }
+      if (done) await AiPhone.ui.toast(`已冲印 ${done} 张照片`);
+    }
+
+    // 语音试听
+    async function playVoiceText(encodedText) {
+      const text = decodeURIComponent(encodedText);
+      if (!window.AiPhone) return;
+
+      try {
+        await AiPhone.ui.toast("🔊 正在解密播放录音...");
+        const speech = await AiPhone.voice.tts({
+          characterId: currentCharacter.id,
+          text: text
+        });
+        if (speech && speech.dataUrl) {
+          await AiPhone.voice.play({ dataUrl: speech.dataUrl });
+        }
+      } catch (e) {
+        console.warn("TTS 播放失败，降级提示", e);
+        await AiPhone.ui.toast("已朗读文本（当前角色未配语音音色）");
+      }
+    }
+
+    // 发送对质卡片到聊天室
+    async function sendToChat(encodedItem, typeLabel) {
+      const item = JSON.parse(decodeURIComponent(encodedItem));
+      if (!window.AiPhone || !currentCharacter) return;
+
+      const confirmSend = await AiPhone.ui.confirm({
+        title: "发到聊天室对质",
+        message: `要把这条「${item.title || typeLabel}」发到聊天室让 ${currentCharacter.name} 解释吗？`
+      });
+
+      if (!confirmSend) return;
+
+      try {
+        await AiPhone.chat.sendCard({
+          characterId: currentCharacter.id,
+          role: "user",
+          summary: `${userName}拿着翻到的手机内容「${item.title}」找${currentCharacter.name}对质。`,
+          historyText: `[对质证据：${userName}翻到了你的手机【${typeLabel}·${item.title}】内容为：「${item.content}」。${userName}正在拿着这条记录向你质问/调侃。]`,
+          card: {
+            appLabel: "TA的手机",
+            title: `📱 翻到了你的【${typeLabel}】`,
+            subtitle: item.title || "私密记录",
+            body: item.content + (item.subInfo ? `\n(${item.subInfo})` : ''),
+            status: "被查获",
+            accentColor: "#38bdf8",
+            sections: [
+              {
+                title: "查获来源",
+                rows: [
+                  { label: "所属机主", value: currentCharacter.name },
+                  { label: "记录时间", value: item.time || "近期" }
+                ]
+              }
+            ],
+            actions: [{ label: "立即解释" }]
+          }
+        });
+
+        await AiPhone.chat.requestReply({
+          characterId: currentCharacter.id
+        });
+
+        await AiPhone.ui.toast(`已发送到聊天室！${currentCharacter.name} 马上就会回复你！`);
+
+        setTimeout(async () => {
+          await AiPhone.app.close();
+        }, 500);
+      } catch (err) {
+        console.error("发送失败:", err);
+        await AiPhone.ui.toast("发送失败：" + err.message);
+      }
+    }
+
+    function openCharSelector() {
+      const listScroll = document.getElementById('char-list-scroll');
+      let html = "";
+      allCharacters.forEach(c => {
+        html += `
+          <div class="char-select-item" onclick="selectChar('${c.id}')">
+            <img src="${c.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + c.id}" style="width:36px; height:36px; border-radius:50%; object-fit:cover;">
+            <div style="font-size:14px; font-weight:500;">${c.name}</div>
+          </div>
+        `;
+      });
+      listScroll.innerHTML = html;
+      document.getElementById('char-modal').classList.remove('hidden');
+    }
+
+    function closeCharSelector() {
+      document.getElementById('char-modal').classList.add('hidden');
+    }
+
+    async function selectChar(id) {
+      closeCharSelector();
+      const target = allCharacters.find(c => c.id === id);
+      if (target) {
+        lockPhone();
+        await setupCharacterLock(target);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

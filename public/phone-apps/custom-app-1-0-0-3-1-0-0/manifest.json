@@ -1,0 +1,26 @@
+{
+  "id": "custom-app",
+  "name": "时光放映馆",
+  "version": "1.0.0",
+  "description": "深棕丝绒剧院质感的时光观影机。在大银幕上演绎过去、虚构同人与未来的番外剧情，并同步捕捉AI角色的实时观影体反应与情绪起伏。",
+  "icon": "1000055294.jpg",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "characters.state.read",
+    "user.profile.read",
+    "user.persona.read",
+    "user.preferences.read",
+    "world.read",
+    "memory.readCore",
+    "memory.readLongTerm",
+    "ai.generate",
+    "ai.chat",
+    "chat.sendCard",
+    "memory.write",
+    "ui.toast"
+  ],
+  "primaryTags": []
+}

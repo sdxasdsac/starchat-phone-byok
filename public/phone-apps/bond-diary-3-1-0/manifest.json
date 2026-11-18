@@ -1,0 +1,141 @@
+{
+  "id": "bond.diary",
+  "name": "不要拉黑",
+  "version": "3.1.0",
+  "sdkVersion": "1.0",
+  "author": "小坊",
+  "description": "🔮 此系统正在静默监控所有羁绊波动...当某条线断裂到极限时，TA 会亲自来找你。请三思而后行。",
+  "icon": "IMG_20260916_215131.jpg",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "characters.state.read",
+    "characters.state.write",
+    "memory.readCore",
+    "memory.readShortTerm",
+    "chat.sendCard",
+    "chat.write",
+    "chat.read",
+    "chat.read.background",
+    "chat.contacts.write",
+    "user.profile.read",
+    "ai.chat",
+    "ai.generate",
+    "ui.toast",
+    "tasks.schedule"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "directives": [
+        {
+          "id": "block-user",
+          "label": "拉黑用户",
+          "syntax": "[拉黑用户:理由]",
+          "description": "当角色因为严重冲突或极度不满想要拒收用户消息时使用。这是最激烈的反应，不要轻易使用。",
+          "tags": []
+        },
+        {
+          "id": "forgive-user",
+          "label": "原谅用户",
+          "syntax": "[原谅用户]",
+          "description": "当角色之前拉黑了用户，现在愿意原谅并恢复通信时使用。",
+          "tags": []
+        }
+      ],
+      "plusActions": [
+        {
+          "id": "open-bond-diary",
+          "label": "不要拉黑",
+          "description": "查看当前角色的好感度、黑化度和关系状态",
+          "entry": "from_chat",
+          "presentation": "app",
+          "tags": []
+        }
+      ]
+    },
+    "events": [
+      {
+        "event": "chat.message.created",
+        "entry": "monitor",
+        "background": true,
+        "description": "监听角色的拉黑/原谅指令，以及海王检测"
+      }
+    ]
+  },
+  "events": [
+    {
+      "event": "chat.message.created",
+      "entry": "monitor",
+      "background": true,
+      "description": "监听角色的拉黑/原谅指令，以及海王检测"
+    }
+  ],
+  "chatDirectives": [
+    {
+      "id": "block-user",
+      "label": "拉黑用户",
+      "syntax": "[拉黑用户:理由]",
+      "description": "当角色因为严重冲突或极度不满想要拒收用户消息时使用。这是最激烈的反应，不要轻易使用。",
+      "tags": []
+    },
+    {
+      "id": "forgive-user",
+      "label": "原谅用户",
+      "syntax": "[原谅用户]",
+      "description": "当角色之前拉黑了用户，现在愿意原谅并恢复通信时使用。",
+      "tags": []
+    }
+  ],
+  "chatPlusActions": [
+    {
+      "id": "open-bond-diary",
+      "label": "不要拉黑",
+      "description": "查看当前角色的好感度、黑化度和关系状态",
+      "entry": "from_chat",
+      "presentation": "app",
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "directives": [
+      {
+        "id": "block-user",
+        "label": "拉黑用户",
+        "syntax": "[拉黑用户:理由]",
+        "description": "当角色因为严重冲突或极度不满想要拒收用户消息时使用。这是最激烈的反应，不要轻易使用。",
+        "tags": []
+      },
+      {
+        "id": "forgive-user",
+        "label": "原谅用户",
+        "syntax": "[原谅用户]",
+        "description": "当角色之前拉黑了用户，现在愿意原谅并恢复通信时使用。",
+        "tags": []
+      }
+    ],
+    "plusActions": [
+      {
+        "id": "open-bond-diary",
+        "label": "不要拉黑",
+        "description": "查看当前角色的好感度、黑化度和关系状态",
+        "entry": "from_chat",
+        "presentation": "app",
+        "tags": []
+      }
+    ]
+  }
+}

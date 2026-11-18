@@ -1,0 +1,3509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>大富翁</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --gold: #f59e0b;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --green: #10b981;
+      --purple: #8b5cf6;
+      --cyan: #06b6d4;
+      --orange: #f97316;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: var(--bg-color);
+      color: var(--text-main);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    /* 顶部导航与安全区 */
+    .topbar {
+      position: fixed;
+      top: var(--ai-phone-app-bar-top, 56px);
+      left: 16px;
+      right: var(--ai-phone-app-bar-clear-right, 96px);
+      height: var(--ai-phone-app-bar-height, 32px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 50;
+    }
+    .app-title {
+      font-size: 19px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .top-btns {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-btn {
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      backdrop-filter: blur(8px);
+    }
+    .icon-btn:active { transform: scale(0.95); }
+
+    /* 主界面容器 */
+    .app-body {
+      flex: 1;
+      min-height: 0;
+      margin-top: calc(var(--ai-phone-app-bar-top, 56px) + 38px);
+      padding-bottom: var(--ai-phone-app-safe-bottom, 20px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 启动与设置房间页 */
+    #setup-view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+      gap: 16px;
+    }
+    .map-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .map-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .map-card.selected {
+      border-color: #fbbf24;
+      background: rgba(251, 191, 36, 0.12);
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
+    }
+    .map-title {
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .map-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.25;
+    }
+    .hero-banner {
+      background: linear-gradient(135deg, #1e1b4b, #312e81, #1e293b);
+      border: 1px solid #4338ca;
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+    }
+    .hero-banner h1 { font-size: 24px; margin-bottom: 6px; color: #fbbf24; }
+    .hero-banner p { font-size: 13px; color: #cbd5e1; }
+    
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .char-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .char-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 10px 6px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+    }
+    .char-card.selected {
+      border-color: #fbbf24;
+      background: rgba(251, 191, 36, 0.1);
+    }
+    .char-card img {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--card-border);
+    }
+    .char-card .name {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .char-card .tag {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 9px;
+      background: #fbbf24;
+      color: #000;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-weight: 800;
+    }
+
+    .config-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .config-row:last-child { margin-bottom: 0; }
+    .config-row label { font-size: 13px; color: var(--text-muted); }
+    .seg-ctrl {
+      display: flex;
+      background: rgba(15, 23, 42, 0.8);
+      border-radius: 8px;
+      padding: 2px;
+    }
+    .seg-item {
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+    .seg-item.active {
+      background: #3b82f6;
+      color: #fff;
+      font-weight: 700;
+    }
+    .start-btn {
+      background: linear-gradient(135deg, #eab308, #ca8a04);
+      color: #000;
+      font-size: 16px;
+      font-weight: 800;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(234, 179, 8, 0.4);
+      margin-top: auto;
+    }
+    .start-btn:active { transform: scale(0.98); }
+
+    /* 游戏主对局视图 */
+    #game-view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* 顶部玩家状态栏 */
+    .players-bar {
+      flex-shrink: 0;
+      display: flex;
+      gap: 6px;
+      padding: 0 10px 6px;
+      overflow-x: auto;
+    }
+    .p-pill {
+      flex: 1;
+      min-width: 80px;
+      background: var(--card-bg);
+      border: 1.5px solid var(--card-border);
+      border-radius: 10px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .p-pill.active {
+      border-color: #fbbf24;
+      background: rgba(251, 191, 36, 0.12);
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+    }
+    .p-pill.bankrupt {
+      opacity: 0.4;
+      filter: grayscale(1);
+    }
+    .p-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .p-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .p-name {
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .p-money {
+      font-size: 12px;
+      font-weight: 800;
+      color: #fbbf24;
+    }
+    .p-badges {
+      display: flex;
+      gap: 2px;
+      flex-wrap: wrap;
+      font-size: 9px;
+    }
+    .p-badge {
+      padding: 0 3px;
+      border-radius: 3px;
+      font-weight: 700;
+    }
+    .badge-god { background: #8b5cf6; color: #fff; }
+    .badge-jail { background: #ef4444; color: #fff; }
+    .badge-sleep { background: #06b6d4; color: #fff; }
+
+    /* 棋盘主区域 (竖屏长方形环形) */
+    .board-container {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      margin: 0 8px 6px;
+      display: grid;
+      /* 6列 x 6行 环形棋盘: 共 20 个格子 */
+      grid-template-columns: repeat(6, 1fr);
+      grid-template-rows: repeat(6, 1fr);
+      gap: 3px;
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid var(--card-border);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+    .board-cell {
+      background: var(--card-bg);
+      border: 1.5px solid var(--card-border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      padding: 3px 2px 2px;
+      font-size: 9px;
+      position: relative;
+      overflow: hidden;
+      justify-content: space-between;
+      transition: all 0.2s;
+    }
+    .board-cell.selectable-for-roadblock {
+      border-color: #38bdf8 !important;
+      cursor: crosshair;
+      animation: cellPulse 1s infinite alternate;
+    }
+    @keyframes cellPulse {
+      from { box-shadow: 0 0 4px #38bdf8; }
+      to { box-shadow: 0 0 12px #38bdf8; }
+    }
+    /* 特殊格子背景质感差异化 */
+    .board-cell.type-go {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), #1e293b);
+      border-color: #10b981;
+    }
+    .board-cell.type-shop {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), #1e293b);
+      border-color: #38bdf8;
+    }
+    .board-cell.type-hospital {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), #1e293b);
+      border-color: #f87171;
+    }
+    .board-cell.type-chance {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), #1e293b);
+      border-color: rgba(251, 191, 36, 0.5);
+    }
+    
+    /* 地产归属高亮描边与背景微光 */
+    .board-cell.owned {
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.5);
+    }
+
+    .cell-header-bar {
+      width: 100%;
+      height: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-radius: 4px;
+      padding: 0 2px;
+      margin-bottom: 1px;
+    }
+    .cell-owner-badge {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 4px;
+      border-radius: 4px;
+      font-size: 8px;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .cell-owner-badge .owner-name {
+      max-width: 28px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .cell-type-badge {
+      font-size: 8px;
+      font-weight: 800;
+      padding: 0 3px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.4);
+    }
+    .cell-name {
+      font-size: 9px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.15;
+      text-align: center;
+      margin-top: 1px;
+    }
+    .cell-info {
+      font-size: 8px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2px;
+    }
+    .cell-houses {
+      color: #fbbf24;
+      font-weight: 800;
+      font-size: 8px;
+      background: rgba(0,0,0,0.4);
+      padding: 0 3px;
+      border-radius: 3px;
+    }
+    .cell-tokens {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      display: flex;
+      gap: 1px;
+    }
+    .p-token {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 1.5px solid #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      font-size: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      color: #fff;
+      animation: bounce 0.4s ease-in-out infinite alternate;
+    }
+    .cell-roadblock {
+      position: absolute;
+      inset: 0;
+      background: rgba(239, 68, 68, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .cell-bomb {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      font-size: 11px;
+    }
+
+    /* 棋盘中央信息区 (占据 4x4) */
+    .board-center {
+      grid-column: 2 / 6;
+      grid-row: 2 / 6;
+      height: 100%;
+      min-height: 0;
+      background: rgba(30, 41, 59, 0.6);
+      border-radius: 8px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .center-log {
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      font-size: 10.5px;
+      line-height: 1.35;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding-right: 2px;
+    }
+    .log-item {
+      color: #cbd5e1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.25);
+    }
+    .log-item.highlight { color: #fbbf24; font-weight: 700; }
+    .log-item.danger { color: #f87171; }
+    
+    /* 角色即时吐槽气泡 */
+    .ai-speech-bubble {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      background: linear-gradient(135deg, #312e81, #1e1b4b);
+      border: 1.5px solid #818cf8;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 11px;
+      line-height: 1.3;
+      color: #e0e7ff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      z-index: 20;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .ai-speech-bubble .speaker {
+      font-weight: 800;
+      color: #fbbf24;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 底部操作区 */
+    .bottom-controls {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--card-bg);
+      border-top: 1px solid var(--card-border);
+      z-index: 40;
+    }
+    .btn-dice {
+      flex: 1;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    }
+    .btn-dice:active { transform: scale(0.97); }
+    .btn-dice:disabled { opacity: 0.5; cursor: not-allowed; }
+    .dice-anim {
+      font-size: 20px;
+      display: inline-block;
+    }
+    .btn-sub {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .btn-sub:active { transform: scale(0.95); }
+
+    /* 弹窗与抽屉通用 */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 340px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.8);
+      animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fbbf24;
+      text-align: center;
+    }
+    .modal-desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.4;
+      text-align: center;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .modal-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .modal-btn.primary { background: #3b82f6; color: #fff; }
+    .modal-btn.gold { background: #f59e0b; color: #000; }
+    .modal-btn.cancel { background: #334155; color: #cbd5e1; }
+
+    /* 道具列表 */
+    .cards-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .card-item {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .card-item:hover { border-color: #38bdf8; }
+    .card-name { font-size: 12px; font-weight: 700; color: #38bdf8; }
+    .card-info { font-size: 10px; color: var(--text-muted); line-height: 1.2; }
+    .card-price { font-size: 11px; font-weight: 800; color: #fbbf24; }
+
+    /* 悬浮对线对局聊天抽屉 */
+    #chat-drawer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 70vh;
+      background: #0f172a;
+      border-top: 2px solid #38bdf8;
+      border-radius: 20px 20px 0 0;
+      z-index: 90;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #chat-drawer.open {
+      transform: translateY(0);
+    }
+    .drawer-header {
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .drawer-header h3 { font-size: 15px; color: #38bdf8; }
+    .drawer-msgs {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .msg-bubble {
+      max-width: 80%;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .msg-bubble.user {
+      align-self: flex-end;
+      background: #2563eb;
+      color: #fff;
+    }
+    .msg-bubble.ai {
+      align-self: flex-start;
+      background: #1e293b;
+      border: 1px solid var(--card-border);
+      color: #f8fafc;
+    }
+    .drawer-input-row {
+      padding: 10px 14px calc(var(--ai-phone-app-safe-bottom, 16px) + 6px);
+      display: flex;
+      gap: 8px;
+      border-top: 1px solid var(--card-border);
+      background: var(--card-bg);
+    }
+    .drawer-input-row input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 8px 14px;
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+    }
+    .drawer-input-row button {
+      background: #38bdf8;
+      border: none;
+      border-radius: 20px;
+      padding: 0 16px;
+      font-weight: 700;
+      color: #000;
+      cursor: pointer;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-3px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部导航栏 -->
+  <div class="topbar">
+    <div class="app-title">🎲 大富翁</div>
+    <div class="top-btns" id="top-bar-btns">
+      <span id="turn-indicator" style="display:none; font-size:11px; color:#38bdf8; font-weight:700; align-self:center; background:rgba(15,23,42,0.8); padding:3px 8px; border-radius:12px; border:1px solid #334155;">第 1 轮</span>
+      <button class="icon-btn" id="btn-restart" style="display:none;" onclick="onRestartClick()">↺ 认输重开</button>
+      <button class="icon-btn" id="btn-open-chat" style="display:none;" onclick="toggleChatDrawer(true)">💬 对线小窗</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- 房间配置与开局视图 -->
+    <div id="setup-view">
+      <div class="hero-banner">
+        <h1>地产大亨 · AI 争霸</h1>
+        <p>自选 AI 角色对手，5 级房产豪赌，神明与道具逆转乾坤！</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">🗺️ 选择冒险地图</div>
+        <div class="map-grid" id="map-picker">
+          <div class="map-card selected" onclick="selectMap('city')">
+            <div class="map-title" style="color:#38bdf8;">🏙️ 繁华都市</div>
+            <div class="map-desc">经典摩天楼与商业街，快节奏商战。</div>
+          </div>
+          <div class="map-card" onclick="selectMap('beach')">
+            <div class="map-title" style="color:#06b6d4;">🏖️ 阳光海滩</div>
+            <div class="map-desc">海岛度假村与冲浪馆，椰林偶遇椰子雨。</div>
+          </div>
+          <div class="map-card" onclick="selectMap('volcano')">
+            <div class="map-title" style="color:#f97316;">🌋 熔岩火山口</div>
+            <div class="map-desc">黑曜石矿场与地热温泉，警惕岩浆喷发！</div>
+          </div>
+          <div class="map-card" onclick="selectMap('ocean')">
+            <div class="map-title" style="color:#818cf8;">🌊 亚特兰蒂斯</div>
+            <div class="map-desc">深海珊瑚礁与人鱼遗迹，神秘潮汐洋流。</div>
+          </div>
+          <div class="map-card" onclick="selectMap('space')">
+            <div class="map-title" style="color:#c084fc;">🚀 星际空间站</div>
+            <div class="map-desc">轨道殖民舱与反物质反应堆。</div>
+          </div>
+          <div class="map-card" onclick="selectMap('snow')">
+            <div class="map-title" style="color:#0ea5e9;">🏔️ 凛冬雪山</div>
+            <div class="map-desc">冰封矿脉与雪中木屋，寒冷地带。</div>
+          </div>
+          <div class="map-card" onclick="selectMap('candy')">
+            <div class="map-title" style="color:#db2777;">🍬 糖果梦工厂</div>
+            <div class="map-desc">甜甜圈街区与巧克力山，甜蜜陷阱。</div>
+          </div>
+          <div class="map-card" onclick="selectMap('fantasy')">
+            <div class="map-title" style="color:#16a34a;">🧝 西幻世界</div>
+            <div class="map-desc">精灵古树与魔法遗迹，奇幻冒险。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">👥 选择参战角色 (支持 1~3 位)</div>
+        <div class="char-grid" id="char-picker">
+          <div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:20px; font-size:12px;">
+            正在读取手机里的 AI 角色...
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">⚙️ 战局规则</div>
+        <div class="config-row">
+          <label>初始现金</label>
+          <div class="seg-ctrl" id="seg-cash">
+            <div class="seg-item" onclick="setCash(5000)">5,000</div>
+            <div class="seg-item active" onclick="setCash(10000)">10,000</div>
+            <div class="seg-item" onclick="setCash(20000)">20,000</div>
+          </div>
+        </div>
+        <div class="config-row" style="margin-top:12px;">
+          <label>胜利条件</label>
+          <div class="seg-ctrl" id="seg-rule">
+            <div class="seg-item active" onclick="setVictoryRule('bankruptcy')">破产决胜</div>
+            <div class="seg-item" onclick="setVictoryRule('turns')">限时轮数</div>
+          </div>
+        </div>
+        <div class="config-row" id="turns-config-row" style="margin-top:12px; display:none;">
+          <label>限定总轮数</label>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div class="seg-ctrl" id="seg-turns-preset">
+              <div class="seg-item active" onclick="setTurnsPreset(30)">30轮</div>
+              <div class="seg-item" onclick="setTurnsPreset(50)">50轮</div>
+            </div>
+            <input type="number" id="input-custom-turns" placeholder="自填" min="5" max="200" style="width:58px; background:rgba(15,23,42,0.8); border:1px solid var(--card-border); color:#fff; border-radius:6px; padding:3px 6px; font-size:12px; text-align:center;" oninput="onCustomTurnsInput(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <button class="start-btn" id="btn-start-game" onclick="startGame()">🎲 开启对局</button>
+    </div>
+
+    <!-- 游戏对战主视图 -->
+    <div id="game-view">
+      <!-- 玩家状态横幅 -->
+      <div class="players-bar" id="players-bar"></div>
+
+      <!-- 环形棋盘 -->
+      <div class="board-container" id="board-grid">
+        <!-- 动态生成 20 个格子 -->
+
+        <!-- 棋盘中心区域 -->
+        <div class="board-center">
+          <div class="ai-speech-bubble" id="ai-bubble">
+            <div class="speaker" id="bubble-speaker">角色名</div>
+            <div class="text" id="bubble-text">吐槽内容</div>
+          </div>
+          <div class="center-log" id="game-log"></div>
+        </div>
+      </div>
+
+      <!-- 底部操作区 -->
+      <div class="bottom-controls">
+        <button class="btn-sub" onclick="openBagModal()">
+          <span>🎒</span>
+          <span>我的道具 (<b id="bag-count">0</b>)</span>
+        </button>
+        <button class="btn-dice" id="btn-roll" onclick="playerRollDice()">
+          <span class="dice-anim" id="dice-face">🎲</span>
+          <span id="roll-text">掷骰子</span>
+        </button>
+        <button class="btn-sub" onclick="openShopModal()">
+          <span>🏪</span>
+          <span>道具商店</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 对战聊天小窗抽屉 -->
+  <div id="chat-drawer">
+    <div class="drawer-header">
+      <h3 id="drawer-title">💬 战局对线与复盘</h3>
+      <button class="icon-btn" onclick="toggleChatDrawer(false)">✕ 关闭</button>
+    </div>
+    <div class="drawer-msgs" id="drawer-msgs">
+      <div class="msg-bubble ai">你拉开了对线小窗，随时可以说两句，角色会根据当局局势和人设回复你。</div>
+    </div>
+    <div class="drawer-input-row">
+      <input type="text" id="drawer-input" placeholder="发句狠话或者聊聊战局..." onkeydown="if(event.key==='Enter') sendDrawerMsg()">
+      <button onclick="sendDrawerMsg()">发送</button>
+    </div>
+  </div>
+
+  <!-- 模态弹窗 (买地/事件/商店/背包等通用) -->
+  <div class="modal-mask" id="modal-mask">
+    <div class="modal-box" id="modal-box">
+      <div class="modal-title" id="modal-title">标题</div>
+      <div class="modal-desc" id="modal-desc">内容</div>
+      <div id="modal-custom-content"></div>
+      <div class="modal-actions" id="modal-actions"></div>
+    </div>
+  </div>
+  <script>
+    // --- 游戏数据与常量 ---
+    const DB_KEY = "monopoly_save_v1";
+    let allCharacters = [];
+    let selectedCharIds = [];
+    let selectedMapKey = "city"; // 'city' | 'beach' | 'volcano' | 'ocean' | 'space'
+    let startCash = 10000;
+    let victoryRule = "bankruptcy"; // 'bankruptcy' | 'turns'
+    let maxTurns = 30;
+    let currentUserProfile = { name: "你" };
+
+    // 道具卡配置
+    const CARDS_DEF = {
+      remote_dice: { id: "remote_dice", name: "遥控骰子", price: 600, desc: "自由选择下一步掷出 1~6 点", icon: "🎯" },
+      turn_card: { id: "turn_card", name: "转向卡", price: 400, desc: "指定自己或任意角色调转行进方向", icon: "↩️" },
+      swap_house: { id: "swap_house", name: "换屋卡", price: 1200, desc: "将自己的一处房产与对手的一处房产对调", icon: "🔄" },
+      roadblock: { id: "roadblock", name: "封路卡", price: 500, desc: "在指定格放置路障，持续 3 回合，经过者强制停下", icon: "🚧" },
+      sleep_card: { id: "sleep_card", name: "冬眠卡", price: 700, desc: "让指定对手深度昏睡 2 回合，跳过行动", icon: "💤" },
+      free_rent: { id: "free_rent", name: "免租卡", price: 500, desc: "踩中他人地产时自动抵消 1 次过路费", icon: "🛡️" },
+      time_bomb: { id: "time_bomb", name: "定时炸弹", price: 800, desc: "自由点选目标格埋放炸弹，走满 5 步即爆，炸伤送医且降级房产", icon: "💣" }
+    };
+
+    // --- 地图主题大全（都市、海滩、火山、海底、宇宙） ---
+    const MAPS_DATABASE = {
+      city: {
+        id: "city",
+        name: "繁华都市",
+        themeCss: {
+          boardBg: "rgba(15, 23, 42, 0.95)",
+          cellBg: "#1e293b",
+          centerBg: "rgba(30, 41, 59, 0.6)",
+          houseLevels: ["空地", "平房", "洋楼", "公寓", "大厦", "👑摩天楼"]
+        },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "中央车站", type: "go", color: "#10b981", icon: "🚩" },
+          { id: 1, r: 4, c: 0, name: "幸福里", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "都市快讯", type: "chance", icon: "❓" },
+          { id: 3, r: 2, c: 0, name: "平安坊", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "吉祥街", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "百货大楼", type: "shop", icon: "🏪" },
+          { id: 6, r: 0, c: 1, name: "海湾路", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "都市快讯", type: "chance", icon: "❓" },
+          { id: 8, r: 0, c: 3, name: "滨海大道", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "云端公馆", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "市立医院", type: "hospital", icon: "🏥" },
+          { id: 11, r: 1, c: 5, name: "枫林路", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "都市快讯", type: "chance", icon: "❓" },
+          { id: 13, r: 3, c: 5, name: "银杏大街", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "梧桐别院", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "命运轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "翡翠湾", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "黄金海岸", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "都市快讯", type: "chance", icon: "❓" },
+          { id: 19, r: 5, c: 1, name: "天际中心", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [
+          { type: "money", text: "你在马路牙子捡到了被风吹散的现金！", val: 300, isGain: true },
+          { type: "money", text: "随手买的彩票喜中刮刮乐二等奖，奖金入账！", val: 600, isGain: true },
+          { type: "money", text: "遭遇飞车党抢劫，现金受损！", val: -400, isGain: false },
+          { type: "hospital", text: "走路低头看手机踩到香蕉皮摔骨折，送医住院 1 回合！", turns: 1 },
+          { type: "upgrade", text: "旧城微改造惠民工程，名下随机 1 处房产免费升 1 级！" },
+          { type: "downgrade", text: "遭遇违建强拆排查，名下最高等级房产强制降 1 级！" }
+        ]
+      },
+      beach: {
+        id: "beach",
+        name: "阳光海滩",
+        themeCss: {
+          boardBg: "rgba(12, 74, 110, 0.95)",
+          centerBg: "rgba(7, 89, 133, 0.5)",
+          houseLevels: ["沙滩", "遮阳伞", "木屋", "海景别墅", "度假酒店", "👑私家海岛"]
+        },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "阳光码头", type: "go", color: "#06b6d4", icon: "⚓" },
+          { id: 1, r: 4, c: 0, name: "贝壳湾", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "海浪漂流瓶", type: "chance", icon: "🍾" },
+          { id: 3, r: 2, c: 0, name: "椰林大道", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "金沙浅滩", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "冲浪补给站", type: "shop", icon: "🏄" },
+          { id: 6, r: 0, c: 1, name: "海风长廊", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "海浪漂流瓶", type: "chance", icon: "🍾" },
+          { id: 8, r: 0, c: 3, name: "珊瑚礁岸", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "海鸥灯塔", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "海边医务所", type: "hospital", icon: "🏥" },
+          { id: 11, r: 1, c: 5, name: "热带雨林", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "海浪漂流瓶", type: "chance", icon: "🍾" },
+          { id: 13, r: 3, c: 5, name: "蔚蓝海湾", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "日落悬崖", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "潮汐大轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "珍珠礁堡", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "星光沙洲", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "海浪漂流瓶", type: "chance", icon: "🍾" },
+          { id: 19, r: 5, c: 1, name: "皇家假日岛", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [
+          { type: "money", text: "在沙滩捡到游客遗落的宝石戒指，换得现金！", val: 350, isGain: true },
+          { type: "money", text: "参加海滩椰子节大胃王比赛夺冠，赢得奖金！", val: 500, isGain: true },
+          { type: "money", text: "出海游艇遭遇暴风雨损毁，支付维修费！", val: -400, isGain: false },
+          { type: "hospital", text: "冲浪时不慎被水母蛰伤，送入海边医务所治疗 1 回合！", turns: 1 },
+          { type: "upgrade", text: "海岛旅游局发放度假扶持基金，名下随机 1 处产业免费升 1 级！" },
+          { type: "downgrade", text: "强台风暴潮过境侵蚀，名下最高等级海景房强制降 1 级！" }
+        ]
+      },
+      volcano: {
+        id: "volcano",
+        name: "熔岩火山口",
+        themeCss: {
+          boardBg: "rgba(69, 10, 10, 0.95)",
+          centerBg: "rgba(127, 29, 29, 0.5)",
+          houseLevels: ["焦土", "石矿棚", "地热工房", "熔岩城堡", "黑曜石要塞", "👑火神殿堂"]
+        },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "熔岩缆车站", type: "go", color: "#f97316", icon: "🌋" },
+          { id: 1, r: 4, c: 0, name: "黑石原", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "地脉震颤", type: "chance", icon: "💥" },
+          { id: 3, r: 2, c: 0, name: "灰烬谷", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "余烬村", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "矮人锻造所", type: "shop", icon: "🔨" },
+          { id: 6, r: 0, c: 1, name: "玄武岩道", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "地脉震颤", type: "chance", icon: "💥" },
+          { id: 8, r: 0, c: 3, name: "硫磺温泉", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "赤焰矿井", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "耐热避难所", type: "hospital", icon: "🏥" },
+          { id: 11, r: 1, c: 5, name: "熔渣峡谷", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "地脉震颤", type: "chance", icon: "💥" },
+          { id: 13, r: 3, c: 5, name: "烈火深渊", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "熔火晶柱", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "熔岩核心轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "黑曜石峰", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "炽炎王座", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "地脉震颤", type: "chance", icon: "💥" },
+          { id: 19, r: 5, c: 1, name: "火神领地", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [
+          { type: "money", text: "在火山灰下挖掘出一块极品火欧泊，高价卖出！", val: 500, isGain: true },
+          { type: "money", text: "地热发电站分红到账，领取清洁能源补贴！", val: 400, isGain: true },
+          { type: "money", text: "遭遇熔岩飞溅灼伤装备，支付修缮费用！", val: -350, isGain: false },
+          { type: "hospital", text: "误入高温硫磺烟雾区中毒，送入避难所休养 1 回合！", turns: 1 },
+          { type: "upgrade", text: "地脉火元素共鸣赋能，名下随机 1 处矿场免费升 1 级！" },
+          { type: "downgrade", text: "遭遇小规模岩浆漫灌，名下最高等级建筑强制降 1 级！" }
+        ]
+      },
+      ocean: {
+        id: "ocean",
+        name: "亚特兰蒂斯",
+        themeCss: {
+          boardBg: "rgba(15, 23, 42, 0.95)",
+          centerBg: "rgba(30, 27, 75, 0.6)",
+          houseLevels: ["海沟", "气泡舱", "贝壳屋", "珊瑚神殿", "水晶穹顶", "👑深海帝王宫"]
+        },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "潮汐漩涡门", type: "go", color: "#38bdf8", icon: "🌀" },
+          { id: 1, r: 4, c: 0, name: "发光水母原", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "古神低语", type: "chance", icon: "🔮" },
+          { id: 3, r: 2, c: 0, name: "海马林地", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "人鱼集市", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "深海潜水仓", type: "shop", icon: "🫧" },
+          { id: 6, r: 0, c: 1, name: "海沟回廊", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "古神低语", type: "chance", icon: "🔮" },
+          { id: 8, r: 0, c: 3, name: "巨鲸遗骸", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "沉船宝藏区", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "减压医疗舱", type: "hospital", icon: "🏥" },
+          { id: 11, r: 1, c: 5, name: "海妖峡湾", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "古神低语", type: "chance", icon: "🔮" },
+          { id: 13, r: 3, c: 5, name: "荧光海槽", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "失落神殿", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "深海潮汐轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "水银深渊", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "海神三叉戟", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "古神低语", type: "chance", icon: "🔮" },
+          { id: 19, r: 5, c: 1, name: "亚特兰蒂斯核心", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [
+          { type: "money", text: "在沉船残骸中撬开了一箱古老金币！", val: 600, isGain: true },
+          { type: "money", text: "救助受困小海豚，人鱼族赠予深海珍珠报恩！", val: 450, isGain: true },
+          { type: "money", text: "氧气加压系统过载，支付深海维护保养费！", val: -300, isGain: false },
+          { type: "hospital", text: "遭遇突发深海巨大乱流被卷晕，送入减压舱休养 1 回合！", turns: 1 },
+          { type: "upgrade", text: "亚特兰蒂斯古代能量重启，名下随机 1 处神殿免费升 1 级！" },
+          { type: "downgrade", text: "巨型深海大章鱼触手破坏，名下最高等级建筑强制降 1 级！" }
+        ]
+      },
+      space: {
+        id: "space",
+        name: "星际空间站",
+        themeCss: {
+          boardBg: "rgba(2, 6, 23, 0.95)",
+          centerBg: "rgba(88, 28, 135, 0.4)",
+          houseLevels: ["舱位", "气闸舱", "科研室", "生态穹顶", "反物质矩阵", "👑戴森球核心"]
+        },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "曲率发射台", type: "go", color: "#a855f7", icon: "🚀" },
+          { id: 1, r: 4, c: 0, name: "小行星带", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "未知信号", type: "chance", icon: "📡" },
+          { id: 3, r: 2, c: 0, name: "氦3采集站", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "月壤基底", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "星际贸易港", type: "shop", icon: "🛸" },
+          { id: 6, r: 0, c: 1, name: "轨道电梯", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "未知信号", type: "chance", icon: "📡" },
+          { id: 8, r: 0, c: 3, name: "火星拓荒区", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "空间对接港", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "重力疗养所", type: "hospital", icon: "🏥" },
+          { id: 11, r: 1, c: 5, name: "木卫二冰海", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "未知信号", type: "chance", icon: "📡" },
+          { id: 13, r: 3, c: 5, name: "土星光环站", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "离子风暴区", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "超空间大轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "脉冲星观测台", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "暗物质要塞", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "未知信号", type: "chance", icon: "📡" },
+          { id: 19, r: 5, c: 1, name: "星河总枢纽", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [
+          { type: "money", text: "探测器发现高纯度振金陨石，星际矿业开出天价！", val: 800, isGain: true },
+          { type: "money", text: "破译外星文明科研论文，荣获银河科学大奖！", val: 500, isGain: true },
+          { type: "money", text: "遭遇太空微陨石撞击，紧急支付太阳能帆板维修费！", val: -400, isGain: false },
+          { type: "hospital", text: "宇航服失压进入人工冬眠，送往重力疗养舱休养 1 回合！", turns: 1 },
+          { type: "upgrade", text: "引力波增幅器启动，名下随机 1 处空间站免费升 1 级！" },
+          { type: "downgrade", text: "遭遇强太阳耀斑辐射风暴，名下最高等级反应堆强制降 1 级！" }
+        ]
+      },
+      snow: {
+        id: "snow",
+        name: "寂静雪山",
+        themeCss: {
+          boardBg: "#e0f2fe",
+          centerBg: "rgba(224, 242, 254, 0.5)",
+          houseLevels: ["雪地", "冰屋", "温泉馆", "滑雪场", "度假城堡", "👑水晶宫"]
+        },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "雪山缆车", type: "go", color: "#0284c7", icon: "🚠" },
+          { id: 1, r: 4, c: 0, name: "冻土原", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "冰封秘境", type: "chance", icon: "❄️" },
+          { id: 3, r: 2, c: 0, name: "雪兔窝", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "霜火营地", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "热可可工坊", type: "shop", icon: "☕" },
+          { id: 6, r: 0, c: 1, name: "极光长道", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "冰封秘境", type: "chance", icon: "❄️" },
+          { id: 8, r: 0, c: 3, name: "滑雪俱乐部", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "温泉度假村", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "医疗帐篷", type: "hospital", icon: "🏥" },
+          { id: 11, r: 1, c: 5, name: "雾凇林", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "冰封秘境", type: "chance", icon: "❄️" },
+          { id: 13, r: 3, c: 5, name: "冰湖垂钓场", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "雪崩废墟", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "冰雪命运轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "云端瞭望台", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "冰川祭坛", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "冰封秘境", type: "chance", icon: "❄️" },
+          { id: 19, r: 5, c: 1, name: "雪山王宫", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [
+          { type: "money", text: "发现古老冰川下的化石矿藏，高价回收！", val: 500, isGain: true },
+          { type: "money", text: "滑雪锦标赛夺冠，赢取丰厚奖金！", val: 450, isGain: true },
+          { type: "money", text: "滑雪板在岩石上刮花，支付昂贵维修费！", val: -300, isGain: false },
+          { type: "hospital", text: "遭遇严重冻伤，强制送入医疗帐篷休养 1 回合！", turns: 1 },
+          { type: "upgrade", text: "冰雪赋予加护，名下随机 1 处温泉度假村免费升 1 级！" },
+          { type: "downgrade", text: "遭遇小型雪崩破坏，名下最高等级建筑强制降 1 级！" }
+        ]
+      },
+      candy: {
+        id: "candy",
+        name: "糖果梦境",
+        themeCss: {
+          boardBg: "#fce7f3",
+          centerBg: "rgba(253, 242, 248, 0.5)",
+          houseLevels: ["糖纸", "饼干屋", "糖果坊", "巧克力堡", "蛋糕庄园", "👑太妃糖巨塔"]
+        },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "棉花糖车站", type: "go", color: "#db2777", icon: "🍬" },
+          { id: 1, r: 4, c: 0, name: "果冻泥滩", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "奇迹扭蛋机", type: "chance", icon: "🔮" },
+          { id: 3, r: 2, c: 0, name: "拐杖糖路", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "焦糖平原", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "甜点配送站", type: "shop", icon: "🍰" },
+          { id: 6, r: 0, c: 1, name: "巧克力长河", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "奇迹扭蛋机", type: "chance", icon: "🔮" },
+          { id: 8, r: 0, c: 3, name: "松饼农场", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "棒棒糖林", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "牙科急诊所", type: "hospital", icon: "🦷" },
+          { id: 11, r: 1, c: 5, name: "泡泡糖小镇", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "奇迹扭蛋机", type: "chance", icon: "🔮" },
+          { id: 13, r: 3, c: 5, name: "威化墙", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "奶油山谷", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "糖果命运轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "曲奇岛", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "太妃糖金库", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "奇迹扭蛋机", type: "chance", icon: "🔮" },
+          { id: 19, r: 5, c: 1, name: "糖果王座", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [
+          { type: "money", text: "意外发现罕见彩色钻石糖，在甜点行高价拍卖！", val: 500, isGain: true },
+          { type: "money", text: "帮蛋糕房完成新品推广，领取代言费！", val: 400, isGain: true },
+          { type: "money", text: "吃太多糖把牙崩坏了，支付高额牙医账单！", val: -300, isGain: false },
+          { type: "hospital", text: "患上严重龋齿，强制送入牙科急诊所治疗 1 回合！", turns: 1 },
+          { type: "upgrade", text: "糖果魔法加持，名下随机 1 处甜点工厂免费升 1 级！" },
+          { type: "downgrade", text: "遭遇巧克力融化灾害，名下最高等级建筑强制降 1 级！" }
+        ]
+      },
+      fantasy: {
+        id: "fantasy",
+        name: "西幻世界",
+        themeCss: {
+          boardBg: "#d1fae5",
+          centerBg: "rgba(209, 250, 229, 0.5)",
+          houseLevels: ["荒地", "营地", "酒馆", "工会", "圣殿", "👑天空之城"]
+        },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "魔法驿站", type: "go", color: "#059669", icon: "🏰" },
+          { id: 1, r: 4, c: 0, name: "落叶森林", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "占星台", type: "chance", icon: "🔮" },
+          { id: 3, r: 2, c: 0, name: "吟游诗人之歌", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "精灵树屋", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "秘法杂货店", type: "shop", icon: "📜" },
+          { id: 6, r: 0, c: 1, name: "矮人矿坑", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "占星台", type: "chance", icon: "🔮" },
+          { id: 8, r: 0, c: 3, name: "黑铁堡垒", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "巨龙巢穴", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "牧师疗愈所", type: "hospital", icon: "🏥" },
+          { id: 11, r: 1, c: 5, name: "迷雾沼泽", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "占星台", type: "chance", icon: "🔮" },
+          { id: 13, r: 3, c: 5, name: "圣骑士陵墓", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "魔法学院", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "时空轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "王都广场", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "贤者图书馆", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "占星台", type: "chance", icon: "🔮" },
+          { id: 19, r: 5, c: 1, name: "天空神殿", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [
+          { type: "money", text: "探险队发现了遗失的古卷，工会赏金入账！", val: 500, isGain: true },
+          { type: "money", text: "成功炼制药水售卖，大赚一笔！", val: 400, isGain: true },
+          { type: "money", text: "魔法杖在对决中损毁，支付高额修理费！", val: -350, isGain: false },
+          { type: "hospital", text: "遭遇黑暗生物偷袭重伤，强制送入牧师疗愈所 1 回合！", turns: 1 },
+          { type: "upgrade", text: "获得上古神灵赐福，名下随机 1 处圣殿免费升 1 级！" },
+          { type: "downgrade", text: "遭遇黑魔法腐蚀，名下最高等级建筑强制降 1 级！" }
+        ]
+      },
+      snow: {
+        id: "snow",
+        name: "凛冬雪山",
+        themeCss: { boardBg: "#e2e8f0", centerBg: "#cbd5e1", houseLevels: ["雪地", "冰屋", "木屋", "度假村", "滑雪场", "👑冰堡"] },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "滑雪起点", type: "go", color: "#0ea5e9", icon: "🚠" },
+          { id: 1, r: 4, c: 0, name: "冻土原", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "冰封秘境", type: "chance", icon: "❄️" },
+          { id: 3, r: 2, c: 0, name: "雪兔窝", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "霜火营地", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "热可可店", type: "shop", icon: "☕" },
+          { id: 6, r: 0, c: 1, name: "极光长道", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "冰封秘境", type: "chance", icon: "❄️" },
+          { id: 8, r: 0, c: 3, name: "滑雪俱乐部", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "温泉度假村", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "医疗帐篷", type: "hospital", icon: "🏥" },
+          { id: 11, r: 1, c: 5, name: "雾凇林", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "冰封秘境", type: "chance", icon: "❄️" },
+          { id: 13, r: 3, c: 5, name: "冰湖垂钓场", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "雪崩废墟", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "冰雪轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "云端瞭望台", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "冰川祭坛", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "冰封秘境", type: "chance", icon: "❄️" },
+          { id: 19, r: 5, c: 1, name: "雪山王宫", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [{type:"money",text:"捡到冻土下的远古化石！",val:500,isGain:true}]
+      },
+      candy: {
+        id: "candy",
+        name: "糖果梦工厂",
+        themeCss: { boardBg: "#fce7f3", centerBg: "rgba(253, 242, 248, 0.5)", houseLevels: ["糖纸", "饼干屋", "糖果坊", "巧克力堡", "蛋糕庄园", "👑太妃糖巨塔"] },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "车站", type: "go", color: "#db2777", icon: "🍬" },
+          { id: 1, r: 4, c: 0, name: "果冻滩", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "扭蛋机", type: "chance", icon: "🔮" },
+          { id: 3, r: 2, c: 0, name: "拐杖街", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "焦糖平原", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "配送站", type: "shop", icon: "🍰" },
+          { id: 6, r: 0, c: 1, name: "巧克力河", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "扭蛋机", type: "chance", icon: "🔮" },
+          { id: 8, r: 0, c: 3, name: "松饼场", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "棒棒糖林", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "牙科所", type: "hospital", icon: "🦷" },
+          { id: 11, r: 1, c: 5, name: "泡泡小镇", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "扭蛋机", type: "chance", icon: "🔮" },
+          { id: 13, r: 3, c: 5, name: "威化墙", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "奶油山谷", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "曲奇岛", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "金库", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "扭蛋机", type: "chance", icon: "🔮" },
+          { id: 19, r: 5, c: 1, name: "糖果王座", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [{type:"money",text:"吃到大草莓棉花糖！",val:500,isGain:true}]
+      },
+      fantasy: {
+        id: "fantasy",
+        name: "西幻世界",
+        themeCss: { boardBg: "#d1fae5", centerBg: "rgba(209, 250, 229, 0.5)", houseLevels: ["荒地", "营地", "酒馆", "工会", "圣殿", "👑天空之城"] },
+        cells: [
+          { id: 0, r: 5, c: 0, name: "驿站", type: "go", color: "#059669", icon: "🏰" },
+          { id: 1, r: 4, c: 0, name: "森林", type: "land", group: "red", price: 800, baseRent: 150 },
+          { id: 2, r: 3, c: 0, name: "占星台", type: "chance", icon: "🔮" },
+          { id: 3, r: 2, c: 0, name: "诗人之歌", type: "land", group: "red", price: 900, baseRent: 180 },
+          { id: 4, r: 1, c: 0, name: "精灵树屋", type: "land", group: "red", price: 1000, baseRent: 200 },
+          { id: 5, r: 0, c: 0, name: "杂货店", type: "shop", icon: "📜" },
+          { id: 6, r: 0, c: 1, name: "矿坑", type: "land", group: "blue", price: 1200, baseRent: 240 },
+          { id: 7, r: 0, c: 2, name: "占星台", type: "chance", icon: "🔮" },
+          { id: 8, r: 0, c: 3, name: "堡垒", type: "land", group: "blue", price: 1400, baseRent: 280 },
+          { id: 9, r: 0, c: 4, name: "巢穴", type: "land", group: "blue", price: 1600, baseRent: 320 },
+          { id: 10, r: 0, c: 5, name: "医所", type: "hospital", icon: "🏥" },
+          { id: 11, r: 1, c: 5, name: "迷雾沼泽", type: "land", group: "orange", price: 1800, baseRent: 360 },
+          { id: 12, r: 2, c: 5, name: "占星台", type: "chance", icon: "🔮" },
+          { id: 13, r: 3, c: 5, name: "陵墓", type: "land", group: "orange", price: 2000, baseRent: 400 },
+          { id: 14, r: 4, c: 5, name: "魔法学院", type: "land", group: "orange", price: 2200, baseRent: 450 },
+          { id: 15, r: 5, c: 5, name: "轮盘", type: "chance", icon: "🎡" },
+          { id: 16, r: 5, c: 4, name: "王都广场", type: "land", group: "purple", price: 2500, baseRent: 500 },
+          { id: 17, r: 5, c: 3, name: "图书馆", type: "land", group: "purple", price: 2800, baseRent: 580 },
+          { id: 18, r: 5, c: 2, name: "占星台", type: "chance", icon: "🔮" },
+          { id: 19, r: 5, c: 1, name: "圣殿", type: "land", group: "purple", price: 3200, baseRent: 700 }
+        ],
+        events: [{type:"money",text:"获得精灵的祝福！",val:500,isGain:true}]
+      }
+    };
+
+    // 通用神仙与道具卡掉落事件（拼接进各主题）
+    const COMMON_CHANCE_EVENTS = [
+      { type: "card", text: "拾金不昧受到好评，获得一张【免租卡】！", cardId: "free_rent" },
+      { type: "card", text: "在路边意外捡到一个高科技道具【遥控骰子】！", cardId: "remote_dice" },
+      { type: "god", text: "✨ 仙光普照！感动了路过的【大财神】附身 3 回合！\n【财神特权】：① 踩他人地产强制免付租金；② 买地加盖全享5折；③ 他人踩己房产租金翻倍；④ 每回合天降祥瑞+¥300！", god: "caishen", godTurns: 3 },
+      { type: "god", text: "👻 乌云盖顶！踩中霉运被【大衰神】缠身 3 回合！\n【衰神诅咒】：① 踩他人地产过路费翻倍(200%)；② 买地加盖加价50%；③ 他人踩己房产租金减半；④ 每回合破财流失-¥200！", god: "shuaishen", godTurns: 3 },
+      { type: "all_gift", text: "心情大好给全场发红包，向其他每位玩家转账 150 元！", perVal: 150 }
+    ];
+
+    function getCurrentMapConfig() {
+      const mapKey = gameState.mapKey || selectedMapKey || "city";
+      return MAPS_DATABASE[mapKey] || MAPS_DATABASE.city;
+    }
+
+    function selectMap(key) {
+      selectedMapKey = key;
+      const cards = document.querySelectorAll("#map-picker .map-card");
+      const keys = ["city", "beach", "volcano", "ocean", "space", "snow", "candy", "fantasy"];
+      cards.forEach((c, idx) => {
+        c.classList.toggle("selected", keys[idx] === key);
+      });
+    }
+
+    const GROUP_COLORS = {
+      red: "#ef4444",
+      blue: "#3b82f6",
+      orange: "#f97316",
+      purple: "#8b5cf6"
+    };
+
+    // 主题配色 (背景, 文字)
+        const THEME_COLORS = {
+      city: { bg: "#1e293b", text: "#f8fafc", accent: "#fbbf24" },
+      beach: { bg: "#0c4a6e", text: "#e0f2fe", accent: "#38bdf8" },
+      volcano: { bg: "#450a0a", text: "#fecaca", accent: "#ef4444" },
+      ocean: { bg: "#1e1b4b", text: "#e0e7ff", accent: "#818cf8" },
+      space: { bg: "#020617", text: "#f1f5f9", accent: "#c084fc" },
+      snow: { bg: "#f1f5f9", text: "#1e293b", accent: "#0ea5e9" },
+      candy: { bg: "#fce7f3", text: "#831843", accent: "#f59e0b" },
+      fantasy: { bg: "#f0fdf4", text: "#064e3b", accent: "#16a34a" }
+    };
+
+    // 运行时战局状态
+    let gameState = {
+      turnCount: 1,
+      currentPlayerIndex: 0,
+      players: [],
+      lands: {}, // cellId -> { ownerIndex, level: 0~5 }
+      roadblocks: {}, // cellId -> turnsLeft
+      bomb: null, // { cellId, stepsLeft: 5 }
+      logs: [],
+      chatMessages: [],
+      isRolling: false
+    };
+
+    // --- 初始化与生命周期 ---
+    window.addEventListener("DOMContentLoaded", async () => {
+      try {
+        await initSDK();
+        await loadSaveOrShowSetup();
+      } catch (e) {
+        console.error("Init err:", e);
+      }
+    });
+
+    async function initSDK() {
+      if (window.AiPhone) {
+        try {
+          const profile = await window.AiPhone.user.getProfile();
+          if (profile && profile.name) currentUserProfile.name = profile.name;
+        } catch (e) {}
+
+        try {
+          const chars = await window.AiPhone.characters.list();
+          allCharacters = chars || [];
+          renderCharPicker();
+        } catch (e) {
+          console.warn("读取角色失败:", e);
+        }
+      } else {
+        // 本地降级模拟
+        allCharacters = [
+          { id: "mock_1", name: "苏浅浅", avatar: "", persona: "毒舌傲娇千金小姐" },
+          { id: "mock_2", name: "陆景深", avatar: "", persona: "腹黑冷静的商界精英" },
+          { id: "mock_3", name: "阿呆", avatar: "", persona: "运气爆棚的阳光乐天派" }
+        ];
+        renderCharPicker();
+      }
+    }
+
+    function renderCharPicker() {
+      const el = document.getElementById("char-picker");
+      if (!allCharacters || allCharacters.length === 0) {
+        el.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); font-size:12px; padding:20px;">
+          暂未找到角色卡，请先在手机主页创建或导入 AI 角色！
+        </div>`;
+        return;
+      }
+      const tipHtml = selectedCharIds.length === 0 
+        ? `<div style="grid-column:1/-1; text-align:center; color:#f59e0b; font-size:11px; padding:4px 0 8px; font-weight:700;">👆 请点击下方卡片，至少勾选 1 位 AI 角色作为对手！</div>` 
+        : '';
+      el.innerHTML = tipHtml + allCharacters.map((c, i) => {
+        const isSel = selectedCharIds.includes(c.id);
+        const avatarSrc = c.avatar || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='50' height='50' fill='%236366f1'><circle cx='25' cy='25' r='25'/><text x='50%' y='55%' font-size='20' fill='white' text-anchor='middle' dominant-baseline='middle'>🤖</text></svg>";
+        return `
+          <div class="char-card ${isSel ? 'selected' : ''}" onclick="toggleCharSelect('${c.id}')">
+            ${isSel ? '<div class="tag">参战</div>' : ''}
+            <img src="${avatarSrc}" alt="">
+            <div class="name">${c.name}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function toggleCharSelect(id) {
+      if (selectedCharIds.includes(id)) {
+        selectedCharIds = selectedCharIds.filter(x => x !== id);
+      } else {
+        if (selectedCharIds.length >= 3) {
+          showToast("最多同时选择 3 位对手！");
+          return;
+        }
+        selectedCharIds.push(id);
+      }
+      renderCharPicker();
+    }
+
+    function setCash(val) {
+      startCash = val;
+      const items = document.querySelectorAll("#seg-cash .seg-item");
+      items.forEach(it => {
+        it.classList.toggle("active", parseInt(it.innerText.replace(/,/g, "")) === val);
+      });
+    }
+
+    function setVictoryRule(rule) {
+      victoryRule = rule;
+      const items = document.querySelectorAll("#seg-rule .seg-item");
+      items[0].classList.toggle("active", rule === 'bankruptcy');
+      items[1].classList.toggle("active", rule === 'turns');
+      document.getElementById("turns-config-row").style.display = rule === 'turns' ? 'flex' : 'none';
+    }
+
+    function setTurnsPreset(val) {
+      maxTurns = val;
+      document.getElementById("input-custom-turns").value = "";
+      const items = document.querySelectorAll("#seg-turns-preset .seg-item");
+      items[0].classList.toggle("active", val === 30);
+      items[1].classList.toggle("active", val === 50);
+    }
+
+    function onCustomTurnsInput(val) {
+      const num = parseInt(val);
+      if (num && num >= 1) {
+        maxTurns = num;
+        const items = document.querySelectorAll("#seg-turns-preset .seg-item");
+        items.forEach(it => it.classList.remove("active"));
+      }
+    }
+
+    function showToast(msg) {
+      if (window.AiPhone && window.AiPhone.ui && window.AiPhone.ui.toast) {
+        window.AiPhone.ui.toast(msg);
+      } else {
+        alert(msg);
+      }
+    }
+
+    // --- 存档与恢复 ---
+    async function loadSaveOrShowSetup() {
+      let saved = null;
+      if (window.AiPhone && window.AiPhone.db) {
+        try {
+          const list = await window.AiPhone.db.list("saves", { limit: 1 });
+          if (list && list.length > 0) saved = list[0].data;
+        } catch (e) {}
+      } else {
+        const local = localStorage.getItem(DB_KEY);
+        if (local) try { saved = JSON.parse(local); } catch(e){}
+      }
+
+      if (saved && saved.players && saved.players.length > 0) {
+        gameState = saved;
+        gameState.isRolling = false;
+        showGameView();
+        addLog("📖 成功加载上次未完结对局！", "highlight");
+        const curP = gameState.players[gameState.currentPlayerIndex];
+        if (curP && curP.isAi && !curP.isBankrupt) {
+          setTimeout(() => runAiTurn(curP), 1000);
+        }
+      } else {
+        showSetupView();
+      }
+    }
+
+    async function saveGame() {
+      if (window.AiPhone && window.AiPhone.db) {
+        try {
+          const list = await window.AiPhone.db.list("saves", { limit: 1 });
+          if (list && list.length > 0) {
+            await window.AiPhone.db.update("saves", list[0].id, { data: gameState, updatedAt: Date.now() });
+          } else {
+            await window.AiPhone.db.create("saves", { data: gameState, createdAt: Date.now() });
+          }
+        } catch (e) {
+          console.warn("DB save fail:", e);
+        }
+      } else {
+        localStorage.setItem(DB_KEY, JSON.stringify(gameState));
+      }
+    }
+
+    async function clearSave() {
+      if (window.AiPhone && window.AiPhone.db) {
+        try {
+          const list = await window.AiPhone.db.list("saves", { limit: 1 });
+          if (list && list.length > 0) await window.AiPhone.db.delete("saves", list[0].id);
+        } catch(e){}
+      } else {
+        localStorage.removeItem(DB_KEY);
+      }
+    }
+
+    // --- 开启新对局 ---
+    function startGame() {
+      if (selectedCharIds.length === 0) {
+        showToast("请至少勾选 1 位 AI 角色对手！");
+        return;
+      }
+      const playerColors = ["#3b82f6", "#ef4444", "#10b981", "#f59e0b"];
+      const chosenChars = allCharacters.filter(c => selectedCharIds.includes(c.id));
+
+      gameState = {
+        turnCount: 1,
+        mapKey: selectedMapKey,
+        maxTurns: victoryRule === 'turns' ? maxTurns : 0,
+        victoryRule: victoryRule,
+        currentPlayerIndex: 0,
+        players: [
+          {
+            id: "user",
+            name: currentUserProfile.name || "你",
+            isAi: false,
+            avatar: "",
+            cash: startCash,
+            pos: 0,
+            direction: 1, // 1: 顺时针, -1: 逆时针
+            cards: ["remote_dice", "free_rent"],
+            god: null, // { type: 'caishen'|'shuaishen', turnsLeft: 3 }
+            sleepTurns: 0,
+            jailTurns: 0,
+            isBankrupt: false,
+            color: playerColors[0]
+          },
+          ...chosenChars.map((c, idx) => ({
+            id: c.id,
+            name: c.name,
+            persona: c.persona || c.description || "普通玩家",
+            isAi: true,
+            avatar: c.avatar || "",
+            cash: startCash,
+            pos: 0,
+            direction: 1,
+            cards: ["turn_card"],
+            god: null,
+            sleepTurns: 0,
+            jailTurns: 0,
+            isBankrupt: false,
+            color: playerColors[idx + 1]
+          }))
+        ],
+        lands: {},
+        roadblocks: {},
+        bomb: null,
+        logs: [],
+        chatMessages: [
+          { role: "ai", content: `大富翁战局开启！${chosenChars.map(c=>c.name).join('、')} 已经就位，初始资金 ¥${startCash}。` }
+        ],
+        isRolling: false
+      };
+
+      showGameView();
+      addLog(`🎲 对局开始！初始资金 ¥${startCash}，祝你好运！`, "highlight");
+      saveGame();
+    }
+
+    function showSetupView() {
+      document.getElementById("setup-view").style.display = "flex";
+      document.getElementById("game-view").style.display = "none";
+      document.getElementById("btn-restart").style.display = "none";
+      document.getElementById("btn-open-chat").style.display = "none";
+      document.getElementById("turn-indicator").style.display = "none";
+    }
+
+    function showGameView() {
+      document.getElementById("setup-view").style.display = "none";
+      document.getElementById("game-view").style.display = "flex";
+      document.getElementById("btn-restart").style.display = "flex";
+      document.getElementById("btn-open-chat").style.display = "flex";
+      document.getElementById("turn-indicator").style.display = "inline-block";
+      buildBoard();
+      renderAll();
+    }
+
+    // --- 棋盘构建与渲染 ---
+    function buildBoard() {
+      const mapCfg = getCurrentMapConfig();
+      const container = document.getElementById("board-grid");
+      
+      // 设置地图专属背景主题色
+      if (mapCfg.themeCss && mapCfg.themeCss.boardBg) {
+        container.style.background = mapCfg.themeCss.boardBg;
+      }
+      const centerEl = container.querySelector(".board-center");
+      if (centerEl && mapCfg.themeCss && mapCfg.themeCss.centerBg) {
+        centerEl.style.background = mapCfg.themeCss.centerBg;
+      }
+
+      container.innerHTML = "";
+      container.appendChild(centerEl);
+
+      mapCfg.cells.forEach(cell => {
+        const div = document.createElement("div");
+        div.className = "board-cell";
+        div.id = `cell-${cell.id}`;
+        div.style.gridRow = `${cell.r + 1} / ${cell.r + 2}`;
+        div.style.gridColumn = `${cell.c + 1} / ${cell.c + 2}`;
+        div.onclick = () => onCellClick(cell.id);
+        container.appendChild(div);
+      });
+    }
+
+    function renderAll() {
+      renderPlayersBar();
+      renderBoardCells();
+      renderBottomBar();
+      renderChatDrawer();
+      renderLogs();
+    }
+
+    function renderPlayersBar() {
+      const indicator = document.getElementById("turn-indicator");
+      if (indicator) {
+        if (gameState.victoryRule === 'turns' && gameState.maxTurns > 0) {
+          indicator.innerText = `第 ${gameState.turnCount} / ${gameState.maxTurns} 轮`;
+        } else {
+          indicator.innerText = `第 ${gameState.turnCount} 轮`;
+        }
+      }
+      const bar = document.getElementById("players-bar");
+      bar.innerHTML = gameState.players.map((p, idx) => {
+        const isActive = idx === gameState.currentPlayerIndex;
+        let avatarHtml = `<span style="font-size:14px;">${p.isAi ? '🤖' : '👤'}</span>`;
+        if (p.avatar) {
+          avatarHtml = `<img src="${p.avatar}" class="p-avatar" alt="">`;
+        }
+        let badgesHtml = "";
+        if (p.god) badgesHtml += `<span class="p-badge badge-god">${p.god.type === 'caishen' ? '财' : '衰'}${p.god.turnsLeft}</span>`;
+        if (p.jailTurns > 0) badgesHtml += `<span class="p-badge badge-jail">院${p.jailTurns}</span>`;
+        if (p.sleepTurns > 0) badgesHtml += `<span class="p-badge badge-sleep">睡${p.sleepTurns}</span>`;
+
+        return `
+          <div class="p-pill ${isActive ? 'active' : ''} ${p.isBankrupt ? 'bankrupt' : ''}">
+            <div class="p-header">
+              <div style="width:8px; height:8px; border-radius:50%; background:${p.color};"></div>
+              ${avatarHtml}
+              <div class="p-name">${p.name}</div>
+            </div>
+            <div class="p-money">${p.isBankrupt ? '破产' : '¥' + p.cash}</div>
+            <div class="p-badges">${badgesHtml}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderBoardCells() {
+      const mapCfg = getCurrentMapConfig();
+      const houseLevelNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+
+      mapCfg.cells.forEach(cell => {
+        const el = document.getElementById(`cell-${cell.id}`);
+        if (!el) return;
+
+        // 样式类重置
+        el.className = `board-cell type-${cell.type}`;
+
+        let headerHtml = "";
+        let infoHtml = "";
+
+        if (cell.type === "land") {
+          const landData = gameState.lands[cell.id] || { ownerIndex: -1, level: 0 };
+          const groupColor = GROUP_COLORS[cell.group] || "#94a3b8";
+
+          const theme = THEME_COLORS[mapCfg.id] || THEME_COLORS.city;
+          if (landData.ownerIndex !== -1) {
+            const owner = gameState.players[landData.ownerIndex];
+            el.classList.add("owned");
+            el.style.borderColor = owner.color;
+            el.style.background = `linear-gradient(135deg, ${owner.color}33, ${theme.bg})`;
+
+            headerHtml = `
+              <div class="cell-header-bar" style="background:${groupColor};">
+                <div class="cell-owner-badge" style="background:${owner.color};">
+                  <span>${owner.name[0]}</span>
+                </div>
+                <div class="cell-houses">${houseLevelNames[landData.level]}</div>
+              </div>
+            `;
+            const currentRent = calcRent(cell.id);
+            infoHtml = `
+              <span style="color:#ef4444; font-weight:900;">租¥${currentRent}</span>
+              <span style="font-size:8px; color:${owner.color}; font-weight:900; background:rgba(0,0,0,0.1); padding:0 2px; border-radius:2px;">${owner.name.slice(0, 2)}</span>
+            `;
+          } else {
+            el.style.borderColor = theme.accent;
+            el.style.background = theme.bg;
+            headerHtml = `
+              <div class="cell-header-bar" style="background:${groupColor};">
+                <span class="cell-type-badge" style="color:#fff;">地产</span>
+                <span style="font-size:7.5px; color:${theme.text}; font-weight:900;">未售</span>
+              </div>
+            `;
+            infoHtml = `
+              <span style="color:${theme.accent}; font-weight:900;">¥${cell.price}</span>
+              <span style="font-size:7.5px; color:${theme.text}; font-weight:900;">租${cell.baseRent}</span>
+            `;
+          }
+        } else if (cell.type === "go") {
+          el.style.borderColor = "#10b981";
+          headerHtml = `
+            <div class="cell-header-bar" style="background:#10b981;">
+              <span class="cell-type-badge" style="color:#fff;">起点</span>
+              <span>${cell.icon || '🚩'}</span>
+            </div>
+          `;
+          infoHtml = `<span style="color:#10b981; font-weight:800;">+¥1000</span><span>薪水</span>`;
+        } else if (cell.type === "shop") {
+          el.style.borderColor = "#38bdf8";
+          headerHtml = `
+            <div class="cell-header-bar" style="background:#0284c7;">
+              <span class="cell-type-badge" style="color:#fff;">商店</span>
+              <span>${cell.icon || '🏪'}</span>
+            </div>
+          `;
+          infoHtml = `<span style="color:#38bdf8; font-weight:800;">道具</span><span>买卡</span>`;
+        } else if (cell.type === "hospital") {
+          el.style.borderColor = "#f87171";
+          headerHtml = `
+            <div class="cell-header-bar" style="background:#dc2626;">
+              <span class="cell-type-badge" style="color:#fff;">避难</span>
+              <span>${cell.icon || '🏥'}</span>
+            </div>
+          `;
+          infoHtml = `<span style="color:#f87171; font-weight:800;">禁足</span><span>休养</span>`;
+        } else if (cell.type === "chance") {
+          el.style.borderColor = "rgba(251, 191, 36, 0.6)";
+          headerHtml = `
+            <div class="cell-header-bar" style="background:#d97706;">
+              <span class="cell-type-badge" style="color:#fff;">命运</span>
+              <span>${cell.icon || '❓'}</span>
+            </div>
+          `;
+          infoHtml = `<span style="color:#fbbf24; font-weight:800;">事件</span><span>抽卡</span>`;
+        }
+
+        // 玩家棋子
+        const tokensOnCell = gameState.players.filter(p => !p.isBankrupt && p.pos === cell.id);
+        const tokensHtml = tokensOnCell.map((p) => {
+          return `<div class="p-token" style="background:${p.color};" title="${p.name}">${p.name[0]}</div>`;
+        }).join("");
+
+        // 路障
+        let roadblockHtml = "";
+        if (gameState.roadblocks[cell.id] && gameState.roadblocks[cell.id] > 0) {
+          roadblockHtml = `<div class="cell-roadblock">🚧</div>`;
+        }
+
+        // 炸弹
+        let bombHtml = "";
+        if (gameState.bomb && gameState.bomb.cellId === cell.id) {
+          bombHtml = `<div class="cell-bomb">💣${gameState.bomb.stepsLeft}</div>`;
+        }
+
+        const theme = THEME_COLORS[mapCfg.id] || THEME_COLORS.city;
+        const nameColor = cell.type === 'land' ? theme.text : '#ffffff';
+
+        el.innerHTML = `
+          ${headerHtml}
+          <div class="cell-name" style="color:${nameColor}; font-weight:900;">${cell.name}</div>
+          <div class="cell-info">${infoHtml}</div>
+          <div class="cell-tokens">${tokensHtml}</div>
+          ${roadblockHtml}
+          ${bombHtml}
+        `;
+      });
+    }
+
+    function renderBottomBar() {
+      const curP = gameState.players[gameState.currentPlayerIndex];
+      const isUserTurn = !curP.isAi && !curP.isBankrupt && !gameState.isRolling;
+      const btnRoll = document.getElementById("btn-roll");
+      const rollText = document.getElementById("roll-text");
+      const user = gameState.players[0];
+
+      document.getElementById("bag-count").innerText = user.cards ? user.cards.length : 0;
+
+      if (isUserTurn) {
+        btnRoll.disabled = false;
+        if (curP.jailTurns > 0) {
+          rollText.innerText = `住院中 (剩余 ${curP.jailTurns} 轮)`;
+        } else if (curP.sleepTurns > 0) {
+          rollText.innerText = `昏睡中 (剩余 ${curP.sleepTurns} 轮)`;
+        } else {
+          rollText.innerText = "掷骰子！";
+        }
+      } else {
+        btnRoll.disabled = true;
+        if (curP.isAi) {
+          rollText.innerText = `${curP.name} 行动中...`;
+        } else {
+          rollText.innerText = "等待轮次";
+        }
+      }
+    }
+
+    function addLog(msg, type = "normal") {
+      gameState.logs.push({ text: msg, type, time: Date.now() });
+      if (gameState.logs.length > 50) gameState.logs.shift();
+      renderLogs();
+    }
+
+    function renderLogs() {
+      const logContainer = document.getElementById("game-log");
+      if (!logContainer) return;
+      logContainer.innerHTML = (gameState.logs || []).map(l => `
+        <div class="log-item ${l.type || 'normal'}">${l.text}</div>
+      `).join("");
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    // --- 核心计算 ---
+    function calcRent(cellId) {
+      const mapCfg = getCurrentMapConfig();
+      const cell = mapCfg.cells[cellId];
+      if (!cell || cell.type !== "land") return 0;
+      const land = gameState.lands[cellId];
+      if (!land || land.ownerIndex === -1) return 0;
+
+      // 基础租金 * 等级乘数 (Lv0:1, Lv1:1.6, Lv2:2.4, Lv3:3.5, Lv4:5.0, Lv5:7.5)
+      const multi = [1, 1.6, 2.4, 3.5, 5.0, 7.5][land.level] || 1;
+      let rent = Math.round(cell.baseRent * multi);
+
+      // 同色垄断加倍
+      const sameGroupLands = mapCfg.cells.filter(c => c.group === cell.group);
+      const isMonopoly = sameGroupLands.every(c => gameState.lands[c.id] && gameState.lands[c.id].ownerIndex === land.ownerIndex);
+      if (isMonopoly) rent *= 2;
+
+      // 神明影响
+      const owner = gameState.players[land.ownerIndex];
+      if (owner && owner.god) {
+        if (owner.god.type === "caishen") rent *= 2;
+        if (owner.god.type === "shuaishen") rent = Math.round(rent * 0.5);
+      }
+      return rent;
+    }
+
+    // --- 走子与行动流程 ---
+    async function playerRollDice() {
+      const curP = gameState.players[gameState.currentPlayerIndex];
+      if (curP.isAi || gameState.isRolling) return;
+
+      if (curP.jailTurns > 0) {
+        curP.jailTurns--;
+        addLog(`🏥 ${curP.name} 正在医院治疗休养，本回合跳过行动。`);
+        endTurn();
+        return;
+      }
+      if (curP.sleepTurns > 0) {
+        curP.sleepTurns--;
+        addLog(`💤 ${curP.name} 处于深度昏睡中，本回合跳过行动。`);
+        endTurn();
+        return;
+      }
+
+      await executeRollAndMove(curP);
+    }
+
+    async function executeRollAndMove(player, forcedSteps = null) {
+      gameState.isRolling = true;
+      renderBottomBar();
+
+      let steps = forcedSteps || (Math.floor(Math.random() * 6) + 1);
+
+      // 掷骰子动画效果
+      const diceFaces = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+      const diceEl = document.getElementById("dice-face");
+      for (let i = 0; i < 8; i++) {
+        diceEl.innerText = diceFaces[Math.floor(Math.random() * 6)];
+        await sleep(60);
+      }
+      diceEl.innerText = diceFaces[steps - 1];
+
+      addLog(`🎲 ${player.name} 掷出了 ${steps} 点！`);
+      await sleep(300);
+
+      // 逐步移动动画与路障/炸弹判定
+      let actualSteps = 0;
+      for (let s = 0; s < steps; s++) {
+        actualSteps++;
+        let nextPos = (player.pos + player.direction + 20) % 20;
+
+        // 起点经过判定 (如果是顺时针路过 0 且不是停在 0)
+        if (player.direction === 1 && nextPos === 0) {
+          player.cash += 1000;
+          addLog(`🚩 ${player.name} 路过起点，领取薪水奖金 ¥1000！`, "highlight");
+        }
+
+        player.pos = nextPos;
+        renderBoardCells();
+        await sleep(150);
+
+        // 检查炸弹步数递减
+        if (gameState.bomb) {
+          gameState.bomb.stepsLeft--;
+          if (gameState.bomb.stepsLeft <= 0) {
+            await triggerBombExplode(player.pos);
+          }
+        }
+
+        // 检查路障
+        if (gameState.roadblocks[player.pos] && gameState.roadblocks[player.pos] > 0) {
+          const curCellName = getCurrentMapConfig().cells[player.pos].name;
+          addLog(`🚧 ${player.name} 踩中路障，被强制停在 ${curCellName}！`, "danger");
+          gameState.roadblocks[player.pos] = 0; // 踩中消耗
+          break;
+        }
+      }
+
+      await handleLandArrival(player, player.pos);
+      gameState.isRolling = false;
+      saveGame();
+    }
+
+    // 到达格子结算
+    async function handleLandArrival(player, cellId) {
+      const mapCfg = getCurrentMapConfig();
+      const cell = mapCfg.cells[cellId];
+      const pIdx = gameState.players.indexOf(player);
+
+      if (cell.type === "go") {
+        addLog(`🚩 ${player.name} 正好停在起点，双倍薪水！获得 ¥2000！`, "highlight");
+        player.cash += 2000;
+        renderAll();
+        endTurn();
+        return;
+      }
+
+      if (cell.type === "hospital") {
+        addLog(`🏥 ${player.name} 来到医院体检探视，平安无事。`);
+        endTurn();
+        return;
+      }
+
+      if (cell.type === "shop") {
+        addLog(`🏪 ${player.name} 亲临地图道具商店，尊享全场 8 折特惠！`, "highlight");
+        if (!player.isAi) {
+          openShopModal(true); // true = 走入实体店享8折
+        } else {
+          // AI 随机买道具 (走入实体店享8折)
+          aiShopBehavior(player, true);
+          endTurn();
+        }
+        return;
+      }
+
+      if (cell.type === "chance") {
+        await triggerChanceEvent(player);
+        return;
+      }
+
+      if (cell.type === "land") {
+        const land = gameState.lands[cellId] || { ownerIndex: -1, level: 0 };
+
+        if (land.ownerIndex === -1) {
+          // 无主空地
+          let buyPrice = cell.price;
+          if (player.god && player.god.type === "caishen") buyPrice = Math.round(buyPrice * 0.5);
+          if (player.god && player.god.type === "shuaishen") buyPrice = Math.round(buyPrice * 1.5);
+
+          if (player.cash >= buyPrice) {
+            if (!player.isAi) {
+              promptBuyLand(player, cell, buyPrice);
+            } else {
+              // AI 决策：只要买得起且余钱充裕就买
+              if (player.cash >= buyPrice + 1000) {
+                player.cash -= buyPrice;
+                gameState.lands[cellId] = { ownerIndex: pIdx, level: 0 };
+                addLog(`🏷️ ${player.name} 花费 ¥${buyPrice} 买下了 ${cell.name}！`, "highlight");
+              }
+              endTurn();
+            }
+          } else {
+            addLog(`💸 ${player.name} 到达 ${cell.name}，但资金不足以购买。`);
+            endTurn();
+          }
+        } else if (land.ownerIndex === pIdx) {
+          // 自己的地产 -> 加盖升级 (最高5级)
+          if (land.level < 5) {
+            let upgradeCost = Math.round(cell.price * 0.6);
+            if (player.god && player.god.type === "caishen") upgradeCost = Math.round(upgradeCost * 0.5);
+            if (player.god && player.god.type === "shuaishen") upgradeCost = Math.round(upgradeCost * 1.5);
+
+            if (player.cash >= upgradeCost) {
+              if (!player.isAi) {
+                promptUpgradeLand(player, cell, land, upgradeCost);
+              } else {
+                if (player.cash >= upgradeCost + 500) {
+                  player.cash -= upgradeCost;
+                  land.level++;
+                  const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+                  addLog(`🏗️ ${player.name} 加盖了 ${cell.name}，升至 Lv${land.level} (${lvlNames[land.level]})！`, "highlight");
+                }
+                endTurn();
+              }
+            } else {
+              addLog(`🏠 ${player.name} 回到自己的 ${cell.name}，资金不足未能加盖。`);
+              endTurn();
+            }
+          } else {
+            addLog(`👑 ${player.name} 回到自己的顶级豪庭 ${cell.name}，金碧辉煌！`);
+            endTurn();
+          }
+        } else {
+          // 他人地产 -> 付过路费！
+          const owner = gameState.players[land.ownerIndex];
+          let rent = calcRent(cellId);
+
+          // 财神免租判定
+          if (player.god && player.god.type === "caishen") {
+            addLog(`✨ 大财神保佑！${player.name} 踩中 ${owner.name} 的地盘，强制免收过路费！`, "highlight");
+            endTurn();
+            return;
+          }
+          // 衰神过路费加倍(200%)
+          if (player.god && player.god.type === "shuaishen") {
+            rent = Math.round(rent * 2);
+            addLog(`👻 大衰神作祟！${player.name} 踩中他人地盘，过路费翻倍至 ¥${rent}！`, "danger");
+          }
+
+          if (player.cards && player.cards.includes("free_rent")) {
+            player.cards = player.cards.filter(c => c !== "free_rent");
+            addLog(`🛡️ ${player.name} 触发【免租卡】，抵消了 ¥${rent} 的天价过路费！`, "highlight");
+            renderAll();
+            endTurn();
+            return;
+          }
+
+          // 付租金
+          player.cash -= rent;
+          owner.cash += rent;
+          addLog(`💸 ${player.name} 踩中 ${owner.name} 的 ${cell.name} (Lv${land.level})，支付过路费 ¥${rent}！`, "danger");
+
+          // 高光触发：高额过路费或导致濒危
+          if (rent >= 1500 || player.cash < 1000) {
+            triggerAiReaction(owner, `对手 ${player.name} 踩中了你的豪华房产 ${cell.name}，给你缴纳了 ¥${rent} 的天价过路费！`);
+          }
+
+          // 破产判定
+          if (player.cash <= 0) {
+            handleBankruptcy(player, owner);
+          }
+
+          renderAll();
+          endTurn();
+        }
+      }
+    }
+
+    // 破产处理
+    function handleBankruptcy(player, toPlayer) {
+      player.isBankrupt = true;
+      player.cash = 0;
+      addLog(`💥 ${player.name} 现金见底，宣告破产出局！名下资产被查封！`, "danger");
+
+      // 清空名下房产
+      const pIdx = gameState.players.indexOf(player);
+      Object.keys(gameState.lands).forEach(cid => {
+        if (gameState.lands[cid].ownerIndex === pIdx) {
+          delete gameState.lands[cid];
+        }
+      });
+
+      triggerAiReaction(player, `你破产了！在与 ${toPlayer ? toPlayer.name : '其他玩家'} 的地产博弈中败下阵来。`);
+
+      // 检查胜负
+      const survivals = gameState.players.filter(p => !p.isBankrupt);
+      if (survivals.length === 1) {
+        showVictory(survivals[0]);
+      }
+    }
+
+    function calcPlayerTotalAssets(player) {
+      if (player.isBankrupt) return 0;
+      const mapCfg = getCurrentMapConfig();
+      const pIdx = gameState.players.indexOf(player);
+      let total = player.cash;
+      Object.keys(gameState.lands).forEach(cid => {
+        const land = gameState.lands[cid];
+        if (land.ownerIndex === pIdx) {
+          const cell = mapCfg.cells[cid];
+          if (cell) {
+            const upgradeCost = Math.round(cell.price * 0.6);
+            total += cell.price + (land.level * upgradeCost);
+          }
+        }
+      });
+      return total;
+    }
+
+    function checkTurnsSettlement() {
+      // 按总资产（现金 + 房产价值）排名
+      const rank = [...gameState.players].map(p => ({
+        player: p,
+        totalAssets: calcPlayerTotalAssets(p)
+      })).sort((a, b) => b.totalAssets - a.totalAssets);
+
+      const winner = rank[0].player;
+      let rankingHtml = rank.map((item, idx) => `
+        <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #334155; font-size:12px;">
+          <span>${idx === 0 ? '👑 1' : idx + 1}. ${item.player.name}</span>
+          <span style="color:#fbbf24; font-weight:700;">¥${item.totalAssets}</span>
+        </div>
+      `).join("");
+
+      openModal(
+        `⏱️ 达到限定总轮数（第 ${gameState.maxTurns} 轮）`,
+        `对局已达限定轮数，全场资产清算完毕：`,
+        `<button class="modal-btn gold" onclick="confirmRestart()">↺ 开启新对局</button>`,
+        `<div style="margin:8px 0; background:rgba(15,23,42,0.8); border-radius:8px; padding:8px;">${rankingHtml}</div>`
+      );
+    }
+
+    function showVictory(winner) {
+      openModal(
+        `🏆 胜负已定！`,
+        `恭喜 <b>${winner.name}</b> 成为本局终极大富翁！<br>总资产垄断全场，称霸地产帝国！`,
+        `
+          <button class="modal-btn gold" onclick="confirmRestart()">↺ 开启新对局</button>
+        `
+      );
+    }
+
+    // 机会事件触发
+    async function triggerChanceEvent(player) {
+      const mapCfg = getCurrentMapConfig();
+      const allEvents = [...mapCfg.events, ...COMMON_CHANCE_EVENTS];
+      const evt = allEvents[Math.floor(Math.random() * allEvents.length)];
+      addLog(`🎡 ${player.name} 抽取了命运卡：${evt.text}`, "highlight");
+
+      if (evt.type === "money") {
+        player.cash += evt.val;
+        if (player.cash <= 0) handleBankruptcy(player, null);
+      } else if (evt.type === "hospital" || evt.type === "jail") {
+        player.pos = 10; // 送往医院/拘留所
+        player.jailTurns = evt.turns;
+      } else if (evt.type === "upgrade") {
+        const pIdx = gameState.players.indexOf(player);
+        const myLands = Object.keys(gameState.lands).filter(cid => gameState.lands[cid].ownerIndex === pIdx && gameState.lands[cid].level < 5);
+        if (myLands.length > 0) {
+          const targetCid = myLands[Math.floor(Math.random() * myLands.length)];
+          gameState.lands[targetCid].level++;
+          addLog(`🏗️ ${player.name} 的 ${mapCfg.cells[targetCid].name} 免费升至 Lv${gameState.lands[targetCid].level}！`);
+        }
+      } else if (evt.type === "downgrade") {
+        const pIdx = gameState.players.indexOf(player);
+        const myLands = Object.keys(gameState.lands).filter(cid => gameState.lands[cid].ownerIndex === pIdx && gameState.lands[cid].level > 0);
+        if (myLands.length > 0) {
+          myLands.sort((a, b) => gameState.lands[b].level - gameState.lands[a].level);
+          gameState.lands[myLands[0]].level--;
+          addLog(`⚠️ ${player.name} 的 ${mapCfg.cells[myLands[0]].name} 被降为 Lv${gameState.lands[myLands[0]].level}！`, "danger");
+        }
+      } else if (evt.type === "card") {
+        if (!player.cards) player.cards = [];
+        if (player.cards.length < 5) {
+          player.cards.push(evt.cardId);
+        }
+      } else if (evt.type === "god") {
+        player.god = { type: evt.god, turnsLeft: evt.godTurns };
+        const godName = evt.god === 'caishen' ? '大财神' : '大衰神';
+        if (player.isAi) {
+          triggerAiReaction(player, `你被【${godName}】附身缠绕了 3 回合！`);
+        } else {
+          const bystanderAi = gameState.players.find(p => p.isAi && !p.isBankrupt);
+          if (bystanderAi) {
+            triggerAiReaction(bystanderAi, `对手 ${player.name} 被【${godName}】附身了！`);
+          }
+        }
+      } else if (evt.type === "all_gift") {
+        const others = gameState.players.filter(p => p !== player && !p.isBankrupt);
+        others.forEach(o => {
+          if (player.cash >= evt.perVal) {
+            player.cash -= evt.perVal;
+            o.cash += evt.perVal;
+          }
+        });
+      }
+
+      openModal(
+        "🎡 突发新闻 / 命运快讯",
+        `<b>${player.name}</b> 触发了事件：<br><br><span style="color:#fbbf24; font-size:14px;">"${evt.text}"</span>`,
+        `<button class="modal-btn primary" onclick="closeModal(); endTurn();">确认</button>`
+      );
+      renderAll();
+    }
+
+    // 炸弹爆炸
+    async function triggerBombExplode(cellId) {
+      const curCellName = getCurrentMapConfig().cells[cellId].name;
+      addLog(`💥 定时炸弹在 ${curCellName} 爆炸了！`, "danger");
+      // 降级周围 1 格房产
+      [-1, 0, 1].forEach(offset => {
+        const cid = (cellId + offset + 20) % 20;
+        if (gameState.lands[cid] && gameState.lands[cid].level > 0) {
+          gameState.lands[cid].level = Math.max(0, gameState.lands[cid].level - 2);
+        }
+      });
+      // 炸伤该格子上所有人进医院
+      const victims = gameState.players.filter(p => !p.isBankrupt && p.pos === cellId);
+      victims.forEach(p => {
+        p.pos = 10;
+        p.jailTurns = 2;
+        addLog(`🚑 ${p.name} 被炸弹波及炸伤，送入医院治疗 2 回合！`, "danger");
+      });
+      
+      // 触发炸弹反应
+      if (victims.length > 0) {
+        const aiVictim = victims.find(p => p.isAi);
+        if (aiVictim) {
+          triggerAiReaction(aiVictim, `你在 ${curCellName} 被定时炸弹正面炸中，受重伤送入医院治疗 2 回合无法行动！`);
+        } else {
+          const bystanderAi = gameState.players.find(p => p.isAi && !p.isBankrupt);
+          if (bystanderAi) {
+            triggerAiReaction(bystanderAi, `对手 ${victims[0].name} 在 ${curCellName} 被炸弹精准炸伤送进医院！`);
+          }
+        }
+      }
+      gameState.bomb = null;
+      renderAll();
+    }
+
+    // --- 回合流转 ---
+    function endTurn() {
+      // 递减神明与状态并触发每回合被动效果
+      const curP = gameState.players[gameState.currentPlayerIndex];
+      if (curP && curP.god && !curP.isBankrupt) {
+        if (curP.god.type === "caishen") {
+          curP.cash += 300;
+          addLog(`✨ 【大财神祥瑞】${curP.name} 获得天降横财 +¥300！`, "highlight");
+        } else if (curP.god.type === "shuaishen") {
+          curP.cash = Math.max(0, curP.cash - 200);
+          addLog(`👻 【大衰神诅咒】${curP.name} 破财流失 -¥200！`, "danger");
+          if (curP.cash <= 0) handleBankruptcy(curP, null);
+        }
+        curP.god.turnsLeft--;
+        if (curP.god.turnsLeft <= 0) {
+          addLog(`💨 ${curP.name} 身上的神明法力散去。`);
+          curP.god = null;
+        }
+      }
+
+      // 递减路障
+      Object.keys(gameState.roadblocks).forEach(cid => {
+        if (gameState.roadblocks[cid] > 0) {
+          gameState.roadblocks[cid]--;
+          if (gameState.roadblocks[cid] <= 0) delete gameState.roadblocks[cid];
+        }
+      });
+
+      // 切换到下一个未破产玩家
+      let nextIdx = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+      let loopCount = 0;
+      while (gameState.players[nextIdx].isBankrupt && loopCount < gameState.players.length) {
+        nextIdx = (nextIdx + 1) % gameState.players.length;
+        loopCount++;
+      }
+
+      if (nextIdx === 0) {
+        gameState.turnCount++;
+        // 检查轮数上限结算
+        if (gameState.victoryRule === 'turns' && gameState.maxTurns > 0 && gameState.turnCount > gameState.maxTurns) {
+          checkTurnsSettlement();
+          return;
+        }
+      }
+      gameState.currentPlayerIndex = nextIdx;
+      gameState.isRolling = false;
+
+      renderAll();
+      saveGame();
+
+      // 如果下一位是 AI，自动驱动
+      const nextP = gameState.players[nextIdx];
+      if (nextP.isAi && !nextP.isBankrupt) {
+        setTimeout(() => runAiTurn(nextP), 1000);
+      }
+    }
+
+    // AI 行动驱动
+    async function runAiTurn(aiPlayer) {
+      if (aiPlayer.jailTurns > 0) {
+        aiPlayer.jailTurns--;
+        addLog(`🏥 ${aiPlayer.name} 正在医院休养中，跳过行动。`);
+        endTurn();
+        return;
+      }
+      if (aiPlayer.sleepTurns > 0) {
+        aiPlayer.sleepTurns--;
+        addLog(`💤 ${aiPlayer.name} 深度昏睡中，跳过行动。`);
+        endTurn();
+        return;
+      }
+
+      // 战术使用道具卡判定
+      if (aiPlayer.cards && aiPlayer.cards.length > 0) {
+        if (aiPlayer.cards.includes("remote_dice")) {
+          // 如果前方 1~6 步内有无人高价值地块或起点，使用遥控骰子
+          const mapCfg = getCurrentMapConfig();
+          for (let step = 1; step <= 6; step++) {
+            let tPos = (aiPlayer.pos + aiPlayer.direction * step + 20) % 20;
+            const cell = mapCfg.cells[tPos];
+            if (cell && cell.type === "land" && (!gameState.lands[tPos] || gameState.lands[tPos].ownerIndex === -1) && aiPlayer.cash >= cell.price) {
+              aiPlayer.cards = aiPlayer.cards.filter(c => c !== "remote_dice");
+              addLog(`🎯 ${aiPlayer.name} 使用了【遥控骰子】，精准锁定 ${step} 点！`, "highlight");
+              await executeRollAndMove(aiPlayer, step);
+              return;
+            }
+          }
+        }
+      }
+
+      await executeRollAndMove(aiPlayer);
+    }
+
+    function aiShopBehavior(aiPlayer) {
+      if (!aiPlayer.cards) aiPlayer.cards = [];
+      if (aiPlayer.cards.length >= 4 || aiPlayer.cash < 2000) return;
+      const cardKeys = ["remote_dice", "free_rent", "roadblock", "turn_card"];
+      const pick = cardKeys[Math.floor(Math.random() * cardKeys.length)];
+      const def = CARDS_DEF[pick];
+      if (def && aiPlayer.cash >= def.price) {
+        aiPlayer.cash -= def.price;
+        aiPlayer.cards.push(pick);
+        addLog(`🏪 ${aiPlayer.name} 在商店购买了【${def.name}】！`);
+      }
+    }
+    // --- 用户交互弹窗 (买地/加盖/道具/商店) ---
+    function openModal(title, desc, actionsHtml, customHtml = "") {
+      document.getElementById("modal-title").innerHTML = title;
+      document.getElementById("modal-desc").innerHTML = desc;
+      document.getElementById("modal-custom-content").innerHTML = customHtml;
+      document.getElementById("modal-actions").innerHTML = actionsHtml;
+      document.getElementById("modal-mask").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("modal-mask").style.display = "none";
+    }
+
+    function promptBuyLand(player, cell, price) {
+      openModal(
+        `🏷️ 购买地产`,
+        `你到达了无主地产 <b>${cell.name}</b>。<br>地价：<b style="color:#fbbf24;">¥${price}</b> (当前现金：¥${player.cash})<br>基础过路费：¥${cell.baseRent}。<br>是否花费资金将其购置入囊？`,
+        `
+          <button class="modal-btn cancel" onclick="closeModal(); endTurn();">放弃</button>
+          <button class="modal-btn gold" onclick="confirmBuyLand(${cell.id}, ${price})">立即买下</button>
+        `
+      );
+    }
+
+    function confirmBuyLand(cellId, price) {
+      const user = gameState.players[0];
+      const mapCfg = getCurrentMapConfig();
+      user.cash -= price;
+      gameState.lands[cellId] = { ownerIndex: 0, level: 0 };
+      addLog(`🏷️ 你花费 ¥${price} 成功购置了 ${mapCfg.cells[cellId].name}！`, "highlight");
+      closeModal();
+      renderAll();
+      endTurn();
+    }
+
+    function promptUpgradeLand(player, cell, land, cost) {
+      const mapCfg = getCurrentMapConfig();
+      const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+      const nextLvl = land.level + 1;
+      openModal(
+        `🏗️ 加盖升级地产`,
+        `你再次回到名下房产 <b>${cell.name}</b> (当前 Lv${land.level} ${lvlNames[land.level]})。<br>加盖费用：<b style="color:#fbbf24;">¥${cost}</b><br>加盖后升至 <b style="color:#38bdf8;">Lv${nextLvl} (${lvlNames[nextLvl]})</b>，过路费将大幅上涨！`,
+        `
+          <button class="modal-btn cancel" onclick="closeModal(); endTurn();">暂不加盖</button>
+          <button class="modal-btn gold" onclick="confirmUpgradeLand(${cell.id}, ${cost})">加盖升级</button>
+        `
+      );
+    }
+
+    function confirmUpgradeLand(cellId, cost) {
+      const user = gameState.players[0];
+      const mapCfg = getCurrentMapConfig();
+      user.cash -= cost;
+      gameState.lands[cellId].level++;
+      const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+      addLog(`🏗️ 你的 ${mapCfg.cells[cellId].name} 升级至 Lv${gameState.lands[cellId].level} (${lvlNames[gameState.lands[cellId].level]})！`, "highlight");
+      closeModal();
+      renderAll();
+      endTurn();
+    }
+
+    // --- 道具商店与购物车系统 ---
+    let shopCart = []; // 暂存选中的 cardId 数组
+    let isPhysicalShopVisit = false; // 是否为走入实体店 (享 8 折且关闭时推进回合)
+    let isSelectingRoadblockCell = false; // 是否正在大地图上点选封路目标
+    let activeRoadblockCardIdx = -1;
+    let isSelectingBombCell = false; // 是否正在大地图上点选炸弹埋放目标
+    let activeBombCardIdx = -1;
+
+    function openShopModal(fromBoardCell = false) {
+      shopCart = [];
+      isPhysicalShopVisit = fromBoardCell;
+      renderShopModalContent();
+    }
+
+    function getCardPrice(cid, isDiscount) {
+      const def = CARDS_DEF[cid];
+      if (!def) return 0;
+      return isDiscount ? Math.round(def.price * 0.8) : def.price;
+    }
+
+    function renderShopModalContent() {
+      const user = gameState.players[0];
+      const currentBagCount = user.cards ? user.cards.length : 0;
+      const remainingSlots = Math.max(0, 5 - currentBagCount);
+
+      // 计算购物车总价与各商品数量
+      let cartTotalPrice = 0;
+      const cartCounts = {};
+      shopCart.forEach(cid => {
+        cartCounts[cid] = (cartCounts[cid] || 0) + 1;
+        cartTotalPrice += getCardPrice(cid, isPhysicalShopVisit);
+      });
+
+      const cardsHtml = Object.values(CARDS_DEF).map(c => {
+        const inCartCount = cartCounts[c.id] || 0;
+        const actualPrice = getCardPrice(c.id, isPhysicalShopVisit);
+        return `
+          <div class="card-item" style="position:relative;">
+            ${inCartCount > 0 ? `<div style="position:absolute; top:4px; right:4px; background:#f59e0b; color:#000; font-size:10px; font-weight:800; border-radius:10px; padding:1px 6px;">x${inCartCount}</div>` : ''}
+            <div class="card-name">${c.icon} ${c.name}</div>
+            <div class="card-info">${c.desc}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+              <span class="card-price">
+                ${isPhysicalShopVisit ? `<s style="font-size:9px; color:#94a3b8; margin-right:2px;">¥${c.price}</s>¥${actualPrice}` : `¥${actualPrice}`}
+              </span>
+              <div style="display:flex; gap:4px;">
+                ${inCartCount > 0 ? `<button onclick="removeFromCart('${c.id}')" style="background:#334155; border:none; color:#fff; border-radius:4px; width:22px; height:22px; font-size:12px; cursor:pointer; font-weight:700;">-</button>` : ''}
+                <button onclick="addToCart('${c.id}')" style="background:#3b82f6; border:none; color:#fff; border-radius:4px; width:22px; height:22px; font-size:12px; cursor:pointer; font-weight:700;">+</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      const discountNotice = isPhysicalShopVisit
+        ? `<div style="background:rgba(16,185,129,0.2); border:1px solid #10b981; border-radius:6px; padding:4px 8px; font-size:11px; color:#34d399; font-weight:700; text-align:center; margin-bottom:6px;">🎉 实体店特惠：当前全场道具尊享 8 折优惠！</div>`
+        : "";
+
+      const cartBarHtml = `
+        <div style="margin-top:10px; background:rgba(15,23,42,0.9); border:1px solid #334155; border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span>🛒 购物车 (<b style="color:#38bdf8;">${shopCart.length}</b> 件 / 最多还能买 ${remainingSlots} 件)</span>
+            <span>合计: <b style="color:#fbbf24; font-size:14px;">¥${cartTotalPrice}</b></span>
+          </div>
+          <div style="font-size:10px; color:#94a3b8; display:flex; justify-content:space-between;">
+            <span>当前现金: ¥${user.cash}</span>
+            ${shopCart.length > 0 ? `<span style="color:#ef4444; cursor:pointer; text-decoration:underline;" onclick="clearCart()">清空</span>` : ''}
+          </div>
+        </div>
+      `;
+
+      const actionsHtml = `
+        <button class="modal-btn cancel" onclick="onCloseShopClick()">离开商店</button>
+        <button class="modal-btn gold" ${shopCart.length === 0 ? 'disabled style="opacity:0.5;"' : ''} onclick="checkoutCart()">
+          一键结账 (¥${cartTotalPrice})
+        </button>
+      `;
+
+      openModal(
+        `🏪 道具卡牌商店`,
+        discountNotice || `点击【+】将道具加入购物车，下方统一结算`,
+        actionsHtml,
+        `<div class="cards-list">${cardsHtml}</div>${cartBarHtml}`
+      );
+    }
+
+    function onCloseShopClick() {
+      closeModal();
+      if (isPhysicalShopVisit) {
+        isPhysicalShopVisit = false;
+        endTurn(); // 亲临商店离开后正常推进下一回合
+      }
+    }
+
+    function addToCart(cardId) {
+      const user = gameState.players[0];
+      const currentBagCount = user.cards ? user.cards.length : 0;
+      if (currentBagCount + shopCart.length >= 5) {
+        showToast("背包与购物车总上限为 5 张！");
+        return;
+      }
+      shopCart.push(cardId);
+      renderShopModalContent();
+    }
+
+    function removeFromCart(cardId) {
+      const idx = shopCart.lastIndexOf(cardId);
+      if (idx !== -1) {
+        shopCart.splice(idx, 1);
+        renderShopModalContent();
+      }
+    }
+
+    function clearCart() {
+      shopCart = [];
+      renderShopModalContent();
+    }
+
+    function checkoutCart() {
+      const user = gameState.players[0];
+      if (shopCart.length === 0) return;
+
+      let total = 0;
+      shopCart.forEach(cid => {
+        total += getCardPrice(cid, isPhysicalShopVisit);
+      });
+
+      if (user.cash < total) {
+        showToast(`资金不足！总计 ¥${total}，你只有 ¥${user.cash}`);
+        return;
+      }
+
+      user.cash -= total;
+      if (!user.cards) user.cards = [];
+      shopCart.forEach(cid => user.cards.push(cid));
+
+      const names = shopCart.map(cid => CARDS_DEF[cid] ? CARDS_DEF[cid].name : "").join("、");
+      const discountTag = isPhysicalShopVisit ? " (8折特惠)" : "";
+      addLog(`🛒 商店结账成功！花费 ¥${total}${discountTag} 购入：${names}！`, "highlight");
+      shopCart = [];
+      closeModal();
+      renderAll();
+      saveGame();
+      showToast("结账购买成功！");
+
+      if (isPhysicalShopVisit) {
+        isPhysicalShopVisit = false;
+        endTurn(); // 亲临商店购物完成后推进回合
+      }
+    }
+
+    function aiShopBehavior(aiPlayer, isDiscount = false) {
+      if (!aiPlayer.cards) aiPlayer.cards = [];
+      if (aiPlayer.cards.length >= 4 || aiPlayer.cash < 2000) return;
+      const cardKeys = ["remote_dice", "free_rent", "roadblock", "turn_card"];
+      const pick = cardKeys[Math.floor(Math.random() * cardKeys.length)];
+      const price = getCardPrice(pick, isDiscount);
+      if (aiPlayer.cash >= price) {
+        aiPlayer.cash -= price;
+        aiPlayer.cards.push(pick);
+        addLog(`🏪 ${aiPlayer.name} 在商店${isDiscount ? '以8折特惠' : ''}购买了【${CARDS_DEF[pick].name}】！`);
+      }
+    }
+
+    function openShopModal(fromBoardCell = false) {
+      const curP = gameState.players[gameState.currentPlayerIndex];
+      if (!fromBoardCell && (curP.isAi || gameState.isRolling)) {
+        showToast("请等待你的行动回合再打开商店！");
+        return;
+      }
+      shopCart = [];
+      isPhysicalShopVisit = fromBoardCell;
+      renderShopModalContent();
+    }
+
+    function openBagModal() {
+      const curP = gameState.players[gameState.currentPlayerIndex];
+      const user = gameState.players[0];
+      if (curP !== user || gameState.isRolling) {
+        showToast("请等待你的行动回合再打开背包！");
+        return;
+      }
+      if (!user.cards || user.cards.length === 0) {
+        openModal("🎒 我的道具背包", "背包空空如也，前往商店或踩机会格获取卡片吧！", `<button class="modal-btn cancel" onclick="closeModal()">返回</button>`);
+        return;
+      }
+
+      const cardsHtml = user.cards.map((cid, idx) => {
+        const c = CARDS_DEF[cid];
+        return `
+          <div class="card-item" onclick="useCard(${idx}, '${cid}')">
+            <div class="card-name">${c.icon} ${c.name}</div>
+            <div class="card-info">${c.desc}</div>
+            <div style="font-size:10px; color:#38bdf8; font-weight:700; margin-top:2px;">点击使用 ➔</div>
+          </div>
+        `;
+      }).join("");
+
+      openModal(
+        `🎒 我的道具背包`,
+        `点击道具即可立即发动战术效果：`,
+        `<button class="modal-btn cancel" onclick="closeModal()">返回</button>`,
+        `<div class="cards-list">${cardsHtml}</div>`
+      );
+    }
+
+    async function useCard(cardIdx, cardId) {
+      const curP = gameState.players[gameState.currentPlayerIndex];
+      const user = gameState.players[0];
+
+      if (curP !== user) {
+        showToast("只有在你的行动回合才能主动使用道具！");
+        return;
+      }
+
+      if (cardId === "remote_dice") {
+        closeModal();
+        let btns = "";
+        for (let i = 1; i <= 6; i++) {
+          btns += `<button class="modal-btn primary" onclick="confirmRemoteDice(${cardIdx}, ${i})">${i} 点</button>`;
+        }
+        openModal("🎯 遥控骰子", "请选择你下一步想要掷出的点数：", btns);
+        return;
+      }
+
+      if (cardId === "turn_card") {
+        closeModal();
+        const choices = gameState.players.filter(p => !p.isBankrupt).map((p, idx) => `
+          <button class="modal-btn primary" onclick="confirmTurnCard(${cardIdx}, ${idx})">${p.name} (${p.direction === 1 ? '顺时针' : '逆时针'})</button>
+        `).join("");
+        openModal("↩️ 转向卡", "请选择要调转行进方向的目标玩家：", choices);
+        return;
+      }
+
+      if (cardId === "roadblock") {
+        closeModal();
+        startDirectMapRoadblockSelect(cardIdx);
+        return;
+      }
+
+      if (cardId === "sleep_card") {
+        closeModal();
+        const activeAis = gameState.players.filter(p => p.isAi && !p.isBankrupt);
+        if (activeAis.length === 0) {
+          showToast("场上没有可指定的对手！");
+          return;
+        }
+        if (activeAis.length === 1) {
+          // 单人对决模式：直接对该唯一角色生效，免去多余弹窗
+          confirmSleepCard(cardIdx, activeAis[0].id);
+          return;
+        }
+        // 多人乱斗模式：弹窗自由挑选目标对手
+        const choices = activeAis.map(p => `
+          <button class="modal-btn primary" onclick="confirmSleepCard(${cardIdx}, '${p.id}')">${p.name}</button>
+        `).join("");
+        openModal("💤 冬眠卡 · 选择目标", "选择让哪位对手陷入 2 回合深度昏睡：", choices);
+        return;
+      }
+
+      if (cardId === "swap_house") {
+        closeModal();
+        const myLands = Object.keys(gameState.lands).filter(cid => gameState.lands[cid].ownerIndex === 0);
+        const oppLands = Object.keys(gameState.lands).filter(cid => gameState.lands[cid].ownerIndex > 0);
+        if (myLands.length === 0 || oppLands.length === 0) {
+          showToast("双方都需要至少拥有 1 处房产才能互换！");
+          return;
+        }
+        showSwapHousePicker(cardIdx, myLands, oppLands);
+        return;
+      }
+
+      if (cardId === "time_bomb") {
+        closeModal();
+        startDirectMapBombSelect(cardIdx);
+        return;
+      }
+
+      if (cardId === "free_rent") {
+        showToast("【免租卡】在踩中他人高额房产时会自动触发抵消！");
+      }
+    }
+
+    function confirmRemoteDice(cardIdx, steps) {
+      closeModal();
+      const user = gameState.players[0];
+      user.cards.splice(cardIdx, 1);
+      addLog(`🎯 你使用了【遥控骰子】，指定掷出 ${steps} 点！`, "highlight");
+      executeRollAndMove(user, steps);
+    }
+
+    function confirmTurnCard(cardIdx, targetIdx) {
+      closeModal();
+      const user = gameState.players[0];
+      user.cards.splice(cardIdx, 1);
+      const target = gameState.players[targetIdx];
+      target.direction *= -1;
+      addLog(`↩️ 你对 ${target.name} 使用了【转向卡】，其方向调转为 ${target.direction === 1 ? '顺时针' : '逆时针'}！`, "highlight");
+      renderAll();
+      saveGame();
+    }
+
+    function startDirectMapRoadblockSelect(cardIdx) {
+      isSelectingRoadblockCell = true;
+      activeRoadblockCardIdx = cardIdx;
+      const mapCfg = getCurrentMapConfig();
+      
+      // 给地图所有格子增加脉冲选中提示
+      mapCfg.cells.forEach(c => {
+        const el = document.getElementById(`cell-${c.id}`);
+        if (el) el.classList.add("selectable-for-roadblock");
+      });
+
+      addLog("🚧 请直接在棋盘上点击任意你想封锁的目标格子！", "highlight");
+      showToast("请直接在地图上点击目标格子！");
+    }
+
+    function cancelDirectMapRoadblockSelect() {
+      isSelectingRoadblockCell = false;
+      activeRoadblockCardIdx = -1;
+      const mapCfg = getCurrentMapConfig();
+      mapCfg.cells.forEach(c => {
+        const el = document.getElementById(`cell-${c.id}`);
+        if (el) el.classList.remove("selectable-for-roadblock");
+      });
+    }
+
+    function confirmRoadblock(cardIdx, targetCellId) {
+      cancelDirectMapRoadblockSelect();
+      const user = gameState.players[0];
+      const mapCfg = getCurrentMapConfig();
+      user.cards.splice(cardIdx, 1);
+      gameState.roadblocks[targetCellId] = 3;
+      addLog(`🚧 你在棋盘【${mapCfg.cells[targetCellId].name}】精准放置了路障，路过者将强制停下！`, "highlight");
+      renderAll();
+      saveGame();
+      showToast(`已在 ${mapCfg.cells[targetCellId].name} 放置路障！`);
+    }
+
+    function startDirectMapBombSelect(cardIdx) {
+      isSelectingBombCell = true;
+      activeBombCardIdx = cardIdx;
+      const mapCfg = getCurrentMapConfig();
+      
+      mapCfg.cells.forEach(c => {
+        const el = document.getElementById(`cell-${c.id}`);
+        if (el) el.classList.add("selectable-for-roadblock");
+      });
+
+      addLog("💣 请直接在棋盘上点击你想埋设【定时炸弹】的目标格子！", "highlight");
+      showToast("请直接点击地图格子埋设炸弹！");
+    }
+
+    function cancelDirectMapBombSelect() {
+      isSelectingBombCell = false;
+      activeBombCardIdx = -1;
+      const mapCfg = getCurrentMapConfig();
+      mapCfg.cells.forEach(c => {
+        const el = document.getElementById(`cell-${c.id}`);
+        if (el) el.classList.remove("selectable-for-roadblock");
+      });
+    }
+
+    function confirmBomb(cardIdx, targetCellId) {
+      cancelDirectMapBombSelect();
+      const user = gameState.players[0];
+      const mapCfg = getCurrentMapConfig();
+      user.cards.splice(cardIdx, 1);
+      gameState.bomb = { cellId: targetCellId, stepsLeft: 5 };
+      addLog(`💣 你在棋盘【${mapCfg.cells[targetCellId].name}】精准安放了【定时炸弹】！走满 5 步即爆！`, "highlight");
+      renderAll();
+      saveGame();
+      showToast(`已在 ${mapCfg.cells[targetCellId].name} 埋设炸弹！`);
+    }
+
+    function confirmSleepCard(cardIdx, targetCharId) {
+      closeModal();
+      const user = gameState.players[0];
+      user.cards.splice(cardIdx, 1);
+      const target = gameState.players.find(p => p.id === targetCharId);
+      if (target) {
+        target.sleepTurns = 2;
+        addLog(`💤 你对 ${target.name} 使用了【冬眠卡】，其陷入深度昏睡 2 回合！`, "highlight");
+        triggerAiReaction(target, `对手 ${user.name} 对你使用了冬眠卡，让你强制昏睡 2 回合无法行动！`);
+      }
+      renderAll();
+      saveGame();
+    }
+
+    function showSwapHousePicker(cardIdx, myLands, oppLands) {
+      const mapCfg = getCurrentMapConfig();
+      const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+      let myOptions = myLands.map(cid => `<option value="${cid}">${mapCfg.cells[cid].name} (${lvlNames[gameState.lands[cid].level]})</option>`).join("");
+      let oppOptions = oppLands.map(cid => {
+        const owner = gameState.players[gameState.lands[cid].ownerIndex];
+        return `<option value="${cid}">${owner.name}的 ${mapCfg.cells[cid].name} (${lvlNames[gameState.lands[cid].level]})</option>`;
+      }).join("");
+
+      openModal(
+        `🔄 偷天换日 · 换屋卡`,
+        `选择一处你的房产，与对手的房产强行对调：`,
+        `
+          <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+          <button class="modal-btn gold" onclick="confirmSwapHouse(${cardIdx})">立即对调</button>
+        `,
+        `
+          <div style="display:flex; flex-direction:column; gap:8px; margin:8px 0; text-align:left;">
+            <label style="font-size:12px; color:#cbd5e1;">我的房产：</label>
+            <select id="swap-my-land" style="background:#0f172a; color:#fff; padding:6px; border-radius:6px; border:1px solid #334155;">${myOptions}</select>
+            <label style="font-size:12px; color:#cbd5e1; margin-top:4px;">对手房产：</label>
+            <select id="swap-opp-land" style="background:#0f172a; color:#fff; padding:6px; border-radius:6px; border:1px solid #334155;">${oppOptions}</select>
+          </div>
+        `
+      );
+    }
+
+    function confirmSwapHouse(cardIdx) {
+      const myCid = document.getElementById("swap-my-land").value;
+      const oppCid = document.getElementById("swap-opp-land").value;
+      closeModal();
+
+      const user = gameState.players[0];
+      const mapCfg = getCurrentMapConfig();
+      user.cards.splice(cardIdx, 1);
+
+      const myOwner = gameState.lands[myCid].ownerIndex;
+      const oppOwner = gameState.lands[oppCid].ownerIndex;
+      const oppPlayer = gameState.players[oppOwner];
+
+      gameState.lands[myCid].ownerIndex = oppOwner;
+      gameState.lands[oppCid].ownerIndex = myOwner;
+
+      addLog(`🔄 换屋成功！你的 ${mapCfg.cells[myCid].name} 与 ${oppPlayer.name} 的 ${mapCfg.cells[oppCid].name} 互换！`, "highlight");
+      triggerAiReaction(oppPlayer, `对手 ${user.name} 用换屋卡强行把 TA 的 ${mapCfg.cells[myCid].name} 与你的 ${mapCfg.cells[oppCid].name} 互换了！`);
+      renderAll();
+      saveGame();
+    }
+
+    function onCellClick(cellId) {
+      const mapCfg = getCurrentMapConfig();
+      const cell = mapCfg.cells[cellId];
+      if (!cell) return;
+
+      // 如果当前处于「封路卡地图点选模式」
+      if (isSelectingRoadblockCell && activeRoadblockCardIdx !== -1) {
+        confirmRoadblock(activeRoadblockCardIdx, cellId);
+        return;
+      }
+
+      // 如果当前处于「定时炸弹地图点选模式」
+      if (isSelectingBombCell && activeBombCardIdx !== -1) {
+        confirmBomb(activeBombCardIdx, cellId);
+        return;
+      }
+
+      if (cell.type === "land") {
+        const land = gameState.lands[cellId];
+        const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+        let ownerName = "无主地块";
+        let lvlStr = lvlNames[0];
+        if (land && land.ownerIndex !== -1) {
+          const owner = gameState.players[land.ownerIndex];
+          ownerName = owner ? owner.name : "未知";
+          lvlStr = `Lv${land.level} (${lvlNames[land.level]})`;
+        }
+        openModal(
+          `🏢 地产信息 · ${cell.name}`,
+          `地价：¥${cell.price}<br>基础租金：¥${cell.baseRent}<br>所属玩家：<b style="color:#38bdf8;">${ownerName}</b><br>当前建筑：<b style="color:#fbbf24;">${lvlStr}</b><br>当前实际过路费：<b style="color:#ef4444;">¥${calcRent(cellId)}</b>`,
+          `<button class="modal-btn primary" onclick="closeModal()">了解</button>`
+        );
+      } else {
+        openModal(`📍 ${cell.name}`, `类型：${cell.type}<br>${cell.icon || ''}`, `<button class="modal-btn primary" onclick="closeModal()">了解</button>`);
+      }
+    }
+
+    function showSwapHousePicker(cardIdx, myLands, oppLands) {
+      const mapCfg = getCurrentMapConfig();
+      const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+      let myOptions = myLands.map(cid => `<option value="${cid}">${mapCfg.cells[cid].name} (${lvlNames[gameState.lands[cid].level]})</option>`).join("");
+      let oppOptions = oppLands.map(cid => {
+        const owner = gameState.players[gameState.lands[cid].ownerIndex];
+        return `<option value="${cid}">${owner.name}的 ${mapCfg.cells[cid].name} (${lvlNames[gameState.lands[cid].level]})</option>`;
+      }).join("");
+
+      openModal(
+        `🔄 偷天换日 · 换屋卡`,
+        `选择一处你的房产，与对手的房产强行对调：`,
+        `
+          <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+          <button class="modal-btn gold" onclick="confirmSwapHouse(${cardIdx})">立即对调</button>
+        `,
+        `
+          <div style="display:flex; flex-direction:column; gap:8px; margin:8px 0; text-align:left;">
+            <label style="font-size:12px; color:#cbd5e1;">我的房产：</label>
+            <select id="swap-my-land" style="background:#0f172a; color:#fff; padding:6px; border-radius:6px; border:1px solid #334155;">${myOptions}</select>
+            <label style="font-size:12px; color:#cbd5e1; margin-top:4px;">对手房产：</label>
+            <select id="swap-opp-land" style="background:#0f172a; color:#fff; padding:6px; border-radius:6px; border:1px solid #334155;">${oppOptions}</select>
+          </div>
+        `
+      );
+    }
+
+    function confirmSwapHouse(cardIdx) {
+      const myCid = document.getElementById("swap-my-land").value;
+      const oppCid = document.getElementById("swap-opp-land").value;
+      closeModal();
+
+      const user = gameState.players[0];
+      const mapCfg = getCurrentMapConfig();
+      user.cards.splice(cardIdx, 1);
+
+      const myOwner = gameState.lands[myCid].ownerIndex;
+      const oppOwner = gameState.lands[oppCid].ownerIndex;
+      const oppPlayer = gameState.players[oppOwner];
+
+      gameState.lands[myCid].ownerIndex = oppOwner;
+      gameState.lands[oppCid].ownerIndex = myOwner;
+
+      addLog(`🔄 换屋成功！你的 ${mapCfg.cells[myCid].name} 与 ${oppPlayer.name} 的 ${mapCfg.cells[oppCid].name} 互换！`, "highlight");
+      triggerAiReaction(oppPlayer, `对手 ${user.name} 用换屋卡强行把 TA 的 ${mapCfg.cells[myCid].name} 与你的 ${mapCfg.cells[oppCid].name} 互换了！`);
+      renderAll();
+      saveGame();
+    }
+
+    function onCellClick(cellId) {
+      const mapCfg = getCurrentMapConfig();
+      const cell = mapCfg.cells[cellId];
+      if (!cell) return;
+
+      // 如果当前处于「封路卡地图点选模式」
+      if (isSelectingRoadblockCell && activeRoadblockCardIdx !== -1) {
+        confirmRoadblock(activeRoadblockCardIdx, cellId);
+        return;
+      }
+
+      // 如果当前处于「定时炸弹地图点选模式」
+      if (isSelectingBombCell && activeBombCardIdx !== -1) {
+        confirmBomb(activeBombCardIdx, cellId);
+        return;
+      }
+
+      if (cell.type === "land") {
+        const land = gameState.lands[cellId];
+        const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+        let ownerName = "无主地块";
+        let lvlStr = lvlNames[0];
+        if (land && land.ownerIndex !== -1) {
+          const owner = gameState.players[land.ownerIndex];
+          ownerName = owner ? owner.name : "未知";
+          lvlStr = `Lv${land.level} (${lvlNames[land.level]})`;
+        }
+        openModal(
+          `🏢 地产信息 · ${cell.name}`,
+          `地价：¥${cell.price}<br>基础租金：¥${cell.baseRent}<br>所属玩家：<b style="color:#38bdf8;">${ownerName}</b><br>当前建筑：<b style="color:#fbbf24;">${lvlStr}</b><br>当前实际过路费：<b style="color:#ef4444;">¥${calcRent(cellId)}</b>`,
+          `<button class="modal-btn primary" onclick="closeModal()">了解</button>`
+        );
+      } else {
+        openModal(`📍 ${cell.name}`, `类型：${cell.type}<br>${cell.icon || ''}`, `<button class="modal-btn primary" onclick="closeModal()">了解</button>`);
+      }
+    }
+
+    function showSwapHousePicker(cardIdx, myLands, oppLands) {
+      const mapCfg = getCurrentMapConfig();
+      const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+      let myOptions = myLands.map(cid => `<option value="${cid}">${mapCfg.cells[cid].name} (${lvlNames[gameState.lands[cid].level]})</option>`).join("");
+      let oppOptions = oppLands.map(cid => {
+        const owner = gameState.players[gameState.lands[cid].ownerIndex];
+        return `<option value="${cid}">${owner.name}的 ${mapCfg.cells[cid].name} (${lvlNames[gameState.lands[cid].level]})</option>`;
+      }).join("");
+
+      openModal(
+        `🔄 偷天换日 · 换屋卡`,
+        `选择一处你的房产，与对手的房产强行对调：`,
+        `
+          <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+          <button class="modal-btn gold" onclick="confirmSwapHouse(${cardIdx})">立即对调</button>
+        `,
+        `
+          <div style="display:flex; flex-direction:column; gap:8px; margin:8px 0; text-align:left;">
+            <label style="font-size:12px; color:#cbd5e1;">我的房产：</label>
+            <select id="swap-my-land" style="background:#0f172a; color:#fff; padding:6px; border-radius:6px; border:1px solid #334155;">${myOptions}</select>
+            <label style="font-size:12px; color:#cbd5e1; margin-top:4px;">对手房产：</label>
+            <select id="swap-opp-land" style="background:#0f172a; color:#fff; padding:6px; border-radius:6px; border:1px solid #334155;">${oppOptions}</select>
+          </div>
+        `
+      );
+    }
+
+    function confirmSwapHouse(cardIdx) {
+      const myCid = document.getElementById("swap-my-land").value;
+      const oppCid = document.getElementById("swap-opp-land").value;
+      closeModal();
+
+      const user = gameState.players[0];
+      const mapCfg = getCurrentMapConfig();
+      user.cards.splice(cardIdx, 1);
+
+      const myOwner = gameState.lands[myCid].ownerIndex;
+      const oppOwner = gameState.lands[oppCid].ownerIndex;
+      const oppPlayer = gameState.players[oppOwner];
+
+      gameState.lands[myCid].ownerIndex = oppOwner;
+      gameState.lands[oppCid].ownerIndex = myOwner;
+
+      addLog(`🔄 换屋成功！你的 ${mapCfg.cells[myCid].name} 与 ${oppPlayer.name} 的 ${mapCfg.cells[oppCid].name} 互换！`, "highlight");
+      triggerAiReaction(oppPlayer, `对手 ${user.name} 用换屋卡强行把 TA 的 ${mapCfg.cells[myCid].name} 与你的 ${mapCfg.cells[oppCid].name} 互换了！`);
+      renderAll();
+      saveGame();
+    }
+
+    function onCellClick(cellId) {
+      const mapCfg = getCurrentMapConfig();
+      const cell = mapCfg.cells[cellId];
+      if (!cell) return;
+
+      // 如果当前处于「封路卡地图点选模式」
+      if (isSelectingRoadblockCell && activeRoadblockCardIdx !== -1) {
+        confirmRoadblock(activeRoadblockCardIdx, cellId);
+        return;
+      }
+
+      // 如果当前处于「定时炸弹地图点选模式」
+      if (isSelectingBombCell && activeBombCardIdx !== -1) {
+        confirmBomb(activeBombCardIdx, cellId);
+        return;
+      }
+
+      if (cell.type === "land") {
+        const land = gameState.lands[cellId];
+        const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+        let ownerName = "无主地块";
+        let lvlStr = lvlNames[0];
+        if (land && land.ownerIndex !== -1) {
+          const owner = gameState.players[land.ownerIndex];
+          ownerName = owner ? owner.name : "未知";
+          lvlStr = `Lv${land.level} (${lvlNames[land.level]})`;
+        }
+        openModal(
+          `🏢 地产信息 · ${cell.name}`,
+          `地价：¥${cell.price}<br>基础租金：¥${cell.baseRent}<br>所属玩家：<b style="color:#38bdf8;">${ownerName}</b><br>当前建筑：<b style="color:#fbbf24;">${lvlStr}</b><br>当前实际过路费：<b style="color:#ef4444;">¥${calcRent(cellId)}</b>`,
+          `<button class="modal-btn primary" onclick="closeModal()">了解</button>`
+        );
+      } else {
+        openModal(`📍 ${cell.name}`, `类型：${cell.type}<br>${cell.icon || ''}`, `<button class="modal-btn primary" onclick="closeModal()">了解</button>`);
+      }
+    }
+
+    function onRestartClick() {
+      openModal(
+        "↺ 确认认输重开？",
+        "确定要放弃当前对局并返回开局大厅重新配置吗？<br><span style='font-size:11px; color:#94a3b8;'>（当前的对局存档将会被清空）</span>",
+        `
+          <button class="modal-btn cancel" onclick="closeModal()">继续对局</button>
+          <button class="modal-btn primary" onclick="confirmRestart()">确认放弃</button>
+        `
+      );
+    }
+
+    async function confirmRestart() {
+      closeModal();
+      await clearSave();
+      gameState = {
+        turnCount: 1,
+        currentPlayerIndex: 0,
+        players: [],
+        lands: {},
+        roadblocks: {},
+        bomb: null,
+        logs: [],
+        chatMessages: [],
+        isRolling: false
+      };
+      showSetupView();
+      showToast("已重置对局！");
+    }
+
+    // --- LLM 联动：战局吐槽气泡与悬浮对线小窗 ---
+    async function triggerAiReaction(charPlayer, eventDesc) {
+      if (!charPlayer || !charPlayer.isAi) return;
+
+      const bubble = document.getElementById("ai-bubble");
+      const speaker = document.getElementById("bubble-speaker");
+      const text = document.getElementById("bubble-text");
+      if (!bubble || !speaker || !text) return;
+
+      speaker.innerText = charPlayer.name;
+      text.innerText = "💭 ...";
+      bubble.style.display = "block";
+
+      try {
+        if (window.AiPhone && window.AiPhone.ai && window.AiPhone.ai.generate) {
+          const prompt = `你正在参与一场大富翁游戏。
+你的人设是：${charPlayer.persona}。
+当前发生的突发事件是：${eventDesc}。
+当前你的资金为 ¥${charPlayer.cash}。
+请以你的角色性格，脱口说出一句简短幽默、生动的即时吐槽/狠话反应（控制在 35 字以内，不要带括号动作描述，只输出角色说的话）。`;
+
+          const res = await window.AiPhone.ai.generate({
+            characterId: charPlayer.id,
+            instruction: prompt
+          });
+
+          if (res && res.text) {
+            const cleanText = res.text.replace(/\[.*?\]/g, "").trim();
+            text.innerText = cleanText || "哼，走着瞧！";
+            addLog(`💬 ${charPlayer.name}：“${cleanText}”`);
+          } else {
+            const fallback = "哼，这点小把戏难不倒我！";
+            text.innerText = fallback;
+            addLog(`💬 ${charPlayer.name}：“${fallback}”`);
+          }
+        } else {
+          const fallback = "哼，这点小把戏难不倒我！";
+          text.innerText = fallback;
+          addLog(`💬 ${charPlayer.name}：“${fallback}”`);
+        }
+      } catch (e) {
+        const fallback = "走着瞧，胜负还没定呢！";
+        text.innerText = fallback;
+        addLog(`💬 ${charPlayer.name}：“${fallback}”`);
+      }
+
+      setTimeout(() => {
+        bubble.style.display = "none";
+      }, 5000);
+    }
+
+    function toggleChatDrawer(show) {
+      const drawer = document.getElementById("chat-drawer");
+      if (show) {
+        drawer.style.display = "flex";
+        setTimeout(() => drawer.classList.add("open"), 10);
+      } else {
+        drawer.classList.remove("open");
+        setTimeout(() => drawer.style.display = "none", 300);
+      }
+    }
+
+    function renderChatDrawer() {
+      const container = document.getElementById("drawer-msgs");
+      if (!container) return;
+      container.innerHTML = gameState.chatMessages.map(m => `
+        <div class="msg-bubble ${m.role}">
+          ${m.name ? `<div style="font-size:10px; font-weight:800; color:#fbbf24; margin-bottom:2px;">${m.name}</div>` : ''}
+          ${m.content}
+        </div>
+      `).join("");
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendDrawerMsg() {
+      const input = document.getElementById("drawer-input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = "";
+      gameState.chatMessages.push({ role: "user", content: text });
+      renderChatDrawer();
+
+      // 选一个活跃的 AI 角色对线回复
+      const activeAis = gameState.players.filter(p => p.isAi && !p.isBankrupt);
+      if (activeAis.length === 0) return;
+      const targetAi = activeAis[Math.floor(Math.random() * activeAis.length)];
+
+      if (window.AiPhone && window.AiPhone.ai) {
+        try {
+          const situation = gameState.players.map(p => `${p.name}: 现金¥${p.cash} (${p.isBankrupt ? '破产' : '正常'})`).join("; ");
+          const prompt = `你正在参与大富翁游戏对局。
+当前战况：${situation}。
+玩家对你说：“${text}”。
+请根据你的人设性格（${targetAi.persona}）和当局优劣势，给出一句充满角色个性的对线回复（40字以内）。`;
+
+          const res = await window.AiPhone.ai.generate({
+            characterId: targetAi.id,
+            instruction: prompt
+          });
+
+          if (res && res.text) {
+            gameState.chatMessages.push({ role: "ai", name: targetAi.name, content: res.text.trim() });
+            renderChatDrawer();
+            saveGame();
+          }
+        } catch (e) {
+          gameState.chatMessages.push({ role: "ai", name: targetAi.name, content: "专心走棋，看我下回合怎么超车！" });
+          renderChatDrawer();
+        }
+      } else {
+        setTimeout(() => {
+          gameState.chatMessages.push({ role: "ai", name: targetAi.name, content: "少耍嘴皮子，地盘见真章！" });
+          renderChatDrawer();
+        }, 600);
+      }
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function showSwapHousePicker(cardIdx, myLands, oppLands) {
+      const mapCfg = getCurrentMapConfig();
+      const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+      let myOptions = myLands.map(cid => `<option value="${cid}">${mapCfg.cells[cid].name} (${lvlNames[gameState.lands[cid].level]})</option>`).join("");
+      let oppOptions = oppLands.map(cid => {
+        const owner = gameState.players[gameState.lands[cid].ownerIndex];
+        return `<option value="${cid}">${owner.name}的 ${mapCfg.cells[cid].name} (${lvlNames[gameState.lands[cid].level]})</option>`;
+      }).join("");
+
+      openModal(
+        `🔄 偷天换日 · 换屋卡`,
+        `选择一处你的房产，与对手的房产强行对调：`,
+        `
+          <button class="modal-btn cancel" onclick="closeModal()">取消</button>
+          <button class="modal-btn gold" onclick="confirmSwapHouse(${cardIdx})">立即对调</button>
+        `,
+        `
+          <div style="display:flex; flex-direction:column; gap:8px; margin:8px 0; text-align:left;">
+            <label style="font-size:12px; color:#cbd5e1;">我的房产：</label>
+            <select id="swap-my-land" style="background:#0f172a; color:#fff; padding:6px; border-radius:6px; border:1px solid #334155;">${myOptions}</select>
+            <label style="font-size:12px; color:#cbd5e1; margin-top:4px;">对手房产：</label>
+            <select id="swap-opp-land" style="background:#0f172a; color:#fff; padding:6px; border-radius:6px; border:1px solid #334155;">${oppOptions}</select>
+          </div>
+        `
+      );
+    }
+
+    function confirmSwapHouse(cardIdx) {
+      const myCid = document.getElementById("swap-my-land").value;
+      const oppCid = document.getElementById("swap-opp-land").value;
+      closeModal();
+
+      const user = gameState.players[0];
+      const mapCfg = getCurrentMapConfig();
+      user.cards.splice(cardIdx, 1);
+
+      const myOwner = gameState.lands[myCid].ownerIndex;
+      const oppOwner = gameState.lands[oppCid].ownerIndex;
+      const oppPlayer = gameState.players[oppOwner];
+
+      gameState.lands[myCid].ownerIndex = oppOwner;
+      gameState.lands[oppCid].ownerIndex = myOwner;
+
+      addLog(`🔄 换屋成功！你的 ${mapCfg.cells[myCid].name} 与 ${oppPlayer.name} 的 ${mapCfg.cells[oppCid].name} 互换！`, "highlight");
+      triggerAiReaction(oppPlayer, `对手 ${user.name} 用换屋卡强行把 TA 的 ${mapCfg.cells[myCid].name} 与你的 ${mapCfg.cells[oppCid].name} 互换了！`);
+      renderAll();
+      saveGame();
+    }
+
+    function onCellClick(cellId) {
+      const mapCfg = getCurrentMapConfig();
+      const cell = mapCfg.cells[cellId];
+      if (!cell) return;
+
+      // 如果当前处于「封路卡地图点选模式」
+      if (isSelectingRoadblockCell && activeRoadblockCardIdx !== -1) {
+        confirmRoadblock(activeRoadblockCardIdx, cellId);
+        return;
+      }
+
+      // 如果当前处于「定时炸弹地图点选模式」
+      if (isSelectingBombCell && activeBombCardIdx !== -1) {
+        confirmBomb(activeBombCardIdx, cellId);
+        return;
+      }
+
+      if (cell.type === "land") {
+        const land = gameState.lands[cellId];
+        const lvlNames = mapCfg.themeCss?.houseLevels || ["空地", "Lv1", "Lv2", "Lv3", "Lv4", "👑Lv5"];
+        let ownerName = "无主地块";
+        let lvlStr = lvlNames[0];
+        if (land && land.ownerIndex !== -1) {
+          const owner = gameState.players[land.ownerIndex];
+          ownerName = owner ? owner.name : "未知";
+          lvlStr = `Lv${land.level} (${lvlNames[land.level]})`;
+        }
+        openModal(
+          `🏢 地产信息 · ${cell.name}`,
+          `地价：¥${cell.price}<br>基础租金：¥${cell.baseRent}<br>所属玩家：<b style="color:#38bdf8;">${ownerName}</b><br>当前建筑：<b style="color:#fbbf24;">${lvlStr}</b><br>当前实际过路费：<b style="color:#ef4444;">¥${calcRent(cellId)}</b>`,
+          `<button class="modal-btn primary" onclick="closeModal()">了解</button>`
+        );
+      } else {
+        openModal(`📍 ${cell.name}`, `类型：${cell.type}<br>${cell.icon || ''}`, `<button class="modal-btn primary" onclick="closeModal()">了解</button>`);
+      }
+    }
+
+    function onRestartClick() {
+      openModal(
+        "↺ 确认认输重开？",
+        "确定要放弃当前对局并返回开局大厅重新配置吗？<br><span style='font-size:11px; color:#94a3b8;'>（当前的对局存档将会被清空）</span>",
+        `
+          <button class="modal-btn cancel" onclick="closeModal()">继续对局</button>
+          <button class="modal-btn primary" onclick="confirmRestart()">确认放弃</button>
+        `
+      );
+    }
+
+    async function confirmRestart() {
+      closeModal();
+      await clearSave();
+      gameState = {
+        turnCount: 1,
+        currentPlayerIndex: 0,
+        players: [],
+        lands: {},
+        roadblocks: {},
+        bomb: null,
+        logs: [],
+        chatMessages: [],
+        isRolling: false
+      };
+      showSetupView();
+      showToast("已重置对局！");
+    }
+
+    // --- LLM 联动：战局吐槽气泡与悬浮对线小窗 ---
+    async function triggerAiReaction(charPlayer, eventDesc) {
+      if (!charPlayer || !charPlayer.isAi) return;
+
+      const bubble = document.getElementById("ai-bubble");
+      const speaker = document.getElementById("bubble-speaker");
+      const text = document.getElementById("bubble-text");
+      if (!bubble || !speaker || !text) return;
+
+      speaker.innerText = charPlayer.name;
+      text.innerText = "💭 ...";
+      bubble.style.display = "block";
+
+      try {
+        if (window.AiPhone && window.AiPhone.ai && window.AiPhone.ai.generate) {
+          const prompt = `你正在参与一场大富翁游戏。
+你的人设是：${charPlayer.persona}。
+当前发生的突发事件是：${eventDesc}。
+当前你的资金为 ¥${charPlayer.cash}。
+请以你的角色性格，脱口说出一句简短幽默、生动的即时吐槽/狠话反应（控制在 35 字以内，不要带括号动作描述，只输出角色说的话）。`;
+
+          const res = await window.AiPhone.ai.generate({
+            characterId: charPlayer.id,
+            instruction: prompt
+          });
+
+          if (res && res.text) {
+            const cleanText = res.text.replace(/\[.*?\]/g, "").trim();
+            text.innerText = cleanText || "哼，走着瞧！";
+            addLog(`💬 ${charPlayer.name}：“${cleanText}”`);
+          } else {
+            const fallback = "哼，这点小把戏难不倒我！";
+            text.innerText = fallback;
+            addLog(`💬 ${charPlayer.name}：“${fallback}”`);
+          }
+        } else {
+          const fallback = "哼，这点小把戏难不倒我！";
+          text.innerText = fallback;
+          addLog(`💬 ${charPlayer.name}：“${fallback}”`);
+        }
+      } catch (e) {
+        const fallback = "走着瞧，胜负还没定呢！";
+        text.innerText = fallback;
+        addLog(`💬 ${charPlayer.name}：“${fallback}”`);
+      }
+
+      setTimeout(() => {
+        bubble.style.display = "none";
+      }, 5000);
+    }
+
+    function toggleChatDrawer(show) {
+      const drawer = document.getElementById("chat-drawer");
+      if (show) {
+        drawer.style.display = "flex";
+        setTimeout(() => drawer.classList.add("open"), 10);
+      } else {
+        drawer.classList.remove("open");
+        setTimeout(() => drawer.style.display = "none", 300);
+      }
+    }
+
+    function renderChatDrawer() {
+      const container = document.getElementById("drawer-msgs");
+      if (!container) return;
+      container.innerHTML = gameState.chatMessages.map(m => `
+        <div class="msg-bubble ${m.role}">
+          ${m.name ? `<div style="font-size:10px; font-weight:800; color:#fbbf24; margin-bottom:2px;">${m.name}</div>` : ''}
+          ${m.content}
+        </div>
+      `).join("");
+      container.scrollTop = container.scrollHeight;
+    }
+
+    async function sendDrawerMsg() {
+      const input = document.getElementById("drawer-input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = "";
+      gameState.chatMessages.push({ role: "user", content: text });
+      renderChatDrawer();
+
+      // 选一个活跃的 AI 角色对线回复
+      const activeAis = gameState.players.filter(p => p.isAi && !p.isBankrupt);
+      if (activeAis.length === 0) return;
+      const targetAi = activeAis[Math.floor(Math.random() * activeAis.length)];
+
+      if (window.AiPhone && window.AiPhone.ai) {
+        try {
+          const situation = gameState.players.map(p => `${p.name}: 现金¥${p.cash} (${p.isBankrupt ? '破产' : '正常'})`).join("; ");
+          const prompt = `你正在参与大富翁游戏对局。
+当前战况：${situation}。
+玩家对你说：“${text}”。
+请根据你的人设性格（${targetAi.persona}）和当局优劣势，给出一句充满角色个性的对线回复（40字以内）。`;
+
+          const res = await window.AiPhone.ai.generate({
+            characterId: targetAi.id,
+            instruction: prompt
+          });
+
+          if (res && res.text) {
+            gameState.chatMessages.push({ role: "ai", name: targetAi.name, content: res.text.trim() });
+            renderChatDrawer();
+            saveGame();
+          }
+        } catch (e) {
+          gameState.chatMessages.push({ role: "ai", name: targetAi.name, content: "专心走棋，看我下回合怎么超车！" });
+          renderChatDrawer();
+        }
+      } else {
+        setTimeout(() => {
+          gameState.chatMessages.push({ role: "ai", name: targetAi.name, content: "少耍嘴皮子，地盘见真章！" });
+          renderChatDrawer();
+        }, 600);
+      }
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{
+  "presets": [
+    {
+      "id": "canyon-friend-profile",
+      "name": "好友档案生成",
+      "content": "你正在《你抢谁蓝呢》中生成你的游戏内好友档案。请结合你的角色人设（性格、出身、能力、气质），输出一个 JSON 对象，字段：gameId（召唤师ID，4-8字）、tier（段位：倔强青铜/秩序白银/荣耀黄金/尊贵铂金/永恒钻石/至尊星耀/最强王者）、stars（星数整数）、totalMatches（总场次整数）、wins（胜场整数，不大于总场次）、mainHero（常用英雄，必须从指令给出的英雄名里选）、position（分路：全能补位/野王带飞/中路法王/发育路核心/游走保镖/对抗路战神）、signature（签名，20字内）、kills（击杀）、deaths（死亡）、assists（助攻）。只输出 JSON，不要多余文字。",
+      "enabled": true,
+      "tags": ["canyon", "friend"]
+    },
+    {
+      "id": "canyon-friend-pay",
+      "name": "好友代付判断",
+      "content": "你正在判断是否帮用户代付充值。请基于你的角色性格、两人关系与自身设定，只输出「同意」或「拒绝」，不要多余文字。",
+      "enabled": true,
+      "tags": ["canyon", "pay"]
+    },
+    {
+      "id": "canyon-battle-voice",
+      "name": "赛后语音互动",
+      "content": "你刚和用户打完一局《你抢谁蓝呢》。请以你的角色身份，说一句简短自然的赛后互动感言，语气符合角色人设，50字以内，直接输出台词，不要加引号或前缀。",
+      "enabled": true,
+      "tags": ["canyon", "battle"]
+    },
+    {
+      "id": "canyon-chat-summary",
+      "name": "对话总结",
+      "content": "请总结用户与你之间这段对话的要点，提炼关键信息和情感倾向，用于写入角色记忆。输出简洁摘要。",
+      "enabled": true,
+      "tags": ["canyon", "summary"]
+    },
+    {
+      "id": "canyon-lobby-chat",
+      "name": "大厅聊天",
+      "content": "你正在《你抢谁蓝呢》的大厅或队内聊天中。请以你的角色身份自然回复，语气符合人设，简短自然，不要加名字前缀。",
+      "enabled": true,
+      "tags": ["canyon", "chat"]
+    }
+  ]
+}

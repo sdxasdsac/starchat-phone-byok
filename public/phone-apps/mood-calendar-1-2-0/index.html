@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>心情记录</title>
+<style>
+:root{
+  --pink:#c98d8d; --pink-soft:#e8d7d5; --bg:#f5f0eb; --card:#fcfaf7;
+  --ink:#5b5550; --sub:#a49b93; --line:#e6ddd5; --amber:#c9a27a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;min-height:100%;margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif;}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none;padding:0}
+.app{min-height:100dvh;padding:0 14px calc(var(--ai-phone-app-safe-bottom,24px) + 66px);
+  padding-top:calc(var(--ai-phone-app-bar-top,56px) + 46px)}
+.topbar{position:fixed;top:var(--ai-phone-app-bar-top,56px);left:14px;
+  right:var(--ai-phone-app-bar-clear-right,96px);min-height:38px;
+  display:flex;align-items:center;justify-content:flex-start;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--pink-soft);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none;
+  border:2px solid #fff;box-shadow:0 1px 4px rgba(120,90,60,.15)}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar .ph{font-size:16px;color:var(--pink);font-weight:700}
+.days{flex:1;min-width:0;height:34px;display:flex;align-items:center;justify-content:center;gap:5px;
+  background:var(--card);border:1px solid var(--line);border-radius:17px;padding:0 12px;
+  font-size:13px;font-weight:700;color:var(--pink);white-space:nowrap;overflow:hidden}
+.addbtn{flex:none;width:34px;height:34px;border-radius:50%;background:var(--pink);color:#fff;
+  font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 8px rgba(150,110,110,.35)}
+.page{display:none;animation:fadein .18s ease}
+.page.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin:2px 0 12px}
+.page-head .ph-title{font-size:17px;font-weight:800}
+.page-head .ph-add{font-size:13px;color:var(--pink);font-weight:700;padding:6px 4px}
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin:4px 0 10px}
+.month-nav .mt{font-size:16px;font-weight:700}
+.month-nav button{width:36px;height:36px;border-radius:10px;background:var(--card);
+  border:1px solid var(--line);font-size:18px;color:var(--sub)}
+.weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;
+  font-size:12px;color:var(--sub);margin-bottom:6px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cell{position:relative;min-height:64px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:3px 2px;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-start;overflow:hidden;transition:transform .05s}
+.cell:active{transform:scale(.96)}
+.cell.off{opacity:.35}
+.cell.today{border:1.5px solid var(--pink)}
+/* 选中框：只在点选的过往／未来日期上出现，深色边框+微内描边，和默认灰线一眼能分开 */
+.cell.sel{opacity:1!important;border-color:#111;box-shadow:inset 0 0 0 .5px #111}
+.cell .num{font-size:13px;font-weight:600;line-height:1.1;height:17px}
+.cell.today .num{color:var(--pink)}
+.cell .emojis{display:flex;flex-direction:column;align-items:center;gap:1px;margin-top:1px;width:100%}
+.cell .erow{display:flex;align-items:center;justify-content:center;gap:2px;width:100%;min-height:14px;font-size:12px;line-height:1}
+.cell .em{font-size:13px;line-height:1;padding:2px 4px}
+.cell .flag{position:absolute;top:2px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.cell .holiday{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:8px;
+  color:var(--pink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px}
+.taskbar{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.taskbar .th{font-size:13px;font-weight:700;color:var(--sub);margin-bottom:6px;display:flex;
+  justify-content:space-between;align-items:center;gap:10px}
+.taskbar .th-acts{display:flex;align-items:center;gap:14px;flex:none}
+.taskbar .th-btn{font-size:12px;font-weight:700;color:var(--pink);padding:5px 2px;
+  white-space:nowrap;line-height:1.2}
+.taskbar .th-btn:active{opacity:.6}
+.taskbar .empty{font-size:12px;color:var(--sub)}
+.task{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:10px;background:var(--bg);margin-bottom:6px}
+.task:last-child{margin-bottom:0}
+.task .ticon{font-size:15px;flex:none}
+.task .tbody{flex:1;min-width:0}
+.task .tt{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.task .ts{font-size:11px;color:var(--sub)}
+.task .tdel{flex:none;font-size:12px;color:#c98d8d;padding:4px 6px}
+.task .mi-who{flex:none;font-size:10px;line-height:1;padding:4px 6px;border-radius:8px;
+  background:var(--bg);color:var(--sub);white-space:nowrap;max-width:56px;
+  overflow:hidden;text-overflow:ellipsis}
+.task .mi-who.user{background:var(--pink-soft);color:#a97070}
+.task .mi-who.char{background:#efe7d9;color:#a9875f}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:45;
+  background:var(--card);border-top:1px solid var(--line);
+  display:flex;align-items:stretch;padding-bottom:var(--ai-phone-app-safe-bottom,24px)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;height:56px;color:var(--sub);font-size:11px}
+.tab .tic{width:22px;height:22px;display:block;fill:none;stroke:currentColor;
+  stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.tab.active{color:var(--pink)}
+.sheet-mask{position:fixed;inset:0;background:rgba(70,60,50,.4);z-index:50;opacity:0;
+  pointer-events:none;transition:opacity .2s}
+.sheet-mask.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-radius:20px 20px 0 0;
+  padding:16px 16px calc(var(--ai-phone-app-safe-bottom,24px) + 16px);z-index:51;
+  transform:translateY(105%);visibility:hidden;pointer-events:none;
+  transition:transform .25s,visibility .25s;
+  max-height:85vh;max-height:85dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet.show{transform:translateY(0);visibility:visible;pointer-events:auto}
+.sheet .sh{display:flex;align-items:center;justify-content:flex-start;position:relative;margin-bottom:12px;min-height:32px}
+.sheet .sh .st{font-size:16px;font-weight:800;padding-left:36px}
+.sheet .sh .x{position:absolute;left:0;top:50%;transform:translateY(-50%);font-size:20px;color:var(--sub);width:32px;height:32px;z-index:3}
+.emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:10px 0}
+.emoji-grid button{font-size:22px;padding:6px 0;border-radius:10px;background:var(--bg);
+  border:1.5px solid transparent}
+.emoji-grid button.on{border-color:var(--pink);background:var(--pink-soft)}
+textarea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:12px;padding:10px;
+  resize:none;background:var(--bg);font-size:14px}
+textarea:focus{outline:none;border-color:var(--pink)}
+input[type=text],input[type=number],input[type=date],input[type=time],select{
+  width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--bg);font-size:14px}
+input:focus,select:focus{outline:none;border-color:var(--pink)}
+.btn{display:block;width:100%;min-height:46px;border-radius:12px;font-weight:700;font-size:15px;
+  margin-top:10px}
+.btn.primary{background:var(--pink);color:#fff}
+.btn.ghost{background:var(--bg);border:1px solid var(--line);color:var(--ink)}
+.btn.danger{background:#f4e9e6;color:#c98d8d;border:1px solid #e8d7d5}
+.hint{font-size:12px;color:var(--sub);margin-top:8px}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.row label{font-size:13px;color:var(--sub);flex:none;width:64px}
+.switch{position:relative;width:46px;height:26px;border-radius:13px;background:#ded6cf;transition:.2s;flex:none}
+.switch.on{background:var(--pink)}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+.switch.on::after{left:23px}
+.muted{color:var(--sub)}
+/* 居中弹窗：便签 & 日记查看 —— 隐藏时必须 pointer-events:none + visibility:hidden，绝不能隐形挡在上层吃点击 */
+#noteSheet.sheet,#diaryViewSheet.sheet{left:50%;right:auto;bottom:auto;top:50%;z-index:60;
+  width:min(90%,360px);transform:translate(-50%,-50%) scale(.94);opacity:0;visibility:hidden;
+  pointer-events:none;border-radius:16px;
+  padding:18px 16px calc(18px + var(--ai-phone-app-safe-bottom,24px));
+  max-height:74vh;max-height:74dvh;overflow-y:auto;
+  -webkit-overflow-scrolling:touch;transition:transform .2s,opacity .2s,visibility .2s}
+#noteSheet.sheet.show,#diaryViewSheet.sheet.show{transform:translate(-50%,-50%) scale(1);opacity:1;visibility:visible;pointer-events:auto}
+.note-card{background:#fbf7ec;border:1px solid #e8dfc9;border-radius:8px;padding:18px 16px;
+  margin-top:8px;box-shadow:0 8px 24px rgba(120,100,70,.16);position:relative}
+.note-card::before{content:"";position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  width:56px;height:18px;background:rgba(226,209,178,.7);border-radius:3px}
+.note-card .nc-t{font-size:12px;color:#a08a66;margin-bottom:6px;font-weight:700}
+.note-card .nc-b{font-size:15px;line-height:1.9;white-space:pre-wrap;word-break:break-word;color:#5c5244}
+.invite-card{background:linear-gradient(160deg,#e6d3ce,#c98d8d);border-radius:16px;padding:18px;
+  color:#5b5550;text-align:center;margin-bottom:12px}
+.invite-card .ic-icon{font-size:22px}
+.invite-card .ic-t{font-size:17px;font-weight:800;margin:8px 0 4px}
+.list-item{display:flex;align-items:center;gap:10px;padding:11px 6px;border-bottom:1px solid var(--line)}
+.list-item:last-child{border-bottom:none}
+.list-item .av{width:36px;height:36px;border-radius:50%;background:var(--pink-soft);display:flex;
+  align-items:center;justify-content:center;font-size:17px;flex:none;overflow:hidden}
+.list-item .av img{width:100%;height:100%;object-fit:cover}
+.list-item .li-nm{font-size:15px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list-item .li-st{font-size:11px;padding:3px 8px;border-radius:10px;background:var(--bg);color:var(--sub)}
+.list-item .li-st.ok{background:#e5efe3;color:#6b9469}
+.list-item .li-st.wait{background:#f3ecdd;color:#b09458}
+.memo-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.memo-card .mc-date{font-size:12px;color:var(--sub);margin-bottom:6px;display:flex;justify-content:space-between}
+.memo-card.past{opacity:.62}
+.memo-card.past .mi-text{color:var(--sub)}
+.memo-item{display:flex;align-items:center;gap:8px;padding:8px 4px;border-radius:8px}
+.memo-item .mi-check{flex:none;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;background:var(--bg)}
+.memo-item.done .mi-check{background:var(--pink);border-color:var(--pink)}
+.memo-item .mi-text{flex:1;min-width:0;font-size:14px;line-height:1.4;word-break:break-all}
+.memo-item.done .mi-text{color:var(--sub);text-decoration:line-through}
+.memo-item .mi-del{flex:none;font-size:14px;color:#c98d8d;padding:2px 4px}
+.memo-item .mi-who{flex:none;font-size:10px;line-height:1;padding:4px 6px;border-radius:8px;
+  background:var(--bg);color:var(--sub);white-space:nowrap;max-width:56px;
+  overflow:hidden;text-overflow:ellipsis}
+.memo-item .mi-who.user{background:var(--pink-soft);color:#a97070}
+.memo-item .mi-who.char{background:#efe7d9;color:#a9875f}
+.memo-line{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px dashed var(--line)}
+.memo-line .ml-check{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:var(--bg)}
+.memo-line.done .ml-check{background:var(--pink);border-color:var(--pink)}
+.memo-line .ml-num{flex:none;width:20px;text-align:center;font-size:13px;color:var(--sub)}
+.memo-line .ml-input{flex:1;min-width:0;border:none;background:transparent;font-size:15px;padding:4px 0;outline:none}
+.memo-line.done .ml-input{color:var(--sub);text-decoration:line-through}
+.memo-line .ml-del{flex:none;font-size:14px;color:#c98d8d;padding:2px 6px}
+.diary-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.diary-card .dc-date{font-size:12px;color:var(--sub);margin-bottom:8px;display:flex;justify-content:space-between}
+.diary-card .dc-body{font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word;color:var(--ink)}
+.diary-card .dc-body.brief{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.diary-card .dc-body.full{white-space:pre-wrap}
+.diary-comment{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+.diary-comment .dc-label{font-size:11px;color:var(--pink);font-weight:700;margin-bottom:4px}
+.diary-comment .dc-line{font-size:13px;line-height:1.6;margin-bottom:4px}
+.diary-comment .dc-line .who{font-size:11px;color:var(--sub);margin-right:4px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="avatar" id="userAvatar"><span class="ph" id="userPh">我</span></div>
+    <div class="days" id="daysChip"><span id="daysVal">❤ 设置日期</span></div>
+    <div class="avatar" id="charAvatar"><span class="ph" id="charPh">TA</span></div>
+    <button class="addbtn" id="addCharBtn">＋</button>
+  </div>
+
+  <div class="page active" id="page-calendar">
+    <div class="month-nav">
+      <button id="prevMonth">‹</button>
+      <div class="mt" id="monthTitle"></div>
+      <button id="nextMonth">›</button>
+    </div>
+    <div class="weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+    <div class="grid" id="calendarGrid"></div>
+    <div class="taskbar" id="taskBar"><div class="th"><span>当天事项</span><span class="th-acts"><button class="th-btn" id="addSchedBtn">＋ 添加事项</button><button class="th-btn" id="setBtn">⚙ 设置</button></span></div><div class="empty" id="taskBody">暂无事项</div></div>
+  </div>
+
+  <div class="page" id="page-memo">
+    <div class="page-head"><div class="ph-title">备忘录</div><div style="display:flex;align-items:center;gap:8px"><button class="ph-add" id="cleanMemBtn">🧹 清理备忘录残留</button><div class="ph-add" id="memoAddBtn">＋ 新建</div></div></div>
+    <div id="memoList"></div>
+  </div>
+
+  <div class="page" id="page-diary">
+    <div class="page-head"><div class="ph-title">日记</div><div class="ph-add" id="diaryAddBtn">＋ 写日记</div></div>
+    <div id="diaryList"></div>
+  </div>
+</div>
+
+<div class="tabbar">
+  <button class="tab active" data-tab="calendar"><svg class="tic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.6" y="5.2" width="16.8" height="15.2" rx="3.2"/><path d="M8.2 3.4v3.4M15.8 3.4v3.4M3.6 10.2h16.8"/><circle cx="8.6" cy="14.1" r=".95" fill="currentColor" stroke="none"/><circle cx="12" cy="14.1" r=".95" fill="currentColor" stroke="none"/><circle cx="15.4" cy="14.1" r=".95" fill="currentColor" stroke="none"/><path d="M8.6 17.4h3.2"/></svg><span>日历</span></button>
+  <button class="tab" data-tab="memo"><svg class="tic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4.6" y="3.6" width="14.8" height="16.8" rx="2.8"/><path d="M8.4 8.6h7.2M8.4 12.2h7.2M8.4 15.8h4.4"/></svg><span>备忘录</span></button>
+  <button class="tab" data-tab="diary"><svg class="tic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.6C10.4 5.3 8.4 4.7 5.9 4.7c-.8 0-1.6.1-2.3.3v13.3c.7-.2 1.5-.3 2.3-.3 2.5 0 4.5.6 6.1 1.9 1.6-1.3 3.6-1.9 6.1-1.9.8 0 1.6.1 2.3.3V5c-.7-.2-1.5-.3-2.3-.3-2.5 0-4.5.6-6.1 1.9z"/><path d="M12 6.6v13.3"/><path d="M6.2 8.9h3.1M6.2 12h3.1"/></svg><span>日记</span></button>
+</div>
+
+
+
+<div class="sheet-mask" id="mask"></div>
+
+<div class="sheet" id="charSheet">
+  <div class="sh"><div class="st">选择角色</div><button class="x" data-close="charSheet">✕</button></div>
+  <div id="charList"></div>
+</div>
+
+<div class="sheet" id="inviteSheet">
+  <div class="sh"><div class="st">邀请</div><button class="x" data-close="inviteSheet">✕</button></div>
+  <div class="invite-card">
+    <div class="ic-icon">💌</div>
+    <div class="ic-t">邀请 <span id="invName">TA</span> 一起记录心情</div>
+  </div>
+  <button class="btn primary" id="inviteYes">发送邀请</button>
+  <button class="btn ghost" id="inviteReset" style="display:none">解除邀请，重新邀请</button>
+  <button class="btn ghost" id="inviteNo">暂不邀请（仅查看）</button>
+</div>
+
+<div class="sheet" id="recordSheet">
+  <div class="sh"><div class="st">记录心情 · <span id="recDate"></span></div><button class="x" data-close="recordSheet">✕</button></div>
+  <div class="muted" style="font-size:12px">你的心情（显示在日期下方第一行）</div>
+  <div class="emoji-grid" id="emojiGrid"></div>
+  <div class="muted" style="font-size:12px">便签（可选）</div>
+  <textarea id="recNote" placeholder="写点什么，也可以留空"></textarea>
+  <button class="btn primary" id="saveMood">保存</button>
+  <button class="btn ghost" id="askRecord">让 TA 也记录今天的心情</button>
+</div>
+
+<div class="sheet" id="noteSheet">
+  <div class="sh"><button class="x" data-close="noteSheet">✕</button><div class="st">便签</div></div>
+  <div id="noteBody"></div>
+</div>
+
+<div class="sheet" id="scheduleSheet">
+  <div class="sh"><div class="st">添加事项</div><button class="x" data-close="scheduleSheet">✕</button></div>
+  <div class="row"><label>日期</label><input type="date" id="schDate"></div>
+  <div class="row"><label>标题</label><input type="text" id="schTitle" placeholder="如：纪念日、生日、生理期开始"></div>
+  <div class="row"><label>类型</label>
+    <select id="schType">
+      <option value="schedule">普通事项</option>
+      <option value="anniversary">纪念日</option>
+      <option value="birthday">生日</option>
+      <option value="period_start">生理期开始</option>
+      <option value="period_end">生理期结束</option>
+      <option value="custom">自定义注释</option>
+    </select></div>
+  <div class="row"><label>时间</label><input type="time" id="schStart"><span class="muted">—</span><input type="time" id="schEnd"></div>
+  <div class="hint">事项到当天会自动提醒你，并写入 TA 的短期记忆；当天之外的日期不会提前写入。</div>
+  <button class="btn primary" id="saveSchedule">保存事项</button>
+</div>
+
+<div class="sheet" id="settingsSheet">
+  <div class="sh"><div class="st">记录设置</div><button class="x" data-close="settingsSheet">✕</button></div>
+  <div class="row" style="margin-top:6px"><label>自动记录</label><div class="switch" id="recToggle"></div><span class="muted" style="font-size:12px">到点提醒 TA 记录</span></div>
+  <div class="row"><label>记录时间</label><input type="time" id="recTime" value="21:00"></div>
+  <div class="hint">开启后，每天到设定时间会提醒；重新打开本 APP 时会自动补录当天未记录的心情。浏览器关闭期间不会离线执行，重开时补跑。</div>
+  <button class="btn primary" id="saveSettings">保存设置</button>
+</div>
+
+<div class="sheet" id="daysSheet">
+  <div class="sh"><div class="st">在一起纪念日</div><button class="x" data-close="daysSheet">✕</button></div>
+  <div class="hint" style="margin-bottom:8px">填写你们在一起那天的日期，之后每天会自动计算并 +1 显示。</div>
+  <input type="date" id="daysInput">
+  <button class="btn primary" id="saveDays">保存</button>
+  <button class="btn ghost" id="clearDays">清除</button>
+</div>
+
+<div class="sheet" id="memoSheet">
+  <div class="sh"><div class="st">备忘录 · <span id="memoDate"></span></div><button class="x" data-close="memoSheet">✕</button></div>
+  <div class="muted" style="font-size:12px;margin-bottom:8px">每行一条待办，按回车新增；点圆圈划掉表示完成；最多 10 条。左侧小标签标出是谁写的：你新建的标「我」，TA 通过聊天加的标 TA 的名字；以前的老条目没记录署名，就不显示标签。</div>
+  <div id="memoEditor"></div>
+  <button class="btn primary" id="saveMemo">保存备忘录</button>
+  <button class="btn ghost" id="askMemoDone">让 TA 看看并划掉已完成的</button>
+</div>
+
+<div class="sheet" id="diarySheet">
+  <div class="sh"><div class="st">日记 · <span id="diaryDate"></span></div><button class="x" data-close="diarySheet">✕</button></div>
+  <textarea id="diaryInput" style="min-height:160px" placeholder="写下今天的日记…"></textarea>
+  <div class="hint">保存后，TA 会在聊天室收到「你写了新日记」的提示，但看不到具体内容。今天可以反复编辑，编辑保存不会重复提示；内容改动后旧批注会清空，可以让 TA 重新看一遍。</div>
+  <button class="btn primary" id="saveDiary">保存日记</button>
+  <button class="btn ghost" id="askDiaryComment">让 TA 来看并写感想</button>
+</div>
+
+<div class="sheet" id="diaryViewSheet">
+  <div class="sh"><button class="x" data-close="diaryViewSheet">✕</button><div class="st">日记 · <span id="dvDate"></span></div></div>
+  <div class="diary-card" style="margin:0">
+    <div class="dc-body" id="dvBody"></div>
+  </div>
+  <div id="dvComments"></div>
+  <button class="btn danger" id="delDiary" style="display:none;margin-top:14px">删除这篇日记</button>
+</div>
+
+<script>
+const API = window.AiPhone || window.AiPhoneApp;
+
+let characters = [];
+let currentId = null;
+let inviteStatus = 'none';
+let viewYear = new Date().getFullYear();
+let viewMonth = new Date().getMonth();
+let selectedDateKey = todayKey();
+// 日历上被点亮的日期（只影响边框，和 selectedDateKey 分开：事项面板仍跟着 selectedDateKey 走）
+let highlightKey = null;
+let moodsCache = {};
+let schedCache = {};
+let holidaysMap = {};
+let recordSettings = { enabled:false, time:"21:00" };
+let emojiPicked = '';
+let editingDateKey = '';
+let inviteTargetId = null;
+let currentCharName = '';
+let userProfile = null;
+let userNameCache = '';
+let togetherStart = null;
+let activeTab = 'calendar';
+let viewingDiaryDate = null;
+let memoLines = [];
+let editingMemoDate = null;
+
+function pad(n){return (n<10?'0':'')+n}
+function fmtDate(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function todayKey(){return fmtDate(new Date())}
+// 把 AI 传来的各种日期写法统一成 YYYY-MM-DD；认不出来就返回空串（后续一律拒绝）
+// 需要它是因为 AI 常写 2026-11-9、2026/11/09、2026年11月9日 这些变体
+function normalizeDateKey(raw){
+  const s = String(raw || '').trim();
+  if(!s) return todayKey();
+  const m = s.match(/^(\d{4})\s*[-\/.年]\s*(\d{1,2})\s*[-\/.月]\s*(\d{1,2})/);
+  if(m) return m[1]+'-'+pad(+m[2])+'-'+pad(+m[3]);
+  if(s === '今天' || s === '今日' || s.toLowerCase() === 'today') return todayKey();
+  return '';
+}
+function parseKey(k){const p=k.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function addMonths(y,m,n){const d=new Date(y,m,1);d.setMonth(d.getMonth()+n);return {y:d.getFullYear(),m:d.getMonth()}}
+function addDays(y,m,d,n){const dt=new Date(y,m,d);dt.setDate(dt.getDate()+n);return dt}
+function weekdayOf(y,m,d){const w=new Date(y,m,d).getDay();return (w+6)%7}
+function nowHM(){const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())}
+function daysBetween(startKey, endKey){
+  const s = parseKey(startKey).getTime();
+  const e = parseKey(endKey).getTime();
+  return Math.floor((e - s) / 86400000);
+}
+function toast(msg){ try{ API.ui.toast(msg); }catch(e){} }
+function el(id){ return document.getElementById(id); }
+// 宿主如果卡住，某些调用会永远不返回；加超时兜底，绝不让整个 APP 停在第一个 await 上变成白板
+function withTimeout(p, ms, fallback){
+  return Promise.race([
+    Promise.resolve(p).catch(()=>fallback),
+    new Promise(res => setTimeout(()=>res(fallback), ms || 5000))
+  ]);
+}
+function esc(s){ return String(s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function escAttr(s){ return String(s||'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function pickAvatar(obj){
+  if(!obj) return null;
+  const keys = ['avatar','avatarUrl','avatar_url','avatarURL','image','icon','headImage','head_image','portrait','face','profileImage','profile_image','cover','photo','headimg','headImg','img'];
+  for(const k of keys){
+    const v = obj[k];
+    if(typeof v === 'string' && v.length > 3) return v;
+    if(v && typeof v === 'object' && typeof v.url === 'string' && v.url.length > 3) return v.url;
+  }
+  if(obj.profile) return pickAvatar(obj.profile);
+  return null;
+}
+
+function monthCells(y,m){
+  const firstWeekday = weekdayOf(y,m,1);
+  const start = addDays(y,m,1,-firstWeekday);
+  const cells = [];
+  for(let i=0;i<42;i++){
+    const d = addDays(start.getFullYear(),start.getMonth(),start.getDate(),i);
+    cells.push({ y:d.getFullYear(), m:d.getMonth(), d:d.getDate(),
+      key:fmtDate(d), inMonth:d.getMonth()===m });
+  }
+  return cells;
+}
+
+// ---------- 农历表（1900-2100）与算法 ----------
+const LUNAR = [
+0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b5a0,0x195a6,
+0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+0x0a2e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,
+0x0d520
+];
+function leapMonth(y){ return LUNAR[y-1900] & 0xf; }
+function leapDays(y){ if(leapMonth(y)) return (LUNAR[y-1900] & 0x10000) ? 30 : 29; return 0; }
+function lunarMonthDays(y,m){ return (LUNAR[y-1900] & (0x10000 >> m)) ? 30 : 29; }
+function lYearDays(y){
+  let sum = 348;
+  for(let i=0x8000; i>0x8; i>>=1) sum += (LUNAR[y-1900] & i) ? 1 : 0;
+  return sum + leapDays(y);
+}
+function lunarToSolar(year, month, day){
+  let offset = 0;
+  for(let y=1900; y<year; y++) offset += lYearDays(y);
+  for(let m=1; m<month; m++) offset += lunarMonthDays(year, m);
+  const lm = leapMonth(year);
+  if(lm > 0 && month > lm) offset += leapDays(year);
+  offset += day - 1;
+  const base = new Date(1900, 0, 31);
+  base.setDate(base.getDate() + offset);
+  return fmtDate(base);
+}
+function lunarHolidays(year){
+  const list = [];
+  list.push({ date:lunarToSolar(year,1,1), name:'春节' });
+  list.push({ date:lunarToSolar(year,1,15), name:'元宵节' });
+  list.push({ date:lunarToSolar(year,5,5), name:'端午节' });
+  list.push({ date:lunarToSolar(year,7,7), name:'七夕' });
+  list.push({ date:lunarToSolar(year,8,15), name:'中秋节' });
+  list.push({ date:lunarToSolar(year,9,9), name:'重阳节' });
+  list.push({ date:lunarToSolar(year-1,12,8), name:'腊八节' });
+  return list;
+}
+function nthWeekday(y,m,w,n){
+  let c=0; const dim=new Date(y,m+1,0).getDate();
+  for(let d=1;d<=dim;d++){ if(new Date(y,m,d).getDay()===w){ c++; if(c===n) return d; } }
+  return -1;
+}
+function getHolidays(year){
+  try{
+  const fixed = [
+    ['01-01','元旦'],['02-14','情人节'],['03-08','妇女节'],['03-12','植树节'],
+    ['04-01','愚人节'],['05-01','劳动节'],['05-04','青年节'],['06-01','儿童节'],
+    ['07-01','建党节'],['08-01','建军节'],['09-10','教师节'],['10-01','国庆节'],
+    ['10-31','万圣节'],['12-24','平安夜'],['12-25','圣诞节']
+  ];
+  const list = fixed.map(([md,n])=>({ date:year+'-'+md, name:n }));
+  const md=(y,m,d)=>({date:y+'-'+pad(m)+'-'+pad(d)});
+  const mothers = nthWeekday(year,4,0,2);
+  const fathers = nthWeekday(year,5,0,3);
+  const thanks  = nthWeekday(year,10,4,4);
+  if(mothers>0) list.push({...md(year,5,mothers), name:'母亲节'});
+  if(fathers>0) list.push({...md(year,6,fathers), name:'父亲节'});
+  if(thanks>0)  list.push({...md(year,11,thanks), name:'感恩节'});
+  list.push(...lunarHolidays(year));
+  const map = {};
+  list.forEach(h=>{ if(h && h.date) map[h.date]=h.name });
+  return map;
+  }catch(e){ return {}; }
+}
+
+const EMOJIS = ['🥺','😊','🥰','😍','🤗','😌','😐','😔','😢','😭','😡','😕','🤒','🥳','😎','🤔','😅','🙃','😘','💕','💔','💭','🥵','😨'];
+
+// ---------- 数据层 ----------
+async function listAll(col){
+  try{ return (await API.db.list(col, { limit: 6000 })) || []; }
+  catch(e){ return []; }
+}
+async function findOne(col, pred){
+  const all = await listAll(col);
+  return all.find(pred) || null;
+}
+async function getInviteStatus(charId){
+  const rec = await findOne('invites', r => r.characterId === charId);
+  return rec ? rec.status : 'none';
+}
+async function setInviteStatus(charId, status){
+  const rec = await findOne('invites', r => r.characterId === charId);
+  if(rec) await API.db.update('invites', rec.id, { status });
+  else await API.db.create('invites', { characterId: charId, status, createdAt: new Date().toISOString() });
+}
+async function saveMoodDb(charId, dateKey, actor, emoji, note){
+  const rec = await findOne('moods', r => r.characterId===charId && r.date===dateKey && r.actor===actor);
+  const payload = { emoji: emoji||'', note: note||'' };
+  if(rec) await API.db.update('moods', rec.id, payload);
+  else await API.db.create('moods', { characterId:charId, date:dateKey, actor, emoji:emoji||'', note:note||'', createdAt:new Date().toISOString() });
+}
+async function loadMoods(charId){
+  const all = await listAll('moods');
+  const map = {};
+  all.forEach(r => {
+    if(r.characterId !== charId) return;
+    if(!map[r.date]) map[r.date] = {};
+    map[r.date][r.actor] = { emoji:r.emoji||'', note:r.note||'' };
+  });
+  return map;
+}
+async function saveScheduleDb(charId, s){
+  if(s.id){ const rec = await findOne('schedules', r=>r.id===s.id); if(rec){ await API.db.update('schedules', rec.id, s); return; } }
+  await API.db.create('schedules', { characterId:charId, date:s.date, startTime:s.startTime||'', endTime:s.endTime||'', title:s.title||'', type:s.type||'schedule', source:s.source||'user', triggered:false, createdAt:new Date().toISOString() });
+}
+async function deleteScheduleDb(id){
+  const rec = await findOne('schedules', r => r.id===id);
+  if(!rec) return;
+  const cid = rec.characterId;
+  // 之前漏了这一步：事项删了，它在短期记忆里那条「事项提醒」还留着
+  await removeTimeline(cid, 'schedule-'+rec.id, 'schedule', rec.date, rec.title);
+  await API.db.delete('schedules', rec.id);
+  // 触发记录一起清，免得越堆越多
+  const trg = await findOne('triggers', t => t.eventType==='schedule' && t.eventId===('schedule-'+rec.id));
+  if(trg){ try{ await API.db.delete('triggers', trg.id); }catch(e){} }
+  // 顺带清掉以前删事项时留下的孤儿记忆
+  await sweepOrphanScheduleMemory(cid);
+}
+async function loadSchedules(charId){
+  const all = await listAll('schedules');
+  const map = {};
+  all.forEach(r => { if(r.characterId !== charId) return; if(!map[r.date]) map[r.date]=[]; map[r.date].push(r); });
+  return map;
+}
+async function isTriggered(charId, dateKey, etype, eid){
+  const rec = await findOne('triggers', t => t.characterId===charId && t.date===dateKey && t.eventType===etype && t.eventId===eid);
+  return !!rec;
+}
+async function markTriggered(charId, dateKey, etype, eid){
+  if(await isTriggered(charId, dateKey, etype, eid)) return;
+  await API.db.create('triggers', { characterId:charId, date:dateKey, eventType:etype, eventId:eid, at:new Date().toISOString() });
+}
+
+// ---------- 短期记忆：写入（保存 entry.id 供删除）与删除 ----------
+// 把 readShortTerm 的返回结构统一成数组（宿主不同版本字段名不完全一致）
+function stList(r){
+  if(!r) return [];
+  if(Array.isArray(r)) return r;
+  const keys = ['entries','items','list','timeline','shortTerm','events','records','data'];
+  for(const k of keys){ if(Array.isArray(r[k])) return r[k]; }
+  return [];
+}
+// 取条目在宿主里的真实主键（宿主不同版本字段名可能是 id、entryId、_id）
+function getEntryId(e){ return e ? (e.id || e.entryId || e._id || (e.entry && e.entry.id) || null) : null; }
+
+// 在短期记忆里找出属于本 APP 这条事件的条目（按 appEventId / 标签+类型+日期 / 文本 三重识别）
+async function findTimelineEntries(charId, eid, etype, dateKey, matchText){
+  let list = [];
+  try{ list = stList(await API.memory.readShortTerm({ characterId: charId, limit: 200 })); }catch(e){ return []; }
+  return list.filter(e => {
+    if(!e) return false;
+    const itemEid = e.appEventId || (e.data && e.data.appEventId) || '';
+    if(eid && itemEid === eid) return true;
+    // 条目自带 appEventId 但不是本次这一条 → 确定是别的条目，绝不连带删除
+    if(eid && itemEid && itemEid !== eid) return false;
+    const label = e.appLabel || e.app || e.sourceLabel || '';
+    const dt = e.detail || e.type || '';
+    const txt = typeof e.summary === 'string' ? e.summary : '';
+    // 无论宿主有没有传回 label，只要以 [备忘录/心情记录 开头且含特征文本，都认领
+    if(label && label !== '心情记录' && txt.indexOf('[备忘录') !== 0 && txt.indexOf('[心情记录') !== 0) return false;
+    if(etype && dt && dt !== etype) return false;
+    // 特征文本比对（待办内容、事项标题、节日名）
+    if(matchText && txt.indexOf(matchText) < 0) return false;
+    if(dateKey){
+      let d = null;
+      try{ d = e.data || {}; }catch(err){ d = null; }
+      if(d && d.date === dateKey) return true;
+    }
+    // 兜底：只要摘要以 [备忘录 · 日期 或 [心情记录 开头并包含该日期，全部认领
+    if(dateKey && (txt.indexOf('[备忘录 · '+dateKey) >= 0 || txt.indexOf('['+dateKey) >= 0 || (txt.indexOf('[心情记录') >= 0 && txt.indexOf(dateKey) >= 0))){
+      return true;
+    }
+    return false;
+  });
+}
+// 彻底清掉某条事件在短期记忆里的所有副本：日志 entryId → appEventId 兜底 → 读回核对逐个删
+async function purgeTimeline(charId, eid, etype, dateKey, matchText){
+  let removed = 0;
+  const logs = (await listAll('timeline_log')).filter(l => l.charId===charId && l.eid===eid);
+  for(const l of logs){
+    if(l.entryId){ try{ await API.memory.deleteTimeline({ entryId: l.entryId }); removed++; }catch(e){} }
+  }
+  try{ await API.memory.deleteTimeline({ characterId: charId, appEventId: eid }); }catch(e){}
+  // 读回核对：接口删除可能静默失败，把还看得到的按 entryId / id 再删一遍
+  let alive = await findTimelineEntries(charId, eid, etype, dateKey, matchText);
+  for(const e of alive){
+    const realId = getEntryId(e);
+    if(realId){
+      try{ await API.memory.deleteTimeline({ entryId: realId }); removed++; }catch(err){}
+      try{ await API.memory.deleteTimeline({ id: realId }); }catch(err){}
+    }
+  }
+  alive = await findTimelineEntries(charId, eid, etype, dateKey, matchText);
+  for(const l of logs){ try{ await API.db.delete('timeline_log', l.id); }catch(e){} }
+  return { removed, remaining: alive.length };
+}
+async function injectTimeline(charId, summary, etype, eid, extra){
+  try{
+    // 同一件事（同一天同类型）再次写入前，先把旧的那条彻底清掉，避免短期记忆里叠出好几份
+    const dateKey = (extra && extra.date) || null;
+    // 事项传标题、节日传名称：同一天有多件事时用来认准「这一条」
+    const matchText = (extra && (extra.title || extra.name)) || null;
+    const pr = await purgeTimeline(charId, eid, etype, dateKey, matchText);
+    if(pr && pr.remaining){
+      // 宿主没让删干净时明确告诉你，而不是悄悄叠出重复
+      toast('旧记忆有 '+pr.remaining+' 条没清掉，可能仍显示重复');
+    }
+    const timeline = await API.memory.addTimeline({
+      characterId: charId, appLabel: '心情记录',
+      detail: etype, summary, appEventId: eid, data: extra || {}
+    });
+    // 宿主各版本返回结构不一，能拿到什么就存什么——这是以后唯一能精确撤销的凭据
+    const entryId = timeline ? ((timeline.entry && timeline.entry.id) || timeline.entryId || timeline.id || (timeline.data && timeline.data.id) || null) : null;
+    if(entryId){
+      await API.db.create('timeline_log', { charId, eid, etype, date:dateKey||'', entryId, summary, createdAt:new Date().toISOString() });
+    }
+    return timeline;
+  }catch(e){ return null; }
+}
+async function removeTimeline(charId, eid, etype, dateKey, matchText){
+  await purgeTimeline(charId, eid, etype || null, dateKey || null, matchText || null);
+}
+// 兜底清理：短期记忆里还挂着「事项」，但对应的事项已经从页面删掉了 → 属于孤儿，清掉
+// 只认本 APP 标签 + schedule 类型 + appEventId 以 schedule- 开头，绝不碰别的记忆
+async function sweepOrphanScheduleMemory(charId){
+  if(!charId) return 0;
+  let list = [];
+  try{ list = stList(await API.memory.readShortTerm({ characterId: charId, limit: 200 })); }catch(e){ return 0; }
+  if(!list.length) return 0;
+  const all = await listAll('schedules');
+  const alive = new Set(all.filter(s => s.characterId === charId).map(s => 'schedule-'+s.id));
+  let removed = 0;
+  for(const e of list){
+    const realId = getEntryId(e);
+    if(!e || !realId) continue;
+    const itemEid = e.appEventId || (e.data && e.data.appEventId) || '';
+    if(itemEid.indexOf('schedule-') !== 0) continue;
+    if(alive.has(itemEid)) continue;
+    const label = e.appLabel || e.app || e.sourceLabel || '';
+    const detail = e.detail || e.type || '';
+    const txt = typeof e.summary === 'string' ? e.summary : '';
+    const mine = label === '心情记录' || (!label && (detail === 'schedule' || txt.indexOf('[心情记录') === 0));
+    if(!mine) continue;
+    try{ await API.memory.deleteTimeline({ entryId: realId }); removed++; }catch(err){}
+    try{ await API.memory.deleteTimeline({ id: realId }); }catch(err){}
+  }
+  return removed;
+}
+
+// 备忘录孤儿扫荡：凡是短期记忆里有 [备忘录 · <日期>，但在当天的备忘录里找不到对应文本的，全杀
+// 每次打开 APP / 切角色 / 删备忘录 时跑一遍，把你图里那些删不掉的旧记忆彻底铲除
+async function sweepOrphanMemoMemory(charId){
+  if(!charId) return 0;
+  let list = [];
+  try{ list = stList(await API.memory.readShortTerm({ characterId: charId, limit: 200 })); }catch(e){ return 0; }
+  if(!list.length) return 0;
+  const memos = await listAll('memos');
+  const userMemos = memos.filter(m => m.characterId === charId);
+  // 建个快速检索表：日期 -> 当天所有还活着的待办文本集合
+  const aliveMap = {};
+  userMemos.forEach(m => {
+    aliveMap[m.date] = new Set((m.items || []).map(i => (i.text||'').trim()).filter(Boolean));
+  });
+  let removed = 0;
+  for(const e of list){
+    const realId = getEntryId(e);
+    if(!e || !realId) continue;
+    const txt = typeof e.summary === 'string' ? e.summary : '';
+    // 只认本 APP 备忘录格式：[备忘录 · YYYY-MM-DD：xxx]
+    // 兼容两种格式：[备忘录 · 日期：内容] 和带署名的新格式 [备忘录 · 日期 · 名字：内容]
+    const m = txt.match(/^\[备忘录\s*[·・]\s*(\d{4}-\d{2}-\d{2})\s*(?:[·・]\s*[^：:]*?)?\s*[：:]\s*(.+?)\]$/);
+    if(!m) continue;
+    const date = m[1];
+    let content = m[2].trim().replace(/（已完成）|\(已完成\)/g, '').trim();
+    const aliveSet = aliveMap[date];
+    // 如果那天在 APP 里根本没有备忘录了（整篇删了），或者这条待办不在当天的存活列表里 → 属于残留，删！
+    let shouldDelete = false;
+    if(!aliveSet || aliveSet.size === 0){
+      shouldDelete = true;
+    } else {
+      // 兼容旧版「整天一条」（如 1.测试1；2.测试2）和新版「一条独立」
+      if(!aliveSet.has(content)){
+        shouldDelete = true;
+      }
+    }
+    if(shouldDelete){
+      try{ await API.memory.deleteTimeline({ entryId: realId }); removed++; }catch(err){}
+      try{ await API.memory.deleteTimeline({ id: realId }); }catch(err){}
+      try{ if(e.appEventId) await API.memory.deleteTimeline({ characterId: charId, appEventId: e.appEventId }); }catch(err){}
+    }
+  }
+  return removed;
+}
+async function notify(title, body, data){
+  try{ await API.notifications.create({ title, body, badgeDelta:1, data:data||{} }); }catch(e){}
+}
+
+// 在一起天数
+async function loadTogether(charId){
+  const rec = await findOne('together', r => r.characterId===charId);
+  togetherStart = rec ? (rec.startDate || null) : null;
+}
+async function saveTogether(charId, startDate){
+  const rec = await findOne('together', r => r.characterId===charId);
+  if(!startDate){
+    if(rec){ await API.db.delete('together', rec.id); await removeTimeline(charId, 'together-'+charId); }
+    togetherStart = null;
+    return;
+  }
+  if(rec) await API.db.update('together', rec.id, { startDate });
+  else await API.db.create('together', { characterId: charId, startDate, createdAt: new Date().toISOString() });
+  togetherStart = startDate;
+}
+
+// 备忘录
+async function getMemo(charId, dateKey){
+  return await findOne('memos', r => r.characterId===charId && r.date===dateKey);
+}
+async function saveMemoDb(charId, dateKey, items){
+  const rec = await findOne('memos', r => r.characterId===charId && r.date===dateKey);
+  if(rec) await API.db.update('memos', rec.id, { items });
+  else await API.db.create('memos', { characterId:charId, date:dateKey, items, createdAt:new Date().toISOString() });
+}
+async function deleteMemoDb(charId, dateKey){
+  const rec = await findOne('memos', r => r.characterId===charId && r.date===dateKey);
+  if(rec) await API.db.delete('memos', rec.id);
+}
+async function loadMemos(charId){
+  const all = await listAll('memos');
+  return all.filter(r => r.characterId===charId).sort((a,b)=> a.date<b.date ? 1 : -1);
+}
+// 每条待办一个稳定 id：记忆条目按 id 定位，删一条不会牵动其他条
+function newMemoItemId(){ return 'mi'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+// 每条待办单独一条短期记忆。
+// 以前是「一整天的待办挤成一条」，改任何一条都要删掉重写，整条记忆的时间就被刷成现在，
+// 于是没动过的待办也跟着跳到最新——现在按条记，谁变了才刷新谁。
+async function syncMemoMemory(charId, date, items){
+  const prefix = 'memo-'+date;
+  const list = items || [];
+  // 旧数据没有 itemId：补上并存回，保证下次还能认出「是这一条」
+  // 注意字段名必须是 itemId，不能叫 id —— 那是数据库记录主键，混进记录内容会让写入被拒
+  let needSave = false;
+  list.forEach(it => { if(!it.itemId && it.id){ it.itemId = it.id; delete it.id; needSave = true; }
+                       if(!it.itemId){ it.itemId = newMemoItemId(); needSave = true; } });
+  if(needSave) await saveMemoDb(charId, date, list);
+  // 只读一次短期记忆：既判断「这条变了没」，也找出该清掉的旧条目
+  let entries = [];
+  try{ entries = stList(await API.memory.readShortTerm({ characterId: charId, limit: 200 })); }catch(e){ entries = []; }
+  // 宿主读回短期记忆时只给 content，没有 id / appEventId。
+  // 所以：认条目只能靠「内容相同」，删条目只能靠「写入时记下的台账」——
+  // 以前按 id 匹配永远匹配不到，于是每次都以为没有旧条目、又写一份新的，越叠越多
+  const contentOf = e => String((e && (e.content || e.summary)) || '');
+  const mine = entries.filter(e => contentOf(e).indexOf('[备忘录 · '+date) === 0);
+  let myLogs = [];
+  try{ myLogs = (await listAll('timeline_log')).filter(l => l.charId === charId && l.etype === 'memo'); }catch(err){}
+  // 写进短期记忆时带上「谁写的」，AI 读到才不会把两个人的待办混成一个人的
+  // 格式：[备忘录 · 2026-11-09 · 凌：测试1]
+  const want = {};
+  list.forEach(it => {
+    const w = memoWhoForMemory(it.author);
+    want[prefix+'-'+it.itemId] = '[备忘录 · '+date+(w ? (' · '+w) : '')+'：'+it.text+(it.done?'（已完成）':'')+']';
+  });
+  const aliveTexts = new Set(Object.keys(want).map(k => want[k]));
+  // 1) 内容已不在今天清单里的旧条目 → 按台账精确撤销（只按内容完全一致来认，绝不误伤）
+  for(const e of mine){
+    const c = contentOf(e);
+    if(aliveTexts.has(c)) continue;
+    const lg = myLogs.find(l => String(l.summary || '') === c);
+    if(!lg) continue;
+    if(lg.entryId){ try{ await API.memory.deleteTimeline({ entryId: lg.entryId }); }catch(err){} }
+    if(lg.eid){ try{ await API.memory.deleteTimeline({ characterId: charId, appEventId: lg.eid }); }catch(err){} }
+    try{ await API.db.delete('timeline_log', lg.id); }catch(err){}
+  }
+  // 2) 只写新增或内容真的变了的；内容一样的跳过，绝不重复叠条
+  for(const eid in want){
+    const t = want[eid];
+    if(mine.some(e => contentOf(e) === t)) continue;
+    await injectTimeline(charId, t, 'memo', eid, { date });
+  }
+  return list;
+}
+
+// 日记
+async function getDiary(charId, dateKey){
+  return await findOne('diaries', r => r.characterId===charId && r.date===dateKey);
+}
+async function saveDiaryDb(charId, dateKey, content){
+  const rec = await findOne('diaries', r => r.characterId===charId && r.date===dateKey);
+  if(rec) await API.db.update('diaries', rec.id, { content });
+  else await API.db.create('diaries', { characterId:charId, date:dateKey, content, createdAt:new Date().toISOString() });
+}
+async function deleteDiaryDb(charId, dateKey){
+  const rec = await findOne('diaries', r => r.characterId===charId && r.date===dateKey);
+  if(rec) await API.db.delete('diaries', rec.id);
+  // 日记连同它当天的批注一起删，否则下次写新日记会捡到旧批注
+  await deleteCommentDb(charId, dateKey);
+  await removeTimeline(charId, 'diary-tip-'+dateKey, 'diary_tip', dateKey);
+  await removeTimeline(charId, 'diary-note-'+dateKey, 'diary_note', dateKey);
+}
+async function clearDiaryComments(charId, dateKey){
+  await deleteCommentDb(charId, dateKey);
+  await removeTimeline(charId, 'diary-note-'+dateKey, 'diary_note', dateKey);
+}
+async function loadDiaries(charId){
+  const all = await listAll('diaries');
+  return all.filter(r => r.characterId===charId).sort((a,b)=> a.date<b.date ? 1 : -1);
+}
+async function getComment(charId, dateKey){
+  return await findOne('comments', r => r.characterId===charId && r.date===dateKey);
+}
+// 一次读出全部批注建索引：日记页按月日逐篇查会整表读 N 遍，篇数一多就卡
+async function loadCommentsMap(charId){
+  const all = await listAll('comments');
+  const map = {};
+  all.forEach(r => { if(r.characterId === charId && r.date) map[r.date] = r; });
+  return map;
+}
+async function saveCommentDb(charId, dateKey, field, text){
+  const rec = await findOne('comments', r => r.characterId===charId && r.date===dateKey);
+  if(rec){ const p = {}; p[field] = text; await API.db.update('comments', rec.id, p); }
+  else { const p = { characterId:charId, date:dateKey }; p[field] = text; await API.db.create('comments', p); }
+}
+async function deleteCommentDb(charId, dateKey){
+  const rec = await findOne('comments', r => r.characterId===charId && r.date===dateKey);
+  if(rec) await API.db.delete('comments', rec.id);
+}
+// ---------- 触发：节日 / 事项 ----------
+async function fireHoliday(charId, dateKey, name){
+  const eid = 'holiday-'+dateKey+'-'+name;
+  if(await isTriggered(charId, dateKey, 'holiday', eid)) return;
+  const summary = '[心情记录·系统提示：今天是'+name+'。]';
+  await injectTimeline(charId, summary, 'holiday', eid, { type:'holiday', date:dateKey, name });
+  if(charId === currentId) await notify('心情记录', '今天是'+name, { type:'holiday', date:dateKey, name });
+  await markTriggered(charId, dateKey, 'holiday', eid);
+}
+async function fireSchedule(charId, s){
+  const eid = 'schedule-'+s.id;
+  if(await isTriggered(charId, s.date, 'schedule', eid)) return;
+  const timePart = s.startTime ? ('（'+s.startTime+(s.endTime?'-'+s.endTime:'')+'）') : '';
+  // 标注是谁设的事项：角色自己设的写角色名，用户设的写用户昵称
+  const cOfSchedule = characters.find(c => c.id === charId);
+  const whoSet = (s.source === 'character')
+    ? ((cOfSchedule && cOfSchedule.name) ? cOfSchedule.name : (charId === currentId ? (currentCharName || 'TA') : 'TA'))
+    : userNameStr();
+  const summary = '[心情记录·事项提醒：'+whoSet+'设置的「'+s.title+'」'+timePart+'。]';
+  await injectTimeline(charId, summary, 'schedule', eid, { type:'schedule', date:s.date, title:s.title });
+  if(charId === currentId) await notify('心情记录·事项', s.title+timePart, { type:'schedule', date:s.date });
+  await markTriggered(charId, s.date, 'schedule', eid);
+  try{ await API.db.update('schedules', s.id, { triggered:true }); }catch(e){}
+}
+async function runDailyChecks(charId){
+  const today = todayKey();
+  if(holidaysMap[today]) await fireHoliday(charId, today, holidaysMap[today]);
+  const all = await listAll('schedules');
+  for(const s of all){
+    if(s.characterId===charId && s.date===today) await fireSchedule(charId, s);
+  }
+}
+
+// ---------- 邀请 ----------
+async function sendInvite(charId, charName){
+  await setInviteStatus(charId, 'pending');
+  inviteStatus = 'pending';
+  try{
+    let userName = userProfile && userProfile.name ? userProfile.name : '用户';
+    await API.chat.writeHistory({
+      characterId: charId, role: 'system',
+      content: '[心情记录邀请] '+userName+'邀请 '+charName+'一起记录每天的心情、便签与纪念事项，需'+charName+'明确回复是否接受（接受/拒绝）。'
+    });
+    await API.chat.requestReply({ characterId: charId });
+    toast('邀请已发送，等 TA 回复');
+  }catch(e){ toast('发送邀请失败：'+e.message); }
+}
+const ACCEPT_WORDS = ['接受','同意','愿意','加入','可以','好呀','好啊','好哦','好的','行','要','来','好','ok','OK','嗯','荣幸'];
+const DECLINE_WORDS = ['拒绝','不要','不了','不想','不愿意','算了','不加','不行'];
+async function parseInviteReply(payload){
+  const charId = payload.characterId;
+  const msg = payload.message;
+  if(!msg || msg.role !== 'assistant') return;
+  const st = await getInviteStatus(charId);
+  if(st !== 'pending') return;
+  const text = (msg.content || '').slice(0, 120);
+  let decision = null;
+  for(const w of DECLINE_WORDS){ if(text.includes(w)){ decision='declined'; break; } }
+  if(!decision){ for(const w of ACCEPT_WORDS){ if(text.includes(w)){ decision='accepted'; break; } } }
+  if(!decision) return;
+  await setInviteStatus(charId, decision);
+  if(charId === currentId) inviteStatus = decision;
+  if(decision === 'accepted'){
+    try{ await API.ui.showNotification({ title:'心情记录', body:'对方已接受邀请，可以一起记录心情啦。' }); }catch(e){}
+  }
+}
+
+// ---------- 渲染 ----------
+function renderHeader(){
+  el('daysVal').textContent = togetherStart ? ('❤ '+ (daysBetween(togetherStart, todayKey())+1) +'天') : '❤ 设置日期';
+  const ua = el('userAvatar'), ca = el('charAvatar');
+  const uAv = pickAvatar(userProfile);
+  if(uAv){ ua.innerHTML = '<img src="'+esc(uAv)+'">'; }
+  else { el('userPh').textContent = (userProfile && userProfile.name) ? userProfile.name.slice(0,1) : '我'; }
+  if(currentId && currentCharName){
+    const c = characters.find(x=>x.id===currentId);
+    const cAv = pickAvatar(c);
+    if(cAv){ ca.innerHTML = '<img src="'+esc(cAv)+'">'; }
+    else { ca.innerHTML = '<span class="ph">'+esc(currentCharName.slice(0,1))+'</span>'; }
+  }else{
+    ca.innerHTML = '<span class="ph">TA</span>';
+  }
+}
+function renderCalendar(){
+  const grid = el('calendarGrid');
+  if(!grid) return;
+  const mtEl = el('monthTitle');
+  if(mtEl) mtEl.textContent = viewYear+'年'+(viewMonth+1)+'月';
+  const today = todayKey();
+  const cells = monthCells(viewYear, viewMonth);
+  const hmap = (viewYear===new Date().getFullYear() && viewMonth===new Date().getMonth()) ? holidaysMap : getHolidays(viewYear);
+  grid.innerHTML = cells.map(c => {
+    const m = moodsCache[c.key] || {};
+    const u = m.user || {};
+    const ch = m.character || {};
+    const hol = hmap[c.key];
+    const scheds = schedCache[c.key] || [];
+    const hasFlag = scheds.length>0;
+    return '<div class="cell'+(c.inMonth?'':' off')+(c.key===today?' today':'')+((highlightKey&&c.key===highlightKey&&c.key!==today)?' sel':'')+'" data-key="'+c.key+'">'
+      + '<div class="num">'+c.d+'</div>'
+      + '<div class="emojis">'
+      +   '<div class="erow user">'+(u.emoji?'<span class="em" data-actor="user" data-date="'+c.key+'">'+esc(u.emoji)+'</span>':'')+'</div>'
+      +   '<div class="erow char">'+(ch.emoji?'<span class="em" data-actor="character" data-date="'+c.key+'">'+esc(ch.emoji)+'</span>':'')+'</div>'
+      + '</div>'
+      + (hasFlag?'<div class="flag"></div>':'')
+      + (hol?'<div class="holiday">'+esc(hol)+'</div>':'')
+      + '</div>';
+  }).join('');
+}
+function renderTaskBar(){
+  const body = el('taskBody');
+  const key = selectedDateKey;
+  const items = [];
+  const hol = holidaysMap[key] || getHolidays(viewYear)[key];
+  if(hol) items.push({ icon:'🎉', title:hol+'（节日）', sub:'系统节日提醒', del:false });
+  const scheds = schedCache[key] || [];
+  scheds.forEach(s => {
+    const icon = ({schedule:'📌',anniversary:'💞',birthday:'🎂',period_start:'🌷',period_end:'🌸',custom:'📝'})[s.type] || '📌';
+    const time = s.startTime ? (s.startTime+(s.endTime?'-'+s.endTime:'')) : '';
+    items.push({ icon, title:s.title, sub:time||({schedule:'事项',anniversary:'纪念日',birthday:'生日',period_start:'生理期开始',period_end:'生理期结束',custom:'注释'})[s.type], del:true, id:s.id, author:(s.source==='character'?'char':'user') });
+  });
+  if(!items.length){ body.innerHTML = '<div class="empty">这天没有事项或节日</div>'; return; }
+  body.innerHTML = items.map(it =>
+    '<div class="task"><span class="ticon">'+it.icon+'</span>'+memoWhoHtml(it.author)+'<div class="tbody"><div class="tt">'+esc(it.title)+'</div><div class="ts">'+esc(it.sub)+'</div></div>'
+    + (it.del?'<button class="tdel" data-del="'+it.id+'">删除</button>':'')+'</div>'
+  ).join('');
+}
+function renderEmojiGrid(){
+  el('emojiGrid').innerHTML = EMOJIS.map(e => '<button class="'+(e===emojiPicked?'on':'')+'" data-emoji="'+e+'">'+e+'</button>').join('');
+}
+
+// ---------- 备忘录渲染 ----------
+// 条目署名：user=我写 / char=TA 写 / 空=旧数据（无从判断，就不显示，绝不瞎标）
+// 署名用的真实名字：写进短期记忆时用这个名字，AI 才分得清谁写的
+function userNameStr(){
+  if(userProfile && userProfile.name){ userNameCache = String(userProfile.name); return userNameCache; }
+  if(userNameCache) return userNameCache;
+  return '你';
+}
+function memoWhoLabel(author){
+  if(author === 'user') return '我';
+  if(author === 'char') return currentCharName || 'TA';
+  return '';
+}
+// 写进短期记忆文本里的主语（AI 读这个）
+function memoWhoForMemory(author){
+  if(author === 'char') return currentCharName || 'TA';
+  if(author === 'user') return userNameStr();
+  return '';
+}
+function memoWhoHtml(author){
+  const who = memoWhoLabel(author);
+  if(!who) return '';
+  return '<span class="mi-who '+(author==='char'?'char':'user')+'">'+esc(who)+'</span>';
+}
+function memoItemHtml(it, idx, editable){
+  const doneCls = it.done ? 'done' : '';
+  return '<div class="memo-item '+doneCls+'" data-idx="'+idx+'">'
+    + '<div class="mi-check">'+(it.done?'✓':'')+'</div>'
+    + memoWhoHtml(it.author)
+    + '<div class="mi-text">'+esc(it.text||'')+'</div>'
+    + (editable?'<button class="mi-del" data-idx="'+idx+'">✕</button>':'')
+    + '</div>';
+}
+async function renderMemoPage(){
+  const box = el('memoList');
+  if(!currentId){ box.innerHTML = '<div class="empty muted" style="padding:16px 0">请先选择角色</div>'; return; }
+  const memos = await loadMemos(currentId);
+  if(!memos.length){ box.innerHTML = '<div class="empty muted" style="padding:16px 0;text-align:center">还没有备忘录，点「＋ 新建」开始</div>'; return; }
+  const today = todayKey();
+  box.innerHTML = memos.map(m => {
+    const items = m.items || [];
+    const editable = (m.date === today) && inviteStatus==='accepted';
+    const doneCount = items.filter(i=>i.done).length;
+    const past = !editable;
+    return '<div class="memo-card'+(past?' past':'')+'" data-date="'+m.date+'">'
+      + '<div class="mc-date"><span>'+m.date+'</span><span class="muted">'+(items.length?(doneCount+'/'+items.length+' 已完成'+(past?' · 仅查看':'')):(past?'仅查看':''))+'</span></div>'
+      + items.map((it,i)=>memoItemHtml(it,i,editable)).join('')
+      + (editable ? '<div style="display:flex;gap:8px;margin-top:6px"><button class="btn ghost" data-edit-memo="'+m.date+'" style="margin-top:0;flex:1">编辑</button><button class="btn danger" data-del-memo="'+m.date+'" style="margin-top:0;flex:1">删除整篇</button></div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+// ---------- 日记渲染：卡片按「行」截取，超过 5 行用省略号；今天可编辑/删除 ----------
+function diaryBrief(text, maxLines){
+  const raw = String(text||'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const lines = raw.split('\n');
+  let clipped = lines.length > maxLines;
+  const head = lines.slice(0, maxLines).map(l => {
+    if(l.length > 60){ clipped = true; return l.slice(0,60)+'…'; }
+    return l;
+  });
+  let s = head.join('\n');
+  if(clipped && s.slice(-1) !== '…') s += '…';
+  return s;
+}
+async function renderDiaryPage(){
+  const box = el('diaryList');
+  if(!currentId){ box.innerHTML = '<div class="empty muted" style="padding:16px 0">请先选择角色</div>'; return; }
+  const diaries = await loadDiaries(currentId);
+  if(!diaries.length){ box.innerHTML = '<div class="empty muted" style="padding:16px 0;text-align:center">还没有日记，点「＋ 写日记」开始</div>'; return; }
+  const today = todayKey();
+  // 批注一次性读出建索引，下面直接从内存取，不再逐篇查库
+  const commentMap = await loadCommentsMap(currentId);
+  let html = '';
+  for(const d of diaries){
+    const c = commentMap[d.date] || null;
+    const canEdit = (d.date === today) && inviteStatus==='accepted';
+    const brief = diaryBrief(d.content || '', 5);
+    html += '<div class="diary-card" data-date="'+d.date+'">'
+      + '<div class="dc-date"><span>'+d.date+'</span>'
+      + (canEdit?'<span style="display:flex;gap:10px;font-size:13px;font-weight:700"><span data-edit-diary="'+d.date+'" style="color:var(--pink);padding:2px 4px">编辑</span><span data-del-diary-card="'+d.date+'" style="color:#c98d8d;padding:2px 4px">删除</span></span>':'')
+      + '</div>'
+      + '<div class="dc-body brief">'+esc(brief)+'</div>'
+      + (c && (c.charComment || c.userComment) ? '<div class="diary-comment"><div class="dc-label">批注</div>'
+          + (c.charComment ? '<div class="dc-line"><span class="who">'+esc(currentCharName)+'</span>'+esc(c.charComment)+'</div>' : '')
+          + (c.userComment ? '<div class="dc-line"><span class="who">你</span>'+esc(c.userComment)+'</div>' : '')
+        + '</div>' : '')
+      + '<button class="btn ghost" data-view-diary="'+d.date+'" style="margin-top:6px">查看全文</button>'
+      + '</div>';
+  }
+  box.innerHTML = html;
+}
+// ---------- 弹层 ----------
+function openSheet(id){ el(id).classList.add('show'); el('mask').classList.add('show'); }
+function closeAll(){
+  ['recordSheet','noteSheet','scheduleSheet','charSheet','inviteSheet','settingsSheet','daysSheet','memoSheet','diarySheet','diaryViewSheet'].forEach(id=>{ if(el(id)) el(id).classList.remove('show'); });
+  el('mask').classList.remove('show');
+}
+function openInviteSheet(charId){
+  inviteTargetId = charId;
+  el('invName').textContent = currentCharName;
+  const yesBtn = el('inviteYes'), resetBtn = el('inviteReset');
+  if(inviteStatus === 'pending'){ yesBtn.textContent = '重新发送邀请'; resetBtn.style.display = 'block'; }
+  else { yesBtn.textContent = '发送邀请'; resetBtn.style.display = 'none'; }
+  openSheet('inviteSheet');
+}
+function requireJoined(){
+  if(!currentId){ toast('请先选择角色'); return false; }
+  if(inviteStatus !== 'accepted'){ toast('未加入，仅可查看'); return false; }
+  return true;
+}
+function switchTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.id==='page-'+tab));
+  if(tab==='memo') renderMemoPage();
+  if(tab==='diary') renderDiaryPage();
+}
+
+// ---------- 日历交互 ----------
+function onCellClick(key){
+  selectedDateKey = key;
+  // 「今天」有自己固定的粉色边框，不参与选中高亮
+  highlightKey = (key === todayKey()) ? null : key;
+  applyHighlight();
+  renderTaskBar();
+  // 只有「今天」才弹记录心情；过往／未来只切换下方事项面板，不弹框
+  if(key === todayKey()){
+    if(inviteStatus==='accepted'){ openRecord(key); }
+    else{ toast('未加入，仅可查看'); }
+    return;
+  }
+  const d = parseKey(key);
+  const inMonth = d.getFullYear()===viewYear && d.getMonth()===viewMonth;
+  if(inMonth){ toast('只能记录今天的心情'); }
+}
+// 按 highlightKey 给日历格子挂/摘选中框（只动 class，不重绘整月，点起来不闪）
+function applyHighlight(){
+  const grid = el('calendarGrid');
+  if(!grid) return;
+  grid.querySelectorAll('.cell').forEach(c => {
+    const on = !!highlightKey && c.dataset.key === highlightKey;
+    if(on !== c.classList.contains('sel')) c.classList.toggle('sel', on);
+  });
+}
+function openRecord(key){
+  editingDateKey = key;
+  const m = (moodsCache[key]||{})['user'] || {};
+  emojiPicked = m.emoji || '';
+  el('recDate').textContent = key;
+  el('recNote').value = m.note || '';
+  renderEmojiGrid();
+  openSheet('recordSheet');
+}
+function showNote(actor, key, m){
+  const who = actor==='character' ? currentCharName : '你';
+  el('noteBody').innerHTML =
+    '<div class="note-card"><div class="nc-t">'+who+' · '+key+' · '+esc(m.emoji||'')+'</div>'
+    + '<div class="nc-b">'+(m.note?esc(m.note):'（没有写下便签）')+'</div></div>';
+  openSheet('noteSheet');
+}
+function openSchedule(date){
+  if(!requireJoined()) return;
+  el('schDate').value = date || todayKey();
+  el('schTitle').value=''; el('schStart').value=''; el('schEnd').value=''; el('schType').value='schedule';
+  openSheet('scheduleSheet');
+}
+async function saveUserMood(){
+  if(!requireJoined()) return;
+  const note = el('recNote').value.trim();
+  if(!emojiPicked){ toast('请选一个表情'); return; }
+  await saveMoodDb(currentId, editingDateKey, 'user', emojiPicked, note);
+  const eid = 'um-'+editingDateKey;
+  const summary = '[心情记录：'+userNameStr()+'在'+editingDateKey+'标记了心情 '+emojiPicked+(note?('，并写下便签：「'+note+'」'):'')+']';
+  // injectTimeline 内部会先把这天的旧心情记忆（含历史重复副本）彻底清掉，再写新的
+  await injectTimeline(currentId, summary, 'user_mood', eid, { date:editingDateKey });
+  await markTriggered(currentId, editingDateKey, 'user_mood', eid);
+  await refreshCalendar();
+  closeAll();
+  toast('已保存');
+}
+async function askRecord(){
+  if(!requireJoined()) return;
+  const btn = el('askRecord');
+  btn.disabled = true; btn.textContent = 'TA 正在想…';
+  try{
+    const result = await API.ai.generate({
+      characterId: currentId, appTags:['mood','record'],
+      instruction: '请记录今天（'+editingDateKey+'）的心情。只能从这24个表情中选一个作为emoji：🥺、😊、🥰、😍、🤗、😌、😐、😔、😢、😭、😡、😕、🤒、🥳、😎、🤔、😅、🙃、😘、💕、💔、💭、🥵、😨。'
+    });
+    const p = parseMoodJson(result.text || '');
+    await saveMoodDb(currentId, editingDateKey, 'character', p.emoji, p.note||'');
+    const summary = '[心情记录：'+currentCharName+'在'+editingDateKey+'标记了心情 '+p.emoji+(p.note?('，并写下便签：「'+p.note+'」'):'')+']';
+    await injectTimeline(currentId, summary, 'char_mood', 'cm-'+editingDateKey, { date:editingDateKey });
+    await refreshCalendar();
+    toast('TA 已记录');
+  }catch(e){ toast('生成失败：'+e.message); }
+  finally{ btn.disabled=false; btn.textContent='让 TA 也记录今天的心情'; }
+}
+function parseMoodJson(text){
+  let s = text.trim();
+  s = s.replace(/^```[a-z]*\s*/i,'').replace(/\s*```$/,'');
+  const a = s.indexOf('{'), b = s.lastIndexOf('}');
+  if(a>=0 && b>a){
+    try{ const o = JSON.parse(s.slice(a,b+1)); if(o.emoji) return { emoji:String(o.emoji).trim().slice(0,4), note:String(o.note||'').trim() }; }catch(e){}
+  }
+  const em = text.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u);
+  return { emoji: em ? em[0] : '😊', note: text.replace(/[{}"']/g,'').replace(/emoji|note/gi,'').trim().slice(0,80) };
+}
+async function saveScheduleForm(){
+  if(!requireJoined()) return;
+  const date = el('schDate').value, title = el('schTitle').value.trim();
+  if(!date || !title){ toast('请填写日期和标题'); return; }
+  await saveScheduleDb(currentId, {
+    date, title, type: el('schType').value,
+    startTime: el('schStart').value, endTime: el('schEnd').value, source:'user'
+  });
+  await refreshCalendar();
+  closeAll();
+  toast('已保存');
+  if(date === todayKey()){ await runDailyChecks(currentId); }
+}
+
+// ---------- 天数 ----------
+function openDaysSheet(){
+  if(!currentId){ toast('请先选择角色'); return; }
+  el('daysInput').value = togetherStart || '';
+  openSheet('daysSheet');
+}
+async function saveDays(){
+  if(!currentId) return;
+  const v = el('daysInput').value;
+  if(!v){ toast('请选择日期'); return; }
+  await saveTogether(currentId, v);
+  const uName = userProfile && userProfile.name ? userProfile.name : '用户';
+  const days = daysBetween(v, todayKey()) + 1;
+  try{
+    await API.chat.writeHistory({ characterId: currentId, role:'system',
+      content: '['+uName+'在心情记录设置了在一起纪念日为 '+v+'，至今已 '+days+' 天]' });
+  }catch(e){}
+  await injectTimeline(currentId, '[心情记录：'+uName+'和'+currentCharName+'在一起纪念日 '+v+'，至今已 '+days+' 天]', 'together', 'together-'+currentId, {});
+  renderHeader();
+  closeAll();
+  toast('已保存');
+}
+
+// ---------- 清单式备忘录编辑器 ----------
+function renderMemoEditorLines(focusIdx){
+  const box = el('memoEditor');
+  box.innerHTML = '';
+  if(!memoLines.length){ memoLines.push({ text:'', done:false, author:'user' }); }
+  memoLines.forEach((line, i) => { box.appendChild(makeMemoLine(line, i)); });
+  if(typeof focusIdx === 'number'){
+    const target = box.querySelectorAll('.memo-line')[focusIdx];
+    if(target){ const inp = target.querySelector('.ml-input'); if(inp) inp.focus(); }
+  }
+}
+function makeMemoLine(line, idx){
+  const wrap = document.createElement('div');
+  wrap.className = 'memo-line' + (line.done ? ' done' : '');
+  wrap.dataset.idx = idx;
+  wrap.innerHTML = '<div class="ml-check">'+(line.done?'✓':'')+'</div>'
+    + '<div class="ml-num">'+(idx+1)+'</div>'
+    + memoWhoHtml(line.author)
+    + '<input class="ml-input" value="'+escAttr(line.text)+'">'
+    + '<button class="ml-del">✕</button>';
+  wrap.querySelector('.ml-check').onclick = () => {
+    line.done = !line.done;
+    wrap.classList.toggle('done', line.done);
+    wrap.querySelector('.ml-check').textContent = line.done ? '✓' : '';
+  };
+  wrap.querySelector('.ml-input').addEventListener('input', e => { memoLines[idx].text = e.target.value; });
+  wrap.querySelector('.ml-input').addEventListener('keydown', e => {
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      if(memoLines.length >= 10){ toast('最多 10 条'); return; }
+      const cur = parseInt(wrap.dataset.idx, 10);
+      memoLines.splice(cur+1, 0, { itemId:'', text:'', done:false, author:'user' });
+      renderMemoEditorLines(cur+1);
+    }
+  });
+  wrap.querySelector('.ml-del').onclick = () => { memoLines.splice(idx, 1); renderMemoEditorLines(); };
+  return wrap;
+}
+function collectMemoLines(){
+  return memoLines.map(l => ({ itemId:l.itemId||'', text:l.text.trim(), done:!!l.done, author:l.author||'' })).filter(l => l.text);
+}
+async function openMemoEditor(date){
+  if(!requireJoined()) return;
+  editingMemoDate = date;
+  const memo = await getMemo(currentId, date);
+  memoLines = (memo && memo.items) ? memo.items.map(it => ({ itemId:it.itemId||it.id||'', text:it.text||'', done:!!it.done, author:it.author||'' })) : [];
+  el('memoDate').textContent = date;
+  renderMemoEditorLines();
+  openSheet('memoSheet');
+  setTimeout(()=>{ const inp = el('memoEditor').querySelector('.ml-input'); if(inp) inp.focus(); }, 250);
+}
+async function saveMemo(){
+  if(!requireJoined()) return;
+  const items = collectMemoLines();
+  if(!items.length){ toast('写点内容吧'); return; }
+  if(items.length > 10){ toast('最多 10 条'); return; }
+  try{ await saveMemoDb(currentId, editingMemoDate, items); }
+  catch(err){ toast('保存失败：'+(err && err.message ? err.message : err)); return; }
+  closeAll();
+  await renderMemoPage();
+  toast('已保存');
+  try{ await syncMemoMemory(currentId, editingMemoDate, items); }
+  catch(err){ toast('记忆同步失败：'+(err && err.message ? err.message : err)); }
+}
+async function delWholeMemo(date){
+  if(!requireJoined()) return;
+  if(date !== todayKey()){ toast('过往的备忘录只能查看'); return; }
+  try{ await deleteMemoDb(currentId, date); }
+  catch(err){ toast('删除失败：'+(err && err.message ? err.message : err)); return; }
+  // 先刷新界面，确保卡片立刻消失
+  await renderMemoPage();
+  toast('已删除');
+  // 再清那天的所有待办记忆（含旧版整天一条的）；失败不影响删除本身
+  try{ await syncMemoMemory(currentId, date, []); }
+  catch(err){ toast('记忆同步失败：'+(err && err.message ? err.message : err)); }
+  try{ await sweepOrphanMemoMemory(currentId); }catch(err){}
+}
+async function askMemoDone(){
+  if(!requireJoined()) return;
+  const btn = el('askMemoDone');
+  btn.disabled = true; btn.textContent = 'TA 正在看…';
+  try{
+    const result = await API.ai.generate({
+      characterId: currentId, appTags:['memo'],
+      instruction: '这是你们今天的备忘录待办，请判断哪些已经完成（比如你或用户已经做完了），把已完成的事项文字原样列出来。\n待办：'+JSON.stringify(collectMemoLines().map(i=>i.text))+'\n只输出 JSON 数组，格式：["已完成的事项文字1","已完成的事项文字2"]，没有则输出 []。'
+    });
+    const arr = parseArr(result.text || '');
+    memoLines = memoLines.map(l => { if(arr.includes(l.text.trim())) l.done = true; return l; });
+    const items = collectMemoLines();
+    try{ await saveMemoDb(currentId, editingMemoDate, items); }
+    catch(err){ toast('保存失败：'+(err && err.message ? err.message : err)); return; }
+    renderMemoEditorLines();
+    toast('TA 已划掉完成的');
+    try{ await syncMemoMemory(currentId, editingMemoDate, items); }
+    catch(err){ toast('记忆同步失败：'+(err && err.message ? err.message : err)); }
+  }catch(e){ toast('生成失败：'+e.message); }
+  finally{ btn.disabled=false; btn.textContent='让 TA 看看并划掉已完成的'; }
+}
+function parseArr(text){
+  let s = text.trim().replace(/^```[a-z]*\s*/i,'').replace(/\s*```$/,'');
+  const a = s.indexOf('['), b = s.lastIndexOf(']');
+  if(a>=0 && b>a){ try{ const o = JSON.parse(s.slice(a,b+1)); if(Array.isArray(o)) return o.map(String); }catch(e){} }
+  return [];
+}
+async function toggleMemoDone(date, idx){
+  if(!requireJoined()) return;
+  if(date !== todayKey()){ toast('过往的备忘录只能查看'); return; }
+  const memo = await getMemo(currentId, date);
+  if(!memo || !memo.items) return;
+  memo.items[idx].done = !memo.items[idx].done;
+  try{ await saveMemoDb(currentId, date, memo.items); }
+  catch(err){ toast('保存失败：'+(err && err.message ? err.message : err)); return; }
+  await renderMemoPage();
+  try{ await syncMemoMemory(currentId, date, memo.items); }
+  catch(err){ toast('记忆同步失败：'+(err && err.message ? err.message : err)); }
+}
+// ---------- 记忆清理面板：把宿主真实返回/真实报错打出来，不再静默吞异常 ----------
+async function openMemoryCleanup(){
+  if(!currentId){ toast('请先选择角色'); return; }
+  const old = document.getElementById('memCleanPanel');
+  if(old) old.remove();
+  const box = document.createElement('div');
+  box.id = 'memCleanPanel';
+  box.style.cssText = 'position:fixed;left:8px;right:8px;top:70px;bottom:80px;z-index:99998;background:#241f1d;color:#ffcdbb;font:12px/1.7 ui-monospace,monospace;padding:12px;border-radius:14px;overflow:auto;-webkit-overflow-scrolling:touch;white-space:pre-wrap;word-break:break-all;box-shadow:0 8px 24px rgba(0,0,0,.4)';
+  box.textContent = '正在读取短期记忆…';
+  box.onclick = ()=>{ box.remove(); };
+  document.body.appendChild(box);
+  const lines = [];
+  const flush = ()=>{ box.textContent = lines.join('\n') + '\n\n（点这里关闭）'; };
+  try{
+    let list = [];
+    try{ list = stList(await API.memory.readShortTerm({ characterId: currentId, limit: 500 })); }
+    catch(err){ lines.push('⚠ 读取短期记忆失败：'+((err && err.message) || err)); }
+    // 不靠字段名猜，直接把每条摊平成字符串找特征：字段名各版本不一样，猜错就永远匹配不上
+    const dump = e => { try{ return JSON.stringify(e) || ''; }catch(err){ return ''; } };
+    lines.push('短期记忆共 '+list.length+' 条。');
+    if(list[0]) lines.push('第一条的字段名：'+Object.keys(list[0]).join(', '));
+    const hitMemo = list.filter(e => dump(e).indexOf('备忘录') >= 0);
+    const hitMood = list.filter(e => dump(e).indexOf('心情记录') >= 0);
+    lines.push('含「备忘录」字样：'+hitMemo.length+' 条；含「心情记录」字样：'+hitMood.length+' 条。');
+    if(hitMemo[0]){
+      lines.push('备忘条目的真实结构：\n'+dump(hitMemo[0]).slice(0, 700));
+    }else{
+      lines.push('前 4 条原样（看它们究竟是聊天还是记忆）：\n'+list.slice(0,4).map((e,i)=>'#'+(i+1)+' '+dump(e).slice(0, 300)).join('\n'));
+    }
+    flush();
+    // 真正属于本 APP 的条目：content 得以本 APP 的方括号标记开头。
+    // 之前用「包含备忘录/心情记录字样」粗筛，把宿主日记的正文也捞进来了——删别人的东西当然删不动
+    const contentOf = e => (typeof e.content === 'string' ? e.content : (typeof e.summary === 'string' ? e.summary : ''));
+    const isMine = e => {
+      const c = contentOf(e);
+      return c.indexOf('[备忘录') === 0 || c.indexOf('[心情记录') === 0 || c.indexOf('[日记 · ') === 0;
+    };
+    const mine = list.filter(isMine);
+    lines.push('以本 APP 标记开头的条目：'+mine.length+' 条。');
+    if(mine[0]) lines.push('│ 字段：'+Object.keys(mine[0]).join(', ')+'\n│ 示例：'+contentOf(mine[0]).slice(0, 110));
+    // 本 APP 自己记的写入台账：存着宿主当时返回的 entryId，是唯一能精确撤销的凭据
+    let logs = [];
+    try{ logs = await listAll('timeline_log'); }catch(err){}
+    const myLogs = logs.filter(l => l.charId === currentId);
+    lines.push('写入台账 timeline_log：本角色 '+myLogs.length+' 条。');
+    flush();
+    // 按台账里存下的 entryId / appEventId 逐个撤销（读回来的条目没有 id，只能靠这份台账）
+    // 只处理「备忘录」类台账条目——心情、纪念日、日记批注、事项提醒一律不碰
+    const memoLogs = myLogs.filter(l => String(l.summary || '').indexOf('[备忘录') === 0);
+    lines.push('其中备忘录类：'+memoLogs.length+' 条（其它类型不处理）。');
+    let ok = 0, fail = 0;
+    const shown = {};
+    for(const l of memoLogs){
+      const errs = [];
+      let done = false;
+      if(l.entryId){
+        try{ await API.memory.deleteTimeline({ entryId: l.entryId }); done = true; }
+        catch(err){ errs.push('entryId → '+((err && err.message) || err)); }
+      }else{ errs.push('台账里没存 entryId'); }
+      if(!done && l.eid){
+        try{ await API.memory.deleteTimeline({ characterId: currentId, appEventId: l.eid }); done = true; }
+        catch(err){ errs.push('appEventId → '+((err && err.message) || err)); }
+      }
+      if(done){ ok++; }
+      else{
+        fail++;
+        const key = String(l.summary || l.eid || '').slice(0, 40);
+        if(!shown[key]){
+          shown[key] = 1;
+          lines.push('✗ '+key+'\n   entryId='+(l.entryId || '无')+'\n   eid='+(l.eid || '无')+'\n   '+errs.join('\n   '));
+        }
+      }
+      flush();
+    }
+    lines.push('—— 按台账删除：成功 '+ok+' 条，失败 '+fail+' 条 ——');
+    let after = [];
+    try{ after = stList(await API.memory.readShortTerm({ characterId: currentId, limit: 500 })); }catch(err){}
+    // 复核只统计「备忘录」条目：心情/纪念日/日记批注本来就不在这次清理范围内，
+    // 混进来只会让你以为没清干净
+    const still = after.filter(e => contentOf(e).indexOf('[备忘录 · ') === 0);
+    lines.push('复核：备忘录类条目还剩 '+still.length+' 条。');
+    if(still.length) lines.push('剩余示例：\n'+still.slice(0,4).map(e=>'· '+contentOf(e).slice(0,50)).join('\n'));
+    if(!still.length) lines.push('✅ 本 APP 的标记条目已清空。');
+    if(!mine.length) lines.push('（读到的时间窗里没有本 APP 的标记条目；宿主一次最多只给 200 条，更早的可能没被读到）');
+    if(ok > 0){
+      for(const l of memoLogs){ try{ await API.db.delete('timeline_log', l.id); }catch(err){} }
+    }
+    // ---------- 重建：把今天真实存在的数据重新写回短期记忆 ----------
+    // 内容全部取自 APP 自己的私有库（备忘录/心情/纪念日都还在），不是凭空补
+    const today = todayKey();
+    let rebuilt = 0;
+    try{
+      const memos = await listAll('memos');
+      for(const m of memos.filter(m => m.characterId === currentId && m.date === today)){
+        const items = (m.items || []).map(i => ({ itemId:i.itemId || i.id || '', text:i.text || '', done:!!i.done, author:i.author || '' }));
+        try{ await saveMemoDb(currentId, m.date, items); await syncMemoMemory(currentId, m.date, items); rebuilt += items.length; }catch(err){}
+      }
+      const mm = (await loadMoods(currentId))[today] || {};
+      if(mm.user && mm.user.emoji){
+        await injectTimeline(currentId, '[心情记录：'+userNameStr()+'在'+today+'标记了心情 '+mm.user.emoji+(mm.user.note?('，并写下便签：「'+mm.user.note+'」'):'')+']', 'user_mood', 'um-'+today, { date: today });
+        rebuilt++;
+      }
+      if(mm.character && mm.character.emoji){
+        await injectTimeline(currentId, '[心情记录：'+currentCharName+'在'+today+'标记了心情 '+mm.character.emoji+(mm.character.note?('，便签：「'+mm.character.note+'」'):'')+']', 'char_mood', 'cm-'+today, { date: today });
+        rebuilt++;
+      }
+      if(togetherStart){
+        const uName = (userProfile && userProfile.name) ? userProfile.name : '用户';
+        await injectTimeline(currentId, '[心情记录：'+uName+'和'+currentCharName+'在一起纪念日 '+togetherStart+'，至今已 '+(daysBetween(togetherStart, today)+1)+' 天]', 'together', 'together-'+currentId, {});
+        rebuilt++;
+      }
+    }catch(err){ lines.push('重建时有异常：'+((err && err.message) || err)); }
+    lines.push('✅ 已按本地数据核对今天的记忆：补写 '+rebuilt+' 条（内容已存在的不重复写）。');
+    await renderMemoPage();
+  }catch(err){ lines.push('出错：'+((err && err.message) || err)); }
+  flush();
+}
+
+async function delMemoItem(date, idx){
+  if(!requireJoined()) return;
+  if(date !== todayKey()){ toast('过往的备忘录只能查看'); return; }
+  const memo = await getMemo(currentId, date);
+  if(!memo || !memo.items) return;
+  memo.items.splice(idx, 1);
+  // 先把数据落库、刷新界面；记忆同步是第二步，万一它出错也不能把删除卡住
+  try{
+    if(!memo.items.length) await deleteMemoDb(currentId, date);
+    else await saveMemoDb(currentId, date, memo.items);
+  }catch(err){
+    toast('保存失败：'+(err && err.message ? err.message : err));
+    return;
+  }
+  await renderMemoPage();
+  try{ await syncMemoMemory(currentId, date, memo.items); }
+  catch(err){ toast('已删掉待办，但记忆同步失败：'+(err && err.message ? err.message : err)); return; }
+  try{ await sweepOrphanMemoMemory(currentId); }catch(err){}
+  toast('已删除');
+}
+
+// ---------- 日记 ----------
+async function openDiaryEditor(date){
+  if(!requireJoined()) return;
+  closeAll();
+  const d = await getDiary(currentId, date);
+  el('diaryDate').textContent = date;
+  el('diaryInput').value = d ? (d.content||'') : '';
+  openSheet('diarySheet');
+  // 等打开动画结束再聚焦：iOS 上在动画中点的输入框经常点不进去
+  setTimeout(()=>{ try{ el('diaryInput').focus(); }catch(e){} }, 280);
+}
+async function saveDiary(){
+  if(!requireJoined()) return;
+  const content = el('diaryInput').value.trim();
+  if(!content){ toast('写点内容吧'); return; }
+  const date = todayKey();
+  const old = await getDiary(currentId, date);
+  const isNewContent = !old || String(old.content||'').trim() !== content;
+  await saveDiaryDb(currentId, date, content);
+  // 日记内容变了，旧批注/总结就对不上了：清掉，等 TA 重新写
+  if(isNewContent) await clearDiaryComments(currentId, date);
+  // 只在第一次写这篇日记时发聊天室灰色提示；编辑就不刷屏了
+  if(!old){
+    const uName = userProfile && userProfile.name ? userProfile.name : '用户';
+    try{ await API.chat.writeHistory({ characterId: currentId, role:'system', content: '['+uName+'写入了新日记]' }); }catch(e){}
+  }
+  closeAll();
+  await renderDiaryPage();
+  toast(isNewContent && old ? '已保存，内容变了，旧批注已清空' : '已保存');
+}
+async function openDiaryView(date){
+  if(!currentId){ toast('请先选择角色'); return; }
+  const d = await getDiary(currentId, date);
+  if(!d){ toast('没有这篇日记'); return; }
+  closeAll();
+  viewingDiaryDate = date;
+  el('dvDate').textContent = date;
+  el('dvBody').textContent = d.content || '';
+  const c = await getComment(currentId, date);
+  const isToday = date === todayKey() && inviteStatus==='accepted';
+  let ch = '';
+  if(c && (c.charComment || c.userComment)){
+    ch = '<div class="diary-comment"><div class="dc-label">批注</div>'
+      + (c.charComment ? '<div class="dc-line"><span class="who">'+esc(currentCharName)+'</span>'+esc(c.charComment)+(isToday&&!c.userComment?' <button class="mi-del" data-del-comment="1">✕</button>':'')+'</div>' : '')
+      + (c.userComment ? '<div class="dc-line"><span class="who">你</span>'+esc(c.userComment)+(isToday?' <button class="mi-del" data-del-comment="2">✕</button>':'')+'</div>' : '')
+      + '</div>';
+  }
+  if(isToday && c && c.charComment && !c.userComment){
+    ch += '<div class="row" style="margin-top:10px"><input type="text" id="replyComment" placeholder="回复 TA 的感想…"></div>'
+      + '<button class="btn ghost" id="saveReply">回复批注</button>';
+  }
+  if(isToday && c && !c.charComment){
+    ch += '<button class="btn ghost" id="askCommentNow" style="margin-top:8px">让 TA 写感想</button>';
+  }
+  el('dvComments').innerHTML = ch;
+  el('delDiary').style.display = isToday ? 'block' : 'none';
+  openSheet('diaryViewSheet');
+}
+async function askDiaryComment(date){
+  if(!requireJoined()) return;
+  const d = await getDiary(currentId, date);
+  if(!d){ toast('没有这篇日记'); return; }
+  // 用真实昵称点名，别让 AI 写成「当事人」「用户」
+  const uName = (userProfile && userProfile.name) ? userProfile.name : '你';
+  const btn = document.getElementById('askCommentNow');
+  if(btn){ btn.disabled = true; btn.textContent = 'TA 正在看…'; }
+  try{
+    const result = await API.ai.generate({
+      characterId: currentId, appTags:['diary'],
+      instruction: uName+'请你查看今天这一篇日记。请只根据「下面这段日记原文」来回应，不要综合聊天记录、其他记忆或别的事情。\n请给出两样东西：\n1) comment：一句简短感想批注，60 字内，直接对'+uName+'说；\n2) summary：对这篇日记的第三人称客观概述，60 字内：用「'+uName+'」称呼写日记的人（禁止写「当事人」「用户」「TA」这类泛指），概括日记里写了什么、'+uName+'是什么心情，不要写你自己的感受。\n日记原文：\n'+d.content+'\n只输出 JSON：{"comment":"感想","summary":"概述"}'
+    });
+    const p = parseSummaryComment(result.text || '');
+    await saveCommentDb(currentId, date, 'charComment', p.comment);
+    await saveCommentDb(currentId, date, 'charSummary', p.summary);
+    await syncDiaryNoteMemory(currentId, date);
+    await renderDiaryPage();
+    toast('TA 已写感想');
+    await openDiaryView(date);
+  }catch(e){ toast('生成失败：'+e.message); }
+  finally{ if(btn){ btn.disabled=false; } }
+}
+function parseSummaryComment(text){
+  let s = text.trim().replace(/^```[a-z]*\s*/i,'').replace(/\s*```$/,'');
+  const a = s.indexOf('{'), b = s.lastIndexOf('}');
+  if(a>=0 && b>a){
+    try{
+      const o = JSON.parse(s.slice(a,b+1));
+      return { comment: String(o.comment||'').trim().slice(0,60), summary: String(o.summary||'').trim().slice(0,60) };
+    }catch(e){}
+  }
+  return { comment: text.slice(0,60), summary: '' };
+}
+async function syncDiaryNoteMemory(charId, date){
+  const c = await getComment(charId, date);
+  if(!c || (!c.charSummary && !c.charComment && !c.userComment)){
+    await removeTimeline(charId, 'diary-note-'+date, 'diary_note', date);
+    return;
+  }
+  let summary = '[日记 · '+date+']';
+  if(c.charSummary) summary += currentCharName+'的总结：'+c.charSummary;
+  if(c.charComment) summary += '；'+currentCharName+'的感想：'+c.charComment;
+  if(c.userComment) summary += '；你的回复：'+c.userComment;
+  await injectTimeline(charId, summary, 'diary_note', 'diary-note-'+date, { date });
+}
+async function delCommentField(charId, date, field){
+  await saveCommentDb(charId, date, field, '');
+  await syncDiaryNoteMemory(charId, date);
+}
+async function delDiary(){
+  if(!requireJoined()) return;
+  await deleteDiaryDb(currentId, viewingDiaryDate);
+  closeAll();
+  await renderDiaryPage();
+  toast('已删除');
+}
+// ---------- 角色切换 / 设置 ----------
+async function refreshCalendar(){
+  if(!currentId) return;
+  moodsCache = await loadMoods(currentId);
+  schedCache = await loadSchedules(currentId);
+  renderCalendar(); renderTaskBar();
+}
+async function selectCharacter(charId){
+  const c = characters.find(x=>x.id===charId);
+  if(!c) return;
+  try{
+    const full = await API.characters.get(charId);
+    if(full && full.name){
+      const i = characters.findIndex(x=>x.id===charId);
+      if(i>=0) characters[i] = Object.assign({}, characters[i], full);
+    }
+  }catch(e){}
+  currentId = charId;
+  currentCharName = c.name || '角色';
+  const lastRec = await listAll('last_character');
+  if(lastRec.length) await API.db.update('last_character', lastRec[0].id, { characterId: charId });
+  else await API.db.create('last_character', { characterId: charId });
+  inviteStatus = await getInviteStatus(charId);
+  if(inviteStatus === 'none'){ await setInviteStatus(charId, 'none'); }
+  await loadSettings(charId);
+  await loadTogether(charId);
+  try{ userProfile = await API.user.getProfile({ characterId: charId }); }catch(e){ userProfile = null; }
+  // 昵称缓存：profile 偶尔取不到时，用上次存下的名字，绝不让署名退化成「用户」这种占位词
+  try{
+    const recs = await listAll('last_character');
+    const rec = recs[0];
+    const nmNow = (userProfile && userProfile.name) ? String(userProfile.name) : '';
+    if(rec){
+      if(nmNow){
+        userNameCache = nmNow;
+        if(rec.userName !== nmNow) await API.db.update('last_character', rec.id, { characterId: charId, userName: nmNow });
+      }else if(rec.userName){
+        userNameCache = String(rec.userName);
+      }
+    }
+  }catch(e){}
+  highlightKey = null;
+  await refreshCalendar();
+  renderHeader();
+  closeAll();
+  await runDailyChecks(charId);
+  await sweepOrphanScheduleMemory(charId);
+  await sweepOrphanMemoMemory(charId);
+  if(activeTab==='memo') await renderMemoPage();
+  if(activeTab==='diary') await renderDiaryPage();
+  if(inviteStatus === 'accepted'){
+    await autoRecordIfDue(charId);
+  }else{
+    openInviteSheet(charId);
+  }
+}
+function renderCharList(){
+  const box = el('charList');
+  if(!characters.length){ box.innerHTML = '<div class="empty" style="padding:12px 0">还没有角色，请先创建</div>'; return; }
+  box.innerHTML = characters.map(c => {
+    const st = c._st || '未加入';
+    const cls = c._st==='accepted'?'ok':(c._st==='pending'?'wait':'');
+    return '<div class="list-item" data-id="'+c.id+'"><div class="av">'+(pickAvatar(c)?'<img src="'+esc(pickAvatar(c))+'">':'🙂')+'</div>'
+      +'<div class="li-nm">'+esc(c.name||'角色')+'</div>'
+      +'<span class="li-st '+cls+'">'+esc(st)+'</span></div>';
+  }).join('');
+}
+async function openCharSheet(){
+  for(const c of characters){ c._st = await getInviteStatus(c.id); }
+  renderCharList();
+  openSheet('charSheet');
+}
+async function loadSettings(charId){
+  const rec = await findOne('settings', r=>r.characterId===charId);
+  recordSettings = rec ? { enabled:!!rec.enabled, time:rec.time||'21:00' } : { enabled:false, time:'21:00' };
+}
+async function saveSettingsDb(){
+  if(!currentId) return;
+  const rec = await findOne('settings', r=>r.characterId===currentId);
+  const payload = { enabled:recordSettings.enabled, time:recordSettings.time };
+  if(rec) await API.db.update('settings', rec.id, payload);
+  else await API.db.create('settings', { characterId:currentId, enabled:recordSettings.enabled, time:recordSettings.time });
+}
+function openSettings(){
+  el('recToggle').classList.toggle('on', recordSettings.enabled);
+  el('recTime').value = recordSettings.time;
+  openSheet('settingsSheet');
+}
+async function autoRecordIfDue(charId){
+  if(!recordSettings.enabled) return;
+  if(nowHM() < recordSettings.time) return;
+  const today = todayKey();
+  const m = (moodsCache[today]||{})['character'];
+  if(m && m.emoji) return;
+  try{
+    const result = await API.ai.generate({
+      characterId: charId, appTags:['mood','record'],
+      instruction: '现在到了你每天固定记录心情的时间，请记录今天（'+today+'）的心情。只能从这24个表情中选一个作为emoji：🥺、😊、🥰、😍、🤗、😌、😐、😔、😢、😭、😡、😕、🤒、🥳、😎、🤔、😅、🙃、😘、💕、💔、💭、🥵、😨。'
+    });
+    const p = parseMoodJson(result.text || '');
+    await saveMoodDb(charId, today, 'character', p.emoji, p.note||'');
+    await injectTimeline(charId, '[心情记录：'+currentCharName+'在'+today+'标记了心情 '+p.emoji+(p.note?('，便签：「'+p.note+'」'):'')+']', 'char_mood', 'cm-'+today, { date:today });
+    await refreshCalendar();
+  }catch(e){}
+}
+
+
+// ---------- APP 工具处理器 ----------
+async function recordMood(args, ctx){
+  args = args || {};
+  const charId = (ctx && ctx.characterId) || currentId;
+  if(!charId) return { success:false, userNotice:'未找到角色' };
+  const st = await getInviteStatus(charId);
+  if(st !== 'accepted') return { success:false, userNotice:'还未加入心情记录' };
+  const ch = characters.find(c=>c.id===charId); const nm = ch ? ch.name : 'TA';
+  // 只允许记录「今天」：日期归一化后不等于今天就整单拒绝——
+  // 不写 moods、不写短期记忆，那天日历保持空白，AI 也会收到失败提示
+  const today = todayKey();
+  if(normalizeDateKey(args.date) !== today){
+    return { success:false, userNotice:'心情记录只能记今天，不能补写过去或提前写未来' };
+  }
+  const date = today;
+  const emoji = String(args.emoji || '😊').trim().slice(0,4);
+  const note = String(args.note || '').trim();
+  await saveMoodDb(charId, date, 'character', emoji, note);
+  await injectTimeline(charId, '[心情记录：'+nm+'在'+date+'标记了心情 '+emoji+(note?('，便签：「'+note+'」'):'')+']', 'char_mood', 'cm-'+date, { date });
+  if(charId === currentId) await refreshCalendar();
+  return { success:true, data:{ date, emoji, note }, userNotice:'已在心情记录记录' };
+}
+async function addSchedule(args, ctx){
+  args = args || {};
+  const charId = (ctx && ctx.characterId) || currentId;
+  if(!charId) return { success:false, userNotice:'未找到角色' };
+  const st = await getInviteStatus(charId);
+  if(st !== 'accepted') return { success:false, userNotice:'还未加入心情记录' };
+  const date = args.date || todayKey();
+  const rec = await API.db.create('schedules', { characterId:charId, date, title:String(args.title||'事项'), type:args.type||'schedule', startTime:args.startTime||'', endTime:args.endTime||'', source:'character', triggered:false, createdAt:new Date().toISOString() });
+  if(date === todayKey()) await fireSchedule(charId, rec);
+  if(charId === currentId) await refreshCalendar();
+  return { success:true, data:{ date, title:args.title }, userNotice:'已添加到心情记录' };
+}
+async function queryMood(args, ctx){
+  args = args || {};
+  const charId = (ctx && ctx.characterId) || currentId;
+  if(!charId) return { success:false, userNotice:'未找到角色' };
+  const all = await listAll('moods');
+  let items;
+  if(args.date){ items = all.filter(r=>r.characterId===charId && r.date===args.date); }
+  else{ const today = todayKey(); items = all.filter(r=>r.characterId===charId && r.date<=today).sort((a,b)=> a.date<b.date ? 1 : -1).slice(0,14); }
+  const lines = items.map(r => (r.actor==='character'?'角色':'用户')+' '+r.date+' '+r.emoji+(r.note?'（'+r.note+'）':'')).join('\n');
+  return { success:true, data:{ count:items.length, records: lines || '暂无记录' } };
+}
+async function viewMemo(args, ctx){
+  args = args || {};
+  const charId = (ctx && ctx.characterId) || currentId;
+  if(!charId) return { success:false, userNotice:'未找到角色' };
+  const date = args.date || todayKey();
+  const memo = await getMemo(charId, date);
+  if(!memo || !memo.items || !memo.items.length) return { success:true, data:{ date, items:[], summary:'当天没有备忘录' } };
+  // 读给角色看时带上署名，这样 TA 能分清哪条是自己写的、哪条是对方写的
+  const ch = characters.find(c => c.id === charId);
+  const nm = (ch && ch.name) ? ch.name : 'TA';
+  const uNm = (userProfile && userProfile.name) ? userProfile.name : '用户';
+  const whoOf = it => it.author === 'char' ? nm : (it.author === 'user' ? uNm : '');
+  const list = memo.items.map((it,i)=>(i+1)+'.'+(whoOf(it) ? ('【'+whoOf(it)+'】') : '')+it.text+(it.done?'（已完成）':'（未完成）')).join('；');
+  return { success:true, data:{ date,
+    items: memo.items.map(i=>({ text:i.text, done:i.done, author: i.author==='char' ? '角色自己' : (i.author==='user' ? '用户' : '未标注') })),
+    summary:list,
+    hint:'每条前面的【】里是写下这条的人。author=角色自己 的是你写的，author=用户 的是对方写的。' } };
+}
+async function addMemo(args, ctx){
+  args = args || {};
+  const charId = (ctx && ctx.characterId) || currentId;
+  if(!charId) return { success:false, userNotice:'未找到角色' };
+  const st = await getInviteStatus(charId);
+  if(st !== 'accepted') return { success:false, userNotice:'还未加入心情记录' };
+  // 待办只认今天：不能补写过往，也不能提前写未来——未来想标记请用「添加纪念事项」
+  const today = todayKey();
+  if(normalizeDateKey(args.date) !== today){
+    return { success:false, userNotice:'备忘录只能记今天的待办，不能补写过去或提前写未来（未来的事请用添加纪念事项）' };
+  }
+  const date = today;
+  const text = String(args.text||'').trim().slice(0,20);
+  if(!text) return { success:false, userNotice:'内容不能为空' };
+  const memo = await getMemo(charId, date);
+  let items = (memo && memo.items) ? memo.items.map(i=>({ itemId:i.itemId||i.id||'', text:i.text||'', done:!!i.done, author:i.author||'' })) : [];
+  if(items.length >= 10) return { success:false, userNotice:'每天最多 10 条' };
+  const exist = items.find(i=>i.text===text);
+  // 已存在同名条目只重置完成状态，不改署名——免得把用户的待办改成自己写的
+  if(exist){ exist.done = false; }
+  else { items.push({ itemId:newMemoItemId(), text, done:false, author:'char' }); }
+  await saveMemoDb(charId, date, items);
+  await syncMemoMemory(charId, date, items);
+  if(charId === currentId && activeTab==='memo') await renderMemoPage();
+  return { success:true, data:{ date, text }, userNotice:'已添加到备忘录' };
+}
+async function completeMemo(args, ctx){
+  args = args || {};
+  const charId = (ctx && ctx.characterId) || currentId;
+  if(!charId) return { success:false, userNotice:'未找到角色' };
+  // 只能划掉今天的待办：过去的已经过去了，不许回头补划
+  const today = todayKey();
+  if(normalizeDateKey(args.date) !== today){
+    return { success:false, userNotice:'只能划掉今天的待办，过往的备忘录只能查看' };
+  }
+  const date = today;
+  const memo = await getMemo(charId, date);
+  if(!memo || !memo.items) return { success:false, userNotice:'没有这条备忘录' };
+  const target = String(args.text||'').trim();
+  let hit = null;
+  for(const it of memo.items){ if(it.text===target || (target && it.text.includes(target)) || (target && target.includes(it.text))){ hit=it; break; } }
+  if(!hit) return { success:false, userNotice:'没找到这条待办' };
+  hit.done = true;
+  await saveMemoDb(charId, date, memo.items);
+  await syncMemoMemory(charId, date, memo.items);
+  return { success:true, data:{ text:hit.text }, userNotice:'已标记完成' };
+}
+async function viewDiary(args, ctx){
+  args = args || {};
+  const charId = (ctx && ctx.characterId) || currentId;
+  if(!charId) return { success:false, userNotice:'未找到角色' };
+  const date = args.date || todayKey();
+  const d = await getDiary(charId, date);
+  if(!d) return { success:true, data:{ date, content:'当天没有日记' } };
+  return { success:true, data:{ date, content:d.content, hint:'看完后请调用「写日记批注」工具，写出你的第三人称总结和感想。' } };
+}
+async function commentDiary(args, ctx){
+  args = args || {};
+  const charId = (ctx && ctx.characterId) || currentId;
+  if(!charId) return { success:false, userNotice:'未找到角色' };
+  const date = args.date || todayKey();
+  const comment = String(args.comment||'').trim().slice(0,60);
+  const summary = String(args.summary||'').trim().slice(0,60);
+  await saveCommentDb(charId, date, 'charComment', comment);
+  if(summary) await saveCommentDb(charId, date, 'charSummary', summary);
+  await syncDiaryNoteMemory(charId, date);
+  return { success:true, data:{ date, comment, summary }, userNotice:'已写批注和总结' };
+}
+
+// ---------- 事件绑定 ----------
+function bindEvents(){
+  el('prevMonth').onclick = ()=>{ const r=addMonths(viewYear,viewMonth,-1); viewYear=r.y; viewMonth=r.m; holidaysMap=getHolidays(viewYear); syncSelected(); renderHeader(); renderCalendar(); };
+  el('nextMonth').onclick = ()=>{ const r=addMonths(viewYear,viewMonth,1); viewYear=r.y; viewMonth=r.m; holidaysMap=getHolidays(viewYear); syncSelected(); renderHeader(); renderCalendar(); };
+  el('addCharBtn').onclick = openCharSheet;
+  el('charList').addEventListener('click', e=>{ const it = e.target.closest('.list-item'); if(it) selectCharacter(it.dataset.id); });
+  el('inviteYes').onclick = async ()=>{ if(inviteTargetId){ await sendInvite(inviteTargetId, currentCharName); closeAll(); renderHeader(); } };
+  el('inviteReset').onclick = async ()=>{ if(inviteTargetId){ await setInviteStatus(inviteTargetId, 'none'); inviteStatus = 'none'; openInviteSheet(inviteTargetId); } };
+  el('inviteNo').onclick = ()=>{ closeAll(); renderHeader(); };
+  el('calendarGrid').addEventListener('click', e=>{
+    const em = e.target.closest('.em');
+    if(em){ const key = em.dataset.date, actor = em.dataset.actor; const m = (moodsCache[key]||{})[actor];
+      if(m && m.note){ showNote(actor, key, m); } else { toast(actor==='character' ? 'TA 这天没有写便签' : '你这天没有写便签'); } return; }
+    const cell = e.target.closest('.cell'); if(cell) onCellClick(cell.dataset.key);
+  });
+  el('emojiGrid').addEventListener('click', e=>{ const b = e.target.closest('button[data-emoji]'); if(b){ emojiPicked = b.dataset.emoji; renderEmojiGrid(); } });
+  el('saveMood').onclick = saveUserMood;
+  el('askRecord').onclick = askRecord;
+  el('addSchedBtn').onclick = ()=>{ openSchedule(selectedDateKey || todayKey()); };
+  el('saveSchedule').onclick = saveScheduleForm;
+  el('taskBar').addEventListener('click', e=>{ const d = e.target.closest('[data-del]'); if(d){ deleteScheduleDb(d.dataset.del).then(async ()=>{ await refreshCalendar(); toast('已删除'); }); } });
+  el('setBtn').onclick = openSettings;
+  el('recToggle').onclick = ()=>{ recordSettings.enabled = !recordSettings.enabled; el('recToggle').classList.toggle('on', recordSettings.enabled); };
+  el('saveSettings').onclick = async ()=>{ recordSettings.time = el('recTime').value || '21:00'; await saveSettingsDb(); closeAll(); toast('已保存'); };
+  el('mask').onclick = closeAll;
+  // 点日历格子之外的任何地方（空白、按钮、面板、遮罩）都撤掉选中框，恢复默认灰边
+  document.addEventListener('click', e=>{
+    if(e.target && e.target.closest && e.target.closest('#calendarGrid .cell')) return;
+    if(highlightKey){ highlightKey = null; applyHighlight(); }
+  });
+  document.querySelectorAll('[data-close]').forEach(b=>{ b.onclick = ()=>closeAll(); });
+  document.querySelectorAll('.tab').forEach(b=>{ b.onclick = ()=>switchTab(b.dataset.tab); });
+  el('daysChip').onclick = openDaysSheet;
+  el('saveDays').onclick = saveDays;
+  el('clearDays').onclick = async ()=>{ await saveTogether(currentId, null); renderHeader(); closeAll(); toast('已清除'); };
+  // 备忘录
+  el('cleanMemBtn').onclick = openMemoryCleanup;
+  el('memoAddBtn').onclick = ()=>{ openMemoEditor(todayKey()); };
+  el('memoList').addEventListener('click', e=>{
+    const editBtn = e.target.closest('[data-edit-memo]'); if(editBtn){ openMemoEditor(editBtn.dataset.editMemo); return; }
+    const delMemoBtn = e.target.closest('[data-del-memo]'); if(delMemoBtn){ delWholeMemo(delMemoBtn.dataset.delMemo); return; }
+    const delBtn = e.target.closest('.mi-del'); if(delBtn){ const card = e.target.closest('.memo-card'); if(card) delMemoItem(card.dataset.date, parseInt(delBtn.dataset.idx)); return; }
+    if(e.target.closest('.mi-check') || e.target.closest('.mi-text')){
+      const card = e.target.closest('.memo-card'); const item = e.target.closest('.memo-item');
+      if(card && item){
+        // 过往的备忘录只能查看：不再允许点圆圈划掉／取消
+        if(card.dataset.date !== todayKey()){ toast('过往的备忘录只能查看'); return; }
+        toggleMemoDone(card.dataset.date, parseInt(item.dataset.idx));
+      }
+    }
+  });
+  el('saveMemo').onclick = saveMemo;
+  el('askMemoDone').onclick = askMemoDone;
+  // 日记
+  el('diaryAddBtn').onclick = ()=>{ openDiaryEditor(todayKey()); };
+  el('diaryList').addEventListener('click', e=>{
+    const editBtn = e.target.closest('[data-edit-diary]'); if(editBtn){ openDiaryEditor(editBtn.dataset.editDiary); return; }
+    const delCard = e.target.closest('[data-del-diary-card]'); if(delCard){ delDiaryCard(delCard.dataset.delDiaryCard); return; }
+    const viewBtn = e.target.closest('[data-view-diary]'); if(viewBtn) openDiaryView(viewBtn.dataset.viewDiary);
+  });
+  el('saveDiary').onclick = saveDiary;
+  el('askDiaryComment').onclick = ()=>{ askDiaryComment(todayKey()); };
+  el('delDiary').onclick = delDiary;
+  el('diaryViewSheet').addEventListener('click', e=>{
+    if(e.target.closest('#saveReply')){
+      const v = el('replyComment').value.trim(); if(!v){ toast('写点内容'); return; }
+      saveCommentDb(currentId, viewingDiaryDate, 'userComment', v).then(()=>syncDiaryNoteMemory(currentId, viewingDiaryDate)).then(async ()=>{ closeAll(); await renderDiaryPage(); toast('已回复'); });
+      return;
+    }
+    if(e.target.closest('#askCommentNow')){ askDiaryComment(viewingDiaryDate); return; }
+    const dc = e.target.closest('[data-del-comment]'); if(dc){
+      const field = dc.dataset.delComment==='1' ? 'charComment' : 'userComment';
+      delCommentField(currentId, viewingDiaryDate, field).then(async ()=>{ closeAll(); await renderDiaryPage(); });
+    }
+  });
+}
+async function delDiaryCard(date){
+  if(!requireJoined()) return;
+  await deleteDiaryDb(currentId, date);
+  await renderDiaryPage();
+  toast('已删除');
+}
+
+function syncSelected(){
+  // 换月份了，上个月的选中框不该留在新日历上
+  highlightKey = null;
+  const today = todayKey();
+  if(viewYear===new Date().getFullYear() && viewMonth===new Date().getMonth()) selectedDateKey = today;
+  else selectedDateKey = viewYear+'-'+pad(viewMonth+1)+'-01';
+}
+
+// ---------- 初始化 ----------
+async function init(){
+  // 先把界面画出来、把点击绑上，再去问宿主要数据。
+  // 宿主一旦卡住（桥接没初始化 / 请求不回），页面至少还能看、还能点，不会变成整片空白。
+  // 每一步独立上锁：任何一步炸了都不许连累后面的（尤其不能让日历空着）
+  try{ holidaysMap = getHolidays(viewYear) || {}; }catch(e){ holidaysMap = {}; }
+  try{ renderHeader(); }catch(e){}
+  try{ renderCalendar(); }catch(e){}
+  try{ renderTaskBar(); }catch(e){}
+  try{ bindEvents(); }catch(e){}
+  try{ characters = (await withTimeout(API.characters.list(), 5000, [])) || []; }catch(e){ characters = []; }
+  try{ API.tools.handle('recordMood', recordMood); }catch(e){}
+  try{ API.tools.handle('addSchedule', addSchedule); }catch(e){}
+  try{ API.tools.handle('queryMood', queryMood); }catch(e){}
+  try{ API.tools.handle('viewMemo', viewMemo); }catch(e){}
+  try{ API.tools.handle('addMemo', addMemo); }catch(e){}
+  try{ API.tools.handle('completeMemo', completeMemo); }catch(e){}
+  try{ API.tools.handle('viewDiary', viewDiary); }catch(e){}
+  try{ API.tools.handle('commentDiary', commentDiary); }catch(e){}
+  try{ API.on('chat.message.created', parseInviteReply); }catch(e){}
+  try{ await withTimeout(API.notifications.clearBadge(), 3000, null); }catch(e){}
+  let targetId = null;
+  try{ const ctx = await withTimeout(API.app.getLaunchContext(), 4000, null); if(ctx && ctx.characterId) targetId = ctx.characterId; }catch(e){}
+  if(!targetId){ const last = await listAll('last_character'); if(last.length && last[0].characterId) targetId = last[0].characterId; }
+  if(targetId && characters.some(c=>c.id===targetId)){ await selectCharacter(targetId); }
+  const invs = await listAll('invites');
+  const ids = new Set(invs.map(r=>r.characterId).filter(Boolean));
+  for(const c of characters){ if(ids.has(c.id)){ await runDailyChecks(c.id); } }
+}
+init();
+</script>
+</body>
+</html>

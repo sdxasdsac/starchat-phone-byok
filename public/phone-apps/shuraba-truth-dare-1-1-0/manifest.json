@@ -1,0 +1,37 @@
+{
+  "id": "shuraba.truth-dare",
+  "name": "修罗场",
+  "version": "1.1.0",
+  "sdkVersion": "1.0",
+  "author": "工坊",
+  "description": "和角色们来一场线下的修罗场聚会吧，几个人面对面坐在一起，挖掘内心的真实想法和想做的事。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "characters.relations.read",
+    "user.profile.read",
+    "user.persona.read",
+    "ai.generate",
+    "chat.write",
+    "chat.sendMessage",
+    "chat.sendCard",
+    "memory.write",
+    "media.pick",
+    "ui.toast"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": []
+}

@@ -1,0 +1,130 @@
+{
+  "id": "honor.canyon.companion",
+  "name": "你抢谁蓝呢",
+  "version": "2.2.0",
+  "sdkVersion": "1.0",
+  "author": "工坊",
+  "description": "荣耀峡谷 AI 伴玩模拟器：好友档案、排位冲星、点券充值、AI 生图、荣耀水晶抽取、七日签到、好友亲密度、开黑邀请卡片（富媒体指令 + 后台语义兜底）。",
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "ai.generate",
+    "ai.chat",
+    "ai.generateImage",
+    "chat.sendCard",
+    "chat.requestReply",
+    "chat.read",
+    "chat.read.background",
+    "memory.readShortTerm",
+    "memory.write",
+    "wallet.read",
+    "wallet.pay",
+    "media.pick",
+    "online.play",
+    "ui.toast"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "directives": [
+        {
+          "id": "canyon-invite",
+          "label": "峡谷开黑邀请",
+          "syntax": "[峡谷开黑:模式:分路]",
+          "description": "当你想邀请用户上线一起开黑打《你抢谁蓝呢》时使用。模式填「匹配」或「排位」；分路填「中路」「打野」「上路」「下路」「辅助」「全能补位」之一。表达组队或开黑意愿时，输出这一标记。",
+          "card": {
+            "appLabel": "你抢谁蓝呢",
+            "title": "📢 邀你上线开黑",
+            "subtitle": "{{模式}} · {{分路}}",
+            "body": "TA 想和你组队打一局，点击卡片进入峡谷组队。",
+            "status": "等你上线",
+            "accentColor": "#e8c26b",
+            "actions": [
+              {
+                "label": "接受邀请"
+              }
+            ]
+          },
+          "tags": []
+        }
+      ]
+    },
+    "events": [
+      {
+        "event": "chat.message.created",
+        "entry": "on-chat-message",
+        "background": true,
+        "description": "角色发消息时，若表达开黑组队意愿且未使用富媒体指令，则自动发送开黑邀请卡片。"
+      }
+    ]
+  },
+  "events": [
+    {
+      "event": "chat.message.created",
+      "entry": "on-chat-message",
+      "background": true,
+      "description": "角色发消息时，若表达开黑组队意愿且未使用富媒体指令，则自动发送开黑邀请卡片。"
+    }
+  ],
+  "chatDirectives": [
+    {
+      "id": "canyon-invite",
+      "label": "峡谷开黑邀请",
+      "syntax": "[峡谷开黑:模式:分路]",
+      "description": "当你想邀请用户上线一起开黑打《你抢谁蓝呢》时使用。模式填「匹配」或「排位」；分路填「中路」「打野」「上路」「下路」「辅助」「全能补位」之一。表达组队或开黑意愿时，输出这一标记。",
+      "card": {
+        "appLabel": "你抢谁蓝呢",
+        "title": "📢 邀你上线开黑",
+        "subtitle": "{{模式}} · {{分路}}",
+        "body": "TA 想和你组队打一局，点击卡片进入峡谷组队。",
+        "status": "等你上线",
+        "accentColor": "#e8c26b",
+        "actions": [
+          {
+            "label": "接受邀请"
+          }
+        ]
+      },
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "directives": [
+      {
+        "id": "canyon-invite",
+        "label": "峡谷开黑邀请",
+        "syntax": "[峡谷开黑:模式:分路]",
+        "description": "当你想邀请用户上线一起开黑打《你抢谁蓝呢》时使用。模式填「匹配」或「排位」；分路填「中路」「打野」「上路」「下路」「辅助」「全能补位」之一。表达组队或开黑意愿时，输出这一标记。",
+        "card": {
+          "appLabel": "你抢谁蓝呢",
+          "title": "📢 邀你上线开黑",
+          "subtitle": "{{模式}} · {{分路}}",
+          "body": "TA 想和你组队打一局，点击卡片进入峡谷组队。",
+          "status": "等你上线",
+          "accentColor": "#e8c26b",
+          "actions": [
+            {
+              "label": "接受邀请"
+            }
+          ]
+        },
+        "tags": []
+      }
+    ]
+  }
+}

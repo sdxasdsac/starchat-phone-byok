@@ -1,0 +1,56 @@
+{
+  "sdkVersion": "1.0",
+  "id": "ear-whisper",
+  "name": "Whisper",
+  "version": "6.2.1",
+  "icon": "icon.png",
+  "author": "Moonlark Studio",
+  "description": "与你亲密的TA共度一段私密语音时光。刷一批专属片单,点进去是配图+配音的沉浸演绎;支持单人/多人模式(最多3位角色同场、各用自己的音色)、拖动进度、单句/整段重新配音、收藏与下载、导入自己的剧本和封面、叠加环境音。",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "characters.relations.read",
+    "user.profile.read",
+    "ai.generate",
+    "ai.generateImage",
+    "voice.readProfiles",
+    "voice.tts",
+    "chat.sendCard",
+    "ui.toast",
+    "media.pick"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "assets": [
+      "assets/noto-serif-sc.woff2",
+      "assets/bg.jpg",
+      "assets/dust.webp",
+      "assets/title.webp",
+      "assets/btn-gen.webp",
+      "assets/btn-custom.webp",
+      "assets/btn-import.webp",
+      "assets/tab-list-on.webp",
+      "assets/tab-list-off.webp",
+      "assets/tab-fav-on.webp",
+      "assets/tab-fav-off.webp",
+      "assets/section-title.webp"
+    ]
+  },
+  "extensions": {
+    "chat": {
+      "plusActions": [
+        {
+          "id": "ear-whisper-invite",
+          "label": "私密时光",
+          "entry": "session",
+          "presentation": "fullscreen",
+          "description": "邀请TA进入一段专属于你们的私密语音时光。"
+        }
+      ]
+    }
+  }
+}

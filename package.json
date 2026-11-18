@@ -1,0 +1,28 @@
+{
+  "name": "starchat-phone-byok",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BYOK AI 小手机：自带 API Key，Vercel 一键部署 + PWA",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@mdi/js": "^7.4.47",
+    "lucide-react": "^0.468.0",
+    "next": "14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

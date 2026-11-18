@@ -1,0 +1,2571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>谁是卧底</title>
+  <style>
+    :root {
+      --bg-color: #F8F6F0;
+      --grid-line: #EDE8DD;
+      --card-cream: #FDFBF7;
+      --word-civilian: #F5E8C8;
+      --word-undercover: #D4EAFA;
+      --word-unknown: #ECE7DE;
+      --primary-green: #7D9D74;
+      --primary-green-dark: #5B7B53;
+      --accent-coral: #F08C7F;
+      --accent-gold: #F59E0B;
+      --bubble-green: #DCE8CB;
+      --bubble-cream: #FDF4E5;
+      --bubble-user: #DCE8CB;
+      --bubble-other: #FFF9EE;
+      --border-dark: #4A4036;
+      --text-dark: #3E342B;
+      --text-muted: #8C8275;
+      --tape-color: #F6D68D;
+      --safe-top: var(--ai-phone-app-safe-top, 56px);
+      --safe-bottom: var(--ai-phone-app-safe-bottom, 24px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: var(--bg-color);
+      background-image: 
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 24px 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      color: var(--text-dark);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Bar */
+    .top-header {
+      position: fixed;
+      top: var(--ai-phone-app-bar-top, 44px);
+      left: 14px;
+      right: var(--ai-phone-app-bar-clear-right, 96px);
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 50;
+    }
+
+    .app-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .app-title-brand {
+      font-size: 20px;
+      font-weight: 900;
+      color: #2F2923;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .app-title-brand span.heart {
+      color: #E65C5C;
+      font-size: 15px;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+    .app-title-sub {
+      font-size: 15px;
+      font-weight: 800;
+      color: #5C5245;
+    }
+
+    .btn-replay-pill {
+      height: 32px;
+      padding: 0 10px;
+      border-radius: 16px;
+      background: #FFFDF8;
+      border: 1.5px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #5C5245;
+      cursor: pointer;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+      transition: all 0.1s;
+    }
+    .btn-replay-pill:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+
+    .btn-icon-tiny {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #FFF;
+      border: 1.5px solid var(--border-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+      transition: transform 0.1s;
+    }
+    .btn-icon-tiny:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+
+    /* Main Container */
+    .game-container {
+      flex: 1;
+      margin-top: calc(var(--ai-phone-app-bar-top, 44px) + 42px);
+      padding: 6px 12px var(--safe-bottom);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - var(--ai-phone-app-bar-top, 44px) - 42px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ---------------- TOP CARDS SHELF (MATCHING SCREENSHOT) ---------------- */
+    .shelf-wrapper {
+      background: #9BB096;
+      border: 2px solid var(--border-dark);
+      border-radius: 16px;
+      padding: 10px 8px 12px;
+      box-shadow: 0 4px 0 var(--border-dark);
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .shelf-inner {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .shelf-inner::-webkit-scrollbar { display: none; }
+
+    .player-card-shelf {
+      flex: 0 0 74px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Word Box above avatar */
+    .shelf-word-box {
+      width: 100%;
+      height: 36px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border-dark);
+      background-color: var(--word-unknown);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-bottom: 6px;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+      text-align: center;
+      padding: 0 2px;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .shelf-word-box.civilian {
+      background-color: var(--word-civilian);
+    }
+    .shelf-word-box.undercover {
+      background-color: var(--word-undercover);
+    }
+    .shelf-word-box.secret {
+      background: #E8E2D6;
+      color: #A89D8F;
+      font-size: 16px;
+    }
+
+    /* Shelf Avatar */
+    .shelf-avatar-wrap {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #FFF;
+      border: 2px solid var(--border-dark);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+      margin-bottom: 4px;
+    }
+    .shelf-avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .shelf-avatar-wrap .avatar-fallback {
+      font-size: 26px;
+    }
+
+    /* Out overlay */
+    .shelf-avatar-wrap.is-out {
+      filter: grayscale(0.9);
+      opacity: 0.65;
+    }
+    .shelf-avatar-wrap.is-out::after {
+      content: "✕";
+      position: absolute;
+      font-size: 30px;
+      font-weight: 900;
+      color: #E63946;
+      text-shadow: 0 0 3px #FFF;
+    }
+
+    /* Victory Ribbon */
+    .shelf-victory-ribbon {
+      position: absolute;
+      top: -8px;
+      right: -6px;
+      background: #F59E0B;
+      color: #FFF;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 1px 5px;
+      border-radius: 6px;
+      border: 1.5px solid var(--border-dark);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+      transform: rotate(8deg);
+      z-index: 5;
+      display: none;
+    }
+
+    /* Identity Pill */
+    .shelf-role-tag {
+      background: #FFF;
+      border: 1.5px solid var(--border-dark);
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-dark);
+      box-shadow: 0 1.5px 0 rgba(0,0,0,0.1);
+      white-space: nowrap;
+    }
+    .shelf-role-tag.civilian {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+    .shelf-role-tag.undercover {
+      background: #DBEAFE;
+      color: #1E40AF;
+    }
+    .shelf-role-tag.unknown {
+      background: #F3F0E8;
+      color: #8C8275;
+    }
+
+    /* Round Banner & Turn Speaker Pill */
+    .round-indicator-pill {
+      background: #FEF3C7;
+      border: 1.5px solid #E2D09E;
+      color: #B45309;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 4px 16px;
+      border-radius: 20px;
+      margin: 4px auto 6px;
+      text-align: center;
+      width: fit-content;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.05);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .turn-speaker-pill {
+      background: #FFFDF8;
+      border: 1.5px solid #7D9D74;
+      color: #3E342B;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 4px 14px;
+      border-radius: 16px;
+      margin: 0 auto 12px;
+      text-align: center;
+      width: fit-content;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.06);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .turn-speaker-pill .countdown-badge {
+      background: #FEE2E2;
+      color: #DC2626;
+      border: 1px solid #F87171;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 900;
+      min-width: 32px;
+      display: inline-block;
+      text-align: center;
+    }
+    .turn-speaker-pill .countdown-badge.urgent {
+      background: #EF4444;
+      color: #FFF;
+      animation: pulse 0.8s infinite;
+    }
+
+    /* ---------------- CHAT STREAM / TIMELINE ---------------- */
+    .chat-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 4px 0 16px;
+    }
+
+    /* Chat bubble items */
+    .chat-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      animation: popIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes popIn {
+      0% { opacity: 0; transform: translateY(8px) scale(0.96); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .chat-row.user-row {
+      flex-direction: row-reverse;
+    }
+
+    .chat-avatar-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #FFF;
+      border: 2px solid var(--border-dark);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .chat-avatar-box img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .chat-avatar-box .avatar-fallback {
+      font-size: 22px;
+    }
+    .chat-player-num {
+      position: absolute;
+      bottom: -4px;
+      right: -4px;
+      background: #FFF;
+      border: 1px solid var(--border-dark);
+      font-size: 9px;
+      font-weight: 800;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chat-content-wrap {
+      max-width: calc(100% - 70px);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .chat-row.user-row .chat-content-wrap {
+      align-items: flex-end;
+    }
+
+    .chat-sender-name {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 0 4px;
+    }
+
+    .chat-bubble {
+      background: var(--bubble-other);
+      border: 2px solid var(--border-dark);
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 700;
+      color: var(--text-dark);
+      box-shadow: 0 2px 0 var(--border-dark);
+      position: relative;
+      word-break: break-word;
+    }
+    .chat-row.user-row .chat-bubble {
+      background: var(--bubble-user);
+    }
+    .chat-bubble.speaking {
+      border-color: #5B7B53;
+      box-shadow: 0 0 0 2px #A3CF9A, 0 3px 0 var(--border-dark);
+    }
+
+    /* ---------------- TAPE RESULT CARD (SCREENSHOT STYLE) ---------------- */
+    .result-tape-card {
+      background: #FFFBF0;
+      border: 2px dashed #E2CEAA;
+      border-radius: 16px;
+      padding: 20px 16px 16px;
+      position: relative;
+      margin: 16px 0;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.03);
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Cute Tape at top */
+    .result-tape-card::before,
+    .result-tape-card::after {
+      content: "";
+      position: absolute;
+      top: -9px;
+      width: 42px;
+      height: 16px;
+      background: var(--tape-color);
+      border: 1px solid #D5B468;
+      border-radius: 2px;
+      opacity: 0.9;
+    }
+    .result-tape-card::before { left: 30px; transform: rotate(-3deg); }
+    .result-tape-card::after { right: 30px; transform: rotate(3deg); }
+
+    .result-card-title {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 900;
+      color: #D97706;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .vote-rows-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .vote-row-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .voter-mini-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-dark);
+      background: #FFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .voter-mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .vote-action-label {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .vote-arrow-icon {
+      font-size: 16px;
+      color: #D97706;
+    }
+    .vote-target-pill {
+      background: #FFF;
+      border: 1.5px solid #E6D9C5;
+      padding: 2px 10px;
+      border-radius: 8px;
+      font-weight: 800;
+      color: var(--text-dark);
+    }
+
+    /* Out Banner */
+    .eliminated-badge-pill {
+      margin: 14px auto 8px;
+      background: #FEE2E2;
+      border: 1.5px solid #FCA5A5;
+      color: #DC2626;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 5px 18px;
+      border-radius: 20px;
+      width: fit-content;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Big Victory Banner matching image bottom */
+    .big-victory-box {
+      text-align: center;
+      margin: 12px auto;
+      animation: bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0.7); opacity: 0; }
+      70% { transform: scale(1.08); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .victory-cat-icon {
+      font-size: 46px;
+      margin-bottom: 2px;
+      display: inline-block;
+      animation: catWiggle 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes catWiggle {
+      0% { transform: rotate(-6deg); }
+      100% { transform: rotate(6deg); }
+    }
+    .victory-text-gold {
+      font-size: 20px;
+      font-weight: 900;
+      color: #D97706;
+      text-shadow: 1px 1px 0 #FEF3C7;
+      letter-spacing: 0.5px;
+    }
+    .victory-text-sub {
+      font-size: 22px;
+      font-weight: 900;
+      color: #B45309;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* ---------------- BOTTOM INTERACTION DOCK ---------------- */
+    .bottom-dock {
+      position: sticky;
+      bottom: 0;
+      margin-top: auto;
+      padding-top: 10px;
+      background: linear-gradient(to top, var(--bg-color) 85%, transparent);
+      z-index: 40;
+    }
+
+    .action-panel {
+      background: #FFF;
+      border: 2px solid var(--border-dark);
+      border-radius: 18px;
+      padding: 12px 14px;
+      box-shadow: 0 4px 0 var(--border-dark);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: popIn 0.2s ease-out;
+    }
+
+    .turn-status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1.5px dashed #E5E0D8;
+      padding-bottom: 8px;
+      margin-bottom: 2px;
+    }
+    .turn-status-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: #3E342B;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .turn-status-title span.player-highlight {
+      color: #B45309;
+      background: #FEF3C7;
+      padding: 2px 8px;
+      border-radius: 8px;
+      border: 1px solid #FDE68A;
+    }
+    .turn-timer-badge {
+      background: #FEE2E2;
+      color: #DC2626;
+      border: 1.5px solid #FCA5A5;
+      font-size: 13px;
+      font-weight: 900;
+      padding: 2px 10px;
+      border-radius: 12px;
+      min-width: 44px;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .turn-timer-badge.urgent {
+      background: #EF4444;
+      color: #FFF;
+      border-color: #B91C1C;
+      animation: pulse 0.7s infinite;
+    }
+
+    .prompt-tip {
+      font-size: 13px;
+      font-weight: 800;
+      color: #6B7280;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .secret-peek-btn {
+      background: #FEF3C7;
+      border: 1px solid #D97706;
+      color: #B45309;
+      border-radius: 8px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .styled-input {
+      flex: 1;
+      height: 42px;
+      border-radius: 12px;
+      border: 2px solid var(--border-dark);
+      background: #FDFBF7;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-dark);
+      outline: none;
+      box-shadow: inset 0 2px 2px rgba(0,0,0,0.04);
+    }
+    .styled-input:focus {
+      border-color: var(--primary-green);
+      background: #FFF;
+    }
+
+    .btn-send {
+      min-width: 72px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--primary-green);
+      border: 2px solid var(--border-dark);
+      color: #FFF;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--border-dark);
+      transition: all 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-send:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 var(--border-dark);
+    }
+    .btn-send:disabled {
+      background: #C4D1C0;
+      border-color: #9AA797;
+      color: #ECECEC;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Vote Selection Grid */
+    .vote-candidate-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .vote-card-btn {
+      background: #FDFBF7;
+      border: 2px solid var(--border-dark);
+      border-radius: 12px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 2px 0 var(--border-dark);
+      transition: all 0.1s;
+    }
+    .vote-card-btn:active {
+      transform: translateY(2px);
+      box-shadow: none;
+    }
+    .vote-card-btn.selected {
+      background: #FEF3C7;
+      border-color: #D97706;
+      box-shadow: 0 0 0 2px #FBBF24;
+    }
+    .vote-card-btn .btn-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-dark);
+      background: #FFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .vote-card-btn .btn-name {
+      font-size: 11px;
+      font-weight: 800;
+      max-width: 70px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Restart / Next Round Button */
+    .btn-big-action {
+      width: 100%;
+      height: 44px;
+      border-radius: 14px;
+      background: #F59E0B;
+      border: 2px solid var(--border-dark);
+      color: #FFF;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 3px 0 var(--border-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.1s;
+    }
+    .btn-big-action:active {
+      transform: translateY(3px);
+      box-shadow: none;
+    }
+
+    /* ---------------- LOBBY / SETUP MODAL ---------------- */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(47, 41, 35, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-sheet {
+      width: 100%;
+      max-width: 380px;
+      max-height: 85vh;
+      background: #FFFDF8;
+      border: 2px solid var(--border-dark);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 8px 0 var(--border-dark);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 900;
+      text-align: center;
+      color: var(--text-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .form-group-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .chip-selector-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .chip-item {
+      flex: 1;
+      min-width: 54px;
+      text-align: center;
+      padding: 8px 4px;
+      border-radius: 12px;
+      border: 2px solid var(--border-dark);
+      background: #F7F3EA;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 2px 0 var(--border-dark);
+      transition: all 0.1s;
+    }
+    .chip-item.active {
+      background: #7D9D74;
+      color: #FFF;
+      border-color: #3E342B;
+    }
+
+    .player-select-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 2px;
+    }
+    .player-pick-card {
+      border: 2px solid var(--border-dark);
+      border-radius: 12px;
+      background: #FFF;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 2px 0 rgba(0,0,0,0.08);
+    }
+    .player-pick-card.chosen {
+      background: #EAF4E6;
+      border-color: #5B7B53;
+      box-shadow: 0 0 0 2px #7D9D74;
+    }
+    .player-pick-card .badge-check {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #7D9D74;
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-dark);
+    }
+    .player-pick-card .char-thumb {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-dark);
+      object-fit: cover;
+    }
+
+    /* Secret Card Popup Modal */
+    .secret-popup-card {
+      background: #FFFBEB;
+      border: 2px solid var(--border-dark);
+      border-radius: 18px;
+      padding: 24px 18px;
+      text-align: center;
+      box-shadow: 0 6px 0 var(--border-dark);
+      width: 100%;
+      max-width: 300px;
+      animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .secret-word-display {
+      font-size: 28px;
+      font-weight: 900;
+      color: #92400E;
+      background: #FEF3C7;
+      border: 2px dashed #D97706;
+      border-radius: 14px;
+      padding: 12px;
+      margin: 16px 0;
+      letter-spacing: 2px;
+    }
+
+    /* Typing indicator */
+    .typing-dots {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+      padding: 4px 6px;
+    }
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      animation: dotPulse 1s infinite alternate;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotPulse {
+      0% { transform: scale(0.6); opacity: 0.4; }
+      100% { transform: scale(1.2); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header with Safe Area Navigation -->
+  <header class="top-header">
+    <div class="app-title-wrap">
+      <div class="app-title-brand">
+        Suki<span class="heart">♥</span>
+      </div>
+      <div class="app-title-sub">谁是卧底</div>
+    </div>
+    <div style="display: flex; gap: 6px; align-items: center;">
+      <button class="btn-replay-pill" id="btn-open-replay" title="战局回放与复盘">📜 回放</button>
+      <button class="btn-icon-tiny" id="btn-peek-word" title="查看我的词">👀</button>
+      <button class="btn-icon-tiny" id="btn-open-settings" title="新游戏设置">⚙️</button>
+    </div>
+  </header>
+
+  <!-- Main Game Container -->
+  <main class="game-container" id="game-container">
+
+    <!-- Top Shelf with Player Cards (Matching Screenshot) -->
+    <section class="shelf-wrapper">
+      <div class="shelf-inner" id="shelf-players-list">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- Round Badge & Current Speaker + Countdown -->
+    <div class="round-indicator-pill" id="round-indicator">
+      <span>第 1 轮 开始</span>
+    </div>
+    <div class="turn-speaker-pill" id="turn-speaker-indicator" style="display: none;">
+      <!-- e.g. 🎤 当前发言：3号「小白猫」 <span class="countdown-badge">28s</span> -->
+    </div>
+
+    <!-- Chat & Voting Stream -->
+    <div class="chat-timeline" id="chat-timeline">
+      <!-- Chat bubbles & vote result tape cards will appear here -->
+    </div>
+
+    <!-- Bottom Dock / Action Input Panel -->
+    <div class="bottom-dock">
+      <div class="action-panel" id="action-panel">
+        <!-- Content dynamically switches: User typing / User voting / Next step button -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Setup & Room Size Modal -->
+  <div class="modal-overlay" id="setup-modal" style="display: none;">
+    <div class="modal-sheet">
+      <div class="modal-title">
+        <span>🎮</span> 开启一局「谁是卧底」
+      </div>
+
+      <div>
+        <div class="form-group-title">选择玩家人数（自动平衡卧底数量）</div>
+        <div class="chip-selector-row" id="player-count-chips">
+          <div class="chip-item active" data-count="4">4人 (1卧底)</div>
+          <div class="chip-item" data-count="6">6人 (1卧底)</div>
+          <div class="chip-item" data-count="8">8人 (2卧底)</div>
+          <div class="chip-item" data-count="10">10人 (2卧底)</div>
+          <div class="chip-item" data-count="12">12人 (3卧底)</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="form-group-title">选择上桌的手机AI角色（不足将由NPC补齐）</div>
+        <div class="player-select-grid" id="char-select-grid">
+          <!-- Populated from AiPhone.characters.list() -->
+        </div>
+      </div>
+
+      <div>
+        <div class="form-group-title">词库模式</div>
+        <div class="chip-selector-row" id="wordbank-chips">
+          <div class="chip-item active" data-mode="modern">现代萌趣</div>
+          <div class="chip-item" data-mode="ancient">国风古韵</div>
+          <div class="chip-item" data-mode="mixed">古今混合</div>
+          <div class="chip-item" data-mode="custom">自定义</div>
+        </div>
+        <div id="custom-word-inputs" style="display: none; margin-top: 8px; gap: 6px; flex-direction: column;">
+          <input type="text" id="input-civ-word" class="styled-input" placeholder="平民词（如：油条）" maxlength="10">
+          <input type="text" id="input-und-word" class="styled-input" placeholder="卧底词（如：麻花）" maxlength="10">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 4px;">
+        <button class="btn-big-action" id="btn-modal-open-replay" style="flex: 1; background: #FFFDF8; color: #5C5245; box-shadow: 0 3px 0 var(--border-dark);">
+          <span>📜</span> 战局回放
+        </button>
+        <button class="btn-big-action" id="btn-start-game" style="flex: 2;">
+          <span>✨</span> 立即发词开局！
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secret Word Modal Popup -->
+  <div class="modal-overlay" id="secret-modal" style="display: none;">
+    <div class="secret-popup-card">
+      <div style="font-size: 36px; margin-bottom: 6px;">🤫</div>
+      <div style="font-size: 16px; font-weight: 900; color: #3E342B;">你的专属秘密词语</div>
+      <div class="secret-word-display" id="popup-secret-word">——</div>
+      <div style="font-size: 12px; color: #8C8275; margin-bottom: 14px;">
+        请在发言环节描述它，但不要直接说出词语哦！
+      </div>
+      <button class="btn-big-action" id="btn-close-secret" style="height: 40px;">
+        记住了，开始游戏！
+      </button>
+    </div>
+  </div>
+
+  <!-- Replay History & AI Summary Modal -->
+  <div class="modal-overlay" id="replay-modal" style="display: none;">
+    <div class="modal-sheet" style="max-height: 88vh;">
+      <div class="modal-title" style="justify-content: space-between;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span>📜</span> 战局回放 (最近7场)
+        </div>
+        <button class="btn-icon-tiny" id="btn-close-replay" style="width:28px;height:28px;font-size:12px;">✕</button>
+      </div>
+
+      <div id="replay-list-view" style="display:flex; flex-direction:column; gap:10px;">
+        <!-- Injected list of games -->
+      </div>
+
+      <!-- Detail / Replay View -->
+      <div id="replay-detail-view" style="display:none; flex-direction:column; gap:10px;">
+        <button class="secret-peek-btn" id="btn-back-to-replay-list" style="align-self:flex-start;">← 返回战局列表</button>
+        <div id="replay-detail-content"></div>
+        <button class="btn-big-action" id="btn-generate-ai-summary" style="background:#5B7B53;">
+          <span>🤖</span> 生成本局 AI 趣味复盘与犀利点评
+        </button>
+        <div id="replay-ai-summary-wrap" style="display:none; flex-direction:column; gap:8px;">
+          <div id="replay-ai-summary-box" style="background:#F5EFE6; border:2px dashed #B89B72; border-radius:12px; padding:12px; font-size:13px; line-height:1.55; color:#3E342B; user-select:text;">
+            <!-- AI Summary stream text -->
+          </div>
+          <button class="btn-big-action" id="btn-copy-ai-summary" style="height:36px; font-size:13px; background:#FFFDF8; color:#5C5245; box-shadow:0 2px 0 var(--border-dark);">
+            <span>📋</span> 一键复制 AI 点评
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 谁是卧底 · 核心状态与词库
+    // ==========================================
+    const WORD_BANKS = {
+      modern: [
+        { civilian: "油条", undercover: "麻花" },
+        { civilian: "咖啡", undercover: "奶茶" },
+        { civilian: "玫瑰", undercover: "月季" },
+        { civilian: "汉堡包", undercover: "肉夹馍" },
+        { civilian: "气球", undercover: "泡泡" },
+        { civilian: "眉毛", undercover: "睫毛" },
+        { civilian: "围巾", undercover: "手套" },
+        { civilian: "沐浴露", undercover: "洗发水" },
+        { civilian: "麦当劳", undercover: "肯德基" },
+        { civilian: "微信", undercover: "QQ" },
+        { civilian: "蜘蛛侠", undercover: "蝙蝠侠" },
+        { civilian: "自拍", undercover: "拍照" },
+        { civilian: "拖鞋", undercover: "凉鞋" },
+        { civilian: "葡萄", undercover: "提子" },
+        { civilian: "枕头", undercover: "抱枕" },
+        { civilian: "橙子", undercover: "橘子" },
+        { civilian: "烤肉", undercover: "火锅" },
+        { civilian: "晴天", undercover: "阴天" },
+        { civilian: "面包", undercover: "蛋糕" },
+        { civilian: "自行车", undercover: "电动车" },
+        { civilian: "猫咪", undercover: "狗狗" },
+        { civilian: "西瓜", undercover: "哈密瓜" },
+        { civilian: "可乐", undercover: "雪碧" },
+        { civilian: "口红", undercover: "唇膏" },
+        { civilian: "雨伞", undercover: "雨衣" }
+      ],
+      ancient: [
+        { civilian: "毛笔", undercover: "拂尘" },
+        { civilian: "折扇", undercover: "团扇" },
+        { civilian: "古筝", undercover: "古琴" },
+        { civilian: "佩剑", undercover: "匕首" },
+        { civilian: "月饼", undercover: "桂花糕" },
+        { civilian: "灯笼", undercover: "烛台" },
+        { civilian: "围棋", undercover: "象棋" },
+        { civilian: "美酒", undercover: "清茶" },
+        { civilian: "信鸽", undercover: "驿站" },
+        { civilian: "纸鸢", undercover: "飞鸟" },
+        { civilian: "荷花", undercover: "荷叶" },
+        { civilian: "发簪", undercover: "步摇" },
+        { civilian: "香囊", undercover: "荷包" },
+        { civilian: "砚台", undercover: "镇纸" },
+        { civilian: "客栈", undercover: "酒楼" },
+        { civilian: "银两", undercover: "铜钱" },
+        { civilian: "轻舟", undercover: "竹筏" },
+        { civilian: "面具", undercover: "面纱" },
+        { civilian: "弓箭", undercover: "弹弓" },
+        { civilian: "桃花", undercover: "樱花" },
+        { civilian: "眉毛", undercover: "睫毛" }
+      ]
+    };
+
+    const NPC_ROSTER = [
+      { id: "npc_cat", name: "小白猫", avatarEmoji: "🐱", persona: "软萌可爱，喜欢用'喵'或者软糯的语气" },
+      { id: "npc_hamster", name: "仓鼠君", avatarEmoji: "🐹", persona: "机智小心谨慎，说话简练" },
+      { id: "npc_shiba", name: "柴犬酱", avatarEmoji: "🐶", persona: "元气满满，热情直爽" },
+      { id: "npc_rabbit", name: "布丁兔", avatarEmoji: "🐰", persona: "文静内敛，用词温柔" },
+      { id: "npc_bear", name: "小熊宝", avatarEmoji: "🐻", persona: "憨厚老实，经常联想到吃" },
+      { id: "npc_fox", name: "赤狐狸", avatarEmoji: "🦊", persona: "古灵精怪，描述充满谜语" },
+      { id: "npc_penguin", name: "企鹅冻冻", avatarEmoji: "🐧", persona: "有点冷幽默，慢吞吞" },
+      { id: "npc_panda", name: "波波熊", avatarEmoji: "🐼", persona: "悠闲随和，说话接地气" },
+      { id: "npc_otter", name: "水獭贝贝", avatarEmoji: "🦦", persona: "好奇心强，活泼搞怪" },
+      { id: "npc_duck", name: "小可鸭", avatarEmoji: "🦆", persona: "喜欢嘎嘎笑，思路清奇" },
+      { id: "npc_seal", name: "海豹球", avatarEmoji: "🦭", persona: "圆滚滚很佛系" }
+    ];
+
+    const RANDOM_USER_AVATARS = ["🐱", "🐰", "🐻", "🦊", "🐶", "🐼", "🐹", "🐯", "🐨", "🐥"];
+
+    // Game Runtime State
+    const gameState = {
+      playerCount: 4,
+      undercoverCount: 1,
+      selectedCharIds: [],
+      availableChars: [],
+      userProfile: { name: "你", avatar: "", avatarEmoji: "🐱" },
+      players: [], // { id, name, avatar, avatarEmoji, isUser, isAIChar, charId, role: 'civilian'|'undercover', word, isAlive: true, descriptions: [] }
+      civilianWord: "",
+      undercoverWord: "",
+      round: 1,
+      phase: "init", // 'init' | 'describing' | 'user_turn' | 'voting' | 'user_vote' | 'pk' | 'game_over'
+      currentTurnIndex: 0,
+      turnOrder: [], // player indexes
+      historyVotes: [],
+      isPkRound: false,
+      pkPlayers: [],
+      winner: null, // 'civilian' | 'undercover'
+      gameLogs: [] // Full event log for replays
+    };
+
+    // DOM Elements
+    const shelfPlayersList = document.getElementById("shelf-players-list");
+    const roundIndicator = document.getElementById("round-indicator");
+    const turnSpeakerIndicator = document.getElementById("turn-speaker-indicator");
+    const chatTimeline = document.getElementById("chat-timeline");
+    const actionPanel = document.getElementById("action-panel");
+    const gameContainer = document.getElementById("game-container");
+    const setupModal = document.getElementById("setup-modal");
+    const secretModal = document.getElementById("secret-modal");
+    const popupSecretWord = document.getElementById("popup-secret-word");
+
+    // 30s Countdown timer state
+    let turnTimerInterval = null;
+    let turnRemainingSeconds = 30;
+
+    function startTurnCountdown(player, playerIdx, onTimeout) {
+      clearInterval(turnTimerInterval);
+      turnRemainingSeconds = 30;
+
+      const updateUI = () => {
+        const isUrgent = turnRemainingSeconds <= 5;
+        // Top banner
+        turnSpeakerIndicator.style.display = "flex";
+        turnSpeakerIndicator.innerHTML = `
+          <span>🎤 当前发言：<strong>${playerIdx + 1}号 ${player.name}</strong></span>
+          <span class="countdown-badge ${isUrgent ? 'urgent' : ''}">⏱️ ${turnRemainingSeconds}s</span>
+        `;
+        // Bottom badge if exists
+        const bottomBadge = document.getElementById("bottom-turn-timer");
+        if (bottomBadge) {
+          bottomBadge.innerHTML = `⏱️ ${turnRemainingSeconds}s`;
+          if (isUrgent) bottomBadge.classList.add("urgent");
+          else bottomBadge.classList.remove("urgent");
+        }
+      };
+
+      updateUI();
+
+      turnTimerInterval = setInterval(() => {
+        turnRemainingSeconds--;
+        if (turnRemainingSeconds <= 0) {
+          clearInterval(turnTimerInterval);
+          updateUI();
+          if (onTimeout) onTimeout();
+        } else {
+          updateUI();
+        }
+      }, 1000);
+    }
+
+    function stopTurnCountdown() {
+      clearInterval(turnTimerInterval);
+      turnSpeakerIndicator.style.display = "none";
+    }
+
+    // ==========================================
+    // SDK 初始化与角色加载
+    // ==========================================
+    async function initSDK() {
+      // Pick a random cartoon emoji fallback for user
+      gameState.userProfile.avatarEmoji = RANDOM_USER_AVATARS[Math.floor(Math.random() * RANDOM_USER_AVATARS.length)];
+
+      if (window.AiPhone) {
+        try {
+          const chars = await window.AiPhone.characters.list();
+          gameState.availableChars = chars || [];
+        } catch (e) {
+          console.warn("读取角色列表失败:", e);
+        }
+
+        try {
+          const user = await window.AiPhone.user.getProfile();
+          if (user) {
+            if (user.name) gameState.userProfile.name = user.name;
+            if (user.avatar) {
+              gameState.userProfile.avatar = user.avatar;
+            }
+          }
+        } catch (e) {
+          console.warn("读取用户资料失败:", e);
+        }
+      }
+      renderSetupModal();
+      showSetupModal();
+    }
+
+    // ==========================================
+    // 渲染 Setup 弹窗
+    // ==========================================
+    function renderSetupModal() {
+      const grid = document.getElementById("char-select-grid");
+      grid.innerHTML = "";
+
+      if (gameState.availableChars.length === 0) {
+        grid.innerHTML = `<div style="grid-column: 1/-1; font-size: 12px; color: #8C8275; text-align: center; padding: 8px;">小手机中暂无AI角色，将全部使用萌萌NPC补齐~</div>`;
+      } else {
+        gameState.availableChars.forEach(c => {
+          const isChosen = gameState.selectedCharIds.includes(c.id);
+          const card = document.createElement("div");
+          card.className = `player-pick-card ${isChosen ? 'chosen' : ''}`;
+          card.innerHTML = `
+            ${isChosen ? '<div class="badge-check">✓</div>' : ''}
+            ${c.avatar ? `<img src="${c.avatar}" class="char-thumb">` : `<div style="font-size:24px;">🤖</div>`}
+            <span style="font-size: 11px; font-weight: 800; max-width: 68px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.name}</span>
+          `;
+          card.onclick = () => {
+            if (gameState.selectedCharIds.includes(c.id)) {
+              gameState.selectedCharIds = gameState.selectedCharIds.filter(id => id !== c.id);
+            } else {
+              if (gameState.selectedCharIds.length < gameState.playerCount - 1) {
+                gameState.selectedCharIds.push(c.id);
+              } else {
+                toast(`最多只能带 ${gameState.playerCount - 1} 位角色上桌哦`);
+              }
+            }
+            renderSetupModal();
+          };
+          grid.appendChild(card);
+        });
+      }
+    }
+
+    function showSetupModal() {
+      setupModal.style.display = "flex";
+    }
+
+    function hideSetupModal() {
+      setupModal.style.display = "none";
+    }
+
+    // ==========================================
+    // 游戏初始化与发词
+    // ==========================================
+    function startNewGame() {
+      const activeMode = document.querySelector("#wordbank-chips .active")?.dataset.mode || "modern";
+      if (activeMode === "custom") {
+        const civInput = document.getElementById("input-civ-word").value.trim();
+        const undInput = document.getElementById("input-und-word").value.trim();
+        if (!civInput || !undInput) {
+          toast("请填写平民词和卧底词哦！");
+          return;
+        }
+        if (civInput === undInput) {
+          toast("平民词和卧底词不能一样哦！");
+          return;
+        }
+        gameState.civilianWord = civInput;
+        gameState.undercoverWord = undInput;
+      } else {
+        let pool = WORD_BANKS.modern;
+        if (activeMode === "ancient") {
+          pool = WORD_BANKS.ancient;
+        } else if (activeMode === "mixed") {
+          pool = [...WORD_BANKS.modern, ...WORD_BANKS.ancient];
+        }
+
+        const pair = pool[Math.floor(Math.random() * pool.length)];
+        // Randomly swap so civilian and undercover words aren't fixed order
+        if (Math.random() > 0.5) {
+          gameState.civilianWord = pair.civilian;
+          gameState.undercoverWord = pair.undercover;
+        } else {
+          gameState.civilianWord = pair.undercover;
+          gameState.undercoverWord = pair.civilian;
+        }
+      }
+
+      // Undercover balance
+      const total = gameState.playerCount;
+      let undCount = 1;
+      if (total >= 8 && total < 12) undCount = 2;
+      if (total >= 12) undCount = 3;
+      gameState.undercoverCount = undCount;
+
+      // Build players roster
+      const rawPlayers = [];
+
+      // 1. User (will be shuffled randomly in the seats)
+      rawPlayers.push({
+        id: "user",
+        name: gameState.userProfile.name || "我",
+        avatar: gameState.userProfile.avatar || "",
+        avatarEmoji: gameState.userProfile.avatarEmoji || "🐱",
+        isUser: true,
+        isAIChar: false,
+        role: "civilian",
+        word: "",
+        isAlive: true,
+        descriptions: []
+      });
+
+      // 2. Selected AI Characters
+      gameState.selectedCharIds.slice(0, total - 1).forEach(charId => {
+        const c = gameState.availableChars.find(x => x.id === charId);
+        if (c) {
+          rawPlayers.push({
+            id: `char_${c.id}`,
+            name: c.name,
+            avatar: c.avatar || "",
+            avatarEmoji: "🤖",
+            isUser: false,
+            isAIChar: true,
+            charId: c.id,
+            persona: c.personality || c.description || "普通玩家",
+            role: "civilian",
+            word: "",
+            isAlive: true,
+            descriptions: []
+          });
+        }
+      });
+
+      // 3. NPC fill
+      let npcIdx = 0;
+      while (rawPlayers.length < total) {
+        const npc = NPC_ROSTER[npcIdx % NPC_ROSTER.length];
+        rawPlayers.push({
+          id: `npc_${npc.id}_${rawPlayers.length}`,
+          name: npc.name,
+          avatar: "",
+          avatarEmoji: npc.avatarEmoji,
+          isUser: false,
+          isAIChar: false,
+          persona: npc.persona,
+          role: "civilian",
+          word: "",
+          isAlive: true,
+          descriptions: []
+        });
+        npcIdx++;
+      }
+
+      // Shuffle entire seat order so User is randomly seated (e.g. 1号, 3号, 5号...)
+      for (let i = rawPlayers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [rawPlayers[i], rawPlayers[j]] = [rawPlayers[j], rawPlayers[i]];
+      }
+
+      // Assign undercover roles randomly among the shuffled players
+      const indices = Array.from({ length: total }, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      const undercoverIndices = indices.slice(0, undCount);
+
+      rawPlayers.forEach((p, idx) => {
+        if (undercoverIndices.includes(idx)) {
+          p.role = "undercover";
+          p.word = gameState.undercoverWord;
+        } else {
+          p.role = "civilian";
+          p.word = gameState.civilianWord;
+        }
+      });
+
+      gameState.players = rawPlayers;
+      gameState.round = 1;
+      gameState.phase = "describing";
+      gameState.turnOrder = [];
+      gameState.currentTurnIndex = 0;
+      gameState.historyVotes = [];
+      gameState.isPkRound = false;
+      gameState.pkPlayers = [];
+      gameState.winner = null;
+      gameState.gameLogs = [];
+
+      hideSetupModal();
+      chatTimeline.innerHTML = "";
+      renderTopShelf();
+
+      // Show Secret Word to user
+      const userPlayer = gameState.players.find(p => p.isUser);
+      if (userPlayer) {
+        popupSecretWord.innerText = userPlayer.word;
+        secretModal.style.display = "flex";
+      } else {
+        startRound();
+      }
+    }
+
+    // ==========================================
+    // 顶部角色架渲染（严格对标原图风格）
+    // ==========================================
+    function renderTopShelf(showAll = false) {
+      shelfPlayersList.innerHTML = "";
+
+      gameState.players.forEach((p, idx) => {
+        const card = document.createElement("div");
+        card.className = "player-card-shelf";
+
+        // Word Box Logic
+        let wordText = "?";
+        let wordClass = "secret";
+        if (showAll || gameState.winner) {
+          wordText = p.word;
+          wordClass = p.role === "undercover" ? "undercover" : "civilian";
+        } else if (p.isUser) {
+          wordText = p.word;
+          wordClass = "civilian"; // User sees their word but doesn't spoil role tag
+        }
+
+        // Victory Ribbon Logic
+        let showRibbon = false;
+        if (gameState.winner) {
+          if (gameState.winner === "civilian" && p.role === "civilian") showRibbon = true;
+          if (gameState.winner === "undercover" && p.role === "undercover") showRibbon = true;
+        }
+
+        // Role tag with player number & name
+        let roleTagText = `${idx + 1}号 ${p.name}`;
+        let roleTagClass = "unknown";
+        if (showAll || gameState.winner) {
+          roleTagText = `${idx + 1}号 ${p.role === "undercover" ? "卧底" : "平民"}`;
+          roleTagClass = p.role;
+        }
+
+        card.innerHTML = `
+          <div class="shelf-word-box ${wordClass}">
+            ${wordText}
+          </div>
+          <div class="shelf-avatar-wrap ${!p.isAlive ? 'is-out' : ''}">
+            ${showRibbon ? '<div class="shelf-victory-ribbon" style="display:block;">胜利</div>' : ''}
+            ${p.avatar ? `<img src="${p.avatar}">` : `<span class="avatar-fallback">${p.avatarEmoji || '🐱'}</span>`}
+          </div>
+          <div class="shelf-role-tag ${roleTagClass}" style="max-width: 72px; overflow: hidden; text-overflow: ellipsis;">
+            ${roleTagText}
+          </div>
+        `;
+
+        shelfPlayersList.appendChild(card);
+      });
+    }
+
+    // ==========================================
+    // 流程推进：描述环节
+    // ==========================================
+    function startRound() {
+      gameState.phase = "describing";
+      gameState.isPkRound = false;
+      gameState.pkPlayers = [];
+
+      roundIndicator.innerHTML = `<span>第 ${gameState.round} 轮 开始</span>`;
+      renderTopShelf();
+
+      // Living players in order
+      gameState.turnOrder = gameState.players
+        .map((p, idx) => ({ p, idx }))
+        .filter(item => item.p.isAlive)
+        .map(item => item.idx);
+
+      gameState.currentTurnIndex = 0;
+      processNextTurn();
+    }
+
+    function startPkRound(tiedPlayerIndexes) {
+      gameState.phase = "pk";
+      gameState.isPkRound = true;
+      gameState.pkPlayers = tiedPlayerIndexes;
+
+      roundIndicator.innerHTML = `<span>⏳ 平票 PK 环节</span>`;
+      addSystemBanner(`平票出现！请 ${tiedPlayerIndexes.map(i => `${i+1}号(${gameState.players[i].name})`).join("、")} 再补充一轮描述！`);
+
+      gameState.turnOrder = [...tiedPlayerIndexes];
+      gameState.currentTurnIndex = 0;
+      processNextTurn();
+    }
+
+    async function processNextTurn() {
+      stopTurnCountdown();
+
+      if (gameState.currentTurnIndex >= gameState.turnOrder.length) {
+        // All descriptions finished -> Move to Voting
+        setTimeout(() => {
+          startVotingPhase();
+        }, 800);
+        return;
+      }
+
+      const playerIdx = gameState.turnOrder[gameState.currentTurnIndex];
+      const player = gameState.players[playerIdx];
+
+      if (player.isUser) {
+        // User turn with 30s countdown
+        renderUserDescribeInput(player, playerIdx);
+      } else {
+        // AI / NPC turn with 30s countdown
+        renderAITurnWaiting(player, playerIdx);
+        startTurnCountdown(player, playerIdx, () => {
+          console.log("AI turn timeout fallback triggered");
+        });
+        await generateAIDescription(player, playerIdx);
+      }
+    }
+
+    function renderUserDescribeInput(player, playerIdx) {
+      actionPanel.innerHTML = `
+        <div class="turn-status-header">
+          <div class="turn-status-title">
+            <span>🗣 轮到</span>
+            <span class="player-highlight">${playerIdx + 1}号 ${player.name} (你)</span>
+            <span>发言</span>
+          </div>
+          <div class="turn-timer-badge" id="bottom-turn-timer">⏱️ 30s</div>
+        </div>
+        <div class="prompt-tip">
+          <span>请描述你的词，切勿提及词语本身：</span>
+          <button class="secret-peek-btn" id="btn-dock-peek">👀 我的词: ${player.word}</button>
+        </div>
+        <div class="input-row">
+          <input type="text" id="user-desc-input" class="styled-input" placeholder="输入一句话描述你的词（不能有原词）..." maxlength="30">
+          <button class="btn-send" id="btn-submit-desc">发言</button>
+        </div>
+      `;
+
+      const input = document.getElementById("user-desc-input");
+      const btn = document.getElementById("btn-submit-desc");
+      const btnPeek = document.getElementById("btn-dock-peek");
+
+      btnPeek.onclick = () => {
+        popupSecretWord.innerText = player.word;
+        secretModal.style.display = "flex";
+      };
+
+      input.focus();
+      input.onkeydown = (e) => {
+        if (e.key === "Enter") btn.click();
+      };
+
+      // Start 30s Countdown for user
+      startTurnCountdown(player, playerIdx, () => {
+        // Timeout auto submit fallback
+        toast("发言时间已到，系统自动代你说了一句！");
+        const defaultClues = ["大家都懂的，我就不多说了", "感觉挺常见的", "我赞同前面朋友的说法", "这个东西很多人都喜欢"];
+        const autoText = defaultClues[Math.floor(Math.random() * defaultClues.length)];
+        
+        stopTurnCountdown();
+        appendChatBubble(player, playerIdx, autoText, true);
+        player.descriptions.push(autoText);
+
+        gameState.currentTurnIndex++;
+        processNextTurn();
+      });
+
+      btn.onclick = () => {
+        const text = input.value.trim();
+        if (!text) {
+          toast("请说一句描述哦~");
+          return;
+        }
+        if (text.includes(player.word)) {
+          toast("不能直接说出自己的词语哦！");
+          return;
+        }
+
+        stopTurnCountdown();
+
+        // Add user chat bubble
+        appendChatBubble(player, playerIdx, text, true);
+        player.descriptions.push(text);
+
+        gameState.currentTurnIndex++;
+        processNextTurn();
+      };
+    }
+
+    function renderAITurnWaiting(player, playerIdx) {
+      actionPanel.innerHTML = `
+        <div class="turn-status-header">
+          <div class="turn-status-title">
+            <span>🗣 轮到</span>
+            <span class="player-highlight">${playerIdx + 1}号 ${player.name}</span>
+            <span>发言</span>
+          </div>
+          <div class="turn-timer-badge" id="bottom-turn-timer">⏱️ 30s</div>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 800; color: #5B7B53; padding: 4px 0;">
+          <span>⏳ ${player.name} 正在思考组织语言...</span>
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+        </div>
+      `;
+    }
+
+    // Generate AI Description using SDK or intelligent fallback
+    async function generateAIDescription(player, playerIdx) {
+      // Gather context of previous speeches in this game
+      const historyContext = gameState.players
+        .filter(p => p.descriptions.length > 0)
+        .map((p, idx) => `${p.name}说: "${p.descriptions[p.descriptions.length - 1]}"`)
+        .join("\n");
+
+      const isUnd = player.role === "undercover";
+      let strategyInstruction = "";
+
+      if (isUnd) {
+        strategyInstruction = `【卧底深度博弈策略】：
+- 你现在拿到的是词语【${player.word}】。注意：你很可能是场上唯一的卧底，平民拿到的词是另一个近义词！
+- 你的核心目标：绝对不能暴露！你要通过观察前面其他人的发言，去推测大家大概在描述什么大类（例如都是食物、文具、乐器等）。
+- 发言策略：找大范围的共同特征（比如“很多人都见过”、“在某些特定场合很受欢迎”、“外观有独特的颜色或质感”），或者顺着前面某个人的思路巧妙附和，千万不要说出过于特异、孤立的细节，模棱两可混入大部队！`;
+      } else {
+        strategyInstruction = `【平民试探与对暗号策略】：
+- 你拿到的词是【${player.word}】。
+- 你的目标：用隐晦、高级的“暗号”试探同伴，既能让拥有相同词语的平民会心一笑，又不要太明显直接让卧底一眼猜出底牌。
+- 观察前人的发言，如果你发现有人发言特别笼统划水或方向走偏，可以适度在发言中加深一点点特征做试探。`;
+      }
+
+      let prompt = `你正在参加一场高智商派对游戏《谁是卧底》。
+你的名字是【${player.name}】。
+你的词语是【${player.word}】。
+${historyContext ? `【前面玩家已有的发言记录】：\n${historyContext}\n` : '你是首位发言者，请给出一个既有范围又不过于具体的精妙开场！\n'}
+${strategyInstruction}
+
+严格输出要求：
+1. 请用一句话（10~25字）自然地描述，不能太白话太简单，要真假难辨、充满心理战博弈！
+2. 绝对不能出现“${player.word}”这几个字或同音字！
+3. 符合你的性格与说话口吻（${player.persona || '自然机智'}）。
+4. 只能输出这一句描述文本，不要加任何多余的开场白、引号或括号解释！`;
+
+      let descriptionText = "";
+
+      if (window.AiPhone && window.AiPhone.ai) {
+        try {
+          if (player.isAIChar && player.charId && window.AiPhone.ai.generate) {
+            const res = await window.AiPhone.ai.generate({
+              characterId: player.charId,
+              instruction: prompt
+            });
+            descriptionText = res.text?.trim();
+          } else if (window.AiPhone.ai.chat) {
+            const res = await window.AiPhone.ai.chat({
+              messages: [
+                { role: "system", content: "你是谁是卧底游戏中的高智商且萌趣的玩家。" },
+                { role: "user", content: prompt }
+              ],
+              timeoutMs: 8000
+            });
+            descriptionText = res.text?.trim() || res.message?.content?.trim();
+          }
+        } catch (e) {
+          console.warn("AI调用生成描述异常，使用精选预设:", e);
+        }
+      }
+
+      // Smart heuristic fallback if AI unavailable or timeout
+      if (!descriptionText || descriptionText.includes(player.word) || descriptionText.length > 40) {
+        descriptionText = generateFallbackClue(player.word, player.descriptions.length);
+      }
+
+      // Clean up punctuation wrappers
+      descriptionText = descriptionText.replace(/^["'“‘]|["'”’]$/g, '').replace(/^[1-9号：:]+/, '');
+
+      // Fake short delay for natural rhythm
+      await new Promise(r => setTimeout(r, 900 + Math.random() * 600));
+
+      appendChatBubble(player, playerIdx, descriptionText, false);
+      player.descriptions.push(descriptionText);
+
+      gameState.currentTurnIndex++;
+      processNextTurn();
+    }
+
+    function generateFallbackClue(word, turnCount) {
+      const clueMap = {
+        "油条": ["是一种常见的早餐食品", "吃起来酥酥脆脆的", "通常是金黄色的长条状", "配豆浆特别搭"],
+        "麻花": ["吃起来甜甜的，还很酥脆", "形状是扭在一起的", "属于传统面点小吃", "可以放很久当零食"],
+        "咖啡": ["有人喜欢加糖，有人喜欢不加", "热的时候喝很舒服", "晚上喝多了可能会睡不着", "外面卖的通常用纸杯装"],
+        "奶茶": ["深受年轻人喜爱的饮品", "里面经常会加珍珠或者椰果", "甜甜的很好喝", "逛街的时候常常人手一杯"],
+        "玫瑰": ["象征着浪漫和爱情", "枝干上通常有小刺", "花朵很鲜艳美丽", "情人节经常有人送"],
+        "月季": ["在很多公园花坛都能看到", "一年四季经常开花", "颜色很丰富", "叶子比较光滑"],
+        "汉堡包": ["有两片面包夹着肉", "快餐店的代表性食物", "吃一个就很管饱", "经常配薯条一起吃"],
+        "肉夹馍": ["外面的皮烤得很香", "里面夹着满满的肉馅", "特色地方小吃", "咬下去满满肉汁"],
+        "气球": ["充气之后会变大", "小孩子特别喜欢玩", "一不小心容易戳破", "可以飘在空中"],
+        "泡泡": ["在阳光下五颜六色的", "碰到就会瞬间破掉", "用肥皂水可以吹出来", "很轻盈很梦幻"],
+        "眉毛": ["长在眼睛上方", "可以做各种挑动的表情", "有些人会修剪或者画它", "表达喜怒哀乐很明显"],
+        "睫毛": ["长在眼皮的边缘", "眨眼的时候会跟着动", "可以阻挡灰尘进眼睛", "有人喜欢刷得长长翘翘的"],
+        "毛笔": ["属于文房用具", "需要配合墨汁使用", "笔头通常很柔软", "能写出不同粗细的线条"],
+        "拂尘": ["由木柄和细长丝束组成", "常在道观或古装剧中见到", "可以用来驱赶蚊蝇拂去尘土", "持在手中有出尘之感"],
+        "折扇": ["天热时拿在手中扇风", "不用时可以聚拢合上", "扇面上常有字画题墨", "开合时姿态优雅"],
+        "团扇": ["扇面呈圆月或芭蕉形", "不能像折扇那样收拢", "古代女子常持之掩面", "扇柄上常系有流苏饰物"],
+        "古筝": ["是一种传统弹拨弦乐器", "弹奏时通常戴着指甲", "琴弦下方有排布整齐的雁柱", "音色清脆明亮如流水"],
+        "古琴": ["自古为文人四艺之一", "琴身通常为七根弦", "音色深沉悠远而内敛", "抚琴常需焚香静心"],
+        "佩剑": ["金属锻造的双刃兵器", "常佩挂在腰间或负于身后", "剑身修长且两侧开刃", "有百兵之君的美誉"],
+        "匕首": ["属于短小精悍的贴身利刃", "便于暗中藏在衣袖或靴中", "近身防卫或出其不意时使用", "刃长通常不过尺余"]
+      };
+
+      if (clueMap[word]) {
+        const list = clueMap[word];
+        return list[turnCount % list.length];
+      }
+
+      // Generic smart clues
+      const genericClues = [
+        "日常生活中经常会接触到",
+        "大家应该都对它不陌生",
+        "很多时候需要用到它",
+        "在特定场合很受欢迎",
+        "外观特征比较明显",
+        "有不同款式和种类"
+      ];
+      return genericClues[Math.floor(Math.random() * genericClues.length)];
+    }
+
+    function appendChatBubble(player, playerIdx, text, isUser) {
+      // Record to game log
+      gameState.gameLogs.push({
+        type: "speech",
+        round: gameState.round,
+        isPk: gameState.isPkRound,
+        playerIdx,
+        playerName: player.name,
+        avatar: player.avatar,
+        avatarEmoji: player.avatarEmoji,
+        role: player.role,
+        word: player.word,
+        text
+      });
+
+      const row = document.createElement("div");
+      row.className = `chat-row ${isUser ? 'user-row' : ''}`;
+
+      row.innerHTML = `
+        <div class="chat-avatar-box">
+          ${player.avatar ? `<img src="${player.avatar}">` : `<span class="avatar-fallback">${player.avatarEmoji || '🐱'}</span>`}
+          <span class="chat-player-num">${playerIdx + 1}</span>
+        </div>
+        <div class="chat-content-wrap">
+          <span class="chat-sender-name">${player.name} (${playerIdx + 1}号)</span>
+          <div class="chat-bubble ${isUser ? '' : ''}">
+            ${escapeHtml(text)}
+          </div>
+        </div>
+      `;
+
+      chatTimeline.appendChild(row);
+      scrollToBottom();
+    }
+
+    function addSystemBanner(text) {
+      const banner = document.createElement("div");
+      banner.style.cssText = "text-align: center; font-size: 12px; font-weight: 800; color: #8C8275; margin: 8px 0;";
+      banner.innerHTML = `<span style="background:#FFF; padding:3px 12px; border-radius:12px; border:1px solid #DDD;">${text}</span>`;
+      chatTimeline.appendChild(banner);
+      scrollToBottom();
+    }
+
+    // ==========================================
+    // 投票环节
+    // ==========================================
+    function startVotingPhase() {
+      stopTurnCountdown();
+      gameState.phase = "voting";
+      addSystemBanner("🗳 描述结束，请所有人公开投票，找出你怀疑的卧底！");
+
+      const livingPlayers = gameState.players
+        .map((p, idx) => ({ p, idx }))
+        .filter(item => item.p.isAlive);
+
+      // Candidates can be all alive players, or if PK, only pk players
+      const candidateList = gameState.isPkRound
+        ? livingPlayers.filter(item => gameState.pkPlayers.includes(item.idx))
+        : livingPlayers;
+
+      // Check if user is alive
+      const userPlayer = gameState.players.find(p => p.isUser);
+      if (userPlayer && userPlayer.isAlive) {
+        renderUserVotingGrid(candidateList);
+      } else {
+        // User already out, auto simulate votes
+        simulateAllVotes(candidateList, null);
+      }
+    }
+
+    function renderUserVotingGrid(candidateList) {
+      const userIdx = gameState.players.findIndex(p => p.isUser);
+
+      // User cannot vote for themselves
+      const voteable = candidateList.filter(c => c.idx !== userIdx);
+
+      actionPanel.innerHTML = `
+        <div class="prompt-tip">
+          <span>🗳 投票环节：请选择你怀疑的卧底（1票）</span>
+        </div>
+        <div class="vote-candidate-grid">
+          ${voteable.map(c => `
+            <div class="vote-card-btn" data-target-idx="${c.idx}">
+              <div class="btn-avatar">
+                ${c.p.avatar ? `<img src="${c.p.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : c.p.avatarEmoji}
+              </div>
+              <span class="btn-name">${c.idx + 1}号 ${c.p.name}</span>
+            </div>
+          `).join("")}
+        </div>
+        <button class="btn-big-action" id="btn-confirm-vote" disabled style="margin-top: 4px;">
+          确认投票
+        </button>
+      `;
+
+      let selectedTargetIdx = null;
+      const cards = actionPanel.querySelectorAll(".vote-card-btn");
+      const confirmBtn = document.getElementById("btn-confirm-vote");
+
+      cards.forEach(card => {
+        card.onclick = () => {
+          cards.forEach(c => c.classList.remove("selected"));
+          card.classList.add("selected");
+          selectedTargetIdx = parseInt(card.dataset.targetIdx, 10);
+          confirmBtn.disabled = false;
+          confirmBtn.innerText = `投给 ${selectedTargetIdx + 1}号 ${gameState.players[selectedTargetIdx].name}`;
+        };
+      });
+
+      confirmBtn.onclick = () => {
+        if (selectedTargetIdx === null) return;
+        confirmBtn.disabled = true;
+        simulateAllVotes(candidateList, selectedTargetIdx);
+      };
+    }
+
+    async function simulateAllVotes(candidateList, userVoteTargetIdx) {
+      actionPanel.innerHTML = `
+        <div style="text-align: center; font-size: 13px; font-weight: 800; color: #D97706; padding: 6px;">
+          📊 正在收集大家全票唱票中...
+        </div>
+      `;
+
+      const votes = []; // { voterIdx, targetIdx }
+      const livingPlayers = gameState.players
+        .map((p, idx) => ({ p, idx }))
+        .filter(item => item.p.isAlive);
+
+      // 1. Record user vote if user is alive
+      const userIdx = gameState.players.findIndex(p => p.isUser);
+      if (userVoteTargetIdx !== null && gameState.players[userIdx].isAlive) {
+        votes.push({ voterIdx: userIdx, targetIdx: userVoteTargetIdx });
+      }
+
+      // 2. Simulate AI/NPC votes
+      for (const item of livingPlayers) {
+        if (item.idx === userIdx) continue;
+
+        // Target options: cannot vote for self, must be in candidateList
+        let options = candidateList.filter(c => c.idx !== item.idx);
+        if (options.length === 0) options = candidateList;
+
+        // Enhanced realistic voting & social deduction logic
+        let target = null;
+        const voterIsUnd = item.p.role === "undercover";
+
+        if (voterIsUnd) {
+          // Undercover wants to blend in: vote a civilian who seems slightly suspicious or follow the crowd
+          const civOptions = options.filter(c => c.p.role === "civilian");
+          target = civOptions.length > 0 ? civOptions[Math.floor(Math.random() * civOptions.length)] : options[0];
+        } else {
+          // Civilian voter logic:
+          // Civilians don't have god view! They analyze suspicion based on round progress and differences
+          const undercovers = options.filter(c => c.p.role === "undercover");
+          const suspicionThreshold = Math.min(0.22 + (gameState.round - 1) * 0.12, 0.50);
+
+          if (undercovers.length > 0 && Math.random() < suspicionThreshold) {
+            target = undercovers[Math.floor(Math.random() * undercovers.length)];
+          } else {
+            // Misdirection: civilian votes another player
+            target = options[Math.floor(Math.random() * options.length)];
+          }
+        }
+
+        if (target) {
+          votes.push({ voterIdx: item.idx, targetIdx: target.idx });
+        }
+      }
+
+      // Sort votes by voter index
+      votes.sort((a, b) => a.voterIdx - b.voterIdx);
+
+      // Render Result Tape Card (ScreenShot Style)
+      await new Promise(r => setTimeout(r, 600));
+      renderVoteResultTapeCard(votes, candidateList);
+    }
+
+    function renderVoteResultTapeCard(votes, candidateList) {
+      // Record vote to game logs
+      gameState.gameLogs.push({
+        type: "vote",
+        round: gameState.round,
+        isPk: gameState.isPkRound,
+        votes: votes.map(v => ({
+          voterName: gameState.players[v.voterIdx]?.name,
+          targetName: gameState.players[v.targetIdx]?.name
+        }))
+      });
+
+      // Calculate vote counts
+      const countMap = {};
+      votes.forEach(v => {
+        countMap[v.targetIdx] = (countMap[v.targetIdx] || 0) + 1;
+      });
+
+      // Find highest votes
+      let maxCount = 0;
+      for (const tIdx in countMap) {
+        if (countMap[tIdx] > maxCount) maxCount = countMap[tIdx];
+      }
+
+      const highestTargets = Object.keys(countMap)
+        .filter(tIdx => countMap[tIdx] === maxCount)
+        .map(tIdx => parseInt(tIdx, 10));
+
+      const card = document.createElement("div");
+      card.className = "result-tape-card";
+
+      card.innerHTML = `
+        <div class="result-card-title">结果统计</div>
+        <div class="vote-rows-list">
+          ${votes.map(v => {
+            const voter = gameState.players[v.voterIdx];
+            const target = gameState.players[v.targetIdx];
+            return `
+              <div class="vote-row-item">
+                <div class="voter-mini-avatar">
+                  ${voter.avatar ? `<img src="${voter.avatar}">` : voter.avatarEmoji}
+                </div>
+                <span class="vote-action-label">投票</span>
+                <span class="vote-arrow-icon">👉</span>
+                <div class="vote-target-pill">"${target.name}"</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+
+      chatTimeline.appendChild(card);
+      scrollToBottom();
+
+      // Check Tie or Elimination
+      setTimeout(() => {
+        if (highestTargets.length > 1 && !gameState.isPkRound) {
+          // First tie -> enter PK
+          startPkRound(highestTargets);
+        } else {
+          // Eliminated player
+          // If in PK still tie, pick one randomly or by coin toss
+          const eliminatedIdx = highestTargets.length > 1
+            ? highestTargets[Math.floor(Math.random() * highestTargets.length)]
+            : highestTargets[0];
+
+          handleElimination(eliminatedIdx);
+        }
+      }, 1200);
+    }
+
+    function handleElimination(eliminatedIdx) {
+      const player = gameState.players[eliminatedIdx];
+      player.isAlive = false;
+
+      gameState.gameLogs.push({
+        type: "elimination",
+        round: gameState.round,
+        playerName: player.name,
+        playerIdx: eliminatedIdx,
+        role: player.role
+      });
+
+      // Update shelf avatar state
+      renderTopShelf();
+
+      // Elimination Badge (Matching Screenshot)
+      const elimBadge = document.createElement("div");
+      elimBadge.className = "eliminated-badge-pill";
+      elimBadge.innerHTML = `✕ ${player.name} 已出局`;
+      chatTimeline.appendChild(elimBadge);
+
+      addSystemBanner(`${player.name}（${eliminatedIdx + 1}号）出局，真实身份是——【${player.role === 'undercover' ? '卧底' : '平民'}】！`);
+      scrollToBottom();
+
+      // Check Win Conditions
+      setTimeout(() => {
+        checkGameEndCondition();
+      }, 1000);
+    }
+
+    // ==========================================
+    // 胜负判定与收尾
+    // ==========================================
+    function checkGameEndCondition() {
+      const aliveUndercovers = gameState.players.filter(p => p.isAlive && p.role === "undercover");
+      const aliveCivilians = gameState.players.filter(p => p.isAlive && p.role === "civilian");
+      const totalAlive = aliveUndercovers.length + aliveCivilians.length;
+
+      if (aliveUndercovers.length === 0) {
+        // Civilians Win!
+        gameState.winner = "civilian";
+        showGameEndBanner("平民胜利", "卧底被投出局了");
+      } else if (aliveUndercovers.length >= aliveCivilians.length || (totalAlive <= 3 && aliveUndercovers.length >= 1)) {
+        // Undercovers Win!
+        gameState.winner = "undercover";
+        showGameEndBanner("卧底胜利", "卧底成功潜伏到最后");
+      } else {
+        // Game continues to next round
+        gameState.round++;
+        actionPanel.innerHTML = `
+          <div style="font-size: 13px; font-weight: 800; text-align: center; color: #5B7B53; margin-bottom: 6px;">
+            游戏继续，进入第 ${gameState.round} 轮！
+          </div>
+          <button class="btn-big-action" id="btn-next-round">
+            开始第 ${gameState.round} 轮描述
+          </button>
+        `;
+        document.getElementById("btn-next-round").onclick = () => {
+          startRound();
+        };
+      }
+    }
+
+    async function showGameEndBanner(mainTitle, subTitle) {
+      stopTurnCountdown();
+      gameState.phase = "game_over";
+      renderTopShelf(true); // Reveal all cards at top!
+
+      // Save game record into storage
+      await saveGameRecordToHistory(mainTitle);
+
+      const victoryBox = document.createElement("div");
+      victoryBox.className = "big-victory-box";
+
+      victoryBox.innerHTML = `
+        <div class="victory-cat-icon">🐱✨</div>
+        <div class="victory-text-gold">${subTitle}</div>
+        <div class="victory-text-sub">✨ ${mainTitle} ✨</div>
+        <div style="font-size: 13px; color: #8C8275; margin-top: 8px; font-weight: 800;">
+          平民词：【${gameState.civilianWord}】 ｜ 卧底词：【${gameState.undercoverWord}】
+        </div>
+      `;
+
+      chatTimeline.appendChild(victoryBox);
+      scrollToBottom();
+
+      actionPanel.innerHTML = `
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-big-action" id="btn-play-again-direct" style="flex: 2; background: #F59E0B;">
+            <span>🎉</span> 再来一局 (同配置快速开局)
+          </button>
+          <button class="btn-big-action" id="btn-play-again-settings" style="flex: 1; background: #FFFDF8; color: #5C5245;">
+            <span>⚙️</span> 重新设置
+          </button>
+        </div>
+      `;
+
+      // Direct instant restart with fresh shuffled cards & words
+      const btnDirect = document.getElementById("btn-play-again-direct");
+      if (btnDirect) {
+        btnDirect.onclick = () => {
+          startNewGame();
+        };
+      }
+
+      // Open room settings modal
+      const btnSettings = document.getElementById("btn-play-again-settings");
+      if (btnSettings) {
+        btnSettings.onclick = () => {
+          showSetupModal();
+        };
+      }
+    }
+
+    // ==========================================
+    // 辅助工具与交互绑定
+    // ==========================================
+    function scrollToBottom() {
+      setTimeout(() => {
+        gameContainer.scrollTop = gameContainer.scrollHeight;
+      }, 50);
+    }
+
+    function toast(msg) {
+      if (window.AiPhone && window.AiPhone.ui && window.AiPhone.ui.toast) {
+        window.AiPhone.ui.toast(msg);
+      } else {
+        const t = document.createElement("div");
+        t.style.cssText = "position:fixed; top:70px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.8); color:#FFF; padding:8px 16px; border-radius:20px; font-size:13px; z-index:9999; font-weight:800;";
+        t.innerText = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2000);
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // ==========================================
+    // 战局存储与回放逻辑 (最近7场)
+    // ==========================================
+    const DB_STORE_KEY = "undercover_history_records";
+
+    async function getHistoryRecords() {
+      if (window.AiPhone && window.AiPhone.db) {
+        try {
+          const list = await window.AiPhone.db.list("records", { limit: 10 });
+          if (list && list.length > 0) {
+            return list.map(item => item.data || item).sort((a, b) => b.timestamp - a.timestamp);
+          }
+        } catch (e) {
+          console.warn("DB读取失败，降级localStorage:", e);
+        }
+      }
+      try {
+        const raw = localStorage.getItem(DB_STORE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    async function saveGameRecordToHistory(winnerResult) {
+      const record = {
+        id: "game_" + Date.now(),
+        timestamp: Date.now(),
+        dateStr: new Date().toLocaleString("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }),
+        winner: gameState.winner,
+        winnerTitle: winnerResult,
+        civilianWord: gameState.civilianWord,
+        undercoverWord: gameState.undercoverWord,
+        playerCount: gameState.playerCount,
+        players: gameState.players.map(p => ({
+          name: p.name,
+          avatar: p.avatar,
+          avatarEmoji: p.avatarEmoji,
+          role: p.role,
+          word: p.word,
+          isUser: p.isUser
+        })),
+        logs: gameState.gameLogs,
+        aiSummary: ""
+      };
+
+      let records = await getHistoryRecords();
+      records.unshift(record);
+      if (records.length > 7) {
+        records = records.slice(0, 7); // 保留最近7场
+      }
+
+      if (window.AiPhone && window.AiPhone.db) {
+        try {
+          await window.AiPhone.db.create("records", { data: record, createdAt: new Date().toISOString() });
+        } catch (e) {
+          console.warn("DB写入失败:", e);
+        }
+      }
+      try {
+        localStorage.setItem(DB_STORE_KEY, JSON.stringify(records));
+      } catch (e) {}
+    }
+
+    // Render Replay List
+    async function openReplayModal() {
+      const modal = document.getElementById("replay-modal");
+      const listView = document.getElementById("replay-list-view");
+      const detailView = document.getElementById("replay-detail-view");
+
+      listView.style.display = "flex";
+      detailView.style.display = "none";
+      modal.style.display = "flex";
+
+      const records = await getHistoryRecords();
+      if (records.length === 0) {
+        listView.innerHTML = `
+          <div style="text-align:center; padding:30px 10px; color:#8C8275;">
+            <div style="font-size:36px; margin-bottom:8px;">📭</div>
+            <div style="font-size:14px; font-weight:800;">暂无战局记录</div>
+            <div style="font-size:12px; margin-top:4px;">完成一局游戏后将自动保存最近7场对决！</div>
+          </div>
+        `;
+        return;
+      }
+
+      listView.innerHTML = records.map((rec, idx) => {
+        const isCivWin = rec.winner === "civilian";
+        return `
+          <div class="result-tape-card" style="margin:4px 0; cursor:pointer; padding:14px;" data-record-id="${rec.id}">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <span style="font-size:12px; font-weight:800; color:#8C8275;">${rec.dateStr || '精彩对决'} · ${rec.playerCount}人局</span>
+              <span class="shelf-role-tag ${isCivWin ? 'civilian' : 'undercover'}">${rec.winnerTitle}</span>
+            </div>
+            <div style="font-size:13px; font-weight:800; color:#3E342B; margin-bottom:6px;">
+              平民词：【${rec.civilianWord}】 ｜ 卧底词：【${rec.undercoverWord}】
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+              ${rec.players.map(p => `
+                <div style="width:24px; height:24px; border-radius:50%; border:1px solid #4A4036; overflow:hidden; background:#FFF; display:flex; align-items:center; justify-content:center; font-size:12px;" title="${p.name}(${p.role==='undercover'?'卧底':'平民'})">
+                  ${p.avatar ? `<img src="${p.avatar}" style="width:100%;height:100%;object-fit:cover;">` : p.avatarEmoji}
+                </div>
+              `).join("")}
+              <span style="margin-left:auto; font-size:12px; font-weight:800; color:#D97706;">点击回放 ➔</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // Bind item click
+      listView.querySelectorAll(".result-tape-card").forEach(card => {
+        card.onclick = () => {
+          const recId = card.dataset.recordId;
+          const targetRec = records.find(r => r.id === recId);
+          if (targetRec) showReplayDetail(targetRec);
+        };
+      });
+    }
+
+    let currentSelectedRecord = null;
+
+    function showReplayDetail(record) {
+      currentSelectedRecord = record;
+      const listView = document.getElementById("replay-list-view");
+      const detailView = document.getElementById("replay-detail-view");
+      const content = document.getElementById("replay-detail-content");
+      const summaryWrap = document.getElementById("replay-ai-summary-wrap");
+      const summaryBox = document.getElementById("replay-ai-summary-box");
+
+      listView.style.display = "none";
+      detailView.style.display = "flex";
+      summaryWrap.style.display = record.aiSummary ? "flex" : "none";
+      if (record.aiSummary) summaryBox.innerHTML = record.aiSummary;
+
+      // Build speech timeline HTML
+      let logsHtml = `
+        <div style="background:#FFF; border:2px solid #4A4036; border-radius:14px; padding:12px; margin-bottom:8px;">
+          <div style="font-size:14px; font-weight:900; color:#D97706; margin-bottom:4px;">${record.winnerTitle}</div>
+          <div style="font-size:12px; color:#5C5245; font-weight:800;">
+            平民词：【${record.civilianWord}】 ｜ 卧底词：【${record.undercoverWord}】
+          </div>
+          <div style="font-size:11px; color:#8C8275; margin-top:4px;">
+            卧底是：${record.players.filter(p=>p.role==='undercover').map(p=>p.name).join('、')}
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; padding-right:2px;">
+      `;
+
+      if (record.logs && record.logs.length > 0) {
+        record.logs.forEach(log => {
+          if (log.type === "speech") {
+            const isUnd = log.role === "undercover";
+            logsHtml += `
+              <div style="display:flex; gap:6px; align-items:flex-start; font-size:12px;">
+                <div style="width:26px; height:26px; border-radius:50%; border:1px solid #4A4036; background:#FFF; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  ${log.avatar ? `<img src="${log.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : log.avatarEmoji}
+                </div>
+                <div style="flex:1; background:${isUnd ? '#DBEAFE' : '#FFF9EE'}; border:1.5px solid #4A4036; border-radius:10px; padding:6px 10px;">
+                  <div style="font-size:10px; font-weight:800; color:#8C8275;">
+                    ${log.playerName} <span style="color:${isUnd?'#1E40AF':'#92400E'};">(${isUnd?'卧底':'平民'})</span>
+                  </div>
+                  <div style="font-weight:700; color:#3E342B; margin-top:2px;">"${escapeHtml(log.text)}"</div>
+                </div>
+              </div>
+            `;
+          } else if (log.type === "elimination") {
+            logsHtml += `
+              <div style="text-align:center; font-size:11px; font-weight:900; color:#DC2626; padding:4px; background:#FEE2E2; border-radius:8px;">
+                ✕ 第 ${log.round} 轮：${log.playerName} 被投出局 (${log.role === 'undercover' ? '卧底' : '平民'})
+              </div>
+            `;
+          }
+        });
+      } else {
+        logsHtml += `<div style="font-size:12px; color:#8C8275; text-align:center; padding:10px;">简易记录暂无发言细节</div>`;
+      }
+      logsHtml += `</div>`;
+
+      content.innerHTML = logsHtml;
+    }
+
+    // AI Summary Generation
+    async function generateAISummaryForRecord() {
+      if (!currentSelectedRecord) return;
+      const summaryWrap = document.getElementById("replay-ai-summary-wrap");
+      const summaryBox = document.getElementById("replay-ai-summary-box");
+      const btn = document.getElementById("btn-generate-ai-summary");
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>⏳</span> AI 正在深度复盘与犀利点评中...`;
+      summaryWrap.style.display = "flex";
+      summaryBox.innerHTML = `<div style="display:flex;align-items:center;gap:6px;color:#8C8275;"><span>🧠 正在回放分析发言线索与卧底心理战术...</span></div>`;
+
+      const speechLogs = (currentSelectedRecord.logs || [])
+        .filter(l => l.type === "speech")
+        .map(l => `${l.playerName}(${l.role==='undercover'?'卧底':'平民'}): "${l.text}"`)
+        .join("\n");
+
+      const prompt = `请作为专业、风趣又犀利的谁是卧底游戏毒舌裁判，对以下战局进行精彩复盘与点评：
+【战局信息】
+- 平民词：${currentSelectedRecord.civilianWord}
+- 卧底词：${currentSelectedRecord.undercoverWord}
+- 获胜方：${currentSelectedRecord.winnerTitle}
+- 玩家发言记录：
+${speechLogs || "无详细记录"}
+
+请按以下三部分输出总结（150字以内，语言幽默萌趣）：
+1. 🎯 【战局亮点与转折】：谁的发言最具有迷惑性/谁最快露出破绽？
+2. 🎭 【卧底表现点评】：卧底藏得如何？
+3. 🏆 【MVP玩家颁奖】：评选本场表现最亮眼的一位玩家并附上一句搞怪评语。`;
+
+      let summaryResult = "";
+      if (window.AiPhone && window.AiPhone.ai) {
+        try {
+          if (window.AiPhone.ai.chat) {
+            const res = await window.AiPhone.ai.chat({
+              messages: [
+                { role: "system", content: "你是谁是卧底官方萌宠解说员，说话可爱且一针见血。" },
+                { role: "user", content: prompt }
+              ],
+              timeoutMs: 12000
+            });
+            summaryResult = res.text?.trim() || res.message?.content?.trim();
+          }
+        } catch (e) {
+          console.warn("复盘生成失败:", e);
+        }
+      }
+
+      if (!summaryResult) {
+        summaryResult = `🎯 【战局亮点】：本局【${currentSelectedRecord.civilianWord}】与【${currentSelectedRecord.undercoverWord}】的交锋十分激烈，双方在描述时都小心翼翼！
+🎭 【卧底表现】：卧底在字里行间极力模仿平民，但细节处还是露出了一丝端倪~
+🏆 【MVP玩家】：全体玩家！大家玩得都很机智，期待下一局更精彩的博弈！`;
+      }
+
+      // Format line breaks
+      summaryBox.innerHTML = summaryResult.replace(/\n/g, "<br>");
+      currentSelectedRecord.aiSummary = summaryBox.innerHTML;
+
+      btn.disabled = false;
+      btn.innerHTML = `<span>✨</span> 重新生成点评`;
+    }
+
+    // Bind Replay Modal Events
+    document.getElementById("btn-open-replay").onclick = () => {
+      openReplayModal();
+    };
+    const btnModalReplay = document.getElementById("btn-modal-open-replay");
+    if (btnModalReplay) {
+      btnModalReplay.onclick = () => {
+        openReplayModal();
+      };
+    }
+    document.getElementById("btn-close-replay").onclick = () => {
+      document.getElementById("replay-modal").style.display = "none";
+    };
+    document.getElementById("btn-back-to-replay-list").onclick = () => {
+      document.getElementById("replay-detail-view").style.display = "none";
+      document.getElementById("replay-list-view").style.display = "flex";
+    };
+    document.getElementById("btn-generate-ai-summary").onclick = () => {
+      generateAISummaryForRecord();
+    };
+    function copyTextRobust(text) {
+      // 1. Try modern clipboard API
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text).catch(() => {
+          return fallbackCopy(text);
+        });
+      }
+      return fallbackCopy(text);
+    }
+
+    function fallbackCopy(text) {
+      return new Promise((resolve, reject) => {
+        const tempArea = document.createElement("textarea");
+        tempArea.value = text;
+        tempArea.style.position = "fixed";
+        tempArea.style.left = "-9999px";
+        tempArea.style.top = "0";
+        tempArea.style.opacity = "0";
+        tempArea.setAttribute("readonly", "");
+        document.body.appendChild(tempArea);
+        tempArea.focus();
+        tempArea.select();
+        tempArea.setSelectionRange(0, 99999);
+        try {
+          const successful = document.execCommand("copy");
+          document.body.removeChild(tempArea);
+          if (successful) resolve();
+          else reject(new Error("execCommand returned false"));
+        } catch (err) {
+          document.body.removeChild(tempArea);
+          reject(err);
+        }
+      });
+    }
+
+    const btnCopySummary = document.getElementById("btn-copy-ai-summary");
+    if (btnCopySummary) {
+      btnCopySummary.onclick = async () => {
+        const box = document.getElementById("replay-ai-summary-box");
+        if (!box || !box.innerText.trim()) {
+          toast("暂无可复制的点评内容哦~");
+          return;
+        }
+        const textToCopy = box.innerText.trim();
+        try {
+          await copyTextRobust(textToCopy);
+          toast("✅ AI 点评已复制到剪贴板！");
+        } catch (err) {
+          // If automatic copy is blocked by iframe permissions, auto-select text for user
+          try {
+            const range = document.createRange();
+            range.selectNodeContents(box);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            toast("已全选文本，长按即可快速复制！");
+          } catch (e) {
+            toast("复制受限，请长按文本手动复制");
+          }
+        }
+      };
+    }
+
+    // Bind Setup Modal Events
+    document.querySelectorAll("#player-count-chips .chip-item").forEach(chip => {
+      chip.onclick = () => {
+        document.querySelectorAll("#player-count-chips .chip-item").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        gameState.playerCount = parseInt(chip.dataset.count, 10);
+        renderSetupModal();
+      };
+    });
+
+    document.querySelectorAll("#wordbank-chips .chip-item").forEach(chip => {
+      chip.onclick = () => {
+        document.querySelectorAll("#wordbank-chips .chip-item").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        const isCustom = chip.dataset.mode === "custom";
+        document.getElementById("custom-word-inputs").style.display = isCustom ? "flex" : "none";
+      };
+    });
+
+    document.getElementById("btn-start-game").onclick = () => {
+      startNewGame();
+    };
+
+    document.getElementById("btn-open-settings").onclick = () => {
+      showSetupModal();
+    };
+
+    document.getElementById("btn-peek-word").onclick = () => {
+      const user = gameState.players.find(p => p.isUser);
+      if (user && user.word) {
+        popupSecretWord.innerText = user.word;
+        secretModal.style.display = "flex";
+      } else {
+        toast("还没有开始游戏哦~");
+      }
+    };
+
+    document.getElementById("btn-close-secret").onclick = () => {
+      secretModal.style.display = "none";
+      // If game is in describing phase and not yet started, trigger round 1 immediately!
+      if (gameState.phase === "describing" && gameState.turnOrder.length === 0) {
+        startRound();
+      }
+    };
+
+    // Close modals on backdrop click
+    setupModal.onclick = (e) => {
+      if (e.target === setupModal && gameState.players.length > 0) hideSetupModal();
+    };
+    secretModal.onclick = (e) => {
+      if (e.target === secretModal) {
+        secretModal.style.display = "none";
+        if (gameState.phase === "describing" && gameState.turnOrder.length === 0) {
+          startRound();
+        }
+      }
+    };
+
+    // Window load entry
+    window.addEventListener("DOMContentLoaded", () => {
+      initSDK();
+    });
+  </script>
+</body>
+</html>

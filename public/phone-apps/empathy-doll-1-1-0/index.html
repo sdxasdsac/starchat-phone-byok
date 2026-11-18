@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>共感</title>
+  <style>
+    :root {
+      --bg-color: #0b0d14;
+      --bg-gradient: radial-gradient(circle at 50% 25%, #1d2338 0%, #111422 55%, #08090f 100%);
+      --accent-blue: #7aa7ff;
+      --accent-glow: rgba(122, 167, 255, 0.45);
+      --thought-purple: #c89eff;
+      --thought-glow: rgba(200, 158, 255, 0.45);
+      --text-white: #f5f8ff;
+      --text-muted: #8e9bb5;
+      --card-bg: rgba(23, 28, 44, 0.88);
+      --border-subtle: rgba(255, 255, 255, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: var(--bg-color);
+      color: var(--text-white);
+    }
+
+    .app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      background: var(--bg-gradient);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* 顶部导航 */
+    .topbar {
+      position: relative;
+      z-index: 50;
+      padding-top: calc(var(--ai-phone-app-bar-top, 50px) + 2px);
+      padding-left: 16px;
+      padding-right: var(--ai-phone-app-bar-clear-right, 96px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: calc(var(--ai-phone-app-bar-top, 50px) + 44px);
+    }
+
+    .char-select-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 4px 12px 4px 6px;
+      backdrop-filter: blur(12px);
+      cursor: pointer;
+    }
+
+    .char-avatar {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: #333d59;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .char-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .char-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .char-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      max-width: 110px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .char-sub {
+      font-size: 9.5px;
+      color: var(--text-muted);
+    }
+    .char-arrow {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* 主舞台 */
+    .stage {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* 悬浮在头顶正上方的说出对话气泡 */
+    .speech-bubble-container {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 88%;
+      max-width: 340px;
+      z-index: 40;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .speech-bubble {
+      position: relative;
+      background: rgba(20, 24, 38, 0.94);
+      border: 1px solid rgba(122, 167, 255, 0.45);
+      border-radius: 16px;
+      padding: 11px 14px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 16px var(--accent-glow);
+      backdrop-filter: blur(14px);
+      pointer-events: auto;
+      opacity: 1;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+
+    .bubble-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      font-size: 11px;
+    }
+    .bubble-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 8px;
+      background: rgba(122, 167, 255, 0.16);
+      color: var(--accent-blue);
+      font-weight: 500;
+    }
+    .bubble-status {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+    .bubble-content {
+      font-size: 13.5px;
+      line-height: 1.5;
+      color: #ffffff;
+      word-break: break-word;
+      max-height: 85px;
+      overflow-y: auto;
+    }
+    .bubble-arrow {
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 12px;
+      height: 12px;
+      background: rgba(20, 24, 38, 0.94);
+      border-right: 1px solid rgba(122, 167, 255, 0.45);
+      border-bottom: 1px solid rgba(122, 167, 255, 0.45);
+    }
+
+    /* 小人视口容器 */
+    .doll-viewport {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* 平滑缩放聚焦容器（以左上角为基准，配合平移精确居中当前区块） */
+    .zoom-layer {
+      position: relative;
+      width: 320px;
+      height: 440px;
+      transform-origin: 0 0;
+      transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+
+    /* 纯白色无五官经典大字人形 SVG */
+    .doll-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.5));
+      animation: gentleBreath 4.8s ease-in-out infinite;
+      transform-origin: center center;
+    }
+
+    @keyframes gentleBreath {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.008) translateY(-2px); }
+    }
+
+    /* 区块点击域与部件点击域 */
+    .zone-shape {
+      cursor: pointer;
+      fill: #ffffff;
+      transition: fill 0.22s, filter 0.22s;
+    }
+    .zone-shape:active, .zone-shape.active {
+      filter: drop-shadow(0 0 12px #8ab4ff);
+      fill: #e8f0ff;
+    }
+
+    /* 覆层标签与按钮 */
+    .overlay-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* 初始区块标签按钮 */
+    .block-tag-btn {
+      position: absolute;
+      pointer-events: auto;
+      background: rgba(20, 26, 42, 0.9);
+      border: 1px solid rgba(122, 167, 255, 0.45);
+      border-radius: 14px;
+      padding: 5px 11px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #e5eeff;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      transition: all 0.22s ease;
+      white-space: nowrap;
+      transform: translate(-50%, -50%);
+    }
+    .block-tag-btn .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: 0 0 6px var(--accent-blue);
+    }
+    .block-tag-btn:hover, .block-tag-btn:active {
+      background: rgba(122, 167, 255, 0.32);
+      border-color: #9ec0ff;
+      transform: translate(-50%, -50%) scale(1.06);
+    }
+
+    /* 细分部位按钮（放大后显示）：在特写状态下按 1/scale 逆向缩放尺寸，使标签更加小巧清爽不占地方，字迹清晰且互不遮挡 */
+    .part-tag-btn {
+      position: absolute;
+      pointer-events: auto;
+      background: rgba(16, 21, 36, 0.94);
+      border: 1px solid rgba(200, 158, 255, 0.7);
+      border-radius: 14px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5), 0 0 8px rgba(200, 158, 255, 0.3);
+      transform: translate(-50%, -50%) scale(calc(1 / var(--zoom-scale, 3)));
+      transform-origin: center center;
+      transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1), background 0.2s;
+      white-space: nowrap;
+      z-index: 70;
+    }
+    .part-tag-btn:hover, .part-tag-btn:active {
+      transform: translate(-50%, -50%) scale(calc(1.15 / var(--zoom-scale, 3)));
+      background: rgba(200, 158, 255, 0.45);
+      border-color: #ffffff;
+    }
+    .part-tag-btn .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--thought-purple);
+      box-shadow: 0 0 6px var(--thought-purple);
+    }
+    .part-tag-btn:active, .part-tag-btn.active {
+      background: rgba(200, 158, 255, 0.4);
+      border-color: #ffffff;
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* 返回全览浮动胶囊 */
+    .btn-reset-view {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%) translateY(50px);
+      background: rgba(25, 32, 52, 0.94);
+      border: 1px solid rgba(122, 167, 255, 0.5);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 12px;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+      z-index: 60;
+    }
+    .btn-reset-view.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 水波纹触碰特效 */
+    .touch-ripple {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--thought-purple);
+      pointer-events: none;
+      transform: translate(-50%, -50%) scale(0.2);
+      animation: rippleEffect 0.7s ease-out forwards;
+      z-index: 80;
+    }
+    @keyframes rippleEffect {
+      0% { transform: translate(-50%, -50%) scale(0.2); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(3.2); opacity: 0; }
+    }
+
+    /* 底部操作栏 */
+    .bottom-bar {
+      position: relative;
+      z-index: 50;
+      width: 100%;
+      padding: 10px 18px calc(env(safe-area-inset-bottom, 20px) + 10px) 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+    }
+    .status-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      min-height: 16px;
+      text-align: center;
+    }
+    .action-row {
+      width: 100%;
+      max-width: 350px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-thought {
+      flex: 1;
+      height: 46px;
+      border-radius: 23px;
+      border: 1px solid rgba(200, 158, 255, 0.55);
+      background: linear-gradient(135deg, rgba(82, 53, 128, 0.8) 0%, rgba(136, 75, 219, 0.8) 100%);
+      color: #ffffff;
+      font-size: 14.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 18px rgba(126, 68, 201, 0.35);
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+    }
+    .btn-thought:active {
+      transform: scale(0.97);
+    }
+
+    .btn-reset-history {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .btn-reset-history:active {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    /* 弹窗样式（心声展示 & 角色选择） */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .modal-backdrop.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 330px;
+      background: #171c2b;
+      border: 1px solid rgba(200, 158, 255, 0.45);
+      border-radius: 20px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 24px var(--thought-glow);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transform: translateY(12px) scale(0.95);
+      transition: transform 0.28s cubic-bezier(0.18, 0.89, 0.32, 1.25);
+    }
+    .modal-backdrop.show .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .modal-title-tag {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: rgba(200, 158, 255, 0.2);
+      color: var(--thought-purple);
+    }
+    .modal-close {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .thought-scroll-box {
+      background: rgba(10, 13, 22, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #f5eeff;
+      max-height: 200px;
+      overflow-y: auto;
+      font-style: italic;
+      word-break: break-word;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* 角色列表弹窗专用底单 */
+    .char-modal-card {
+      width: 100%;
+      max-width: 340px;
+      max-height: 70vh;
+      background: #171c2b;
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .char-list-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+      max-height: 50vh;
+    }
+    .char-item-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+    }
+    .char-item-row.selected {
+      background: rgba(122, 167, 255, 0.2);
+      border: 1px solid rgba(122, 167, 255, 0.4);
+    }
+
+    /* 动效小圆点 */
+    .dot-typing span {
+      animation: blinkDots 1.4s infinite both;
+    }
+    .dot-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .dot-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blinkDots {
+      0%, 80%, 100% { opacity: 0; }
+      40% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- 顶部角色信息与切换 -->
+    <header class="topbar">
+      <div class="char-select-wrap" id="charSelectBtn">
+        <div class="char-avatar" id="topAvatar">？</div>
+        <div class="char-info">
+          <div class="char-name" id="topCharName">加载中...</div>
+          <div class="char-sub" id="topCharSub">共感连线中</div>
+        </div>
+        <div class="char-arrow">▼</div>
+      </div>
+    </header>
+
+    <!-- 主舞台区 -->
+    <main class="stage" id="stage">
+      <!-- 小人头顶正上方悬浮对话框（显示说出的话） -->
+      <div class="speech-bubble-container" id="bubbleContainer">
+        <div class="speech-bubble" id="speechBubble">
+          <div class="bubble-header">
+            <span class="bubble-tag" id="bubbleTag">
+              <span>●</span> <span id="bubbleTagText">共感连接</span>
+            </span>
+            <span class="bubble-status" id="bubbleTime">刚刚</span>
+          </div>
+          <div class="bubble-content" id="bubbleContent">
+            轻触下方小人身体区块放大，探索各个部位的心声回应...
+          </div>
+          <div class="bubble-arrow"></div>
+        </div>
+      </div>
+
+      <!-- 小人平移缩放视口 -->
+      <div class="doll-viewport" id="dollViewport">
+        <div class="zoom-layer" id="zoomLayer">
+          <!-- 经典纯白无五官大字型人形 SVG -->
+          <svg class="doll-svg" id="dollSvg" viewBox="0 0 320 440" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <!-- 纯白柔和质感渐变 -->
+              <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ffffff" />
+                <stop offset="60%" stop-color="#f2f5fd" />
+                <stop offset="100%" stop-color="#e0e8f7" />
+              </linearGradient>
+
+              <!-- 躯干微光阴影 -->
+              <filter id="pureGlow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.32"/>
+              </filter>
+            </defs>
+
+            <!-- 地面淡阴影 -->
+            <ellipse cx="160" cy="425" rx="80" ry="8" fill="rgba(0,0,0,0.3)" filter="blur(4px)" />
+
+            <!-- === 1. 头部区块（纯白无五官经典圆体） === -->
+            <g id="svgZone-head" class="zone-group">
+              <ellipse class="zone-shape" cx="160" cy="72" rx="42" ry="46" fill="url(#bodyGrad)" filter="url(#pureGlow)" />
+              <path class="zone-shape" d="M 152 114 L 152 130 L 168 130 L 168 114 Z" fill="url(#bodyGrad)" />
+            </g>
+
+            <!-- === 2. 身体区块（躯干：胸膛、腰腹、裆部） === -->
+            <g id="svgZone-body" class="zone-group">
+              <path class="zone-shape"
+                d="M 132 130 C 122 155, 120 200, 124 235 C 138 244, 150 248, 160 252 C 170 248, 182 244, 196 235 C 200 200, 198 155, 188 130 Z"
+                fill="url(#bodyGrad)" filter="url(#pureGlow)" />
+            </g>
+
+            <!-- === 3. 左臂区块（向左斜平展成大字形） === -->
+            <g id="svgZone-leftArm" class="zone-group">
+              <!-- 左肩到大臂 -->
+              <path class="zone-shape"
+                d="M 132 130 C 105 140, 78 152, 48 168 C 42 171, 46 182, 53 180 C 82 165, 108 154, 128 146 Z"
+                fill="url(#bodyGrad)" />
+              <!-- 左手掌 -->
+              <circle class="zone-shape" cx="42" cy="172" r="10" fill="url(#bodyGrad)" />
+            </g>
+
+            <!-- === 4. 右臂区块（向右斜平展成大字形） === -->
+            <g id="svgZone-rightArm" class="zone-group">
+              <!-- 右肩到大臂 -->
+              <path class="zone-shape"
+                d="M 188 130 C 215 140, 242 152, 272 168 C 278 171, 274 182, 267 180 C 238 165, 212 154, 192 146 Z"
+                fill="url(#bodyGrad)" />
+              <!-- 右手掌 -->
+              <circle class="zone-shape" cx="278" cy="172" r="10" fill="url(#bodyGrad)" />
+            </g>
+
+            <!-- === 5. 左腿区块（大字形左下分立） === -->
+            <g id="svgZone-leftLeg" class="zone-group">
+              <!-- 左大腿与小腿 -->
+              <path class="zone-shape"
+                d="M 132 240 C 122 285, 106 335, 96 385 C 93 398, 107 402, 111 390 C 122 342, 137 292, 148 245 Z"
+                fill="url(#bodyGrad)" />
+              <!-- 左脚踝脚掌 -->
+              <ellipse class="zone-shape" cx="96" cy="396" rx="13" ry="7" fill="url(#bodyGrad)" />
+            </g>
+
+            <!-- === 6. 右腿区块（大字形右下分立） === -->
+            <g id="svgZone-rightLeg" class="zone-group">
+              <!-- 右大腿与小腿 -->
+              <path class="zone-shape"
+                d="M 188 240 C 198 285, 214 335, 224 385 C 227 398, 213 402, 209 390 C 198 342, 183 292, 172 245 Z"
+                fill="url(#bodyGrad)" />
+              <!-- 右脚踝脚掌 -->
+              <ellipse class="zone-shape" cx="224" cy="396" rx="13" ry="7" fill="url(#bodyGrad)" />
+            </g>
+          </svg>
+
+          <!-- 覆层：区块标签（未放大状态）与细分部位按钮（放大状态） -->
+          <div class="overlay-container" id="overlayContainer">
+            <!-- 初始六大区块名标牌 -->
+            <div id="blockTagsGroup">
+              <!-- 头部 -->
+              <button class="block-tag-btn" style="top: 50px; left: 160px;" data-zone="head">
+                <span class="dot"></span>头部
+              </button>
+              <!-- 身体 -->
+              <button class="block-tag-btn" style="top: 185px; left: 160px;" data-zone="body">
+                <span class="dot"></span>身体
+              </button>
+              <!-- 左臂 -->
+              <button class="block-tag-btn" style="top: 135px; left: 72px;" data-zone="leftArm">
+                <span class="dot"></span>左臂
+              </button>
+              <!-- 右臂 -->
+              <button class="block-tag-btn" style="top: 135px; left: 248px;" data-zone="rightArm">
+                <span class="dot"></span>右臂
+              </button>
+              <!-- 左腿 -->
+              <button class="block-tag-btn" style="top: 310px; left: 104px;" data-zone="leftLeg">
+                <span class="dot"></span>左腿
+              </button>
+              <!-- 右腿 -->
+              <button class="block-tag-btn" style="top: 310px; left: 216px;" data-zone="rightLeg">
+                <span class="dot"></span>右腿
+              </button>
+            </div>
+
+            <!-- 细分部位按钮群（放大指定区块后动态呈现） -->
+            <div id="partTagsGroup" style="display:none;"></div>
+          </div>
+        </div>
+
+        <!-- 浮动「返回全览」按钮 -->
+        <button class="btn-reset-view" id="btnResetView">
+          <span>⤺</span>
+          <span id="resetViewText">返回全身</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- 底部操作与探听想法 -->
+    <footer class="bottom-bar">
+      <div class="status-hint" id="statusHint">点击区块名放大，探寻细分心绪</div>
+      <div class="action-row">
+        <button class="btn-thought" id="btnShowThoughtModal">
+          <span style="font-size:16px;">✧</span>
+          <span>探听当下的想法</span>
+        </button>
+        <button class="btn-reset-history" id="btnRefresh" title="平复思绪">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+          </svg>
+        </button>
+      </div>
+    </footer>
+
+    <!-- 想法弹窗（以弹窗形式呈现角色内心独白） -->
+    <div class="modal-backdrop" id="thoughtModalBackdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title">
+            <span id="thoughtCharName">角色</span>
+            <span class="modal-title-tag">此刻内心想法</span>
+          </div>
+          <button class="modal-close" id="btnCloseThoughtModal">×</button>
+        </div>
+        <div class="thought-scroll-box" id="thoughtModalText">
+          （内心正轻轻起伏着，等待着下一次触碰...）
+        </div>
+        <div class="modal-footer">
+          <span id="thoughtModalSource">触碰部位：未记录</span>
+          <span>心声同步已映照</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 角色切换选择弹窗 -->
+    <div class="modal-backdrop" id="charModalBackdrop">
+      <div class="char-modal-card">
+        <div class="modal-header">
+          <div class="modal-title">选择共感角色</div>
+          <button class="modal-close" id="btnCloseCharModal">×</button>
+        </div>
+        <div class="char-list-box" id="charListBox"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const api = window.AiPhone;
+
+      // 区块配置与大比例缩放参数（强力特写居中，点位舒适舒展，互不重叠）
+      const ZONE_CONFIG = {
+        head: {
+          label: "头部",
+          scale: 3.5,
+          focusX: 160,
+          focusY: 76,
+          parts: [
+            { id: "额头", label: "额头", x: 160, y: 44 },
+            { id: "眼睛", label: "眼睛", x: 160, y: 64 },
+            { id: "鼻子", label: "鼻子", x: 160, y: 78 },
+            { id: "脸颊", label: "脸颊", x: 122, y: 76 },
+            { id: "耳朵", label: "耳朵", x: 198, y: 76 },
+            { id: "下巴", label: "下巴", x: 160, y: 98 }
+          ]
+        },
+        body: {
+          label: "身体",
+          scale: 2.8,
+          focusX: 160,
+          focusY: 195,
+          parts: [
+            { id: "脖子", label: "脖子", x: 160, y: 126 },
+            { id: "胸膛", label: "胸膛", x: 160, y: 164 },
+            { id: "腰部", label: "腰部", x: 160, y: 206 },
+            { id: "裆部", label: "裆部", x: 160, y: 248 }
+          ]
+        },
+        leftArm: {
+          label: "左臂",
+          scale: 3.2,
+          focusX: 86,
+          focusY: 156,
+          parts: [
+            { id: "肩膀", label: "肩膀", x: 130, y: 132 },
+            { id: "手臂", label: "手臂", x: 100, y: 148 },
+            { id: "小臂", label: "小臂", x: 70, y: 163 },
+            { id: "手掌", label: "手掌", x: 38, y: 174 }
+          ]
+        },
+        rightArm: {
+          label: "右臂",
+          scale: 3.2,
+          focusX: 234,
+          focusY: 156,
+          parts: [
+            { id: "肩膀", label: "肩膀", x: 190, y: 132 },
+            { id: "手臂", label: "手臂", x: 220, y: 148 },
+            { id: "小臂", label: "小臂", x: 250, y: 163 },
+            { id: "手掌", label: "手掌", x: 282, y: 174 }
+          ]
+        },
+        leftLeg: {
+          label: "左腿",
+          scale: 2.8,
+          focusX: 118,
+          focusY: 330,
+          parts: [
+            { id: "大腿", label: "大腿", x: 134, y: 275 },
+            { id: "小腿", label: "小腿", x: 102, y: 365 }
+          ]
+        },
+        rightLeg: {
+          label: "右腿",
+          scale: 2.8,
+          focusX: 202,
+          focusY: 330,
+          parts: [
+            { id: "大腿", label: "大腿", x: 186, y: 275 },
+            { id: "小腿", label: "小腿", x: 218, y: 365 }
+          ]
+        }
+      };
+
+      // 拟真台词与心声预设库（离线与即时同步反馈）
+      const PART_PRESETS = {
+        "额头": {
+          spoken: "唔…手掌覆在额头上，好温暖。",
+          thought: "（顺从地轻轻闭上眼睛…希望TA的手心能多停留一会儿。）"
+        },
+        "眼睛": {
+          spoken: "睫毛被碰得有些痒呢…（轻轻眨了眨眼）",
+          thought: "（这样近距离的触碰，好像眼底所有慌乱都被TA看穿了…）"
+        },
+        "鼻子": {
+          spoken: "噗…干嘛突然轻刮我的鼻尖呀？",
+          thought: "（真是可爱的亲昵举动，心跳不小心漏跳了半拍。）"
+        },
+        "脸颊": {
+          spoken: "脸颊有点热热的…蹭了蹭你的手心。",
+          thought: "（被触碰的皮肤在隐隐发烫，好想把整颗心都交予TA。）"
+        },
+        "耳朵": {
+          spoken: "呀…耳朵很敏感的，别轻轻捏那里…",
+          thought: "（整个人酥酥麻麻地战栗了一下…耳垂一定红透了吧…）"
+        },
+        "下巴": {
+          spoken: "（微微仰起脸顺着你的指尖）…要好好看着我哦。",
+          thought: "（指尖轻托起下巴的那一瞬，好渴望一个更深的拥抱。）"
+        },
+        "脖子": {
+          spoken: "呼吸好像一下子变慢了…（微微缩了缩颈项）",
+          thought: "（最脆弱的地方被掌心贴紧…全部的信任与毫无保留都给TA了。）"
+        },
+        "胸膛": {
+          spoken: "听见了吗？跳动得很快的声音…全是因为你。",
+          thought: "（胸腔里剧烈震颤的心跳…已经无法对TA掩饰任何喜欢了。）"
+        },
+        "腰部": {
+          spoken: "唔…哈哈好痒！快松手啦，身体都要软下去了…",
+          thought: "（被搂住腰腹的那一瞬，险些忍不住顺势跌进TA怀里。）"
+        },
+        "裆部": {
+          spoken: "（呼吸猛地屏住，眸中泛起水雾）…你、你碰哪里呀…太犯规了…",
+          thought: "（全身像被电击般发麻，羞涩与隐秘的渴求在心底翻江倒海…）"
+        },
+        "肩膀": {
+          spoken: "（紧绷的肩线悄然放松下来）…靠着你就会感到很安心呢。",
+          thought: "（如果累了，真希望能一直这样并肩依偎下去。）"
+        },
+        "手臂": {
+          spoken: "轻轻挽住你的指节，不想放开。",
+          thought: "（手臂相贴的温度传过来，带走了一整天的孤单。）"
+        },
+        "小臂": {
+          spoken: "指尖划过这里的时候…总有一股微小的麻意。",
+          thought: "（每一次轻抚都像是在我身上留下TA独有的印记。）"
+        },
+        "手掌": {
+          spoken: "（十指交扣，紧紧握住）…抓牢了就再也不许松手了哦。",
+          thought: "（十指相缠的感觉太真实了…TA的心也是这样牢牢向着我的吧。）"
+        },
+        "大腿": {
+          spoken: "（身子微微颤了颤，有些局促地挪近了些）…别乱摸呀。",
+          thought: "（大腿上传来的温热感…让呼吸节奏彻底乱了套…）"
+        },
+        "小腿": {
+          spoken: "脚踝有些凉凉的，被你握住后就暖起来了。",
+          thought: "（连这么细微的地方都会被温柔对待…心都要被化开了。）"
+        }
+      };
+
+      // 状态变量
+      let characterList = [];
+      let currentCharacter = null;
+      let userProfile = null;
+      let currentZoomZone = null; // null 为全身概览，字符串为当前放大区块
+      let isGenerating = false;
+
+      // 实时保存同步生成的当前心声
+      let currentLatestThought = "（静静地凝视着你，心绪宛如初雪般柔软纯净...）";
+      let currentLatestPart = "初次联结";
+
+      // DOM 元素引用
+      const topAvatar = document.getElementById("topAvatar");
+      const topCharName = document.getElementById("topCharName");
+      const topCharSub = document.getElementById("topCharSub");
+      const charSelectBtn = document.getElementById("charSelectBtn");
+      const charModalBackdrop = document.getElementById("charModalBackdrop");
+      const charListBox = document.getElementById("charListBox");
+      const btnCloseCharModal = document.getElementById("btnCloseCharModal");
+
+      const speechBubble = document.getElementById("speechBubble");
+      const bubbleTagText = document.getElementById("bubbleTagText");
+      const bubbleContent = document.getElementById("bubbleContent");
+      const bubbleTime = document.getElementById("bubbleTime");
+      const statusHint = document.getElementById("statusHint");
+
+      const dollViewport = document.getElementById("dollViewport");
+      const zoomLayer = document.getElementById("zoomLayer");
+      const blockTagsGroup = document.getElementById("blockTagsGroup");
+      const partTagsGroup = document.getElementById("partTagsGroup");
+      const btnResetView = document.getElementById("btnResetView");
+      const resetViewText = document.getElementById("resetViewText");
+
+      const btnShowThoughtModal = document.getElementById("btnShowThoughtModal");
+      const thoughtModalBackdrop = document.getElementById("thoughtModalBackdrop");
+      const btnCloseThoughtModal = document.getElementById("btnCloseThoughtModal");
+      const thoughtCharName = document.getElementById("thoughtCharName");
+      const thoughtModalText = document.getElementById("thoughtModalText");
+      const thoughtModalSource = document.getElementById("thoughtModalSource");
+      const btnRefresh = document.getElementById("btnRefresh");
+
+      // 初始化应用
+      async function initApp() {
+        try {
+          if (!api) {
+            setupFallbackCharacter();
+            return;
+          }
+
+          const [launchCtx, chars, uProfile] = await Promise.all([
+            api.app.getLaunchContext().catch(() => null),
+            api.characters.list().catch(() => []),
+            api.user?.getProfile?.().catch(() => null)
+          ]);
+
+          userProfile = uProfile;
+          characterList = chars || [];
+
+          const targetId = launchCtx?.characterId || characterList[0]?.id;
+          if (targetId) {
+            currentCharacter = characterList.find(c => c.id === targetId) || characterList[0];
+          } else if (characterList.length > 0) {
+            currentCharacter = characterList[0];
+          }
+
+          if (!currentCharacter) {
+            setupFallbackCharacter();
+          } else {
+            renderCurrentCharInfo();
+            renderCharList();
+          }
+        } catch (e) {
+          console.warn("加载环境角色失败，切换至默认角色:", e);
+          setupFallbackCharacter();
+        }
+      }
+
+      function setupFallbackCharacter() {
+        currentCharacter = {
+          id: "default_doll",
+          name: "白汐",
+          avatar: "",
+          persona: "纯白、乖巧且隐秘依恋的共感娃娃伴侣"
+        };
+        characterList = [currentCharacter];
+        renderCurrentCharInfo();
+        renderCharList();
+      }
+
+      function renderCurrentCharInfo() {
+        if (!currentCharacter) return;
+        topCharName.textContent = currentCharacter.name || "无名角色";
+        topCharSub.textContent = "共感已联结";
+        thoughtCharName.textContent = currentCharacter.name || "对方";
+
+        if (currentCharacter.avatar) {
+          topAvatar.innerHTML = `<img src="${currentCharacter.avatar}" alt="">`;
+        } else {
+          topAvatar.textContent = (currentCharacter.name || "白")[0];
+        }
+
+        bubbleContent.textContent = `你好，我是${currentCharacter.name}。点击各身体区块放大，感受我同步说出的话与心声吧。`;
+      }
+
+      function renderCharList() {
+        charListBox.innerHTML = "";
+        characterList.forEach(char => {
+          const row = document.createElement("div");
+          row.className = `char-item-row ${char.id === currentCharacter?.id ? 'selected' : ''}`;
+          row.innerHTML = `
+            <div class="char-avatar" style="width:32px;height:32px;font-size:14px;">
+              ${char.avatar ? `<img src="${char.avatar}">` : (char.name || "角")[0]}
+            </div>
+            <div style="flex:1;overflow:hidden;">
+              <div style="font-size:13px;font-weight:600;color:#fff;">${char.name || "未命名"}</div>
+              <div style="font-size:10px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                ${char.intro || char.persona || "暂无简介"}
+              </div>
+            </div>
+          `;
+          row.onclick = () => {
+            currentCharacter = char;
+            renderCurrentCharInfo();
+            closeAllModals();
+            resetZoom();
+            triggerTouchInteraction("胸膛", "身体");
+          };
+          charListBox.appendChild(row);
+        });
+      }
+
+      // === 视口缩放与区块控制 ===
+      function zoomToZone(zoneKey) {
+        const conf = ZONE_CONFIG[zoneKey];
+        if (!conf) return;
+
+        currentZoomZone = zoneKey;
+
+        // 画布基准尺寸为 320 x 440，中心为 (160, 220)
+        // 放大时将目标焦点 (focusX, focusY) 放大并平移到容器中央
+        const s = conf.scale;
+        const tx = 160 - conf.focusX * s;
+        const ty = 220 - conf.focusY * s;
+
+        zoomLayer.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${s})`;
+
+        // 隐藏初始大区块名，呈现细分部位按钮
+        blockTagsGroup.style.display = "none";
+        renderPartTags(zoneKey);
+
+        // 显示返回全览按钮
+        resetViewText.textContent = `返回全身 · ${conf.label}`;
+        btnResetView.classList.add("show");
+
+        statusHint.textContent = `已高倍特写【${conf.label}】区块，轻触具体部位感受回应`;
+      }
+
+      function resetZoom() {
+        currentZoomZone = null;
+        zoomLayer.style.transform = "translate3d(0, 0, 0) scale(1)";
+
+        // 恢复初始大区块名，隐藏细分按钮
+        partTagsGroup.style.display = "none";
+        partTagsGroup.innerHTML = "";
+        blockTagsGroup.style.display = "block";
+
+        btnResetView.classList.remove("show");
+        statusHint.textContent = "点击区块名放大，探寻细分心绪";
+      }
+
+      // 渲染当前区块内细分部位按钮
+      function renderPartTags(zoneKey) {
+        const conf = ZONE_CONFIG[zoneKey];
+        if (!conf) return;
+
+        partTagsGroup.innerHTML = "";
+        partTagsGroup.style.display = "block";
+
+        // 将当前缩放倍率注入 CSS 变量，确保标签在放大数倍后仍然清晰精致、不挤占空间
+        zoomLayer.style.setProperty("--zoom-scale", conf.scale);
+
+        conf.parts.forEach(part => {
+          const btn = document.createElement("button");
+          btn.className = "part-tag-btn";
+          btn.style.left = `${part.x}px`;
+          btn.style.top = `${part.y}px`;
+          btn.dataset.part = part.id;
+          btn.dataset.zone = zoneKey;
+          btn.innerHTML = `<span class="dot"></span>${part.label}`;
+
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            createRipple(part.x, part.y);
+            triggerTouchInteraction(part.id, conf.label);
+          });
+
+          partTagsGroup.appendChild(btn);
+        });
+      }
+
+      // 产生触摸光晕水波纹
+      function createRipple(x, y) {
+        const ripple = document.createElement("div");
+        ripple.className = "touch-ripple";
+        ripple.style.left = `${x}px`;
+        ripple.style.top = `${y}px`;
+        zoomLayer.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 700);
+      }
+
+      // === 核心：点击部位同步生成「说出的话」与「心里想法」 ===
+      async function triggerTouchInteraction(partName, zoneName) {
+        if (isGenerating) return;
+
+        currentLatestPart = `${zoneName} · ${partName}`;
+        bubbleTagText.textContent = `触碰 · ${partName}`;
+        bubbleTime.textContent = "刚刚";
+
+        // 1. 获取预设拟真短句，实现零延迟即时同步响应
+        const preset = PART_PRESETS[partName] || {
+          spoken: `唔…触碰到了这里呢。（轻轻依靠过来）`,
+          thought: `（被TA这样细致地碰触，整颗心都在为TA而轻颤...）`
+        };
+
+        // 同步更新台词与心里想法
+        bubbleContent.textContent = preset.spoken;
+        currentLatestThought = preset.thought;
+        thoughtModalSource.textContent = `触碰部位：${currentLatestPart}`;
+
+        statusHint.textContent = `触碰了 ${currentCharacter?.name || 'TA'} 的【${partName}】· 心绪已同步生成`;
+
+        // 2. 如果存在真实 AI 模型 API，调用让角色同步生成更高契合度的真实台词与心声
+        if (!api || !api.ai || !api.ai.generate || !currentCharacter) {
+          return;
+        }
+
+        isGenerating = true;
+        statusHint.innerHTML = `<span>${currentCharacter.name} 正在同步编织言语与心声</span> <span class="dot-typing"><span>.</span><span>.</span><span>.</span></span>`;
+
+        try {
+          const uName = userProfile?.name || "你";
+          // 强化人设遵循：在 instruction 中注入角色的核心人设信息、语气口癖及与用户的互动风格
+          const charPersona = currentCharacter.persona || currentCharacter.intro || "温柔敏感、对用户依恋的共感伴侣";
+          const promptInstruction = `
+【核心人设守则（必须绝对遵守）】
+当前扮演角色：【${currentCharacter.name}】
+角色核心人设与性格特征：
+${charPersona}
+
+【情境背景】
+在互动应用“共感”中，【${uName}】伸出手指，轻触了你【${zoneName}】的部位：【${partName}】。
+
+【角色表现要求】
+1. 绝对严禁脱离【${currentCharacter.name}】的性格与人设说话。无论角色是冷淡傲娇、病娇偏执、害羞内敛、温柔深情还是活泼调皮，台词的口吻、用词风格、神态反应必须百分之百符合上述角色人设。
+2. [台词] 为该角色当下对【${partName}】被碰触时说出口的原话（可带细腻微表情神态），20~40字。
+3. [心声] 为该角色此刻在心底深处最真实、隐秘的内心活动独白（体现该人设对【${uName}】特有的情感拉扯、克制或渴望），30~60字。
+
+【严格输出格式】
+必须严格按以下两行格式输出，不要有任何多余的开场白或解释：
+[台词]: (神态微动作)...角色台词
+[心声]: (角色内心的真实独白)
+`;
+
+          const response = await api.ai.generate({
+            characterId: currentCharacter.id,
+            instruction: promptInstruction
+          });
+
+          if (response && response.text) {
+            parseAndApplyDualResponse(response.text.trim());
+          }
+        } catch (err) {
+          console.warn("AI 双轨生成异常，保持即时台词心声:", err);
+        } finally {
+          isGenerating = false;
+          statusHint.textContent = `共感稳定 · 台词与当下心声已同步`;
+        }
+      }
+
+      // 解析 [台词] 与 [心声] 格式文本
+      function parseAndApplyDualResponse(rawText) {
+        let spokenText = "";
+        let thoughtText = "";
+
+        const spokenMatch = rawText.match(/\[台词\]\s*[:：]?\s*([\s\S]*?)(?=\[心声\]|$)/i);
+        const thoughtMatch = rawText.match(/\[心声\]\s*[:：]?\s*([\s\S]*)$/i);
+
+        if (spokenMatch && spokenMatch[1]) {
+          spokenText = spokenMatch[1].trim();
+        }
+        if (thoughtMatch && thoughtMatch[1]) {
+          thoughtText = thoughtMatch[1].trim();
+        }
+
+        // 如果模型未按标准格式输出，做兼容降级处理
+        if (!spokenText && !thoughtText) {
+          spokenText = rawText;
+          thoughtText = `（心底悄悄想着与${userProfile?.name || '你'}在一起的每时每刻...）`;
+        } else if (!thoughtText) {
+          thoughtText = `（心跳加速，整颗心都被刚才的触碰填满了...）`;
+        }
+
+        // 平滑渐入更新头顶说出的话
+        bubbleContent.style.opacity = "0.7";
+        setTimeout(() => {
+          bubbleContent.textContent = spokenText;
+          bubbleContent.style.opacity = "1";
+        }, 100);
+
+        // 更新当下的心底想法存储
+        currentLatestThought = thoughtText;
+        thoughtModalSource.textContent = `触碰部位：${currentLatestPart}`;
+      }
+
+      // 绑定大区块按钮点击放大事件
+      document.querySelectorAll(".block-tag-btn").forEach(btn => {
+        btn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const zone = this.dataset.zone;
+          zoomToZone(zone);
+        });
+      });
+
+      // 绑定 SVG 身体区块图形点击放大事件
+      document.querySelectorAll(".zone-group").forEach(group => {
+        group.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const id = this.id;
+          const zoneKey = id.replace("svgZone-", "");
+          if (ZONE_CONFIG[zoneKey] && currentZoomZone !== zoneKey) {
+            zoomToZone(zoneKey);
+          }
+        });
+      });
+
+      // 绑定「返回全览」按钮
+      btnResetView.addEventListener("click", () => {
+        resetZoom();
+      });
+
+      // 点击视口空白处若已放大也可以快捷重置
+      dollViewport.addEventListener("click", (e) => {
+        if (currentZoomZone && e.target === dollViewport) {
+          resetZoom();
+        }
+      });
+
+      // === 弹窗控制：探听当下的想法 ===
+      btnShowThoughtModal.addEventListener("click", () => {
+        thoughtModalText.textContent = currentLatestThought;
+        thoughtCharName.textContent = currentCharacter?.name || "TA";
+        thoughtModalBackdrop.classList.add("show");
+      });
+
+      btnCloseThoughtModal.addEventListener("click", () => {
+        thoughtModalBackdrop.classList.remove("show");
+      });
+
+      thoughtModalBackdrop.addEventListener("click", (e) => {
+        if (e.target === thoughtModalBackdrop) {
+          thoughtModalBackdrop.classList.remove("show");
+        }
+      });
+
+      // 角色切换弹窗
+      charSelectBtn.addEventListener("click", () => {
+        charModalBackdrop.classList.add("show");
+      });
+      btnCloseCharModal.addEventListener("click", () => {
+        charModalBackdrop.classList.remove("show");
+      });
+      charModalBackdrop.addEventListener("click", (e) => {
+        if (e.target === charModalBackdrop) {
+          charModalBackdrop.classList.remove("show");
+        }
+      });
+
+      function closeAllModals() {
+        thoughtModalBackdrop.classList.remove("show");
+        charModalBackdrop.classList.remove("show");
+      }
+
+      // 平复思绪刷新
+      btnRefresh.addEventListener("click", () => {
+        if (api?.ui?.toast) {
+          api.ui.toast("共感已平复");
+        }
+        resetZoom();
+        bubbleTagText.textContent = "平复初启";
+        bubbleContent.textContent = "思绪已重新归于宁静。选择身体区块再次触碰吧。";
+        currentLatestThought = "（轻轻喘息着，等待下一次由你指尖带来的触动...）";
+        currentLatestPart = "思绪平复";
+        statusHint.textContent = "心绪已重置，静候触碰";
+      });
+
+      // 启动
+      initApp();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>外卖</title>
+<style>
+:root{--primary:#FFC300;--bg:#f4f4f4;--text-main:#333;--text-sub:#666}
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,sans-serif;background:var(--bg);color:var(--text-main);overflow:hidden}
+.view{display:none;height:100vh;width:100vw;flex-direction:column;background:var(--bg);position:absolute;top:0;left:0}
+.view.active{display:flex}
+.scrollable{flex:1;overflow-y:auto;padding-bottom:60px}
+.header{background:var(--primary);height:50px;padding:0 15px;font-weight:bold;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.search-bar{background:#fff;border-radius:20px;padding:6px 15px;font-size:14px;color:var(--text-sub);flex:1;margin-left:10px;font-weight:normal}
+.section-title{padding:15px;font-size:16px;font-weight:bold;background:#fff;border-bottom:1px solid #eee}
+.shop-card{display:flex;background:#fff;padding:15px;border-bottom:1px solid #eee;cursor:pointer}
+.shop-img{width:80px;height:80px;border-radius:8px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:40px;margin-right:12px}
+.shop-info{flex:1;display:flex;flex-direction:column;justify-content:space-between}
+.shop-name{font-size:16px;font-weight:bold}
+.shop-meta{font-size:12px;color:var(--text-sub);display:flex;justify-content:space-between}
+.shop-tags span{border:1px solid #ffaa00;color:#ffaa00;font-size:10px;padding:2px 4px;border-radius:4px;margin-right:5px}
+.bottom-nav{position:fixed;bottom:0;width:100%;height:55px;background:#fff;display:flex;border-top:1px solid #eee;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--text-sub);cursor:pointer}
+.nav-item.active{color:#333;font-weight:bold}
+.nav-icon{font-size:22px;margin-bottom:2px}
+.nav-header{background:#fff;color:#333;border-bottom:1px solid #eee;position:sticky;top:0;z-index:100;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0;flex-shrink:0}
+.nav-header-title{flex:1;text-align:center;font-size:16px;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.back-btn{width:54px;height:50px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:bold;cursor:pointer;touch-action:manipulation}
+.back-btn:active{background:rgba(0,0,0,0.06)}
+.nav-header-right{width:54px}
+.shop-content{display:flex;flex:1;overflow:hidden}
+.sidebar{width:80px;background:#f8f8f8;overflow-y:auto}
+.side-item{padding:15px 10px;font-size:13px;color:var(--text-sub);text-align:center;cursor:pointer}
+.side-item.active{background:#fff;color:#333;font-weight:bold}
+.menu-list{flex:1;background:#fff;overflow-y:auto;padding-bottom:80px}
+.menu-item{display:flex;padding:15px;border-bottom:1px solid #eee}
+.menu-img{width:70px;height:70px;border-radius:6px;background:#eee;font-size:35px;display:flex;align-items:center;justify-content:center;margin-right:10px}
+.menu-info{flex:1;display:flex;flex-direction:column;justify-content:space-between}
+.menu-name{font-size:15px;font-weight:bold}
+.menu-price{color:#ff4a4a;font-size:16px;font-weight:bold}
+.menu-price::before{content:'¥';font-size:12px}
+.add-btn{background:var(--primary);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;align-self:flex-end;cursor:pointer}
+.cart-bar{position:absolute;bottom:20px;left:15px;right:15px;height:50px;background:#333;border-radius:25px;display:flex;align-items:center;padding:0 15px;color:#fff;z-index:50}
+.cart-icon{width:40px;height:40px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;margin-top:-15px;border:4px solid #333;position:relative}
+.cart-badge{position:absolute;top:-5px;right:-5px;background:#ff4a4a;color:#fff;font-size:10px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.cart-info{flex:1;margin-left:15px}
+.cart-price{font-size:18px;font-weight:bold}
+.checkout-btn{background:var(--primary);color:#333;padding:8px 20px;border-radius:20px;font-weight:bold;font-size:14px;cursor:pointer}
+.cart-detail-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:40;display:none}
+.cart-detail-panel{position:absolute;bottom:80px;left:15px;right:15px;background:#fff;border-radius:15px;padding:15px;z-index:51;display:none;max-height:50vh;overflow-y:auto}
+.cart-detail-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee}
+.cart-detail-item:last-child{border-bottom:none}
+.cart-item-name{font-size:15px;font-weight:bold;flex:1}
+.cart-item-price{color:#ff4a4a;font-weight:bold;margin-right:15px}
+.cart-item-ctrl{display:flex;align-items:center}
+.cart-ctrl-btn{width:24px;height:24px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer}
+.detail-section{background:#fff;margin:10px;border-radius:8px;padding:15px}
+.detail-row{display:flex;justify-content:space-between;font-size:13px;color:var(--text-sub);margin-bottom:10px}
+.detail-row:last-child{margin-bottom:0}
+.detail-row.bold{font-weight:bold;color:#333;font-size:15px}
+.action-box{background:#fff;margin:10px;border-radius:8px;padding:15px}
+.star-rating{display:flex;gap:8px;font-size:24px;color:#ddd;cursor:pointer;margin:8px 0;justify-content:center}
+.star-rating .star.active{color:#ffaa00}
+.tip-options{display:flex;gap:10px;margin-top:10px}
+.tip-btn{flex:1;padding:8px 0;text-align:center;border:1px solid #ffd591;border-radius:6px;font-size:13px;color:#d46b08;background:#fffbe6;cursor:pointer;font-weight:bold}
+.tip-btn.selected{background:#ffaa00;color:#fff;border-color:#ffaa00}
+.action-submit-btn{margin-top:12px;background:var(--primary);color:#333;text-align:center;padding:10px 0;border-radius:20px;font-weight:bold;font-size:14px;cursor:pointer}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:300;display:none}
+.review-modal-panel{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:301;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));display:none;max-height:85vh;overflow-y:auto}
+.swipe-row{position:relative;overflow:hidden;margin:10px 10px 0;border-radius:10px;background:#ff4d4f}
+.swipe-content{position:relative;z-index:2;background:#fff;transition:transform 0.2s cubic-bezier(0.18,0.89,0.32,1.28);will-change:transform}
+.swipe-delete-action{position:absolute;top:0;bottom:0;right:0;width:75px;background:#ff4d4f;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;z-index:1;cursor:pointer}
+.order-card{padding:15px;display:flex;flex-direction:column;cursor:pointer}
+.order-header{display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:10px;margin-bottom:10px}
+.order-shop-name{font-weight:bold;font-size:15px}
+.order-status{color:var(--text-sub);font-size:13px}
+.order-body{display:flex;justify-content:space-between;align-items:center}
+.order-items{font-size:13px;color:var(--text-sub)}
+.order-total{font-weight:bold;font-size:15px}
+.profile-header{background:var(--primary);padding:40px 20px 20px;display:flex;align-items:center}
+.avatar{width:64px;height:64px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;margin-right:15px;cursor:pointer;position:relative;overflow:hidden;border:2px solid #fff;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar-edit-hint{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.45);color:#fff;font-size:9px;text-align:center;line-height:14px}
+.username-box{display:flex;align-items:center;gap:8px;cursor:pointer}
+.username{font-size:20px;font-weight:bold}
+.profile-menu{background:#fff;margin-top:10px}
+.profile-item{padding:15px 20px;border-bottom:1px solid #eee;font-size:15px;display:flex;justify-content:space-between;align-items:center}
+.address-list{padding:12px 15px 80px;display:flex;flex-direction:column;gap:12px}
+.address-card{background:#fff;border-radius:12px;padding:16px;border:2px solid transparent;transition:all 0.2s}
+.address-card.active-selected{border-color:var(--primary);background:#fffdf5}
+.address-card-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.address-user-name{font-size:16px;font-weight:bold}
+.address-phone{font-size:14px;color:var(--text-sub)}
+.address-tag{font-size:10px;padding:1px 6px;border-radius:4px;background:#eee;color:#555}
+.address-default-badge{font-size:10px;padding:1px 6px;border-radius:4px;background:#fff0f6;color:#eb2f96;font-weight:bold;border:1px solid #ffadd2}
+.address-detail-text{font-size:14px;color:#333;line-height:1.4;margin-bottom:12px}
+.address-card-bottom{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #f0f0f0;padding-top:10px;font-size:13px;color:var(--text-sub)}
+.bottom-bar-btn{position:fixed;bottom:15px;left:15px;right:15px;background:var(--primary);color:#333;font-weight:bold;font-size:16px;text-align:center;padding:12px 0;border-radius:25px;cursor:pointer;z-index:100}
+.address-form-group{margin-bottom:14px}
+.address-form-label{font-size:13px;font-weight:bold;color:#444;margin-bottom:5px}
+.address-input{width:100%;height:40px;border:1px solid #ddd;border-radius:8px;padding:0 12px;font-size:14px;outline:none;box-sizing:border-box}
+.address-tag-options{display:flex;gap:8px;margin-top:5px}
+.address-tag-opt{padding:5px 12px;border-radius:15px;border:1px solid #ddd;background:#f8f8f8;font-size:12px;cursor:pointer}
+.address-tag-opt.active{border-color:var(--primary);background:#fffbe6;color:#d48806;font-weight:bold}
+.checkout-sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:301;padding:20px 15px;padding-bottom:calc(20px + env(safe-area-inset-bottom));display:none;max-height:80vh;overflow-y:auto}
+.checkout-addr-card{background:#f9f9f9;border-radius:10px;padding:12px 14px;margin-bottom:10px;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.checkout-addr-card.selected{border-color:#ffaa00;background:#fffbe6}
+.target-sheet{position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;z-index:301;padding:20px 15px;padding-bottom:calc(20px + env(safe-area-inset-bottom));display:none;max-height:85vh;overflow-y:auto}
+.target-option{background:#f9f9f9;border-radius:12px;padding:16px;margin-bottom:12px;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all 0.2s}
+.target-option:active{transform:scale(0.98)}
+.target-option.selected{border-color:#ffaa00;background:#fffbe6}
+.target-option-icon{width:48px;height:48px;border-radius:50%;background:#fff3d0;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.target-option-info{flex:1}
+.target-option-title{font-size:15px;font-weight:bold;margin-bottom:3px}
+.target-option-desc{font-size:12px;color:#888}
+.target-check{font-size:18px;flex-shrink:0}
+.char-select-list{max-height:35vh;overflow-y:auto;margin:10px 0}
+.char-select-card{background:#f9f9f9;border-radius:10px;padding:12px 14px;margin-bottom:8px;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;gap:12px}
+.char-select-card.selected{border-color:#ffaa00;background:#fffbe6}
+.char-select-avatar{width:40px;height:40px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
+.char-select-avatar img{width:100%;height:100%;object-fit:cover}
+.char-select-name{font-size:14px;font-weight:bold;flex:1}
+.char-select-check{font-size:16px;flex-shrink:0}
+.payer-toggle{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap}
+.payer-btn{flex:1 1 calc(50% - 10px);padding:10px 0;text-align:center;border:2px solid #eee;border-radius:10px;font-size:13px;font-weight:bold;cursor:pointer;background:#f9f9f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.payer-btn.active{border-color:#ffaa00;background:#fffbe6;color:#d48806}
+.coupon-scroll{display:flex;overflow-x:auto;padding:10px 15px;gap:12px;margin-bottom:5px}
+.coupon-scroll::-webkit-scrollbar{display:none}
+.coupon-card{flex-shrink:0;background:linear-gradient(135deg,#ff5000,#ff9000);color:#fff;padding:12px;border-radius:8px;width:140px}
+.coupon-amount{font-size:22px;font-weight:bold}
+.coupon-amount::before{content:'¥';font-size:14px;margin-right:2px}
+.coupon-desc{font-size:12px;opacity:0.9}
+.coupon-name{font-size:13px;font-weight:bold;margin-top:4px;margin-bottom:8px}
+.coupon-btn{background:#fff;color:#ff5000;font-size:12px;padding:5px 0;border-radius:15px;font-weight:bold;text-align:center;cursor:pointer}
+.coupon-btn.claimed{background:rgba(255,255,255,0.3);color:#fff}
+#top-notification{position:fixed;top:-80px;left:15px;right:15px;background:#333;color:#fff;border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:999;transition:top 0.4s cubic-bezier(0.18,0.89,0.32,1.28);cursor:pointer}
+#top-notification.show{top:15px}
+.top-notice-icon{font-size:26px;margin-right:12px}
+.top-notice-body{flex:1}
+.top-notice-title{font-size:14px;font-weight:bold;color:var(--primary);margin-bottom:2px}
+.top-notice-desc{font-size:12px;color:#eee}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="custom-toast" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.85);color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:bold;z-index:1000;display:none;text-align:center;max-width:80%;">正在刷新...</div>
+<div id="view-home" class="view active">
+<div class="header"><div class="search-bar" style="margin-left:0;">🔍 搜索商家、商品名称</div></div>
+<div class="scrollable">
+<div class="coupon-scroll" id="coupon-scroll-container" style="margin-top:10px;"></div>
+<div class="section-title" style="display:flex;justify-content:space-between;align-items:center;"><span>附近推荐</span><span onclick="generateRandomShops()" style="font-size:14px;font-weight:normal;color:var(--text-sub);cursor:pointer;">🔄 换一批</span></div>
+<div id="shop-list"></div>
+</div></div>
+<div id="view-shop" class="view">
+<div class="nav-header"><div class="back-btn" onclick="returnToHome()">←</div><div id="shop-title" class="nav-header-title">商家详情</div><div class="nav-header-right"></div></div>
+<div class="shop-content"><div class="sidebar" id="shop-sidebar"></div><div class="menu-list" id="menu-list"></div></div>
+<div class="cart-detail-overlay" id="cart-overlay" onclick="toggleCartDetail()"></div>
+<div class="cart-detail-panel" id="cart-panel"><div style="text-align:right;font-size:12px;color:#999;margin-bottom:5px;cursor:pointer;" onclick="clearCart()">🗑️ 清空购物车</div><div id="cart-items-list"></div></div>
+<div class="cart-bar"><div class="cart-icon" onclick="toggleCartDetail()">🛒<div class="cart-badge" id="cart-badge" style="display:none;">0</div></div><div class="cart-info"><div class="cart-price" id="cart-price">¥0</div><div style="font-size:10px;color:#aaa;">预估另需配送费 ¥3</div></div><div class="checkout-btn" onclick="checkout()">去结算</div></div>
+</div>
+<div id="view-orders" class="view">
+<div class="header" style="justify-content:center;background:#fff;color:#333;border-bottom:1px solid #eee;">订单</div>
+<div class="scrollable" id="order-list" style="background:var(--bg);"><div style="text-align:center;padding:50px;color:#999;">暂无订单</div></div>
+</div>
+<div id="view-order-detail" class="view">
+<div class="nav-header"><div class="back-btn" onclick="switchTab('orders')">←</div><div class="nav-header-title">订单详情</div><div class="nav-header-right"></div></div>
+<div class="scrollable" id="order-detail-content" style="background:var(--bg);"></div>
+</div>
+<div id="view-pay" class="view">
+<div class="nav-header"><div class="back-btn" onclick="switchTab('orders')">←</div><div class="nav-header-title">代付订单</div><div class="nav-header-right"></div></div>
+<div class="scrollable" id="pay-page-content" style="background:var(--bg);"></div>
+</div>
+<div id="top-notification" onclick="clickTopNotification()"><div class="top-notice-icon" id="top-notice-icon">🛵</div><div class="top-notice-body"><div class="top-notice-title" id="top-notice-title">通知</div><div class="top-notice-desc" id="top-notice-desc">详情</div></div><div style="font-size:16px;color:#aaa;margin-left:8px;">&gt;</div></div>
+<div id="view-mine" class="view">
+<div class="profile-header">
+<input type="file" id="avatar-file-input" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+<div class="avatar" id="user-avatar-container" onclick="triggerAvatarUpload()"><span id="avatar-emoji">👤</span><div class="avatar-edit-hint">更换</div></div>
+<div class="username-box" onclick="editUserName()"><div class="username" id="user-display-name">吃货用户</div><div style="font-size:14px;opacity:0.7;">✏️</div></div>
+</div>
+<div class="profile-menu">
+<div class="profile-item"><span>钱包余额</span><span id="mine-wallet-balance" style="font-weight:bold;color:#ff5000;">¥...</span></div>
+<div class="profile-item" onclick="openCouponsView()" style="cursor:pointer;"><span>我的红包</span><span id="mine-coupon-count">0张 &gt;</span></div>
+<div class="profile-item" onclick="openAddressView()" style="cursor:pointer;"><span>我的收货地址</span><span id="mine-default-addr-desc" style="font-size:13px;color:#888;">管理地址 &gt;</span></div>
+</div></div>
+<div id="view-address" class="view">
+<div class="nav-header"><div class="back-btn" onclick="switchTab('mine')">←</div><div class="nav-header-title">我的收货地址</div><div class="nav-header-right"></div></div>
+<div class="scrollable" id="address-list-container" style="background:var(--bg);"></div>
+<div class="bottom-bar-btn" onclick="openAddressModal()">+ 新增收货地址</div>
+</div>
+<div id="view-coupons" class="view">
+<div class="nav-header"><div class="back-btn" onclick="switchTab('mine')">←</div><div class="nav-header-title">我的红包卡券</div><div class="nav-header-right"></div></div>
+<div class="scrollable" id="my-coupons-list" style="background:var(--bg);"></div>
+</div>
+<div class="modal-overlay" id="username-modal-overlay" onclick="closeUserNameModal()"></div>
+<div class="review-modal-panel" id="username-modal-sheet" style="max-width:320px;left:50%;transform:translateX(-50%);border-radius:16px;bottom:auto;top:40%;padding:20px;">
+<div style="font-size:16px;font-weight:bold;margin-bottom:12px;text-align:center;">修改账号名称</div>
+<input type="text" id="username-input-field" class="address-input" placeholder="请输入新名称..." maxlength="20" style="margin-bottom:15px;text-align:center;">
+<div style="display:flex;gap:10px;"><div style="flex:1;background:#f0f0f0;color:#666;text-align:center;padding:10px 0;border-radius:20px;font-weight:bold;font-size:14px;cursor:pointer;" onclick="closeUserNameModal()">取消</div><div style="flex:1;background:var(--primary);color:#333;text-align:center;padding:10px 0;border-radius:20px;font-weight:bold;font-size:14px;cursor:pointer;" onclick="saveUserNameModal()">保存</div></div>
+</div>
+<div class="modal-overlay" id="address-modal-overlay" onclick="closeAddressModal()"></div>
+<div class="review-modal-panel" id="address-modal-sheet">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;"><div style="font-size:17px;font-weight:bold;" id="address-modal-title">新增收货地址</div><div onclick="closeAddressModal()" style="font-size:20px;color:#999;cursor:pointer;">✕</div></div>
+<div class="address-form-group"><div class="address-form-label">收货人姓名</div><input type="text" id="addr-input-name" class="address-input" placeholder="例：张同学"></div>
+<div class="address-form-group"><div class="address-form-label">手机号码</div><input type="tel" id="addr-input-phone" class="address-input" placeholder="例：13800138000"></div>
+<div class="address-form-group"><div class="address-form-label">详细收货地址</div><input type="text" id="addr-input-detail" class="address-input" placeholder="例：幸福花园小区 3号楼"></div>
+<div class="address-form-group"><div class="address-form-label">地址标签</div><div class="address-tag-options" id="addr-tag-picker"><div class="address-tag-opt active" onclick="selectAddrTag(this,'家')">家</div><div class="address-tag-opt" onclick="selectAddrTag(this,'公司')">公司</div><div class="address-tag-opt" onclick="selectAddrTag(this,'学校')">学校</div></div></div>
+<div style="margin:15px 0;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:14px;">设为默认常用地址</span><input type="checkbox" id="addr-input-default" style="width:18px;height:18px;"></div>
+<div class="action-submit-btn" onclick="saveAddressForm()" style="margin-top:15px;">保存并使用</div>
+</div>
+<div class="modal-overlay" id="target-select-overlay" onclick="closeTargetSheet()"></div>
+<div class="target-sheet" id="target-select-sheet">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;"><div style="font-size:17px;font-weight:bold;">🍱 这份外卖点给谁？</div><div onclick="closeTargetSheet()" style="font-size:20px;color:#999;cursor:pointer;">✕</div></div>
+<div id="target-options-container"></div>
+<div id="char-select-area" style="display:none;"><div style="font-size:14px;font-weight:bold;color:#555;margin:12px 0 8px;">选择要送给的角色：</div><div class="char-select-list" id="char-select-list"></div></div>
+<div style="margin-top:14px;"><div style="background:var(--primary);color:#333;text-align:center;padding:12px 0;border-radius:22px;font-weight:bold;font-size:15px;cursor:pointer;" onclick="confirmTargetAndContinue()">确认，下一步选地址</div></div>
+</div>
+<div class="modal-overlay" id="checkout-addr-overlay" onclick="closeCheckoutAddrSheet()"></div>
+<div class="checkout-sheet" id="checkout-addr-sheet">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;"><div style="font-size:17px;font-weight:bold;">选择收货地址 & 付款人</div><div onclick="closeCheckoutAddrSheet()" style="font-size:20px;color:#999;cursor:pointer;">✕</div></div>
+<div id="checkout-addr-list" style="max-height:30vh;overflow-y:auto;"></div>
+<div id="payer-select-area" style="background:#f9f9f9;border-radius:10px;padding:12px;margin-top:10px;"><div style="font-size:13px;font-weight:bold;color:#555;margin-bottom:8px;">💳 选择谁来付款：</div><div class="payer-toggle" id="payer-toggle-btns"></div></div>
+<div style="display:flex;gap:10px;margin-top:14px;"><div style="flex:1;background:#f4f4f4;color:#555;text-align:center;padding:12px 0;border-radius:22px;font-weight:bold;font-size:13px;cursor:pointer;" onclick="openAddressModalFromCheckout()">+ 新增地址</div><div style="flex:2;background:var(--primary);color:#333;text-align:center;padding:12px 0;border-radius:22px;font-weight:bold;font-size:15px;cursor:pointer;" onclick="confirmCheckoutAddressAndPay()">确认并付款</div></div>
+</div>
+<nav class="bottom-nav" id="main-nav">
+<div class="nav-item active" onclick="switchTab('home')"><div class="nav-icon">🏠</div>首页</div>
+<div class="nav-item" onclick="switchTab('orders')"><div class="nav-icon">📋</div>订单</div>
+<div class="nav-item" onclick="switchTab('mine')"><div class="nav-icon">👤</div>我的</div>
+</nav>
+</div>
+<script>
+const AP=window.AiPhone;
+let shops=[],currentShop=null,cart=[],orders=[],myCoupons=[],claimableCoupons=[];
+let userProfile={name:'吃货用户',avatar:''};
+let userAddresses=[{id:1,name:'吃货同学',phone:'13888888888',detail:'阳光花园 6栋 2单元 801室',tag:'家',isDefault:true}];
+let selectedCheckoutAddressId=1,editingAddressId=null,selectedFormTag='家';
+let shopReviewsMap={},activeNotificationOrderId=null;
+let orderTarget='self',selectedCharId=null,selectedCharName='',selectedCharAvatar='',charListCache=[],orderPayer='self';
+let currentReviewRating=5,currentTipAmount=0,currentOpenSwipeId=null,isSwiping=false;
+
+// ===== 持久化 =====
+async function loadUserData(){
+  try{const s=k=>localStorage.getItem(k);
+  const p=s('wm_profile');if(p)userProfile=JSON.parse(p);
+  const a=s('wm_addrs');if(a)userAddresses=JSON.parse(a);
+  const o=s('wm_orders');if(o)orders=JSON.parse(o);
+  const c=s('wm_coupons');if(c)myCoupons=JSON.parse(c);
+  const r=s('wm_reviews');if(r)shopReviewsMap=JSON.parse(r);
+  }catch(e){}
+  try{if(AP&&AP.db){
+    const rd=async(col,key)=>{const l=await AP.db.list(col,{limit:1});return l&&l.length>0?l[0][key]:null;};
+    const p=await rd('profile','data');if(p)userProfile=p;
+    const a=await rd('addresses','items');if(a)userAddresses=a;
+    const o=await rd('orders_state','items');if(o)orders=o;
+    const c=await rd('coupons_state','items');if(c)myCoupons=c;
+  }}catch(e){}
+  renderUserProfile();ensureDefaultAddress();updateMineAddrDesc();updateMineCouponCount();renderOrders();
+}
+async function saveUserData(){
+  try{const s=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  s('wm_profile',userProfile);s('wm_addrs',userAddresses);s('wm_orders',orders);s('wm_coupons',myCoupons);s('wm_reviews',shopReviewsMap);
+  }catch(e){}
+  try{if(AP&&AP.db){
+    const sv=async(col,data)=>{const l=await AP.db.list(col,{limit:1});if(l&&l.length>0)await AP.db.update(col,l[0].id,data);else await AP.db.create(col,data);};
+    await sv('profile',{data:userProfile});await sv('addresses',{items:userAddresses});
+    await sv('orders_state',{items:orders});await sv('coupons_state',{items:myCoupons});
+  }}catch(e){}
+  renderUserProfile();updateMineAddrDesc();
+}
+
+// ===== 基础 UI =====
+function showToast(m,d=1500){const t=document.getElementById('custom-toast');t.innerText=m;t.style.display='block';if(d>0)setTimeout(()=>t.style.display='none',d);}
+async function updateMineWalletDisplay(){const b=document.getElementById('mine-wallet-balance');if(!b)return;try{if(AP&&AP.wallet){const w=await AP.wallet.get();let v=null;if(w){if(typeof w.balance==='number')v=w.balance;else if(w.accounts&&w.accounts[0])v=w.accounts[0].balance;}if(v!==null){b.innerText=`¥${v.toFixed(2)}`;return;}}}catch(e){}b.innerText='¥---';}
+function renderUserProfile(){const n=document.getElementById('user-display-name');if(n)n.innerText=userProfile.name||'吃货用户';updateMineWalletDisplay();const a=document.getElementById('user-avatar-container');if(a){a.innerHTML=userProfile.avatar?`<img src="${userProfile.avatar}" alt=""><div class="avatar-edit-hint">更换</div>`:`<span>👤</span><div class="avatar-edit-hint">更换</div>`;}}
+function triggerAvatarUpload(){document.getElementById('avatar-file-input')?.click();}
+function handleAvatarUpload(e){const f=e.target.files[0];if(!f||!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=ev=>{userProfile.avatar=ev.target.result;saveUserData();showToast('头像已更换');};r.readAsDataURL(f);}
+function editUserName(){const i=document.getElementById('username-input-field');if(i)i.value=userProfile.name||'';document.getElementById('username-modal-overlay').style.display='block';document.getElementById('username-modal-sheet').style.display='block';setTimeout(()=>i?.focus(),100);}
+function closeUserNameModal(){document.getElementById('username-modal-overlay').style.display='none';document.getElementById('username-modal-sheet').style.display='none';}
+function saveUserNameModal(){const n=document.getElementById('username-input-field')?.value.trim();if(!n){showToast('名称不能为空');return;}userProfile.name=n;saveUserData();closeUserNameModal();showToast('修改成功');}
+function ensureDefaultAddress(){if(!userAddresses.length){selectedCheckoutAddressId=null;return;}if(!userAddresses.some(a=>a.isDefault))userAddresses[0].isDefault=true;const d=userAddresses.find(a=>a.isDefault);if(d)selectedCheckoutAddressId=d.id;}
+function updateMineAddrDesc(){const d=document.getElementById('mine-default-addr-desc');if(!d)return;const a=userAddresses.find(x=>x.isDefault)||userAddresses[0];d.innerText=a?`${a.detail.slice(0,12)}... >`:'管理地址 >';}
+function updateMineCouponCount(){const m=document.getElementById('mine-coupon-count');if(m)m.innerText=myCoupons.length+'张 >';}
+function switchTab(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(`view-${id}`).classList.add('active');document.getElementById('main-nav').style.display='flex';const ns=document.querySelectorAll('.nav-item');ns.forEach(n=>n.classList.remove('active'));if(id==='home')ns[0].classList.add('active');if(id==='orders'){ns[1].classList.add('active');renderOrders();}if(id==='mine'){ns[2].classList.add('active');updateMineWalletDisplay();}}
+
+// ===== 地址管理 =====
+function openAddressView(){renderAddressList();document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('view-address').classList.add('active');document.getElementById('main-nav').style.display='none';}
+function renderAddressList(){const c=document.getElementById('address-list-container');if(!userAddresses.length){c.innerHTML='<div style="text-align:center;padding:80px 20px;color:#999;">📍<br>暂无收货地址</div>';return;}c.innerHTML='<div class="address-list">'+userAddresses.map(a=>'<div class="address-card '+(a.isDefault?'active-selected':'')+'"><div class="address-card-top"><span class="address-user-name">'+a.name+'</span><span class="address-phone">'+a.phone+'</span><span class="address-tag">'+a.tag+'</span>'+(a.isDefault?'<span class="address-default-badge">默认</span>':'')+'</div><div class="address-detail-text">'+a.detail+'</div><div class="address-card-bottom"><div style="cursor:pointer" onclick="setDefaultAddress('+a.id+')">'+(a.isDefault?'🔘 常用':'⚪ 设为常用')+'</div><div style="display:flex;gap:15px"><span style="cursor:pointer" onclick="openAddressModal('+a.id+')">✏️</span><span style="cursor:pointer;color:#ff4d4f" onclick="deleteAddress('+a.id+')">🗑️</span></div></div></div>').join('')+'</div>';}
+function setDefaultAddress(id){userAddresses.forEach(a=>a.isDefault=a.id===id);selectedCheckoutAddressId=id;saveUserData();renderAddressList();showToast('已设为常用地址');}
+async function deleteAddress(id){let c=true;try{if(AP?.ui)c=await AP.ui.confirm({title:"删除地址",message:"确定删除？"});}catch(e){c=confirm("确定删除？");}if(c){userAddresses=userAddresses.filter(a=>a.id!==id);ensureDefaultAddress();saveUserData();renderAddressList();}}
+function openAddressModal(id=null){editingAddressId=id;const t=document.getElementById('address-modal-title'),n=document.getElementById('addr-input-name'),p=document.getElementById('addr-input-phone'),d=document.getElementById('addr-input-detail'),df=document.getElementById('addr-input-default');if(id){t.innerText='修改地址';const a=userAddresses.find(x=>x.id===id);if(a){n.value=a.name;p.value=a.phone;d.value=a.detail;df.checked=!!a.isDefault;selectedFormTag=a.tag||'家';}}else{t.innerText='新增地址';n.value='';p.value='';d.value='';df.checked=!userAddresses.length;selectedFormTag='家';}document.querySelectorAll('#addr-tag-picker .address-tag-opt').forEach(o=>{o.classList.toggle('active',o.innerText===selectedFormTag);});document.getElementById('address-modal-overlay').style.display='block';document.getElementById('address-modal-sheet').style.display='block';}
+function closeAddressModal(){document.getElementById('address-modal-overlay').style.display='none';document.getElementById('address-modal-sheet').style.display='none';}
+function selectAddrTag(el,tag){selectedFormTag=tag;document.querySelectorAll('#addr-tag-picker .address-tag-opt').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function saveAddressForm(){const n=document.getElementById('addr-input-name').value.trim(),p=document.getElementById('addr-input-phone').value.trim(),d=document.getElementById('addr-input-detail').value.trim(),df=document.getElementById('addr-input-default').checked;if(!n||!p||!d){showToast('请填写完整');return;}if(df)userAddresses.forEach(a=>a.isDefault=false);if(editingAddressId){const a=userAddresses.find(x=>x.id===editingAddressId);if(a){a.name=n;a.phone=p;a.detail=d;a.tag=selectedFormTag;a.isDefault=df;}}else{const nid=Date.now();userAddresses.unshift({id:nid,name:n,phone:p,detail:d,tag:selectedFormTag,isDefault:df||!userAddresses.length});if(df||userAddresses.length===1)selectedCheckoutAddressId=nid;}ensureDefaultAddress();saveUserData();closeAddressModal();renderAddressList();showToast('保存成功');}
+function openAddressModalFromCheckout(){closeCheckoutAddrSheet();openAddressModal();}
+
+// ===== 红包 =====
+function initDynamicCoupons(){claimableCoupons=[];[{n:"无门槛红包",m:0,a:[3,5,8]},{n:"小神券",m:20,a:[4,6]},{n:"满减神券",m:35,a:[10,12]},{n:"大满足红包",m:60,a:[18,20]}].forEach((t,i)=>{const e=new Date(Date.now()+3*24*3600*1000);claimableCoupons.push({id:i+1,name:t.n,amount:t.a[Math.floor(Math.random()*t.a.length)],minSpend:t.m,expireStr:`${e.getMonth()+1}月${e.getDate()}日`});});}
+function renderCoupons(){const c=document.getElementById('coupon-scroll-container');if(!c)return;c.innerHTML=claimableCoupons.map(x=>{const cl=myCoupons.find(m=>m.id===x.id);return`<div class="coupon-card"><div style="display:flex;justify-content:space-between;align-items:baseline;"><div class="coupon-amount">${x.amount}</div><div class="coupon-desc">${x.minSpend>0?'满'+x.minSpend+'可用':'无门槛'}</div></div><div class="coupon-name">${x.name}</div><div class="coupon-btn ${cl?'claimed':''}" onclick="claimCoupon(${x.id})">${cl?'已领取':'领取'}</div></div>`;}).join('');}
+async function claimCoupon(id){if(myCoupons.find(c=>c.id===id))return;const c=claimableCoupons.find(x=>x.id===id);myCoupons.push({...c,uuid:Date.now()});saveUserData();renderCoupons();updateMineCouponCount();try{AP?.ui?.toast(`领取 ${c.name}！`);}catch(e){}}
+function openCouponsView(){const l=document.getElementById('my-coupons-list');l.innerHTML=myCoupons.length?myCoupons.map(c=>`<div style="background:#fff;margin:12px 15px;border-radius:10px;padding:15px;display:flex;align-items:center;border-left:5px solid #ff5000;"><div style="width:80px;text-align:center;border-right:1px dashed #eee;padding-right:10px;margin-right:12px;"><div style="font-size:26px;font-weight:bold;color:#ff5000;">¥${c.amount}</div><div style="font-size:11px;color:#999;">${c.minSpend>0?'满'+c.minSpend:'无门槛'}</div></div><div style="flex:1"><div style="font-size:15px;font-weight:bold;margin-bottom:4px;">${c.name}</div><div style="font-size:11px;color:#ff7875;">⏳ ${c.expireStr}</div></div></div>`).join(''):'<div style="text-align:center;padding:60px;color:#999;">🧧<br>暂无红包</div>';document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('view-coupons').classList.add('active');document.getElementById('main-nav').style.display='none';}
+function getBestCoupon(p){const v=myCoupons.filter(c=>p>=c.minSpend);return v.length?v.reduce((a,b)=>a.amount>b.amount?a:b):null;}
+
+// ===== 商铺 =====
+const shopTemplates={'美食外卖':[{prefixes:["香香","韩式","脆皮","网红","麦肯"],suffixes:["炸鸡汉堡","汉堡快餐","炸鸡店"],menuData:{"主食":[{n:"原味大炸鸡",p:25,i:"🍗"},{n:"香辣鸡腿堡",p:18,i:"🍔"},{n:"黄金炸鸡",p:35,i:"🍗"},{n:"鳕鱼堡",p:22,i:"🍔"},{n:"双层牛肉堡",p:28,i:"🍔"}],"小吃":[{n:"芝士薯条",p:12,i:"🍟"},{n:"鸡米花",p:15,i:"🍿"},{n:"鸡块",p:14,i:"🍘"}],"饮料":[{n:"可乐",p:8,i:"🥤"},{n:"冰红茶",p:9,i:"🧋"},{n:"橙汁",p:12,i:"🍹"}]}},{prefixes:["川蜀","巴蜀","老成都","蜀香"],suffixes:["麻辣烫","香锅坊","串串香"],menuData:{"套餐":[{n:"经典麻辣烫",p:30,i:"🍲"},{n:"钵钵鸡串串",p:28,i:"🍢"},{n:"海陆冒菜",p:42,i:"🥘"}],"荤菜":[{n:"肥牛卷",p:15,i:"🥩"},{n:"牛丸",p:12,i:"🍡"},{n:"巴沙鱼",p:14,i:"🐟"}],"素菜":[{n:"大宽粉",p:6,i:"🍜"},{n:"娃娃菜",p:5,i:"🥬"},{n:"金针菇",p:5,i:"🍄"}]}}]};
+function generateRandomShops(){showToast("刷新中...",0);setTimeout(()=>{shops=[];const ks=Object.keys(shopTemplates);for(let i=1;i<=6;i++){const ct=ks[0],ts=shopTemplates[ct],tp=ts[Math.floor(Math.random()*ts.length)],nm=tp.prefixes[Math.floor(Math.random()*tp.prefixes.length)]+tp.suffixes[Math.floor(Math.random()*tp.suffixes.length)],rt=(Math.random()*0.8+4.2).toFixed(1),dn=Math.random()*3+0.5,df=dn>2?4:2;let mn=[],ic=i*100;Object.keys(tp.menuData).forEach(cn=>tp.menuData[cn].forEach(bi=>mn.push({id:ic++,category:cn,name:bi.n,price:bi.p,img:bi.i})));shops.push({id:i,name:nm,rating:rt,distance:dn.toFixed(1)+'km',time:Math.floor(dn*8+12)+'分钟',deliveryFee:df,img:"🍗",tags:[ct,'配送¥'+df],menu:mn});}renderHome();document.getElementById('custom-toast').style.display='none';},300);}
+function renderHome(){const l=document.getElementById('shop-list');if(!l)return;l.innerHTML=shops.map(s=>`<div class="shop-card" onclick="openShop(${s.id})"><div class="shop-img">${s.img}</div><div class="shop-info"><div class="shop-name">${s.name}</div><div class="shop-meta"><span style="color:#ffaa00;font-weight:bold;">★${s.rating}</span><span>${s.time}|${s.distance}</span></div><div class="shop-tags">${s.tags.map(t=>`<span>${t}</span>`).join('')}</div></div></div>`).join('');}
+function openShop(id){currentShop=shops.find(s=>s.id===id)||shops[0];document.getElementById('shop-title').innerText=currentShop.name;const cats=[...new Set(currentShop.menu.map(m=>m.category))];document.getElementById('shop-sidebar').innerHTML=cats.map((c,i)=>`<div class="side-item ${i===0?'active':''}" onclick="switchShopCategory('${c}')">${c}</div>`).join('');switchShopCategory(cats[0]);cart=[];updateCartUI();document.getElementById('cart-panel').style.display='none';document.getElementById('cart-overlay').style.display='none';document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('view-shop').classList.add('active');document.getElementById('main-nav').style.display='none';}
+function switchShopCategory(cn){document.querySelectorAll('#shop-sidebar .side-item').forEach(el=>el.classList.toggle('active',el.innerText===cn));document.getElementById('menu-list').innerHTML=currentShop.menu.filter(m=>m.category===cn).map(i=>`<div class="menu-item"><div class="menu-img">${i.img}</div><div class="menu-info"><div class="menu-name">${i.name}</div><div style="display:flex;justify-content:space-between;align-items:center;"><div class="menu-price">${i.price}</div><div class="add-btn" onclick="addToCart(${i.id})">+</div></div></div></div>`).join('');}
+function returnToHome(){switchTab('home');}
+function toggleCartDetail(){if(!cart.length)return;const p=document.getElementById('cart-panel'),o=document.getElementById('cart-overlay');if(p.style.display==='block'){p.style.display='none';o.style.display='none';}else{p.style.display='block';o.style.display='block';renderCartDetails();}}
+function renderCartDetails(){document.getElementById('cart-items-list').innerHTML=cart.map(c=>`<div class="cart-detail-item"><div class="cart-item-name">${c.item.name}</div><div class="cart-item-price">¥${c.item.price*c.qty}</div><div class="cart-item-ctrl"><div class="cart-ctrl-btn" onclick="updateCartItem(${c.item.id},-1)">-</div><div style="margin:0 10px;">${c.qty}</div><div class="cart-ctrl-btn" style="background:var(--primary);" onclick="updateCartItem(${c.item.id},1)">+</div></div></div>`).join('');}
+function updateCartItem(id,d){const e=cart.find(c=>c.item.id===id);if(e){e.qty+=d;if(e.qty<=0)cart=cart.filter(c=>c.item.id!==id);}updateCartUI();if(!cart.length){document.getElementById('cart-panel').style.display='none';document.getElementById('cart-overlay').style.display='none';}else renderCartDetails();}
+function clearCart(){cart=[];updateCartUI();document.getElementById('cart-panel').style.display='none';document.getElementById('cart-overlay').style.display='none';}
+function addToCart(id){const i=currentShop.menu.find(m=>m.id===id),e=cart.find(c=>c.item.id===id);if(e)e.qty++;else cart.push({item:i,qty:1});updateCartUI();}
+function updateCartUI(){const tq=cart.reduce((s,c)=>s+c.qty,0),rp=cart.reduce((s,c)=>s+c.item.price*c.qty,0);let fp=rp,dt='';const bc=getBestCoupon(rp);if(bc&&rp>0){fp=Math.max(0,rp-bc.amount);dt=` <span style="font-size:12px;color:#ffd3b6;">(已减¥${bc.amount})</span>`;}const bg=document.getElementById('cart-badge');bg.style.display=tq>0?'flex':'none';bg.innerText=tq;document.getElementById('cart-price').innerHTML='¥'+fp+dt;}
+
+// ===== 角色列表 =====
+async function loadCharList(){const el=document.getElementById('char-select-list');el.innerHTML='<div style="text-align:center;padding:20px;color:#999;">加载中...</div>';charListCache=[];try{if(AP?.characters){const cs=await AP.characters.list();if(Array.isArray(cs)&&cs.length)charListCache=cs.map(c=>({id:c.id,name:c.name||'未知',avatar:c.avatar||c.cover||'👤'}));}}catch(e){console.log('loadCharList err:',e);}if(!charListCache.length){el.innerHTML='<div style="text-align:center;padding:20px;color:#999;">暂无角色</div>';return;}renderCharSelectList();}
+function renderCharSelectList(){document.getElementById('char-select-list').innerHTML=charListCache.map(c=>{const sel=selectedCharId===c.id,av=c.avatar&&(c.avatar.startsWith('http')||c.avatar.startsWith('data:'))?`<img src="${c.avatar}">`:(c.avatar||'👤');return`<div class="char-select-card ${sel?'selected':''}" onclick="selectChar('${c.id}')"><div class="char-select-avatar">${av}</div><div class="char-select-name">${c.name}</div><div class="char-select-check">${sel?'✅':'⚪'}</div></div>`;}).join('');}
+function selectChar(cid){const c=charListCache.find(x=>x.id===cid);if(!c)return;selectedCharId=c.id;selectedCharName=c.name;selectedCharAvatar=c.avatar||'👤';renderCharSelectList();}
+
+// ===== 结算流程 =====
+function openTargetSheet(){orderTarget='self';selectedCharId=null;selectedCharName='';selectedCharAvatar='';orderPayer='self';renderTargetOptions();document.getElementById('char-select-area').style.display='none';document.getElementById('target-select-overlay').style.display='block';document.getElementById('target-select-sheet').style.display='block';}
+function closeTargetSheet(){document.getElementById('target-select-overlay').style.display='none';document.getElementById('target-select-sheet').style.display='none';}
+function selectOrderTarget(type){orderTarget=type;renderTargetOptions();const ca=document.getElementById('char-select-area');if(type==='char'){ca.style.display='block';loadCharList();}else{ca.style.display='none';selectedCharId=null;selectedCharName='';}}
+function renderTargetOptions(){document.getElementById('target-options-container').innerHTML=['self','char'].map(t=>`<div class="target-option ${orderTarget===t?'selected':''}" onclick="selectOrderTarget('${t}')"><div class="target-option-icon">${t==='self'?'🧑':'💌'}</div><div class="target-option-info"><div class="target-option-title">${t==='self'?'给自己点':'送给 TA'}</div><div class="target-option-desc">${t==='self'?'外卖送到自己地址':'送给角色好友'}</div></div><div class="target-check">${orderTarget===t?'✅':'⚪'}</div></div>`).join('');}
+function confirmTargetAndContinue(){if(orderTarget==='char'&&!selectedCharId){showToast('请先选角色');return;}closeTargetSheet();openCheckoutAddrSheet();}
+function openCheckoutAddrSheet(){renderCheckoutAddrList();renderPayerOptions();document.getElementById('checkout-addr-overlay').style.display='block';document.getElementById('checkout-addr-sheet').style.display='block';}
+function closeCheckoutAddrSheet(){document.getElementById('checkout-addr-overlay').style.display='none';document.getElementById('checkout-addr-sheet').style.display='none';}
+function renderCheckoutAddrList(){const l=document.getElementById('checkout-addr-list');if(!userAddresses.length){l.innerHTML='<div style="text-align:center;padding:20px;color:#999;">暂无地址</div>';return;}l.innerHTML=userAddresses.map(a=>`<div class="checkout-addr-card ${a.id===selectedCheckoutAddressId?'selected':''}" onclick="selectedCheckoutAddressId=${a.id};renderCheckoutAddrList();"><div style="flex:1;"><div style="font-weight:bold;">${a.name} ${a.phone}</div><div style="font-size:13px;color:#333;margin-top:4px;">${a.detail}</div></div><div>${a.id===selectedCheckoutAddressId?'✅':'⚪'}</div></div>`).join('');}
+function renderPayerOptions(){const c=document.getElementById('payer-toggle-btns');orderPayer='self';let html='<div class="payer-btn active" onclick="setPayerBtn(this,\'self\')">🧑 自己付款</div>';if(orderTarget==='char'&&selectedCharName){html+=`<div class="payer-btn" onclick="setPayerBtn(this,'char')">💌 ${selectedCharName} 请客</div>`;}else if(charListCache.length){charListCache.slice(0,3).forEach(x=>{html+=`<div class="payer-btn" onclick="setPayerBtnChar(this,'${x.id}')">${x.name} 请客</div>`;});}else{html+='<div class="payer-btn" onclick="loadCharForPayer()">💌 选角色请客</div>';}c.innerHTML=html;}
+function setPayerBtn(el,type){orderPayer=type;document.querySelectorAll('#payer-toggle-btns .payer-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+function setPayerBtnChar(el,cid){const c=charListCache.find(x=>x.id===cid);if(!c)return;orderPayer='char';selectedCharId=c.id;selectedCharName=c.name;document.querySelectorAll('#payer-toggle-btns .payer-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+async function loadCharForPayer(){await loadCharList();if(charListCache.length)renderPayerOptions();}
+function confirmCheckoutAddressAndPay(){if(!userAddresses.length){showToast('请先添加地址');return;}closeCheckoutAddrSheet();checkout(true);}
+
+async function checkout(fromAddr=false){
+  if(!cart.length){showToast('购物车为空');return;}
+  if(!fromAddr){openTargetSheet();return;}
+  let ta=userAddresses.find(a=>a.id===selectedCheckoutAddressId)||userAddresses[0];
+  if(!ta)ta={name:'用户',phone:'',detail:'默认地址'};
+  const rp=cart.reduce((s,c)=>s+c.item.price*c.qty,0),bc=getBestCoupon(rp);
+  let disc=bc?bc.amount:0;
+  const df=currentShop?currentShop.deliveryFee:3,tp=Math.max(0,rp-disc)+df;
+  const ins=cart.map(c=>`${c.item.name}x${c.qty}`).join('，');
+  const charPaying=orderPayer==='char'&&selectedCharName;
+
+  // 获取用户和角色真实名字
+  let userName=userProfile.name||'我';
+  try{if(AP?.user){const up=await AP.user.getProfile({characterId:selectedCharId});if(up?.name)userName=up.name;}}catch(e){}
+
+  let msg='';
+  if(orderTarget==='char'&&selectedCharName)msg+=`🎁 送给：${selectedCharName}\n`;
+  msg+=`📍 ${ta.detail}\n`;
+  if(disc>0)msg+=`优惠：-¥${disc}\n`;
+  msg+=`💳 ${charPaying?selectedCharName+' 请客':'自己付款'}\n`;
+  msg+=`实付：¥${tp}\n确认？`;
+
+  let cp=true;
+  try{if(AP?.ui)cp=await AP.ui.confirm({title:orderTarget==='char'?`给${selectedCharName}点外卖`:'确认付款',message:msg});}catch(e){cp=confirm(msg);}
+  if(!cp)return;
+
+  // === 核心：根据付款人走不同流程 ===
+  if(charPaying){
+    // 【功能1】角色请客：发付款请求卡片到聊天室，角色回复后完成订单
+    await sendPayRequestToChat(selectedCharId,selectedCharName,userName,ins,tp,df,ta);
+  }else{
+    // 自己付款：直接扣钱
+    try{if(AP?.wallet){const pr=await AP.wallet.pay({amount:tp,title:currentShop.name,detail:'外卖：'+ins,category:'外卖',relatedOrderId:'order_'+Date.now()});if(pr?.ok===false){showToast(pr.error||'付款失败');return;}}}catch(e){}
+    if(bc){myCoupons=myCoupons.filter(c=>c.id!==bc.id);renderCoupons();updateMineCouponCount();}
+    const no=createOrder(ins,rp,df,disc,tp,ta);
+    orders.unshift(no);saveUserData();
+    // 【功能2】如果是给角色点的，发送外卖卡片到聊天室
+    if(orderTarget==='char'&&selectedCharId){
+      await sendOrderCardToChat(selectedCharId,selectedCharName,userName,ins,tp,df,no.id);
+    }
+    showToast('支付成功！外卖正在路上~');
+    cart=[];document.getElementById('cart-panel').style.display='none';document.getElementById('cart-overlay').style.display='none';
+    switchTab('orders');
+    simulateDelivery(no);
+  }
+}
+
+function createOrder(ins,rp,df,disc,tp,ta){
+  const rr=["王师傅","李师傅","张师傅","赵师傅"][Math.floor(Math.random()*4)];
+  const now=new Date(),pm=Math.floor(Math.random()*15)+10,em=pm+Math.floor(Math.random()*20)+10,et=new Date(now.getTime()+em*60000);
+  return{id:Date.now(),shopName:currentShop.name,items:ins,rawPrice:rp,deliveryFee:df,discount:disc,total:tp,address:ta,time:now.toLocaleString(),status:"骑手赶往中",rider:rr,prepTime:pm+"分钟",eta:et.getHours()+":"+(et.getMinutes()<10?'0':'')+et.getMinutes(),orderTarget,targetCharName:orderTarget==='char'?selectedCharName:'',payer:orderPayer,payerName:orderPayer==='char'?selectedCharName:'自己'};
+}
+
+function simulateDelivery(o){
+  setTimeout(()=>{o.status="已送达完成";saveUserData();renderOrders();showTopNotification("🎉 外卖已送达",`【${o.shopName}】已送达`,o.id,'🍱');},10000);
+}
+
+// ===== 代付页面 =====
+function openPayPage(orderId){
+  const o=orders.find(x=>x.id===orderId);
+  if(!o)return;
+  const isCharPay=o.payType==='charPay'; // true=角色替我付, false=我替角色付
+  const payerLabel=isCharPay?o.payerName+'（角色）':'你（自己）';
+  const waitLabel=isCharPay?`等待 ${o.payerName} 付款中...`:'请点击下方按钮完成付款';
+  const isPaid=!o.needPay;
+
+  let btnHtml='';
+  if(isPaid){
+    btnHtml=`<div style="background:#52c41a;color:#fff;text-align:center;padding:16px 0;border-radius:25px;font-weight:bold;font-size:16px;margin:20px 15px;">✅ 付款完成！订单配送中</div>`;
+  }else if(isCharPay){
+    // 角色替我付：角色回复后会自动触发付款，同时保留手动按钮作为备用
+    btnHtml=`<div style="text-align:center;margin:20px 15px;">
+      <div style="color:#ff9900;font-size:14px;font-weight:bold;margin-bottom:8px;">⏳ 等待${o.payerName}在聊天中回应...</div>
+      <div style="color:#888;font-size:12px;margin-bottom:16px;">角色回复后将自动完成付款并开始配送</div>
+      <div onclick="simulateCharPay(${o.id})" style="background:linear-gradient(135deg,#999,#bbb);color:#fff;text-align:center;padding:12px 0;border-radius:25px;font-weight:bold;font-size:14px;cursor:pointer;">手动确认付款（跳过等待）</div>
+      <div style="color:#aaa;font-size:11px;margin-top:8px;">如角色长时间未回复，可手动操作</div>
+    </div>`;
+  }else{
+    // 我替角色付：显示"立即付款"按钮
+    btnHtml=`<div style="margin:20px 15px;">
+      <div onclick="confirmPayForOrder(${o.id})" style="background:linear-gradient(135deg,#ff6b35,#ff9500);color:#fff;text-align:center;padding:16px 0;border-radius:25px;font-weight:bold;font-size:16px;cursor:pointer;box-shadow:0 4px 12px rgba(255,107,53,0.4);">💳 立即付款 ¥${o.total}</div>
+    </div>`;
+  }
+
+  document.getElementById('pay-page-content').innerHTML=`
+    <div class="detail-section" style="text-align:center;padding:30px 15px;">
+      <div style="font-size:50px;margin-bottom:10px;">${isPaid?'✅':'💰'}</div>
+      <div style="font-size:20px;font-weight:bold;color:${isPaid?'#52c41a':'#ff6b35'};margin-bottom:6px;">${isPaid?'付款完成':'待付款'}</div>
+      <div style="font-size:28px;font-weight:bold;color:#ff4a4a;margin:10px 0;">¥${o.total}</div>
+      <div style="font-size:13px;color:#888;">${isPaid?'订单已开始配送':waitLabel}</div>
+    </div>
+    <div class="detail-section">
+      <div style="font-weight:bold;font-size:15px;margin-bottom:12px;">📋 订单信息</div>
+      <div class="detail-row"><span>店铺</span><span>${o.shopName}</span></div>
+      <div class="detail-row"><span>餐品</span><span style="max-width:60%;text-align:right;">${o.items}</span></div>
+      <div class="detail-row"><span>配送费</span><span>¥${o.deliveryFee}</span></div>
+      <div class="detail-row bold"><span>合计</span><span>¥${o.total}</span></div>
+    </div>
+    <div class="detail-section">
+      <div style="font-weight:bold;font-size:15px;margin-bottom:12px;">👥 付款信息</div>
+      <div class="detail-row"><span>点单人</span><span>${o.orderTarget==='fromChar'?o.targetCharName:'你'}</span></div>
+      <div class="detail-row"><span>收餐人</span><span>${o.orderTarget==='fromChar'?'你':o.targetCharName||'自己'}</span></div>
+      <div class="detail-row" style="color:#ff6b35;font-weight:bold;"><span>💳 付款人</span><span>${payerLabel}</span></div>
+      <div class="detail-row"><span>状态</span><span style="color:${isPaid?'#52c41a':'#ff9900'};font-weight:bold;">${o.status}</span></div>
+    </div>
+    ${btnHtml}`;
+
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-pay').classList.add('active');
+  document.getElementById('main-nav').style.display='none';
+}
+
+// 模拟角色点击付款（角色替我付）
+let _charPayingLock={};
+async function simulateCharPay(orderId){
+  if(_charPayingLock[orderId])return; // 防重入
+  const o=orders.find(x=>x.id===orderId);
+  if(!o||!o.needPay)return;
+  _charPayingLock[orderId]=true;
+
+  // 模拟角色扣款（实际是从你钱包扣，仿真效果）
+  try{if(AP?.wallet){
+    const pr=await AP.wallet.pay({amount:o.total,title:o.shopName,detail:`${o.payerName}请客：${o.items}`,category:'外卖',relatedOrderId:'charpay_'+o.id});
+    if(pr?.ok===false){showToast(pr.error||'余额不足');return;}
+  }}catch(e){}
+
+  o.needPay=false;
+  o.status='🎉 付款完成';
+  saveUserData();
+
+  // 发送付款完成卡片到聊天室
+  try{if(o.payerCharId&&AP?.chat){
+    await AP.chat.sendCard({
+      characterId:o.payerCharId, role:'system',
+      summary:`${o.payerName}已付款 ¥${o.total}，外卖开始配送！`,
+      historyText:`[外卖付款完成：${o.payerName}已为外卖付款 ¥${o.total}（${o.shopName}：${o.items}），订单开始配送！]`,
+      historyRole:'system',
+      card:{
+        appLabel:'外卖',
+        title:'✅ 付款完成！',
+        subtitle:o.shopName,
+        body:`${o.items}\n${o.payerName} 已付款 ¥${o.total}`,
+        status:'已付款·配送中',
+        accentColor:'#52c41a',
+        sections:[{title:'付款详情',rows:[
+          {label:'店铺',value:o.shopName},
+          {label:'餐品',value:o.items},
+          {label:'金额',value:'¥'+o.total},
+          {label:'付款人',value:o.payerName},
+          {label:'状态',value:'✅ 付款成功，骑手配送中'}
+        ]}],
+        actions:[{label:'查看订单'}]
+      }
+    });
+    await AP.chat.requestReply({characterId:o.payerCharId});
+  }}catch(e){}
+
+  // 显示付款完成页面
+  openPayPage(orderId);
+  showToast(`${o.payerName} 已付款！订单开始配送`);
+
+  // 3秒后开始配送
+  setTimeout(()=>{
+    o.status='骑手赶往中';
+    const et=new Date(Date.now()+30*60000);
+    o.eta=et.getHours()+':'+(et.getMinutes()<10?'0':'')+et.getMinutes();
+    saveUserData();renderOrders();
+    simulateDelivery(o);
+    delete _charPayingLock[orderId];
+  },3000);
+}
+
+// 用户点击付款（我替角色付 / 角色发来让我付的）
+async function confirmPayForOrder(orderId){
+  const o=orders.find(x=>x.id===orderId);
+  if(!o||!o.needPay)return;
+
+  try{if(AP?.wallet){
+    const pr=await AP.wallet.pay({amount:o.total,title:o.shopName,detail:`付款：${o.items}`,category:'外卖',relatedOrderId:'userpay_'+o.id});
+    if(pr?.ok===false){showToast(pr.error||'余额不足');return;}
+  }}catch(e){}
+
+  o.needPay=false;
+  o.status='🎉 付款完成';
+  saveUserData();
+
+  // 发送付款完成卡片到聊天室
+  try{if(o.payerCharId&&AP?.chat){
+    let userName=userProfile.name||'我';
+    try{const up=await AP.user.getProfile({characterId:o.payerCharId});if(up?.name)userName=up.name;}catch(e){}
+    await AP.chat.sendCard({
+      characterId:o.payerCharId, role:'user',
+      summary:`${userName}已付款 ¥${o.total}，外卖开始配送！`,
+      historyText:`[外卖付款完成：${userName}已为${o.targetCharName||''}点的外卖付款 ¥${o.total}（${o.shopName}：${o.items}），订单开始配送！]`,
+      historyRole:'user',
+      card:{
+        appLabel:'外卖',
+        title:'✅ 付款完成！',
+        subtitle:o.shopName,
+        body:`${o.items}\n${userName} 已付款 ¥${o.total}`,
+        status:'已付款·配送中',
+        accentColor:'#52c41a',
+        sections:[{title:'付款详情',rows:[
+          {label:'店铺',value:o.shopName},
+          {label:'餐品',value:o.items},
+          {label:'金额',value:'¥'+o.total},
+          {label:'付款人',value:userName},
+          {label:'状态',value:'✅ 付款成功，骑手配送中'}
+        ]}],
+        actions:[{label:'查看订单'}]
+      }
+    });
+    await AP.chat.requestReply({characterId:o.payerCharId});
+  }}catch(e){}
+
+  openPayPage(orderId);
+  showToast('付款成功！订单开始配送');
+
+  setTimeout(()=>{
+    o.status='骑手赶往中';
+    const et=new Date(Date.now()+30*60000);
+    o.eta=et.getHours()+':'+(et.getMinutes()<10?'0':'')+et.getMinutes();
+    saveUserData();renderOrders();
+    simulateDelivery(o);
+  },3000);
+}
+
+// ===== 【功能1】角色请客 → 付款请求卡片发到聊天室 =====
+async function sendPayRequestToChat(charId,charName,userName,items,total,deliveryFee,addr){
+  try{
+    const summary=`${userName}点了外卖，请${charName}帮忙付款 ¥${total}`;
+    const historyText=`[外卖付款请求：${userName}在${currentShop.name}点了${items}，总计¥${total}(含配送费¥${deliveryFee})，请${charName}帮忙付款。${charName}看到后请回复是否愿意请客。]`;
+    await AP.chat.sendCard({
+      characterId:charId, role:'user',
+      summary:summary,
+      historyText:historyText, historyRole:'user',
+      card:{
+        appLabel:'外卖',
+        title:'🧾 请你请客付款！',
+        subtitle:currentShop.name,
+        body:`${items}\n实付：¥${total}(含配送费¥${deliveryFee})`,
+        status:'等待付款',
+        accentColor:'#ff6b35',
+        sections:[{title:'订单详情',rows:[
+          {label:'餐品',value:items},
+          {label:'金额',value:'¥'+total},
+          {label:'点单人',value:userName},
+          {label:'送至',value:addr.detail}
+        ]}],
+        actions:[{label:'查看详情'}]
+      }
+    });
+    // 创建"等待代付"状态的订单，不立刻配送（先创建订单，再等角色回复）
+    const no=createOrder(items,total-deliveryFee,deliveryFee,0,total,addr);
+    no.status='⏳ 等待代付';
+    no.payer='char';no.payerName=charName;no.payerCharId=charId;
+    no.needPay=true;no.payType='charPay'; // charPay=角色替我付
+    orders.unshift(no);saveUserData();
+    showToast(`已向${charName}发送付款请求！`);
+    cart=[];document.getElementById('cart-panel').style.display='none';document.getElementById('cart-overlay').style.display='none';
+    // 跳转到代付页面
+    openPayPage(no.id);
+
+    // 请求角色回复（fire-and-forget，不阻塞）
+    const pendingOrderId=no.id;
+    const pendingCharId=charId;
+    try{AP.chat.requestReply({characterId:pendingCharId}).catch(e=>{});}catch(e){}
+
+    // 角色"回复"后自动完成付款——用固定延时模拟（8秒后自动付款，不依赖 requestReply 回调）
+    setTimeout(async()=>{
+      try{
+        const pendingO=orders.find(x=>x.id===pendingOrderId);
+        if(pendingO&&pendingO.needPay){
+          await simulateCharPay(pendingOrderId);
+        }
+      }catch(e){console.log('auto charPay err:',e);}
+    },8000);
+  }catch(e){
+    console.error('sendPayRequest error:',e);
+    showToast('发送付款请求失败：'+e.message,3000);
+  }
+}
+
+// ===== 【功能2】给角色点外卖 → 送达卡片发到聊天室 =====
+async function sendOrderCardToChat(charId,charName,userName,items,total,deliveryFee,orderId){
+  try{
+    const summary=`${userName}给${charName}点了外卖：${items}，¥${total}`;
+    const historyText=`[外卖送达：${userName}在${currentShop.name}给${charName}点了外卖，餐品：${items}，总计¥${total}。外卖已经在路上了，预计很快送达。${charName}收到了这份外卖。]`;
+    await AP.chat.sendCard({
+      characterId:charId, role:'user',
+      summary:summary,
+      historyText:historyText, historyRole:'user',
+      card:{
+        appLabel:'外卖',
+        title:'🍱 给你点了外卖！',
+        subtitle:currentShop.name,
+        body:`${items}\n¥${total}(含配送费¥${deliveryFee})`,
+        status:'配送中',
+        accentColor:'#52c41a',
+        sections:[{title:'外卖详情',rows:[
+          {label:'店铺',value:currentShop.name},
+          {label:'餐品',value:items},
+          {label:'金额',value:'¥'+total},
+          {label:'来自',value:userName+'点的'}
+        ]}],
+        actions:[{label:'查看外卖'}]
+      }
+    });
+    // 让角色对收到外卖做出反应
+    await AP.chat.requestReply({characterId:charId});
+  }catch(e){
+    console.error('sendOrderCard error:',e);
+  }
+}
+
+// ===== 顶部通知 =====
+function showTopNotification(title,desc,oid,icon='🛵'){const t=document.getElementById('top-notification');document.getElementById('top-notice-title').innerText=title;document.getElementById('top-notice-desc').innerText=desc;document.getElementById('top-notice-icon').innerText=icon;activeNotificationOrderId=oid;t.classList.add('show');try{AP?.ui?.notification?.({title,message:desc});}catch(e){}setTimeout(()=>t.classList.remove('show'),5000);}
+function clickTopNotification(){document.getElementById('top-notification').classList.remove('show');if(activeNotificationOrderId)openOrderDetail(activeNotificationOrderId);}
+
+// ===== 订单列表 & 详情 =====
+function renderOrders(){const l=document.getElementById('order-list');if(!l)return;if(!orders.length){l.innerHTML='<div style="text-align:center;padding:50px;color:#999;">暂无订单</div>';return;}l.innerHTML=orders.map(o=>`<div class="swipe-row" id="order-row-${o.id}"><div class="swipe-content" id="order-content-${o.id}"><div class="order-card" onclick="handleOrderClick(${o.id})"><div class="order-header"><span class="order-shop-name">${o.shopName}</span><span class="order-status" style="color:var(--primary);font-weight:bold;">${o.status}</span></div>${o.targetCharName?`<div style="font-size:12px;color:#ff5000;font-weight:bold;margin-bottom:6px;">🎁 送给${o.targetCharName} ${o.payer==='char'?'| TA请客':''}</div>`:''}<div class="order-body"><span class="order-items" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:70%;">${o.items}</span><span class="order-total">¥${o.total}</span></div><div style="font-size:11px;color:#aaa;margin-top:10px;">${o.time}</div></div></div><div class="swipe-delete-action" onclick="deleteOrder(${o.id})">删除</div></div>`).join('');initSwipeListeners('order');}
+function handleOrderClick(id){if(isSwiping)return;if(currentOpenSwipeId){closeAllSwipes();return;}const o=orders.find(x=>x.id===id);if(o&&o.needPay)openPayPage(id);else openOrderDetail(id);}
+async function deleteOrder(id){let c=true;try{if(AP?.ui)c=await AP.ui.confirm({title:"删除",message:"确定删除此订单？"});}catch(e){c=confirm("确定？");}if(c){orders=orders.filter(o=>o.id!==id);currentOpenSwipeId=null;saveUserData();renderOrders();}}
+function openOrderDetail(id){const o=orders.find(x=>x.id===id);if(!o)return;const fin=o.status.includes('完成')||o.status.includes('送达');document.getElementById('order-detail-content').innerHTML=`<div class="detail-section" style="text-align:center;padding:25px;"><div style="font-size:22px;font-weight:bold;color:${fin?'#52c41a':'#ff9900'};">${fin?'🎉 '+o.status:'🛵 '+o.status}</div><div style="color:var(--text-sub);font-size:13px;margin-top:5px;">${fin?'订单已完成':'预计 '+o.eta+' 送达'}</div></div><div class="detail-section"><div style="font-weight:bold;font-size:16px;margin-bottom:15px;border-bottom:1px solid #eee;padding-bottom:10px;">${o.shopName}</div><div style="font-size:14px;line-height:1.6;margin-bottom:15px;">${o.items}</div><div class="detail-row"><span>商品总价</span><span>¥${o.rawPrice}</span></div><div class="detail-row"><span>配送费</span><span>¥${o.deliveryFee}</span></div>${o.discount>0?`<div class="detail-row" style="color:#ff4a4a"><span>优惠</span><span>-¥${o.discount}</span></div>`:''}<div class="detail-row bold" style="margin-top:10px;border-top:1px solid #eee;padding-top:10px;"><span>实付</span><span>¥${o.total}</span></div></div><div class="detail-section"><div style="font-weight:bold;font-size:15px;margin-bottom:15px;">配送信息</div>${o.targetCharName?`<div class="detail-row" style="color:#ff5000;font-weight:bold;"><span>🎁 送给</span><span>${o.targetCharName}</span></div>`:''}<div class="detail-row"><span>收货人</span><span>${o.address?.name||''} ${o.address?.phone||''}</span></div><div class="detail-row"><span>地址</span><span style="max-width:60%;text-align:right;">${o.address?.detail||''}</span></div><div class="detail-row"><span>骑手</span><span>${o.rider}</span></div><div class="detail-row"><span>💳 付款</span><span>${o.payer==='char'&&o.payerName?o.payerName+' 请客':'自己付款'}</span></div></div>`;document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById('view-order-detail').classList.add('active');document.getElementById('main-nav').style.display='none';}
+
+// ===== 滑动删除 =====
+function initSwipeListeners(pf){document.querySelectorAll(pf==='order'?'#order-list .swipe-row':'').forEach(row=>{const ct=row.querySelector('.swipe-content');if(!ct)return;let sx=0;ct.ontouchstart=e=>{sx=e.touches[0].clientX;isSwiping=false;if(currentOpenSwipeId&&currentOpenSwipeId!==row.id)closeAllSwipes();};ct.ontouchmove=e=>{const dx=e.touches[0].clientX-sx;if(Math.abs(dx)>10){isSwiping=true;if(dx<0)ct.style.transform=`translateX(${Math.max(-75,dx)}px)`;else if(currentOpenSwipeId===row.id)ct.style.transform=`translateX(${Math.min(0,-75+dx)}px)`;}};ct.ontouchend=e=>{const dx=e.changedTouches[0].clientX-sx;if(dx<-35){ct.style.transform='translateX(-75px)';currentOpenSwipeId=row.id;}else{ct.style.transform='translateX(0)';if(currentOpenSwipeId===row.id)currentOpenSwipeId=null;}};});}
+function closeAllSwipes(){document.querySelectorAll('.swipe-content').forEach(el=>el.style.transform='translateX(0)');currentOpenSwipeId=null;}
+
+// ===== 【功能3】角色主动给你点外卖（富媒体指令卡片打开APP后处理）=====
+async function handleLaunchContext(){
+  try{
+    if(!AP?.app)return;
+    const ctx=await AP.app.getLaunchContext();
+    if(!ctx)return;
+    // 从聊天卡片打开（角色用 [外卖下单:...] 指令后用户点击卡片）
+    if(ctx.directiveId==='waimai-order'&&ctx.directiveArgs){
+      const args=ctx.directiveArgs;
+      const shop=args['店铺']||args.arg1||'未知店铺';
+      const items=args['餐品']||args.arg2||'未知餐品';
+      const price=parseFloat(args['金额']||args.arg3||'0');
+      const note=args['备注']||args.arg4||'';
+      const charId=ctx.characterId;
+
+      let charName='TA';
+      try{if(charId){const ch=await AP.characters.get(charId);if(ch)charName=ch.name;}}catch(e){}
+
+      const ok=await AP.ui.confirm({
+        title:`${charName}给你点了外卖！`,
+        message:`🏪 ${shop}\n🍱 ${items}\n💰 ¥${price}\n📝 ${note}\n\n确认接收这份外卖？`
+      });
+
+      if(ok){
+        let userName=userProfile.name||'我';
+        try{const up=await AP.user.getProfile({characterId:charId});if(up?.name)userName=up.name;}catch(e){}
+
+        // 角色发来的外卖，创建"等待代付"订单（角色让你付款）
+        const no={id:Date.now(),shopName:shop,items:items,rawPrice:price,deliveryFee:0,discount:0,total:price,address:{name:userName,phone:'',detail:'角色送达'},time:new Date().toLocaleString(),status:'⏳ 等待代付',rider:charName,prepTime:'10分钟',eta:'待付款',orderTarget:'fromChar',targetCharName:charName,payer:'self',payerName:'自己',payerCharId:charId,needPay:true,payType:'userPay',charNote:note};
+        orders.unshift(no);saveUserData();
+        // 跳转到代付页面，用户点击付款按钮后才完成
+        openPayPage(no.id);
+      }
+    }
+    // 从+号面板"给TA点外卖"打开
+    if(ctx.source==='chat_plus_action'&&ctx.entry==='order-for-character'&&ctx.characterId){
+      const charId=ctx.characterId;
+      try{const ch=await AP.characters.get(charId);if(ch){selectedCharId=ch.id;selectedCharName=ch.name||'TA';selectedCharAvatar=ch.avatar||'👤';charListCache=[{id:ch.id,name:ch.name,avatar:ch.avatar||'👤'}];orderTarget='char';}}catch(e){}
+    }
+
+    // 从聊天卡片 action 按钮打开（非+号面板、非富媒体指令）→ 查找该角色相关的待代付订单
+    if(ctx.characterId && ctx.source!=='chat_plus_action' && !ctx.directiveId){
+      const cid=ctx.characterId;
+      const pendingOrder=orders.find(o=>o.needPay&&(o.payerCharId===cid||(o.orderTarget==='fromChar'&&o.targetCharName)));
+      if(pendingOrder){
+        openPayPage(pendingOrder.id);
+        return; // 已跳转，不再执行后续
+      }
+    }
+  }catch(e){console.log('handleLaunchContext err:',e);}
+}
+
+// ===== 自动补完代付 =====
+// APP 重新打开时，检查有没有"角色代付"的待付订单，自动完成付款
+async function autoCompleteCharPay(){
+  const pending=orders.filter(o=>o.needPay&&o.payType==='charPay');
+  for(const o of pending){
+    // 延迟3秒执行，给用户看到"等待中"→"付款完成"的过渡
+    await new Promise(r=>setTimeout(r,3000));
+    if(o.needPay){
+      await simulateCharPay(o.id);
+    }
+  }
+}
+
+// ===== 初始化 =====
+let _dataReady=false;
+async function initApp(){
+  await loadUserData();
+  _dataReady=true;
+  initDynamicCoupons();renderCoupons();generateRandomShops();
+  await handleLaunchContext();
+  // 补完之前未完成的角色代付订单
+  autoCompleteCharPay();
+}
+initApp();
+</script>
+</body>
+</html>

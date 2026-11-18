@@ -1,0 +1,62 @@
+{
+  "id": "quick.delivery.box",
+  "name": "极速达",
+  "version": "1.0.0",
+  "sdkVersion": "1.0",
+  "author": "小坊",
+  "description": "万物极速签收与拆箱管家。自动识别聊天与购物记录中的礼物，智能为角色注入不可磨灭的真实使用记忆并即刻唤起试用反馈。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "chat.read",
+    "chat.write",
+    "chat.sendCard",
+    "chat.requestReply",
+    "memory.write",
+    "ui.toast"
+  ],
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "plusActions": [
+        {
+          "id": "quick-unboxing",
+          "label": "📦 极速签收",
+          "description": "一键拆箱签收送给TA的物品，唤起真实试用体验。",
+          "entry": "unboxing",
+          "presentation": "panel",
+          "panelHeight": "78vh",
+          "tags": []
+        }
+      ]
+    }
+  },
+  "chatPlusActions": [
+    {
+      "id": "quick-unboxing",
+      "label": "📦 极速签收",
+      "description": "一键拆箱签收送给TA的物品，唤起真实试用体验。",
+      "entry": "unboxing",
+      "presentation": "panel",
+      "panelHeight": "78vh",
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "plusActions": [
+      {
+        "id": "quick-unboxing",
+        "label": "📦 极速签收",
+        "description": "一键拆箱签收送给TA的物品，唤起真实试用体验。",
+        "entry": "unboxing",
+        "presentation": "panel",
+        "panelHeight": "78vh",
+        "tags": []
+      }
+    ]
+  }
+}

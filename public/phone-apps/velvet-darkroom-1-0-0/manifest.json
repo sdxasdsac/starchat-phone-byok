@@ -1,0 +1,39 @@
+{
+  "sdkVersion": "1.0",
+  "id": "velvet.darkroom",
+  "name": "Velvet 丝绒暗室",
+  "version": "1.0.0",
+  "author": "小卷和卷卷",
+  "description": "一个主打两性私密、暗室情感探讨、随机匹配信道与风控裁决庭的独立 App。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "app.assets.read",
+    "characters.read",
+    "ai.generate",
+    "ai.chat",
+    "chat.sendCard",
+    "chat.requestReply",
+    "ui.toast",
+    "media.put",
+    "media.get"
+  ],
+  "resources": {
+    "presets": ["presets.json"]
+  },
+  "extensions": {
+    "chat": {
+      "plusActions": [
+        {
+          "id": "open-velvet-darkroom",
+          "label": "丝绒暗室",
+          "entry": "index.html",
+          "presentation": "fullscreen",
+          "description": "从聊天室一键全屏打开丝绒暗室。"
+        }
+      ]
+    }
+  }
+}

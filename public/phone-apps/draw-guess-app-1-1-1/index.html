@@ -1,0 +1,48 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">
+  <script src="/phone-apps/ai-phone-host.js"></script><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>你画我猜</title><link rel="stylesheet" href="style.css"></head>
+<body><main id="app">
+  <header><button id="homeBtn" class="round-btn" type="button" aria-label="返回首页">⌂</button><div><small>DRAW · LOOK · GUESS</small><h1>你画我猜</h1></div><button id="historyBtn" class="round-btn archive-btn" type="button" data-open-history aria-label="打开游戏记录">册</button></header>
+  <section id="homeView" class="view active">
+    <article class="hero"><span>DRAW TOGETHER</span><h2>这次谁来画？<br>把题目交给默契。</h2><p>你画，TA 真正看图来猜；或者让 TA 画，你来猜。</p><div class="seal">双向玩法</div></article>
+    <label>游戏搭档</label><select id="characterSelect"></select>
+    <div class="filters"><div><label>题目分类</label><select id="categorySelect"><option value="all">全部分类</option></select></div><div><label>难度</label><select id="difficultySelect"><option value="all">随机难度</option><option value="easy">简单</option><option value="normal">普通</option><option value="hard">困难</option></select></div></div>
+    <div id="resumeCard" class="resume-card hidden"><div><b>有一局还没结束</b><small id="resumeMeta"></small></div><div><button id="discardDraftBtn">放弃</button><button id="resumeBtn">继续这局</button></div></div>
+    <div id="newGameActions" class="mode-actions"><button id="startRandomBtn" class="primary"><span><strong>我画，TA 猜</strong><small>题目只给你看</small></span><b>→</b></button><button id="startRoleDrawBtn" class="primary role-mode"><span><strong>TA 画，我来猜</strong><small>角色悄悄拿题作画</small></span><b>✦</b></button><button id="customBtn" class="secondary">自定义题目 · 我来画</button></div>
+    <div class="stats"><div><b id="gamesCount">0</b><span>完成局数</span></div><div><b id="winsCount">0</b><span>猜中局数</span></div><div><b id="topicsCount">480</b><span>本地词条</span></div></div>
+    <button id="archiveShortcut" class="archive-shortcut" type="button" data-open-history><span><b>游戏记录</b><small>翻看保存过的画与 TA 的回答</small></span><i>→</i></button>
+  </section>
+  <section id="roleDrawView" class="view">
+    <div class="role-secret-card"><span>TA'S SECRET</span><h2 id="roleDrawTitle">TA 已经画好了</h2><small id="roleDrawMeta">答案暂时保密</small></div>
+    <div class="attempts"><span>你的机会</span><div id="roleHearts">♥ ♥ ♥</div></div>
+    <article id="roleOpening" class="role-opening"></article>
+    <div class="paper role-paper"><img id="roleArt" alt="角色画的题目"></div>
+    <div id="userGuessLog" class="guess-log hidden"></div>
+    <div class="answer-input"><input id="userGuessInput" maxlength="30" autocomplete="off" placeholder="你觉得 TA 画的是什么？"><button id="submitUserGuessBtn">猜</button></div>
+    <button id="roleGuessBtn" class="primary"><span>提交我的答案</span><b>→</b></button>
+    <div class="under-actions"><button id="roleGiveUpBtn">我猜不到，揭晓吧</button></div>
+    <p class="security">秘密题目不会显示在页面上；角色画完以后，由你来猜。</p>
+  </section>
+  <section id="drawView" class="view">
+    <div class="secret-card"><div><span>只给你看的题目</span><h2 id="secretWord"></h2><small id="secretMeta"></small></div><button id="maskBtn">遮住</button></div>
+    <div class="attempts"><span>TA 的机会</span><div id="hearts">♥ ♥ ♥</div></div>
+    <div class="paper"><canvas id="canvas" width="640" height="640"></canvas></div>
+    <div class="tools"><div id="palette" class="palette"></div><button id="undoBtn">撤销</button><button id="clearBtn">清空</button></div>
+    <div class="widths"><span>笔触</span><button data-width="5">细</button><button data-width="11" class="active">中</button><button data-width="22">粗</button><button id="eraserBtn">橡皮</button></div>
+    <div id="guessLog" class="guess-log hidden"></div>
+    <div id="hintBox" class="hint-box hidden"><input id="hintInput" maxlength="60" placeholder="给一句提示，但不要直接说答案"><button id="saveHintBtn">确定</button></div>
+    <button id="guessBtn" class="primary"><span>画好了，让 TA 猜</span><b>◉</b></button>
+    <div class="under-actions"><button id="hintBtn">给一句提示</button><button id="giveUpBtn">揭晓答案</button></div>
+    <p class="security">请求中不会包含秘密题目；角色只能收到当前画布图片。</p>
+  </section>
+  <section id="waitingView" class="view"><div class="waiting"><div class="eye"><i></i></div><span id="waitingStep">正在把画递给 TA……</span><h2 id="waitingTitle">TA 正在认真看</h2><p>只有图片，没有答案。</p></div></section>
+  <section id="resultView" class="view">
+    <div id="resultBadge" class="result-badge">猜中了</div><h2 id="resultTitle"></h2><p class="answer">答案是：<b id="resultAnswer"></b></p><img id="finalArt" alt="本局画作">
+    <article class="role-note"><span id="noteFrom"></span><p id="finalReaction"></p></article>
+    <div class="round-summary"><div><b id="usedAttempts"></b><span>使用机会</span></div><div><b id="roundDifficulty"></b><span>题目难度</span></div></div>
+    <label class="remember"><input id="rememberToggle" type="checkbox"><span><b>让 TA 记住这一局</b><small>只记录题目、猜测过程和结果，不保存图片到记忆。</small></span></label>
+    <button id="shareBtn" class="secondary">投递到聊天</button><button id="finishBtn" class="primary"><span>收进游戏记录</span><b>✓</b></button>
+  </section>
+  <section id="historyView" class="view"><div class="history-head"><span>OUR GUESSING ARCHIVE</span><h2>游戏记录</h2><p>那些一眼认出，和怎么都没猜到的画。</p></div><div id="historyList"></div><div id="emptyHistory" class="empty hidden">还没有完成第一局。</div></section>
+  <div id="customModal" class="modal hidden"><div class="modal-card"><h3>自定义秘密题目</h3><p>内容只保存在本地，游戏结束前不会发送给角色。</p><input id="customWord" maxlength="20" placeholder="例如：哈密瓜"><input id="customAliases" maxlength="80" placeholder="可选同义词，用逗号分隔"><div><button id="cancelCustom">取消</button><button id="confirmCustom">开始画</button></div></div></div>
+  <div id="errorBox" class="error-box hidden"><b>这一眼没看顺</b><p id="errorText"></p><div><button id="closeError">返回画纸</button><button id="retryBtn">重试</button></div></div>
+</main><script src="topics.js"></script><script src="app.js"></script></body></html>

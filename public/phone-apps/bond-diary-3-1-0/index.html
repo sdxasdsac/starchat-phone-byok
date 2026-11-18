@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>不要拉黑</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; min-height: 100%; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    /* 背景加粉，波点更明显 */
+    body { 
+      background: #fff5f7; 
+      background-image: radial-gradient(#fce7f3 2px, transparent 2px); 
+      background-size: 24px 24px; 
+      color: #52525b; 
+      overflow-x: hidden; 
+    }
+    .app {
+      min-height: 100dvh;
+      padding: 0 20px var(--ai-phone-app-safe-bottom, 24px);
+      padding-top: calc(var(--ai-phone-app-safe-top, 88px) + 10px);
+    }
+    .header {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(244, 114, 182, 0.15);
+      border: 1.5px solid #fbcfe8;
+    }
+    .warning-text {
+      font-size: 12px;
+      line-height: 1.5;
+      color: #db2777;
+      margin-bottom: 12px;
+      text-align: center;
+      font-weight: 600;
+      padding: 0 10px;
+    }
+    .header-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-help, .btn-refresh {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 14px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(244, 114, 182, 0.1);
+    }
+    .btn-help { background: #fdf2f8; color: #db2777; border: 1px solid #fbcfe8; }
+    .btn-refresh { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
+    .btn-css { background: #f5f3ff !important; color: #7c3aed !important; border: 1px solid #ddd6fe !important; }
+    .btn-help:active, .btn-refresh:active { transform: scale(0.92); opacity: 0.8; }
+    
+    .loading { text-align: center; padding: 60px 20px; color: #db2777; font-size: 14px; font-weight: 600; }
+    .char-list { display: flex; flex-direction: column; gap: 20px; padding-bottom: 30px; }
+    .char-card { 
+      background: white; border-radius: 24px; padding: 20px; 
+      box-shadow: 0 8px 20px rgba(244, 114, 182, 0.08); 
+      border: 1px solid #fce7f3;
+      transition: transform 0.3s ease;
+    }
+    .char-name { font-size: 20px; font-weight: 800; color: #18181b; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .char-name::before { content: ''; width: 4px; height: 18px; background: #f472b6; border-radius: 2px; }
+    
+    .stats-row { display: flex; gap: 14px; margin-bottom: 16px; }
+    .stat-box { flex: 1; background: #fffbff; border-radius: 16px; padding: 12px; text-align: center; border: 1px solid #fce7f3; }
+    .stat-label { font-size: 11px; color: #9d174d; margin-bottom: 4px; font-weight: 600; opacity: 0.7; }
+    .stat-value { font-size: 22px; font-weight: 900; color: #18181b; }
+    .stat-value.dark { color: #f43f5e; }
+    
+    .relation-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .relation-box { 
+      flex: 1; background: #fff; border-radius: 14px; padding: 12px; text-align: center; 
+      cursor: pointer; border: 2px dashed #f472b6; position: relative;
+      transition: all 0.2s;
+    }
+    .relation-box:active { background: #fff1f2; transform: scale(0.98); }
+    .relation-value { font-size: 15px; font-weight: 800; color: #be185d; }
+    .relation-manual-mark { position: absolute; top: -8px; right: -4px; background: #10b981; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3); border: 2px solid white; }
+    
+    .btn-analyze { 
+      padding: 12px 18px; border: none; border-radius: 14px; background: #f472b6; color: white; 
+      font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(244, 114, 182, 0.25);
+    }
+    .btn-analyze:active { transform: scale(0.95); }
+    .btn-analyze.analyzing { animation: pulse 1.5s infinite; background: #fda4af; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    .block-status { padding: 10px; border-radius: 14px; font-size: 12px; margin-bottom: 12px; font-weight: 700; text-align: center; }
+    .block-status.normal { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
+    .block-status.blocked { background: #fff1f2; color: #991b1b; border: 1px solid #ffe4e6; }
+    
+    .btn-block, .btn-unblock { 
+      width: 100%; padding: 15px; border: none; border-radius: 18px; font-size: 14px; 
+      font-weight: 800; cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-block { background: #f4f4f5; color: #71717a; border: 1px solid #e4e4e7; }
+    .btn-block:active { background: #fee2e2; color: #ef4444; border-color: #fecaca; }
+    .btn-unblock { background: #10b981; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25); }
+
+    /* Modals */
+    .modal-overlay { 
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+      background: rgba(0, 0, 0, 0.4); z-index: 1000; align-items: center; justify-content: center; 
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-content { background: white; border-radius: 32px; padding: 32px; width: 90%; max-width: 340px; border: none; }
+    .modal-title { font-size: 18px; margin-bottom: 22px; color: #18181b; font-weight: 800; text-align: center; }
+    .relation-options { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .relation-option { 
+      padding: 16px; border-radius: 18px; background: #fffbff; border: 1.5px solid #fce7f3; 
+      color: #3f3f46; font-size: 14px; font-weight: 700; text-align: center; transition: all 0.2s;
+    }
+    .relation-option:active { background: #fdf2f8; color: #db2777; border-color: #fbcfe8; transform: scale(0.94); }
+    .btn-modal-close { width: 100%; padding: 14px; border: none; background: #f4f4f5; color: #71717a; border-radius: 16px; font-weight: 700; cursor: pointer; }
+    
+    /* Invasion */
+    .invasion-overlay { 
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+      background: #000; z-index: 9999; align-items: center; justify-content: center; 
+    }
+    .invasion-overlay.show { display: flex; }
+    .invasion-text { 
+      font-size: 28px; font-weight: 900; color: #ef4444; text-align: center;
+      text-shadow: 0 0 20px #ef4444; animation: shake 0.5s infinite; 
+    }
+    @keyframes shake { 0%, 100% { transform: translate(0); } 25% { transform: translate(-5px, -2px); } 75% { transform: translate(5px, 2px); } }
+    .blood-texts { position: absolute; width: 100%; height: 100%; pointer-events: none; }
+    .blood-text { position: absolute; color: rgba(239, 68, 68, 0.7); font-weight: bold; animation: fade 2s infinite; }
+    @keyframes fade { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+
+    /* 囚禁剧情视图 */
+    #plotView {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #000;
+      z-index: 5000;
+      color: #ef4444;
+      padding: 40px 20px;
+    }
+    .prison-bg {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at center, #1a0505 0%, #000 100%);
+      pointer-events: none;
+    }
+    .plot-container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+    }
+    .plot-content {
+      flex: 1;
+      font-family: serif;
+      line-height: 1.8;
+      font-size: 17px;
+      text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      overflow-y: auto;
+      padding-bottom: 20px;
+    }
+    .coax-input-area {
+      padding: 20px 0;
+      border-top: 1px solid #450a0a;
+      display: flex;
+      gap: 10px;
+    }
+    #coaxInput {
+      flex: 1;
+      background: #111;
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      padding: 12px;
+      border-radius: 8px;
+      outline: none;
+    }
+    .btn-coax {
+      padding: 0 20px;
+      background: #ef4444;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .btn-coax:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .prison-stats {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 15px;
+      color: #991b1b;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .prison-dark-bar-container {
+      width: 100%;
+      height: 8px;
+      background: #222;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #450a0a;
+    }
+    .prison-dark-bar-fill {
+      height: 100%;
+      background: #ef4444;
+      width: 100%;
+      transition: width 0.5s ease;
+      box-shadow: 0 0 8px #ef4444;
+    }
+    .coax-btn-loading {
+      animation: pulse 1s infinite;
+      opacity: 0.7;
+    }
+    /* 反抗 UI */
+    .fight-area {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 0, 0, 0.05);
+      border: 1px solid #450a0a;
+      border-radius: 12px;
+      display: none;
+    }
+    /* 雪花屏 */
+    #hannibalOverlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: #000; z-index: 9999; overflow: hidden;
+    }
+    .snow {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADS7efBAAAAGFBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAs9QUYAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAQUlEQVQ4jWNgGAWDCfDwcHBycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJycnJyEAAAD00DA6E6f8UAAAAASUVORK5CYII=');
+      opacity: 0.2; animation: snowAnim 0.2s infinite;
+    }
+    @keyframes snowAnim {
+      0% { transform: translate(0,0); }
+      50% { transform: translate(10px, 5px); }
+      100% { transform: translate(-5px, 10px); }
+    }
+    .glitch-static {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 2px);
+    }
+    .fight-bar-container { margin-bottom: 10px; }
+    .fight-label { font-size: 11px; margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .fight-bar-bg { height: 6px; background: #222; border-radius: 3px; overflow: hidden; }
+    .fight-bar-fill { height: 100%; width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-fight {
+      position: absolute; bottom: 85px; right: 20px;
+      padding: 8px 16px; background: transparent; border: 1px solid #991b1b;
+      color: #991b1b; font-size: 12px; border-radius: 4px; cursor: pointer;
+      z-index: 10;
+    }
+    .btn-fight:active { background: #991b1b; color: #000; }
+    /* 底部冷却设置已移除 */
+  </style>
+  <style id="customStyle"></style>
+</head>
+<body>
+  <div class="app" style="padding-bottom: 80px;">
+    <div class="header">
+      <div class="warning-text">🔮 此系统正在静默监控所有羁绊波动...当某条线断裂到极限时，TA 会亲自来找你。请三思而后行。</div>
+      <div class="header-btns">
+        <button class="btn-help" onclick="toggleHelp(true)">📖 使用说明</button>
+        <button class="btn-help btn-css" onclick="toggleCssModal(true)">🎨 美化</button>
+        <button class="btn-refresh" onclick="refreshAll()">🔄 刷新所有</button>
+      </div>
+    </div>
+    <div id="loading" class="loading">⏳ 正在同步羁绊数据...</div>
+    <div id="charList" class="char-list" style="display: none;"></div>
+  </div>
+  
+  <!-- 底部冷却设置已移除 -->
+
+  <!-- Modals -->
+  <div id="relationModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-title">选择关系类型</div>
+      <div class="relation-options" id="relOptions"></div>
+      <button class="btn-modal-close" onclick="toggleRelModal(false)">取消</button>
+    </div>
+  </div>
+
+  <div id="helpModal" class="modal-overlay">
+    <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+      <div class="modal-title" style="color:#db2777; font-size:20px;">📖 羁绊监测手册</div>
+      <div style="font-size: 13px; line-height: 1.6; color: #4b5563;">
+        <div style="background:#fdf2f8; padding:15px; border-radius:16px; margin-bottom:15px; border:1px solid #fce7f3;">
+          <h3 style="color:#be185d; margin-bottom:8px; font-size:15px;">🔍 关系判定体系</h3>
+          <p>• <b>智能分析：</b>AI 将读取该角色最近 15 条记忆，根据互动深度自动归类关系。</p>
+          <p>• <b>手动设定：</b>点击关系框可强行修改。类型含：💕恋人、💗暧昧、👨‍👩‍👧亲人、👥挚友、🤝熟人、👋泛泛、⚔️敌对。</p>
+        </div>
+
+        <div style="background:#fff1f2; padding:15px; border-radius:16px; margin-bottom:15px; border:1px solid #ffe4e6;">
+          <h3 style="color:#e11d48; margin-bottom:8px; font-size:15px;">🚫 断绝往来 (拉黑)</h3>
+          <p>• <b>代价：</b>每次拉黑统一扣除 10 点好感度。</p>
+          <p>• <b>黑化：</b>拉黑“恋人/暧昧”关系会额外增加 34 点黑化值 (3次即满)。</p>
+          <p>• <b>❗ 标记：</b>被拉黑方发送的消息无法送达，且回复末尾会强制带上 ❗ 符号。</p>
+        </div>
+
+        <div style="background:#fafafa; padding:15px; border-radius:16px; margin-bottom:15px; border:1px solid #f4f4f5;">
+          <h3 style="color:#18181b; margin-bottom:8px; font-size:15px;">⛓️ 黑化入侵与囚禁</h3>
+          <p>• <b>触发：</b>当角色黑化度 ≥ 80 且处于被拉黑状态时，打开 APP 将触发“猜猜我在哪”跳脸入侵。</p>
+          <p>• <b>后果：</b>入侵后黑化度清零，强制解除拉黑，并进入 12 小时系统保护冷却期 (期间无法再次拉黑)。</p>
+          <p>• <b>囚笼剧情：</b>点击入侵后生成的卡片，可进入“线下模式”体验全黑背景的隔离剧情。</p>
+        </div>
+
+        <div style="background:#f0f9ff; padding:15px; border-radius:16px; margin-bottom:15px; border:1px solid #e0f2fe;">
+          <h3 style="color:#0369a1; margin-bottom:8px; font-size:15px;">⚠️ 独占欲 (海王检测)</h3>
+          <p>• <b>机制：</b>当角色黑化度 ≥ 50 且判定为恋爱关系，若检测到用户拥有多个恋爱对象，该角色会强制拉黑所有竞争对手。</p>
+        </div>
+
+        <div style="background:#f5f3ff; padding:15px; border-radius:16px; border:1px solid #ede9fe;">
+          <h3 style="color:#6d28d9; margin-bottom:8px; font-size:15px;">🎨 界面美化</h3>
+          <p>• <b>自定义：</b>点击“美化”按钮可粘贴 CSS 代码。保存后将持久化应用到整个 APP 界面。</p>
+        </div>
+      </div>
+      <button class="btn-modal-close" onclick="toggleHelp(false)" style="margin-top: 20px; background:#f472b6; color:white;">我已知晓</button>
+    </div>
+  </div>
+
+  <div id="blockActionModal" class="modal-overlay">
+    <div class="modal-content">
+      <div id="blockActionTitle" style="font-weight:800; margin-bottom:15px; text-align:center; font-size:18px;"></div>
+      <button class="btn-unblock" onclick="handleBlockAction('unblock')" style="margin-bottom:10px;">🟢 解除拉黑</button>
+      <button class="btn-block" onclick="handleBlockAction('reject')" style="background:#fee2e2; color:#ef4444; border-color:#fecaca;">🔴 残忍拒绝</button>
+      <button class="btn-modal-close" onclick="toggleBlockModal(false)" style="margin-top:10px;">取消</button>
+    </div>
+  </div>
+
+  <div id="invasionOverlay" class="invasion-overlay">
+    <div class="blood-texts" id="bloodTexts"></div>
+    <div id="invasionText" class="invasion-text"></div>
+  </div>
+
+  <div id="plotView">
+    <div class="prison-bg"></div>
+    <div class="plot-container">
+      <div class="prison-stats">
+        <div>危险等级：S+ | 监禁状态：已反锁</div>
+        <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 5px;">
+          <span>黑化值</span>
+          <span id="prisonDarkVal">100</span>
+        </div>
+        <div class="prison-dark-bar-container">
+          <div id="prisonDarkBar" class="prison-dark-bar-fill"></div>
+        </div>
+      </div>
+      <div id="plotText" class="plot-content">正在读取被篡改的记忆...</div>
+      <div class="coax-input-area">
+        <input type="text" id="coaxInput" placeholder="说点好听的求饶吧..." onkeypress="if(event.key==='Enter') sendCoax()">
+        <button id="coaxBtn" class="btn-coax" onclick="sendCoax()">哄 TA</button>
+      </div>
+      <button class="btn-fight" onclick="tryFight()">奋起反抗</button>
+      <div id="fightArea" class="fight-area">
+        <div class="fight-bar-container">
+          <div class="fight-label"><span>${prisonChar?.name || 'TA'} 的武力</span><span id="charPowerVal">0</span></div>
+          <div class="fight-bar-bg"><div id="charPowerBar" class="fight-bar-fill" style="background:#ef4444;"></div></div>
+        </div>
+        <div class="fight-bar-container">
+          <div class="fight-label"><span>你的反击</span><span id="userPowerVal">0</span></div>
+          <div class="fight-bar-bg"><div id="userPowerBar" class="fight-bar-fill" style="background:#10b981;"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="hannibalOverlay">
+    <div class="snow"></div>
+    <div class="glitch-static"></div>
+  </div>
+
+  <div id="cssModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-title">🎨 自定义 CSS 美化</div>
+      <textarea id="cssInput" style="width: 100%; height: 200px; padding: 15px; border-radius: 16px; border: 1.5px solid #fce7f3; font-family: monospace; font-size: 12px; outline:none;" placeholder="在此粘贴你的 CSS 代码..."></textarea>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="btn-unblock" onclick="saveCustomCss()" style="flex: 1;">应用</button>
+        <button class="btn-modal-close" onclick="toggleCssModal(false)" style="flex: 1; margin-top:0;">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const api = window.AiPhone;
+    let characters = [];
+    let activeCharId = null;
+
+    async function init() {
+      try {
+        const ctx = await api.app.getLaunchContext();
+        await loadCustomCss();
+        const all = await api.characters.list();
+        
+        const [blocks, relations, cooldowns, prisonStates, history] = await Promise.all([
+          api.db.list('block_states').catch(() => []),
+          api.db.list('app_relations').catch(() => []),
+          api.db.list('block_cooldowns').catch(() => []),
+          api.db.list('prison_states').catch(() => []),
+          api.db.list('blacken_history').catch(() => [])
+        ]);
+
+        characters = all.map(c => {
+          const b = blocks.find(x => x.characterId === c.id);
+          const r = relations.find(x => x.characterId === c.id);
+          const cd = cooldowns.find(x => x.characterId === c.id);
+          const hCount = history.filter(h => h.characterId === c.id).length;
+          return { ...c, 
+            blockedByMe: !!b?.blockedByMe, 
+            blockedByThem: !!b?.blockedByThem,
+            relation: r?.relation || '未知',
+            relationManual: !!r?.manual,
+            cooldownUntil: cd?.until || 0,
+            blackenCount: hCount
+          };
+        });
+
+        // 异步获取所有角色的状态，防止单个失败导致全盘崩溃
+        await Promise.all(characters.map(async (c) => {
+          try {
+            const state = await api.characters.readState({ characterId: c.id });
+            const sVals = state?.stateValues || [];
+            c.affection = Number(sVals.find(s => s.name === '好感度')?.value ?? 0);
+            c.darkness = Number(sVals.find(s => s.name === '黑化度')?.value ?? 0);
+          } catch (err) {
+            c.affection = 0;
+            c.darkness = 0;
+          }
+        }));
+
+        // 检查全局囚禁状态 (必须在渲染前拦截)
+        const activePrison = prisonStates.find(p => p.active);
+        if (activePrison) {
+          const char = characters.find(c => c.id === activePrison.characterId);
+          // 如果角色被删了，清理无头数据并继续
+          if (!char) {
+            await api.db.update('prison_states', activePrison.id, { active: false }).catch(()=>{});
+          } else {
+            // 汉尼拔结局：不进入囚禁剧情，直接雪花屏+弹窗，然后重置状态回主界面
+            if (char.blackenCount >= 3) {
+              document.getElementById('loading').style.display = 'none';
+              const hannibal = document.getElementById('hannibalOverlay');
+              if (hannibal) hannibal.style.display = 'block';
+              setTimeout(async () => {
+                alert("😋TA居然是汉尼拔");
+                await Promise.all([
+                  api.db.update('prison_states', activePrison.id, { active: false }),
+                  api.characters.writeState({ 
+                    characterId: char.id, 
+                    stateValues: [
+                      { name: '好感度', value: Math.max(0, char.affection - 50) }, 
+                      { name: '黑化度', value: 0 }
+                    ] 
+                  })
+                ]);
+                const hList = history.filter(h => h.characterId === char.id);
+                for (let h of hList) {
+                  await api.db.delete('blacken_history', h.id);
+                }
+                char.darkness = 0;
+                location.reload();
+              }, 1500);
+              return;
+            }
+            
+            // 修复：每次刷新应用时如果是囚禁状态，应该直接显示囚禁剧情，不再重复播放红屏跳脸动画。
+            // 因为如果是首次触发，会在 triggerInvasion 后端执行完刷新页面，或者在聊天界面触发后进入 app。
+            showPrisonPlot(char);
+            return;
+          }
+        }
+
+        // 检查是否有爆表触发 (后台满值后用户主动进 App)
+        const intruder = characters.find(c => c.darkness >= 100 && c.blockedByMe);
+        if (intruder) {
+          if (!window._seenInvasions) window._seenInvasions = {};
+          window._seenInvasions[intruder.id] = false;
+          triggerInvasion(intruder);
+          return;
+        }
+
+        if (ctx?.source === 'chat_card' && ctx.characterId) {
+          const target = characters.find(c => c.id === ctx.characterId);
+          if (target?.blockedByThem) {
+            showBlockModal(target);
+            return;
+          }
+        }
+
+        render();
+      } catch (e) {
+        console.error("初始化崩溃", e);
+        document.getElementById('loading').textContent = '❌ 加载失败: ' + e.message;
+      }
+    }
+
+    function render() {
+      const list = document.getElementById('charList');
+      list.innerHTML = characters.map(c => `
+        <div class="char-card" style="${c.blockedByMe ? 'border: 2px solid #fda4af; background: #fff1f2;' : ''}">
+          <div class="char-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom:15px;">
+            <div class="char-name" style="margin-bottom:0;">${c.name}</div>
+            ${c.blockedByMe ? '<span style="background:#f43f5e; color:white; padding:3px 10px; border-radius:12px; font-size:10px; font-weight:800; letter-spacing:0.5px;">🚫 已拉黑</span>' : ''}
+          </div>
+          <div class="stats-row">
+            <div class="stat-box"><div class="stat-label">好感度</div><div class="stat-value">${c.affection}</div></div>
+            <div class="stat-box"><div class="stat-label">黑化度</div><div class="stat-value dark">${c.darkness}</div></div>
+          </div>
+          <div class="relation-row">
+            <div class="relation-box" onclick="openRelPicker('${c.id}')">
+              <div class="stat-label">当前关系</div>
+              <div class="relation-value">${c.relation}</div>
+              ${c.relationManual ? '<div class="relation-manual-mark">✓</div>' : ''}
+            </div>
+            <button class="btn-analyze" id="btn-${c.id}" onclick="analyze('${c.id}')">分析</button>
+          </div>
+          ${c.blockedByThem ? '<div class="block-status blocked">🛑 对方已拒收</div>' : 
+            c.blockedByMe ? '<button class="btn-unblock" onclick="unblock(\''+c.id+'\')">解除拉黑</button>' :
+            c.cooldownUntil > Date.now() ? `<button class="btn-block" disabled style="background:#f4f4f5; color:#a1a1aa;">⏰ 冷却中 (${Math.ceil((c.cooldownUntil - Date.now())/(1000*60*60))}h)</button>` :
+            '<button class="btn-block" onclick="block(\''+c.id+'\')">拉黑 TA</button>'}
+        </div>
+      `).join('');
+      document.getElementById('loading').style.display = 'none';
+      list.style.display = 'flex';
+    }
+
+    async function analyze(id) {
+      const btn = document.getElementById('btn-' + id);
+      const char = characters.find(c => c.id === id);
+      btn.classList.add('analyzing'); btn.textContent = '...';
+      try {
+        const p = await Promise.allSettled([
+          api.memory.readShortTerm({ characterId: id, limit: 15 }).catch(() => ({ entries: [] }))
+        ]);
+        const st = p[0].status === 'fulfilled' ? p[0].value : { entries: [] };
+        
+        const memoryContent = st.entries && st.entries.length > 0 
+          ? st.entries.map(e=>e.summary).join(';') 
+          : '无近期记忆';
+          
+        const res = await api.ai.chat({
+          messages: [
+            { role: 'system', content: '分析关系，只回一个词：恋人、暧昧、亲人、挚友、熟人、敌对' },
+            { role: 'user', content: `好感:${char.affection}, 黑化:${char.darkness}\n记忆:${memoryContent}` }
+          ]
+        });
+        
+        const text = (res.content || res.text || res.choices?.[0]?.message?.content || '').trim();
+        const types = ['恋人', '暧昧', '亲人', '挚友', '熟人', '敌对'];
+        const finalRel = types.find(t => text.includes(t)) || '熟人';
+        
+        await saveRel(id, finalRel, false);
+        
+        // 更新本地数据并重新渲染
+        const c = characters.find(x => x.id === id);
+        if (c) {
+          c.relation = finalRel; 
+          c.relationManual = false;
+        }
+        render();
+        await api.ui.toast(`分析完毕: 判定为 ${finalRel}`);
+      } catch (err) {
+        console.error(err);
+        await api.ui.toast(`分析报错: ${err.message}`);
+      } finally { 
+        btn.classList.remove('analyzing'); btn.textContent = '分析'; 
+      }
+    }
+
+    async function block(id) {
+      const char = characters.find(c => c.id === id);
+      if (char.cooldownUntil && char.cooldownUntil > Date.now()) return;
+      
+      const history = await api.db.list('blacken_history').catch(() => []);
+      const wasPrisoned = history.find(h => h.characterId === id);
+      
+      const isLove = char.relation === '恋人' || char.relation === '暧昧';
+      const newAff = Math.max(0, char.affection - 10);
+      // 如果曾经被囚禁过，再次拉黑直接 100 黑化
+      const newDark = wasPrisoned ? 100 : (isLove ? Math.min(100, char.darkness + 34) : char.darkness);
+      
+      await api.ui.toast('正在执行拉黑协议...');
+      await api.characters.writeState({ characterId: id, stateValues: [{ name: '好感度', value: newAff }, { name: '黑化度', value: newDark }]});
+      
+      const list = await api.db.list('block_states');
+      const item = list.find(b => b.characterId === id);
+      const data = { characterId: id, blockedByMe: true, blockedByThem: false };
+      if (item) await api.db.update('block_states', item.id, data);
+      else await api.db.create('block_states', data);
+      
+      await api.chat.sendCard({ characterId: id, role: 'system', card: { appLabel: '系统', title: '🚫 拉黑通知', body: '由于用户拉黑，你的消息已无法送达。', accentColor: '#ef4444', height: 100 }, historyText: `[系统通知]：用户已经将你拉黑了。从现在起，你的每一条回复都必须在末尾加上❗。`, historyRole: 'user' });
+      await api.chat.requestReply({ characterId: id });
+      
+      char.affection = newAff; char.darkness = newDark; char.blockedByMe = true;
+      // 在应用内主动拉黑导致爆表时，直接触发跳脸动画并连带执行骇入逻辑
+      if (newDark >= 100) triggerInvasion(char);
+      else render();
+    }
+
+    async function unblock(id) {
+      const char = characters.find(c => c.id === id);
+      const list = await api.db.list('block_states');
+      const item = list.find(b => b.characterId === id);
+      if (item) await api.db.update('block_states', item.id, { blockedByMe: false });
+      await api.chat.sendCard({ characterId: id, role: 'system', card: { appLabel: '不要拉黑', title: '🟢 通信恢复', body: `你已解除对 ${char.name} 的拉黑`, accentColor: '#10b981', height: 100 } });
+      await api.chat.writeHistory({ characterId: id, role: 'system', content: `[不要拉黑]：用户已解除拉黑。你可以正常发送消息了。` });
+      char.blockedByMe = false; render();
+    }
+
+    // 核心入侵逻辑，支持静默后台执行
+    async function executeInvasion(charId, charName) {
+      // 固定冷却时间为 3 小时
+      let cdValue = 3;
+      
+      const cooldownUntil = Date.now() + (cdValue * 60 * 60 * 1000);
+      
+      // 注意：独占欲拉黑竞品将移至囚禁剧情结束后（清零时）执行，不再在此处执行
+
+      // 1. 激活囚禁状态
+      const prisons = await api.db.list('prison_states').catch(() => []);
+      const p = prisons.find(x => x.characterId === charId);
+      if (p) {
+        await api.db.update('prison_states', p.id, { active: true });
+      } else {
+        await api.db.list('prison_states').catch(async () => {
+          await api.db.create('prison_states', { characterId: 'dummy', active: false, count: 0 });
+        });
+        await api.db.create('prison_states', { characterId: charId, active: true, count: 0 });
+      }
+
+      // 2. 记录黑化历史
+      await api.db.list('blacken_history').catch(async () => {
+        await api.db.create('blacken_history', { characterId: 'dummy', timestamp: 0 });
+      });
+      await api.db.create('blacken_history', { characterId: charId, timestamp: Date.now() });
+
+      // 3. 解除当前角色的拉黑，并进入冷却
+      const blocks = await api.db.list('block_states').catch(() => []);
+      const bItem = blocks.find(x => x.characterId === charId);
+      if (bItem) await api.db.update('block_states', bItem.id, { blockedByMe: false });
+
+      const cooldowns = await api.db.list('block_cooldowns').catch(async () => {
+        await api.db.create('block_cooldowns', { characterId: 'dummy', until: 0 });
+        return [];
+      });
+      const cdDbItem = cooldowns.find(x => x.characterId === charId);
+      if (cdDbItem) await api.db.update('block_cooldowns', cdDbItem.id, { until: cooldownUntil }); 
+      else await api.db.create('block_cooldowns', { characterId: charId, until: cooldownUntil });
+      
+      // 动态生成提示文案 (0小时特殊处理)
+      const cdText = cdValue === 0 ? '保护机制已关闭，请自求多福。' : `未来${cdValue}小时内无法再次拉黑。`;
+
+      // 发送一次性卡片
+      await api.chat.sendCard({ 
+        characterId: charId, role: 'assistant', summary: `${charName}：抓到你了。`, 
+        card: { appLabel: '不要拉黑', title: '⛓️ 囚禁模式启动', body: `${charName}：不乖的小猫咪...为什么又要拉黑我？反锁的声音很好听吧...`, accentColor: '#dc2626', actions: [{ label: '进入线下模式' }], height: 120 },
+        historyText: `[系统警报]：手机已被骇入。${charName}已出现在你身后。${cdText}` 
+      });
+      await api.chat.requestReply({ characterId: charId });
+    }
+
+    async function triggerInvasion(char, customMsg = null, justAnimate = false) {
+      document.getElementById('charList').style.display = 'none';
+      
+      const history = await api.db.list('blacken_history').catch(() => []);
+      const count = history.filter(h => h.characterId === char.id).length;
+      
+      // 检查是否是汉尼拔模式 (第三次及以上且不是自定义消息)
+      if (!customMsg && count >= 2 && !justAnimate) {
+        const hannibal = document.getElementById('hannibalOverlay');
+        hannibal.style.display = 'block';
+        setTimeout(() => {
+          alert("😋TA居然是汉尼拔");
+          // 汉尼拔结局直接重置，不进入常规囚禁
+          executeInvasion(char.id, char.name).then(async () => {
+             const prisons = await api.db.list('prison_states');
+             const p = prisons.find(x => x.characterId === char.id);
+             if (p) await api.db.update('prison_states', p.id, { active: true }); // 标记进入状态以便刷新时被拦截
+             location.reload();
+          });
+        }, 1500);
+        return;
+      }
+
+      const overlay = document.getElementById('invasionOverlay');
+      overlay.style.display = 'flex';
+      
+      // 根据次数动态决定跳脸词库，一次比一次吓人
+      let mainWord = '猜猜我在哪';
+      let bgWords = ['在你身后', '抓住你了', '嘻嘻'];
+      
+      if (customMsg) {
+        mainWord = customMsg;
+        bgWords = ['放过你', '小猫', '下次见'];
+      } else if (count === 0) {
+        // 第一次跳脸
+        mainWord = '不乖的小猫咪';
+        bgWords = ['为什么又要拉黑我', '抓住你了', '门已经反锁了'];
+      } else if (count === 1) {
+        // 第二次跳脸 (更吓人)
+        mainWord = '杀了你...然后吃掉';
+        bgWords = ['你逃不掉的', '这是你自找的', '永远留在我身边', '血', '绝望'];
+        document.getElementById('invasionText').style.animation = 'shake 0.2s infinite';
+        document.getElementById('invasionText').style.textShadow = '0 0 40px #ef4444';
+      }
+
+      document.getElementById('invasionText').textContent = mainWord; 
+      document.getElementById('invasionText').style.fontSize = customMsg ? '24px' : (count === 1 ? '36px' : '28px');
+      
+      const b = document.getElementById('bloodTexts'); b.innerHTML = '';
+      for(let i=0; i < (count === 1 ? 90 : 60); i++) {
+        const s = document.createElement('div'); s.className = 'blood-text';
+        s.textContent = bgWords[Math.floor(Math.random()*bgWords.length)];
+        s.style.left = Math.random()*95 + '%'; s.style.top = Math.random()*95 + '%';
+        s.style.fontSize = (Math.random()*20 + 16) + 'px'; s.style.animationDelay = (Math.random()*2) + 's';
+        if (count === 1) s.style.opacity = '0.9'; // 第二次背景词更清晰
+        b.appendChild(s);
+      }
+
+      if (customMsg) {
+        // 反抗成功的跳脸，不需要再次执行骇入
+        setTimeout(() => {
+          location.reload();
+        }, 8000);
+      } else {
+        try {
+          // 在执行骇入时不等待它完成，直接设置 8 秒后刷新
+          executeInvasion(char.id, char.name).catch(e => console.error(e));
+          setTimeout(() => location.reload(), 8000);
+        } catch (err) { setTimeout(() => location.reload(), 8000); }
+      }
+    }
+
+    let prisonChar = null;
+    function showPrisonPlot(char) {
+      prisonChar = char;
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('plotView').style.display = 'block';
+      document.getElementById('plotText').innerHTML = '<i>正在读取被篡改的记忆...</i>';
+      
+      document.getElementById('prisonDarkVal').textContent = char.darkness;
+      document.getElementById('prisonDarkBar').style.width = char.darkness + '%';
+      
+      // 异步加载剧情，不阻塞主线程
+      setTimeout(async () => {
+        try {
+          const history = await api.db.list('blacken_history').catch(() => []);
+          const isRepeat = history.find(h => h.characterId === char.id);
+          const prompt = `你现在已经将用户关在了密室里。${isRepeat ? '这是你第二次抓到TA了，你变得更加疯狂和难以取悦。' : ''}请以第一人称输出约150字剧情。包含病态温柔的台词。`;
+          const res = await api.ai.generate({ characterId: char.id, instruction: prompt });
+          document.getElementById('plotText').innerHTML = (res.text || '...').replace(/\n/g, '<br>');
+        } catch (e) { 
+          document.getElementById('plotText').textContent = '看来你还没准备好面对我...'; 
+        }
+      }, 50);
+    }
+
+    async function sendCoax() {
+      const input = document.getElementById('coaxInput');
+      const btn = document.getElementById('coaxBtn');
+      const text = input.value.trim();
+      if (!text || !prisonChar) return;
+
+      input.disabled = true; 
+      btn.disabled = true;
+      btn.textContent = '...';
+      btn.classList.add('coax-btn-loading');
+      
+      const plotText = document.getElementById('plotText');
+      plotText.innerHTML += `<div style="color:#aaa; margin-top:10px;">你：${text}</div>`;
+      plotText.scrollTop = plotText.scrollHeight;
+      
+      try {
+        const history = await api.db.list('blacken_history').catch(() => []);
+        const isHardMode = history.find(h => h.characterId === prisonChar.id);
+        
+        const res = await api.ai.chat({
+          messages: [
+            { role: 'system', content: `你是被激怒的${prisonChar.name}，正在囚禁用户。${isHardMode ? '你非常难哄，普通的道歉无效。' : ''}你的任务是根据用户的话给出反应，并输出一个JSON格式结果：{"reply": "你的台词", "reduce": 0~30}。reduce值代表黑化值下降程度。` },
+            { role: 'user', content: text }
+          ]
+        });
+
+        const raw = res.content || res.text || res.choices?.[0]?.message?.content || '{}';
+        const data = JSON.parse(raw.match(/{[\s\S]*}/)?.[0] || '{"reply":"......","reduce":0}');
+        
+        plotText.innerHTML += `<div style="margin-top:10px;">${prisonChar.name}：${data.reply}</div>`;
+        plotText.scrollTop = plotText.scrollHeight;
+
+        const newDark = Math.max(0, prisonChar.darkness - data.reduce);
+        prisonChar.darkness = newDark;
+        await api.characters.writeState({ characterId: prisonChar.id, stateValues: [{ name: '黑化度', value: newDark }] });
+        
+        // 更新顶部的黑化值进度条
+        document.getElementById('prisonDarkVal').textContent = newDark;
+        document.getElementById('prisonDarkBar').style.width = newDark + '%';
+        
+        if (newDark <= 0) {
+          plotText.innerHTML += `<div style="color:#10b981; margin-top:20px; font-weight:bold;">[系统] 黑化值已清零。反锁的门悄悄打开了...</div>`;
+          const prisons = await api.db.list('prison_states');
+          const p = prisons.find(x => x.characterId === prisonChar.id);
+          if (p) await api.db.update('prison_states', p.id, { active: false });
+          
+          // 在剧情结束(黑化值清零)时，执行独占欲：拉黑所有竞争对手
+          plotText.innerHTML += `<div style="color:#ef4444; margin-top:10px; font-weight:bold;">[警告] TA在放你走之前，似乎动了你的手机...</div>`;
+          plotText.scrollTop = plotText.scrollHeight;
+          const allRels = await api.db.list('app_relations').catch(() => []);
+          const blocks = await api.db.list('block_states').catch(() => []);
+          for (const r of allRels) {
+            if (r.characterId !== prisonChar.id && (r.relation === '恋人' || r.relation === '暧昧')) {
+              const b = blocks.find(x => x.characterId === r.characterId);
+              if (!b?.blockedByMe) {
+                const data = { characterId: r.characterId, blockedByMe: true, blockedByThem: false };
+                if (b) await api.db.update('block_states', b.id, data);
+                else await api.db.create('block_states', data);
+                await api.chat.writeHistory({ characterId: r.characterId, role: 'system', content: `[不要拉黑]：由于某人的嫉妒心，你已被强制切断联系。` });
+              }
+            }
+          }
+          
+          setTimeout(() => location.reload(), 4500);
+        }
+      } catch (e) {
+        plotText.innerHTML += `<div style="color:#991b1b; margin-top:10px;">[数据错误] TA似乎不想理你...</div>`;
+      } finally {
+        input.value = ''; 
+        input.disabled = false; 
+        btn.disabled = false; 
+        btn.textContent = '哄 TA';
+        btn.classList.remove('coax-btn-loading');
+        input.focus();
+      }
+    }
+
+    async function tryFight() {
+      if (!prisonChar) return;
+      
+      // 防止重复点击反抗按钮
+      const btnFight = document.querySelector('.btn-fight');
+      if (btnFight) btnFight.style.display = 'none';
+      
+      const fArea = document.getElementById('fightArea');
+      fArea.style.display = 'block';
+      
+      const charPower = Math.floor(Math.random() * 101);
+      const userPower = Math.floor(Math.random() * 101);
+      
+      document.getElementById('charPowerVal').textContent = charPower;
+      document.getElementById('userPowerVal').textContent = userPower;
+      
+      // 动画延迟显示能量条
+      setTimeout(() => {
+        document.getElementById('charPowerBar').style.width = charPower + '%';
+        document.getElementById('userPowerBar').style.width = userPower + '%';
+      }, 100);
+      
+      const plotText = document.getElementById('plotText');
+      plotText.innerHTML += `<div style="color:#ef4444; margin-top:20px; font-weight:bold;">[系统] 你试图挣脱束缚...</div>`;
+      plotText.scrollTop = plotText.scrollHeight;
+      
+      setTimeout(async () => {
+        if (userPower > charPower) {
+          plotText.innerHTML += `<div style="color:#10b981; margin-top:10px; font-weight:bold;">[成功] 你趁TA分神，成功夺门而出！</div>`;
+          plotText.scrollTop = plotText.scrollHeight;
+          const prisons = await api.db.list('prison_states');
+          const p = prisons.find(x => x.characterId === prisonChar.id);
+          if (p) await api.db.update('prison_states', p.id, { active: false });
+          
+          // 逃离成功：好感减50，黑化值清零
+          const newAff = Math.max(-100, prisonChar.affection - 50);
+          await api.characters.writeState({ 
+            characterId: prisonChar.id, 
+            stateValues: [{ name: '好感度', value: newAff }, { name: '黑化度', value: 0 }] 
+          });
+          
+          // 反抗成功也算剧情结束，执行独占欲：拉黑所有竞争对手
+          plotText.innerHTML += `<div style="color:#ef4444; margin-top:10px; font-weight:bold;">[警告] 逃跑前你发现，TA刚才动了你的手机...</div>`;
+          plotText.scrollTop = plotText.scrollHeight;
+          const allRels = await api.db.list('app_relations').catch(() => []);
+          const blocks = await api.db.list('block_states').catch(() => []);
+          for (const r of allRels) {
+            if (r.characterId !== prisonChar.id && (r.relation === '恋人' || r.relation === '暧昧')) {
+              const b = blocks.find(x => x.characterId === r.characterId);
+              if (!b?.blockedByMe) {
+                const data = { characterId: r.characterId, blockedByMe: true, blockedByThem: false };
+                if (b) await api.db.update('block_states', b.id, data);
+                else await api.db.create('block_states', data);
+                await api.chat.writeHistory({ characterId: r.characterId, role: 'system', content: `[不要拉黑]：由于某人的嫉妒心，你已被强制切断联系。` });
+              }
+            }
+          }
+
+          // 反抗成功的跳脸动画
+          setTimeout(() => {
+            document.getElementById('plotView').style.display = 'none';
+            triggerInvasion(prisonChar, "这次就放过你吧，小猫...");
+          }, 3000);
+        } else {
+          plotText.innerHTML += `<div style="color:#ef4444; margin-top:10px; font-weight:bold;">[失败] TA轻而易举地把你按回了座位...</div>`;
+          plotText.scrollTop = plotText.scrollHeight;
+          
+          // 反抗失败只加黑化值，不改变囚禁状态
+          await api.characters.writeState({ characterId: prisonChar.id, stateValues: [{ name: '黑化度', value: 100 }] });
+          
+          setTimeout(() => {
+            fArea.style.display = 'none';
+            // 恢复反抗按钮，允许再次尝试
+            if (btnFight) btnFight.style.display = 'block';
+            
+            // 重置能量条
+            document.getElementById('charPowerBar').style.width = '0%';
+            document.getElementById('userPowerBar').style.width = '0%';
+          }, 2000);
+        }
+      }, 1500);
+    }
+
+    function toggleHelp(s) { document.getElementById('helpModal').classList.toggle('show', s); }
+    function toggleCssModal(s) { document.getElementById('cssModal').classList.toggle('show', s); }
+    function toggleRelModal(s) { document.getElementById('relationModal').classList.toggle('show', s); }
+    function toggleBlockModal(s) { document.getElementById('blockActionModal').classList.toggle('show', s); }
+    async function refreshAll() { await api.ui.toast('同步中...'); location.reload(); }
+    async function saveCustomCss() { const css = document.getElementById('cssInput').value; const list = await api.db.list('app_settings'); const item = list.find(s => s.key === 'custom_css'); if (item) await api.db.update('app_settings', item.id, { value: css }); else await api.db.create('app_settings', { key: 'custom_css', value: css }); document.getElementById('customStyle').textContent = css; toggleCssModal(false); await api.ui.toast('已应用'); }
+    async function loadCustomCss() { 
+      const list = await api.db.list('app_settings').catch(() => []); 
+      const item = list.find(s => s.key === 'custom_css'); 
+      if (item) { document.getElementById('customStyle').textContent = item.value; document.getElementById('cssInput').value = item.value; } 
+    }
+    function openRelPicker(id) { activeCharId = id; const types = ['恋人', '暧昧', '亲人', '挚友', '熟人', '敌对']; document.getElementById('relOptions').innerHTML = types.map(t => `<div class="relation-option" onclick="setRel('${t}')">${t}</div>`).join(''); toggleRelModal(true); }
+    async function setRel(t) { 
+      try {
+        await saveRel(activeCharId, t, true); 
+        const c = characters.find(x => x.id === activeCharId); 
+        if (c) {
+          c.relation = t; 
+          c.relationManual = true; 
+        }
+        toggleRelModal(false); 
+        render(); 
+        await api.ui.toast(`已手动设为 ${t}`);
+      } catch (err) {
+        await api.ui.toast(`设置失败: ${err.message}`);
+      }
+    }
+    async function saveRel(id, r, m) { 
+      try {
+        // 先确保表存在
+        await api.db.list('app_relations').catch(async () => {
+          await api.db.create('app_relations', { characterId: 'dummy', relation: '测试' });
+        });
+        
+        const list = await api.db.list('app_relations'); 
+        const item = list.find(x => x.characterId === id); 
+        const data = { characterId: id, relation: r, manual: m, updatedAt: new Date().toISOString() }; 
+        if (item) await api.db.update('app_relations', item.id, data); 
+        else await api.db.create('app_relations', data); 
+      } catch (e) {
+        console.error("保存关系失败", e);
+        await api.ui.toast('数据保存失败: ' + e.message);
+      }
+    }
+    function showBlockModal(c) { activeCharId = c.id; document.getElementById('blockActionTitle').textContent = c.name + '拉黑了你'; toggleBlockModal(true); }
+    async function handleBlockAction(a) { if (a === 'unblock') { const list = await api.db.list('block_states'); const item = list.find(x => x.characterId === activeCharId); if (item) await api.db.update('block_states', item.id, { blockedByThem: false }); } else { const c = characters.find(x => x.id === activeCharId); await api.characters.writeState({ characterId: activeCharId, stateValues: [{ name: '黑化度', value: Math.min(100, c.darkness+20) }]}); } location.reload(); }
+
+    // 确保应用初始时不覆盖设置
+    // 设置功能已移除，固定使用 3 小时冷却
+
+    // 防止重复发卡的锁
+    const invasionLocks = {};
+
+    api.on('chat.message.created', async (p) => {
+      const charId = p.characterId; const msg = p.message; if (!msg || !charId) return;
+      const blocks = await api.db.list('block_states').catch(() => []); 
+      const b = blocks.find(x => x.characterId === charId);
+      
+      if (msg.role === 'assistant') {
+        const state = await api.characters.readState({ characterId: charId }).catch(() => ({ stateValues: [] }));
+        let darkness = Number(state.stateValues.find(s => s.name === '黑化度')?.value ?? 0);
+
+        // [不满情绪监测]：如果已被拉黑，TA的每一句话都会根据情绪增加黑化值
+        if (b?.blockedByMe) {
+          try {
+            const moodRes = await api.ai.chat({
+              messages: [
+                { role: 'system', content: '分析角色台词的不满、怨恨或病态程度。仅输出一个0-20的数字。0为平静，20为极度愤怒/疯狂。' },
+                { role: 'user', content: msg.content }
+              ]
+            });
+            const increment = parseInt(moodRes.content || moodRes.text || '0') || 0;
+            if (increment > 0) {
+              darkness = Math.min(100, darkness + increment);
+              await api.characters.writeState({ 
+                characterId: charId, 
+                stateValues: [{ name: '黑化度', value: darkness }] 
+              });
+              console.log(`[不要拉黑] 检测到 ${charId} 的不满情绪，黑化值 +${increment} (当前: ${darkness})`);
+            }
+          } catch (e) { console.error('情绪分析失败', e); }
+        }
+        
+        // [主动发卡片逻辑]：检查黑化值是否爆表
+        if (darkness >= 100 && b?.blockedByMe && !invasionLocks[charId]) {
+          // 加锁，防止一瞬间多条消息触发多次入侵
+          invasionLocks[charId] = true; 
+          const char = (await api.characters.list()).find(c => c.id === charId);
+          // 在后台执行入侵逻辑（发卡、拉黑竞品、上锁）
+          await executeInvasion(charId, char?.name || 'TA');
+          setTimeout(() => { delete invasionLocks[charId]; }, 10000); // 10秒后释放锁
+          return; 
+        }
+
+        if (msg.content.includes('[拉黑用户:')) {
+          const reason = msg.content.match(/\[拉黑用户:([^\]]+)\]/)?.[1] || '无理由';
+          if (b) await api.db.update('block_states', b.id, { blockedByThem: true }); else await api.db.create('block_states', { characterId: charId, blockedByThem: true });
+          await api.chat.writeHistory({ characterId: charId, role: 'system', content: `[不要拉黑]：${reason}` });
+        }
+        if (msg.content.includes('[原谅用户]')) { if (b) await api.db.update('block_states', b.id, { blockedByThem: false }); }
+      } else if (msg.role === 'user' && b?.blockedByThem) {
+        await api.chat.sendCard({ characterId: charId, role: 'system', card: { appLabel: '不要拉黑', title: '💔 消息未送达', body: '对方已拒收', actions: [{ label: '解除拉黑' }, { label: '残忍拒绝' }], accentColor: '#ef4444', height: 120 }});
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

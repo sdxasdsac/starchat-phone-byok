@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>极速达</title>
+  <style>
+    :root {
+      --primary: #7c3aed;
+      --primary-light: #ede9fe;
+      --primary-hover: #6d28d9;
+      --accent: #f59e0b;
+      --bg-start: #fbfbfe;
+      --bg-end: #f4f3fa;
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --text-main: #1f2937;
+      --text-sub: #6b7280;
+      --border-color: rgba(124, 58, 237, 0.12);
+      --shadow: 0 8px 24px -4px rgba(124, 58, 237, 0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    .topbar {
+      position: fixed;
+      top: var(--ai-phone-app-bar-top, 44px);
+      left: 16px;
+      right: var(--ai-phone-app-bar-clear-right, 96px);
+      min-height: var(--ai-phone-app-bar-height, 32px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 50;
+    }
+
+    .app-title {
+      font-size: 19px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #111827;
+      letter-spacing: -0.3px;
+    }
+
+    .app-title span.badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 99px;
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .container {
+      padding: calc(var(--ai-phone-app-bar-top, 44px) + 40px) 16px var(--ai-phone-app-safe-bottom, 28px);
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-sub);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .char-select-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid rgba(0,0,0,0.06);
+      padding: 8px 12px;
+      border-radius: 12px;
+    }
+
+    .char-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #475569;
+      font-size: 14px;
+    }
+
+    .char-info {
+      flex: 1;
+    }
+
+    .char-info select {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1f2937;
+      outline: none;
+    }
+
+    .detected-tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+      min-height: 34px;
+    }
+
+    .item-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: #ffffff;
+      border: 1px solid rgba(124, 58, 237, 0.18);
+      padding: 6px 12px;
+      border-radius: 99px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .item-chip.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .chip-empty {
+      font-size: 12px;
+      color: #9ca3af;
+      padding: 6px 0;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #4b5563;
+      margin-bottom: 6px;
+    }
+
+    .input-text {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: #ffffff;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-text:focus {
+      border-color: var(--primary);
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .cat-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: #f8fafc;
+      border: 1.5px solid transparent;
+      border-radius: 12px;
+      padding: 10px 6px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .cat-btn .icon {
+      font-size: 22px;
+    }
+
+    .cat-btn .name {
+      font-size: 11px;
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .cat-btn.selected {
+      background: #f5f3ff;
+      border-color: var(--primary);
+      box-shadow: 0 3px 10px rgba(124, 58, 237, 0.14);
+    }
+
+    .cat-btn.selected .name {
+      color: var(--primary);
+    }
+
+    .experience-preview {
+      background: #fafaf9;
+      border-left: 3px solid var(--accent);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.55;
+      color: #57534e;
+      margin-top: 8px;
+    }
+
+    .btn-deliver {
+      width: 100%;
+      min-height: 48px;
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(109, 40, 217, 0.32);
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    .btn-deliver:active {
+      transform: scale(0.98);
+      opacity: 0.92;
+    }
+
+    .btn-deliver:disabled {
+      background: #9ca3af;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 190px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.05);
+      font-size: 12px;
+    }
+
+    .history-item .tag {
+      font-size: 10px;
+      background: #f3f4f6;
+      color: #4b5563;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="app-title">
+      📦 极速达 <span class="badge">签收管家</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 角色选择 -->
+    <div class="card">
+      <div class="section-title">
+        <span>收件人</span>
+        <span id="status-hint" style="font-size: 10px; color: var(--primary);"></span>
+      </div>
+      <div class="char-select-wrap">
+        <div class="char-avatar" id="char-avatar-box">👤</div>
+        <div class="char-info">
+          <select id="character-picker"></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- 自动识别区域 -->
+    <div class="card">
+      <div class="section-title">
+        <span>✨ 自动识别的最近礼物</span>
+        <button id="btn-refresh-scan" style="background:none; border:none; color:var(--primary); font-size:11px; cursor:pointer; font-weight:600;">重新扫描</button>
+      </div>
+      <div class="detected-tag-list" id="detected-chips">
+        <div class="chip-empty">正在分析聊天与购物送礼记录...</div>
+      </div>
+    </div>
+
+    <!-- 物品与品类配置 -->
+    <div class="card">
+      <div class="section-title">
+        <span>物品详情与品类</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="item-name-input">物品名称</label>
+        <input type="text" id="item-name-input" class="input-text" placeholder="如：复古实木书桌、海盐香水、拿铁咖啡..." />
+      </div>
+
+      <div class="form-group">
+        <label>选择所属品类（决定AI试用的真实状态）</label>
+        <div class="category-grid" id="category-container"></div>
+      </div>
+
+      <div class="form-group">
+        <label>专属使用细节设定（可修改）</label>
+        <input type="text" id="detail-input" class="input-text" />
+        <div class="experience-preview" id="preview-text"></div>
+      </div>
+
+      <button id="btn-submit" class="btn-deliver">
+        🚀 确认送达并安置就绪
+      </button>
+    </div>
+
+    <!-- 签收履历 -->
+    <div class="card">
+      <div class="section-title">
+        <span>📋 已送达记录</span>
+      </div>
+      <div class="history-list" id="history-list">
+        <div class="chip-empty">暂无签收记录</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const CATEGORIES = [
+      {
+        id: 'furniture',
+        name: '生活家居',
+        icon: '🛋️',
+        keywords: ['家具', '沙发', '桌', '椅', '床', '台灯', '柜', '地毯', '茶几', '架', '枕', '垫子', '收纳'],
+        defaultDetail: '物品已妥善配送到家并整齐摆放在室内，空间布置温馨大方，随时可以常态使用。'
+      },
+      {
+        id: 'skincare',
+        name: '美妆护肤',
+        icon: '💄',
+        keywords: ['口红', '香水', '面膜', '面霜', '精华', '水乳', '唇膏', '护手霜', '腮红', '眼影', '洗面奶'],
+        defaultDetail: '已整齐收纳在梳妆台，包装精美，质地温和清爽，十分合心意。'
+      },
+      {
+        id: 'food',
+        name: '食物饮品',
+        icon: '🍰',
+        keywords: ['蛋糕', '奶茶', '咖啡', '水果', '巧克力', '甜点', '零食', '茶', '饼干', '糖', '饮料', '饭', '汤'],
+        defaultDetail: '包装已拆开，新鲜可口，风味纯正，令人心情愉悦。'
+      },
+      {
+        id: 'digital',
+        name: '数码文具',
+        icon: '🎧',
+        keywords: ['耳机', '手机', '平板', '电脑', '键盘', '鼠标', '音箱', '钢笔', '笔记本', '手账', '文具', '相机'],
+        defaultDetail: '已开箱摆放就绪，做工精良，质感出色，已融入日常工作与生活环境。'
+      },
+      {
+        id: 'clothing',
+        name: '服饰鞋包',
+        icon: '👗',
+        keywords: ['外套', '衣服', '裙', '鞋', '包', '帽子', '围巾', '手套', '首饰', '项链', '手链', '耳环'],
+        defaultDetail: '已妥善挂放进衣橱收纳，剪裁得体，面料考究，非常满意。'
+      },
+      {
+        id: 'general',
+        name: '生活百货',
+        icon: '🎁',
+        keywords: [],
+        defaultDetail: '已顺利签收放置，做工细致，已经整洁归位于室内显眼位置，常态可用。'
+      }
+    ];
+
+    let selectedCat = CATEGORIES[0];
+    let characters = [];
+    let currentCharacterId = null;
+    let currentSessionId = null;
+
+    // 初始化 UI 元素
+    const charPicker = document.getElementById('character-picker');
+    const charAvatarBox = document.getElementById('char-avatar-box');
+    const detectedChips = document.getElementById('detected-chips');
+    const itemNameInput = document.getElementById('item-name-input');
+    const detailInput = document.getElementById('detail-input');
+    const previewText = document.getElementById('preview-text');
+    const btnSubmit = document.getElementById('btn-submit');
+    const catContainer = document.getElementById('category-container');
+    const btnRefreshScan = document.getElementById('btn-refresh-scan');
+    const historyList = document.getElementById('history-list');
+    const statusHint = document.getElementById('status-hint');
+
+    function renderCategories() {
+      catContainer.innerHTML = '';
+      CATEGORIES.forEach(cat => {
+        const div = document.createElement('div');
+        div.className = `cat-btn ${cat.id === selectedCat.id ? 'selected' : ''}`;
+        div.innerHTML = `<span class="icon">${cat.icon}</span><span class="name">${cat.name}</span>`;
+        div.onclick = () => selectCategory(cat);
+        catContainer.appendChild(div);
+      });
+    }
+
+    function selectCategory(cat, keepCustomDetail = false) {
+      selectedCat = cat;
+      renderCategories();
+      if (!keepCustomDetail || !detailInput.value) {
+        detailInput.value = cat.defaultDetail;
+      }
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const name = itemNameInput.value.trim() || '某件物品';
+      previewText.innerHTML = `<strong>【${name}】状态将注入：</strong><br/>${detailInput.value}`;
+    }
+
+    function inferCategory(name) {
+      for (const cat of CATEGORIES) {
+        if (cat.keywords.some(kw => name.includes(kw))) {
+          return cat;
+        }
+      }
+      return CATEGORIES[CATEGORIES.length - 1];
+    }
+
+    async function loadCharacters() {
+      try {
+        const ctx = await window.AiPhone.app.getLaunchContext();
+        characters = await window.AiPhone.characters.list();
+        
+        if (!characters || characters.length === 0) {
+          statusHint.textContent = '未检测到角色';
+          return;
+        }
+
+        charPicker.innerHTML = '';
+        characters.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name || '未命名角色';
+          charPicker.appendChild(opt);
+        });
+
+        if (ctx && ctx.characterId) {
+          currentCharacterId = ctx.characterId;
+          currentSessionId = ctx.sessionId || null;
+          charPicker.value = ctx.characterId;
+        } else {
+          const tuan = characters.find(c => c.name && c.name.includes('团山'));
+          currentCharacterId = tuan ? tuan.id : characters[0].id;
+          charPicker.value = currentCharacterId;
+        }
+
+        updateCharDisplay();
+        await scanRecentGifts();
+        await loadHistory();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function updateCharDisplay() {
+      const char = characters.find(c => c.id === currentCharacterId);
+      if (char) {
+        if (char.avatar) {
+          charAvatarBox.innerHTML = `<img src="${char.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" />`;
+        } else {
+          charAvatarBox.textContent = (char.name || '角')[0];
+        }
+      }
+    }
+
+    async function scanRecentGifts() {
+      detectedChips.innerHTML = '<div class="chip-empty">扫描近况中...</div>';
+      try {
+        let history = [];
+        try {
+          history = await window.AiPhone.chat.readHistory({
+            sessionId: currentSessionId,
+            limit: 40
+          });
+        } catch(e) {}
+
+        const candidateItems = new Set();
+
+        if (history && history.length > 0) {
+          for (const msg of history) {
+            const text = msg.content || msg.text || msg.summary || '';
+            const patterns = [
+              /送给[^\]:：,，]{1,8}[的:：\s]*([^\],，。\n]{2,14})/g,
+              /买[了个支件条份台套双块盒本瓶包头顶把张顶张张桌椅床柜车机碗水灯纸笔鞋包]+([^\],，。\n]{2,14})/g,
+              /\[购物[：:]([^\]]+)\]/g,
+              /\[礼物[：:]([^\]]+)\]/g,
+              /\[外卖[：:]([^\]]+)\]/g,
+              /赠送了[：: ]*([^\],，。\n]{2,14})/g,
+              /商品名称[：: ]*([^\],，。\n]{2,14})/g,
+              /【([^】]{2,16})】/g
+            ];
+
+            for (const p of patterns) {
+              let match;
+              while ((match = p.exec(text)) !== null) {
+                let raw = match[1].trim();
+                raw = raw.replace(/^(一份|一个|一件|一台|一把|一张|一盒|一条|一支)/, '').trim();
+                if (raw.length >= 2 && raw.length <= 16 && !raw.includes('系统') && !raw.includes('订单号')) {
+                  candidateItems.add(raw);
+                }
+              }
+            }
+          }
+        }
+
+        detectedChips.innerHTML = '';
+        if (candidateItems.size === 0) {
+          const presetExamples = ['定制实木衣柜', '复古沙发茶几', '法式香薰蜡烛', '浓郁黑巧蛋糕', '高保真头戴耳机'];
+          detectedChips.innerHTML = '<div class="chip-empty" style="margin-bottom:6px;width:100%;">未在最近消息抓取到明确物品，点选热门示例或直接输入：</div>';
+          presetExamples.forEach(ex => {
+            createChip(ex, false);
+          });
+        } else {
+          candidateItems.forEach(item => {
+            createChip(item, true);
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        detectedChips.innerHTML = '<div class="chip-empty">自动识别失败，请在下方直接输入</div>';
+      }
+    }
+
+    function createChip(name, isReal) {
+      const chip = document.createElement('div');
+      chip.className = 'item-chip';
+      chip.innerHTML = `${isReal ? '✨' : '💡'} <span>${name}</span>`;
+      chip.onclick = () => {
+        document.querySelectorAll('.item-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        itemNameInput.value = name;
+        const matchedCat = inferCategory(name);
+        selectCategory(matchedCat);
+      };
+      detectedChips.appendChild(chip);
+    }
+
+    async function loadHistory() {
+      try {
+        const records = await window.AiPhone.db.list('delivered_records', { limit: 20 });
+        historyList.innerHTML = '';
+        if (!records || records.length === 0) {
+          historyList.innerHTML = '<div class="chip-empty">暂无签收记录</div>';
+          return;
+        }
+        records.reverse().forEach(r => {
+          const item = document.createElement('div');
+          item.className = 'history-item';
+          item.innerHTML = `
+            <div>
+              <strong>${r.icon || '📦'} ${r.itemName}</strong>
+              <span style="color:#6b7280; margin-left:6px; font-size:11px;">→ ${r.charName || '角色'}</span>
+            </div>
+            <span class="tag">${r.categoryName || '已送达'}</span>
+          `;
+          historyList.appendChild(item);
+        });
+      } catch (e) {}
+    }
+
+    btnSubmit.onclick = async () => {
+      const itemName = itemNameInput.value.trim();
+      if (!itemName) {
+        window.AiPhone.ui.toast('请输入或选择一件物品');
+        return;
+      }
+
+      const charId = currentCharacterId;
+      const char = characters.find(c => c.id === charId);
+      const charName = char?.name || '对方';
+      const userProf = await window.AiPhone.user.getProfile({ characterId: charId }).catch(() => null);
+      const userName = userProf?.name || '你';
+      const stateDetail = detailInput.value.trim() || selectedCat.defaultDetail;
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = '🚀 正在火速签收并唤醒中...';
+
+      try {
+        // 1. 注入绝对真实的长期记忆
+        await window.AiPhone.memory.add({
+          characterId: charId,
+          type: 'long_term',
+          content: `${charName}已完整签收并收到来自${userName}赠送的物品【${itemName}】（品类：${selectedCat.name}）。具体状态：${stateDetail}`,
+          importance: 0.9,
+          reason: '极速达礼物签收与实物入驻'
+        });
+
+        // 2. 发送送达与开箱卡片到聊天室
+        await window.AiPhone.chat.sendCard({
+          characterId: charId,
+          role: 'user',
+          summary: `${userName}赠送给${charName}的【${itemName}】已顺利签收并安置就绪！`,
+          historyText: `[系统提示：用户${userName}送给${charName}的礼物【${itemName}】已正式签收安置完毕。室内实况：${stateDetail}。请以自然温馨的日常语气向${userName}表达感谢与分享。]`,
+          historyRole: 'system',
+          card: {
+            appLabel: '极速达 · 签收管家',
+            title: `${selectedCat.icon} 礼物已送达并安置！`,
+            subtitle: 'PARCEL UNBOXED & DELIVERED',
+            status: '已就位 / 正常使用',
+            accentColor: '#7c3aed',
+            sections: [
+              {
+                title: '物品信息',
+                rows: [
+                  { label: '收件人', value: charName },
+                  { label: '送礼人', value: userName },
+                  { label: '物品名称', value: itemName },
+                  { label: '所属品类', value: selectedCat.name }
+                ]
+              },
+              {
+                title: '当前实况',
+                rows: [
+                  { label: '现场状态', value: stateDetail }
+                ]
+              }
+            ],
+            actions: [
+              { label: '已确认就绪' }
+            ]
+          }
+        });
+
+        // 3. 记录私有履历
+        await window.AiPhone.db.create('delivered_records', {
+          itemName,
+          charId,
+          charName,
+          categoryName: selectedCat.name,
+          icon: selectedCat.icon,
+          stateDetail,
+          createdAt: new Date().toISOString()
+        }).catch(() => {});
+
+        // 4. 唤醒角色聊天回复
+        await window.AiPhone.chat.requestReply({
+          characterId: charId
+        });
+
+        window.AiPhone.ui.toast(`✨ ${itemName} 已签收！${charName} 正在向你反馈试用感受！`);
+        await loadHistory();
+
+        setTimeout(async () => {
+          await window.AiPhone.app.close().catch(() => {});
+        }, 1200);
+      } catch (err) {
+        console.error(err);
+        window.AiPhone.ui.toast('签收处理出错：' + (err.message || err));
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = '🚀 确认送达并拆箱体验';
+      }
+    };
+
+    charPicker.onchange = () => {
+      currentCharacterId = charPicker.value;
+      updateCharDisplay();
+      scanRecentGifts();
+    };
+
+    btnRefreshScan.onclick = () => {
+      scanRecentGifts();
+    };
+
+    itemNameInput.oninput = () => {
+      const val = itemNameInput.value.trim();
+      if (val) {
+        const matchedCat = inferCategory(val);
+        selectCategory(matchedCat, true);
+      }
+      updatePreview();
+    };
+
+    detailInput.oninput = () => {
+      updatePreview();
+    };
+
+    // 初始化
+    selectCategory(CATEGORIES[0]);
+    loadCharacters();
+  </script>
+</body>
+</html>

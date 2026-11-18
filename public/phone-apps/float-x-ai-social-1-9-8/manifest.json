@@ -1,0 +1,44 @@
+{
+  "sdkVersion": "1.0",
+  "id": "float.x.ai.social",
+  "name": "X",
+  "version": "1.9.8",
+  "author": "仓鼠",
+  "description": "X 风格的虚构 AI 社交空间：角色与 NPC 时间线、评论、私信、关注与生图。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "user.persona.read",
+    "ai.generate",
+    "ai.chat",
+    "ai.generateImage",
+    "media.pick",
+    "chat.sendCard",
+    "characters.relations.read",
+    "notifications.write",
+    "chat.read.background",
+    "memory.readCore",
+    "memory.readLongTerm",
+    "memory.readShortTerm",
+    "memory.write"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ]
+  },
+  "extensions": {
+    "events": [
+      {
+        "event": "chat.message.created",
+        "entry": "events",
+        "background": true,
+        "timeoutMs": 1800000
+      }
+    ]
+  }
+}

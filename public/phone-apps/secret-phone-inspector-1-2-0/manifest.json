@@ -1,0 +1,61 @@
+{
+  "id": "secret-phone-inspector",
+  "name": "TA的手机",
+  "version": "1.2.0",
+  "sdkVersion": "1.0",
+  "author": "小坊",
+  "description": "沉浸式查手机：动态锁屏密码，9大隐私模块（备忘录、草稿、搜索、心愿单、相册、语音备忘、秘密文件、追剧、看书），内容累加留存，一键发聊天质问。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "memory.write",
+    "ai.generate",
+    "chat.write",
+    "chat.sendCard",
+    "chat.requestReply",
+    "user.profile.read",
+    "voice.tts",
+    "voice.readProfiles",
+    "ui.toast"
+  ],
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "plusActions": [
+        {
+          "id": "inspect-phone",
+          "label": "📱 查TA手机",
+          "description": "打开当前角色的手机锁屏界面",
+          "entry": "inspect-entry",
+          "presentation": "fullscreen",
+          "tags": []
+        }
+      ]
+    }
+  },
+  "chatPlusActions": [
+    {
+      "id": "inspect-phone",
+      "label": "📱 查TA手机",
+      "description": "打开当前角色的手机锁屏界面",
+      "entry": "inspect-entry",
+      "presentation": "fullscreen",
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "plusActions": [
+      {
+        "id": "inspect-phone",
+        "label": "📱 查TA手机",
+        "description": "打开当前角色的手机锁屏界面",
+        "entry": "inspect-entry",
+        "presentation": "fullscreen",
+        "tags": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "who.is.undercover",
+  "name": "谁是卧底",
+  "version": "1.0.0",
+  "sdkVersion": "1.0",
+  "author": "小坊",
+  "description": "手绘可爱画风的「谁是卧底」派对游戏！支持4~12人局，可拉上小手机里的AI角色一起玩，人数不足自动补齐萌萌NPC。",
+  "icon": "assets/icon.svg",
+  "entry": "index.html",
+  "permissions": [
+    "characters.read",
+    "ai.chat",
+    "ai.generate",
+    "user.profile.read",
+    "ui.toast",
+    "app.data.read",
+    "app.data.write"
+  ],
+  "primaryTags": []
+}

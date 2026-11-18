@@ -1,0 +1,25 @@
+{
+  "id": "onlyfans.clone",
+  "name": "OnlyFans",
+  "version": "1.0.1",
+  "sdkVersion": "1.0",
+  "author": "小坊",
+  "description": "高仿 OF 社区：支持 AI 随机生成创作者动态、选择角色生成专属动态、用户自己发文、私信与主页编辑。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "chat.read",
+    "ai.chat",
+    "ai.generate",
+    "ai.generateImage",
+    "ui.toast",
+    "wallet.read",
+    "wallet.pay",
+    "media.pick",
+    "user.profile.read"
+  ],
+  "primaryTags": []
+}

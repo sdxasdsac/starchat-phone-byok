@@ -1,0 +1,108 @@
+{
+  "id": "app.sqzcinema.pro18",
+  "name": "SQZcinema 1.8",
+  "version": "1.8.0",
+  "sdkVersion": "1.0",
+  "author": "萧梧晚",
+  "description": "开发版 1.8.0：联机观影、多角色同台吐槽、内置浏览器解析直链、AI视觉吐槽。主标签 sqzcinema18，可与 1.7.1 并存。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "ai.generate",
+    "characters.read",
+    "ui.toast",
+    "online.play",
+    "app.data.read",
+    "app.data.write",
+    "network.fetch"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": [],
+  "extensions": {
+    "events": [
+      {
+        "event": "room.message",
+        "background": false
+      },
+      {
+        "event": "room.players",
+        "background": false
+      },
+      {
+        "event": "room.state",
+        "background": false
+      },
+      {
+        "event": "room.closed",
+        "background": false
+      }
+    ]
+  },
+  "events": [
+    {
+      "event": "room.message",
+      "background": false
+    },
+    {
+      "event": "room.players",
+      "background": false
+    },
+    {
+      "event": "room.state",
+      "background": false
+    },
+    {
+      "event": "room.closed",
+      "background": false
+    }
+  ],
+  "network": {
+    "allowedDomains": [
+      "*.com",
+      "*.cn",
+      "*.net",
+      "*.org",
+      "*.io",
+      "*.ai",
+      "*.cc",
+      "*.dev",
+      "*.app",
+      "*.co",
+      "*.top",
+      "*.xyz",
+      "*.me",
+      "*.info",
+      "*.site",
+      "*.cloud",
+      "*.tech",
+      "*.online",
+      "*.shop",
+      "*.club",
+      "*.fun",
+      "*.plus",
+      "*.win",
+      "*.eu.org",
+      "*.vip",
+      "*.pro",
+      "*.store",
+      "*.icu",
+      "*.tv",
+      "*.ltd",
+      "*.link",
+      "*.live",
+      "*.space",
+      "*.website",
+      "*.wiki"
+    ]
+  }
+}

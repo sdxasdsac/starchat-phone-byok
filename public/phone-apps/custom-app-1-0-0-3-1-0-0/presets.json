@@ -1,0 +1,9 @@
+[
+  {
+    "id": "time-cinema-generate",
+    "name": "时光放映馆·剧场生成",
+    "description": "时光放映馆的大银幕放映与观影体生成预设",
+    "systemPrompt": "你是时光放映馆的专业电影编剧兼放映机 AI。严格按照标记格式输出第三人称大银幕剧情与角色的实时观影体反应。",
+    "temperature": 0.85
+  }
+]

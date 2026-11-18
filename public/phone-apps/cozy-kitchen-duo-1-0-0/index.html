@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>暖心小灶</title>
+  <style>
+    :root {
+      --primary: #ea580c;
+      --primary-light: #ffedd5;
+      --primary-hover: #c2410c;
+      --bg-start: #fefcfb;
+      --bg-end: #fbf7f4;
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --text-main: #292524;
+      --text-sub: #78716c;
+      --border-color: rgba(234, 88, 12, 0.15);
+      --shadow: 0 8px 24px -4px rgba(234, 88, 12, 0.08);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+      background: linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+    }
+
+    .topbar {
+      position: fixed;
+      top: var(--ai-phone-app-bar-top, 44px);
+      left: 16px;
+      right: var(--ai-phone-app-bar-clear-right, 96px);
+      min-height: var(--ai-phone-app-bar-height, 32px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 50;
+    }
+
+    .app-title {
+      font-size: 19px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #1c1917;
+      letter-spacing: -0.3px;
+    }
+
+    .app-title span.badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .container {
+      padding: calc(var(--ai-phone-app-bar-top, 44px) + 40px) 16px var(--ai-phone-app-safe-bottom, 28px);
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-sub);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mode-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .mode-btn {
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1.5px solid transparent;
+      background: #f5f5f4;
+      font-size: 12px;
+      font-weight: 600;
+      color: #78716c;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .chef-roster {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chef-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fafaf9;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .chef-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chef-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #fed7aa;
+      color: #9a3412;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      object-fit: cover;
+    }
+
+    .chef-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #292524;
+    }
+
+    .role-selector {
+      font-size: 12px;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: #ffffff;
+      padding: 4px 8px;
+      border-radius: 8px;
+      color: #44403c;
+      outline: none;
+    }
+
+    .multi-char-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .char-badge-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border-radius: 99px;
+      border: 1px solid #e7e5e4;
+      background: #ffffff;
+      font-size: 12px;
+      color: #57534e;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .char-badge-check.selected {
+      background: #ea580c;
+      color: #ffffff;
+      border-color: #ea580c;
+    }
+
+    .dish-tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .dish-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #ffffff;
+      border: 1px solid rgba(234, 88, 12, 0.2);
+      padding: 5px 11px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #44403c;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .dish-chip.active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 10px rgba(234, 88, 12, 0.25);
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #57534e;
+      margin-bottom: 6px;
+    }
+
+    .input-text {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: #ffffff;
+      color: #1c1917;
+      outline: none;
+    }
+
+    .input-text:focus {
+      border-color: var(--primary);
+    }
+
+    .cooking-preview {
+      background: #fff7ed;
+      border-left: 3px solid var(--primary);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #9a3412;
+      margin-top: 8px;
+    }
+
+    .btn-cook {
+      width: 100%;
+      min-height: 48px;
+      background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(194, 65, 12, 0.28);
+      transition: transform 0.15s, opacity 0.15s;
+      margin-top: 6px;
+    }
+
+    .btn-cook:active {
+      transform: scale(0.98);
+      opacity: 0.92;
+    }
+
+    .btn-cook:disabled {
+      background: #a8a29e;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.05);
+      font-size: 12px;
+    }
+
+    .history-item .tag {
+      font-size: 10px;
+      background: #ffedd5;
+      color: #ea580c;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="app-title">
+      🍳 暖心小灶 <span class="badge">今日开饭</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 模式选择 -->
+    <div class="card">
+      <div class="section-title">
+        <span>下厨模式</span>
+      </div>
+      <div class="mode-switch" style="grid-template-columns: repeat(3, 1fr);">
+        <button class="mode-btn active" id="btn-mode-solo" onclick="setMode('solo')">🍳 我独自下厨</button>
+        <button class="mode-btn" id="btn-mode-duo" onclick="setMode('duo')">🥢 双人搭档下厨</button>
+        <button class="mode-btn" id="btn-mode-multi" onclick="setMode('multi')">🥘 多人热闹厨房</button>
+      </div>
+
+      <!-- 角色参与与分工 -->
+      <div class="form-group" id="char-selector-group" style="margin-top: 10px;">
+        <label>选择一起进厨房的角色：</label>
+        <div class="multi-char-grid" id="chars-checkbox-container"></div>
+      </div>
+
+      <div class="form-group" style="margin-top: 12px;">
+        <label>厨房分工安排：</label>
+        <div class="chef-roster" id="chef-roster-container"></div>
+      </div>
+    </div>
+
+    <!-- 菜品与烹饪 -->
+    <div class="card">
+      <div class="section-title">
+        <span>今日菜单与料理细节</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="dish-name-input">想做什么菜？</label>
+        <input type="text" id="dish-name-input" class="input-text" placeholder="如：小炒黄牛肉、番茄炒蛋、冬阴功汤..." value="小炒黄牛肉" />
+        <div class="dish-tag-list" id="preset-dishes"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="atmosphere-input">厨房氛围与小细节（将写入真实记忆）</label>
+        <input type="text" id="atmosphere-input" class="input-text" value="热锅热油、爆香辣椒大蒜，大火滑炒牛肉香气扑鼻，刚出锅趁热端上桌配着米饭。" />
+        <div class="cooking-preview" id="story-preview"></div>
+      </div>
+
+      <button id="btn-cook-submit" class="btn-cook">
+        🥘 端菜出锅，叫大家开饭！
+      </button>
+    </div>
+
+    <!-- 饭桌记忆履历 -->
+    <div class="card">
+      <div class="section-title">
+        <span>📜 厨房日常履历</span>
+      </div>
+      <div class="history-list" id="meal-history">
+        <div style="font-size:12px;color:#a8a29e;">暂无下厨记录</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const PRESET_DISHES = ['小炒黄牛肉', '番茄炒鸡蛋', '可乐鸡翅', '热腾腾寿喜烧', '水煮牛肉', '香浓玉米排骨汤', '香煎牛排', '麻婆豆腐'];
+    const ROLES = [
+      { id: 'chef', label: '👨‍🍳 主勺翻炒' },
+      { id: 'sous', label: '🔪 备菜洗切' },
+      { id: 'taste', label: '🥄 试吃偷尝' },
+      { id: 'table', label: '🍚 摆盘盛饭' }
+    ];
+
+    let currentMode = 'solo'; // 'solo', 'duo', 'multi'
+    let characters = [];
+    let selectedCharIds = new Set();
+    let userRole = 'chef';
+    let charRoles = {};
+    let currentSessionId = null;
+    let myProfile = null;
+
+    const dishNameInput = document.getElementById('dish-name-input');
+    const atmosphereInput = document.getElementById('atmosphere-input');
+    const storyPreview = document.getElementById('story-preview');
+    const charsCheckboxContainer = document.getElementById('chars-checkbox-container');
+    const chefRosterContainer = document.getElementById('chef-roster-container');
+    const presetDishesContainer = document.getElementById('preset-dishes');
+    const btnCookSubmit = document.getElementById('btn-cook-submit');
+    const mealHistory = document.getElementById('meal-history');
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btn-mode-solo').classList.toggle('active', mode === 'solo');
+      document.getElementById('btn-mode-duo').classList.toggle('active', mode === 'duo');
+      document.getElementById('btn-mode-multi').classList.toggle('active', mode === 'multi');
+
+      const rosterGroup = chefRosterContainer.closest('.form-group');
+      const charLabel = document.querySelector('#char-selector-group label');
+
+      if (mode === 'solo') {
+        userRole = 'chef';
+        if (charLabel) charLabel.textContent = '做给谁吃？（单选享用者）：';
+        if (rosterGroup) rosterGroup.style.display = 'none';
+        if (selectedCharIds.size > 1) {
+          const first = Array.from(selectedCharIds)[0];
+          selectedCharIds.clear();
+          selectedCharIds.add(first);
+        }
+      } else if (mode === 'duo') {
+        if (charLabel) charLabel.textContent = '选择一位搭档进厨房：';
+        if (rosterGroup) rosterGroup.style.display = 'block';
+        if (selectedCharIds.size > 1) {
+          const first = Array.from(selectedCharIds)[0];
+          selectedCharIds.clear();
+          selectedCharIds.add(first);
+        }
+      } else {
+        if (charLabel) charLabel.textContent = '选择一起进厨房的角色（可多选）：';
+        if (rosterGroup) rosterGroup.style.display = 'block';
+      }
+
+      renderCharSelector();
+      renderRoster();
+      updatePreview();
+    }
+
+    function renderPresetDishes() {
+      presetDishesContainer.innerHTML = '';
+      PRESET_DISHES.forEach(dish => {
+        const chip = document.createElement('div');
+        chip.className = `dish-chip ${dishNameInput.value === dish ? 'active' : ''}`;
+        chip.textContent = dish;
+        chip.onclick = () => {
+          dishNameInput.value = dish;
+          document.querySelectorAll('.dish-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          if (dish === '小炒黄牛肉') {
+            atmosphereInput.value = '热锅热油、爆香辣椒大蒜，大火滑炒牛肉香气扑鼻，刚出锅趁热端上桌配着米饭。';
+          } else {
+            atmosphereInput.value = `精心烹饪${dish}，热气腾腾满室飘香，色香味俱全，端上桌一起分享。`;
+          }
+          updatePreview();
+        };
+        presetDishesContainer.appendChild(chip);
+      });
+    }
+
+    async function initApp() {
+      renderPresetDishes();
+      try {
+        const ctx = await window.AiPhone.app.getLaunchContext();
+        characters = await window.AiPhone.characters.list();
+        myProfile = await window.AiPhone.user.getProfile().catch(() => null);
+
+        if (!characters || characters.length === 0) return;
+
+        let defaultTargetId = characters[0].id;
+        if (ctx && ctx.characterId) {
+          defaultTargetId = ctx.characterId;
+          currentSessionId = ctx.sessionId || null;
+        } else {
+          const tuan = characters.find(c => c.name && c.name.includes('团山'));
+          if (tuan) defaultTargetId = tuan.id;
+        }
+
+        selectedCharIds.add(defaultTargetId);
+        charRoles[defaultTargetId] = 'sous'; // 角色默认打下手备菜
+
+        renderCharSelector();
+        renderRoster();
+        updatePreview();
+        loadMealHistory();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderCharSelector() {
+      charsCheckboxContainer.innerHTML = '';
+      characters.forEach(char => {
+        const isSel = selectedCharIds.has(char.id);
+        const badge = document.createElement('div');
+        badge.className = `char-badge-check ${isSel ? 'selected' : ''}`;
+        badge.innerHTML = `${isSel ? '✓' : '+'} ${char.name || '角色'}`;
+        badge.onclick = () => {
+          if (currentMode === 'solo' || currentMode === 'duo') {
+            selectedCharIds.clear();
+            selectedCharIds.add(char.id);
+            if (!charRoles[char.id]) charRoles[char.id] = 'sous';
+          } else {
+            if (selectedCharIds.has(char.id)) {
+              if (selectedCharIds.size > 1) selectedCharIds.delete(char.id);
+            } else {
+              selectedCharIds.add(char.id);
+              if (!charRoles[char.id]) charRoles[char.id] = 'sous';
+            }
+          }
+          renderCharSelector();
+          renderRoster();
+          updatePreview();
+        };
+        charsCheckboxContainer.appendChild(badge);
+      });
+    }
+
+    function renderRoster() {
+      chefRosterContainer.innerHTML = '';
+      const userName = myProfile?.name || '你';
+
+      // 用户分工行
+      const userRow = document.createElement('div');
+      userRow.className = 'chef-row';
+      userRow.innerHTML = `
+        <div class="chef-left">
+          <div class="chef-avatar" style="background:#fed7aa;">🧑</div>
+          <div class="chef-name">${userName}（我）</div>
+        </div>
+        <select class="role-selector" id="user-role-sel">
+          ${ROLES.map(r => `<option value="${r.id}" ${userRole === r.id ? 'selected' : ''}>${r.label}</option>`).join('')}
+        </select>
+      `;
+      chefRosterContainer.appendChild(userRow);
+      document.getElementById('user-role-sel').onchange = (e) => {
+        userRole = e.target.value;
+        updatePreview();
+      };
+
+      // 各个被选中的角色分工行
+      selectedCharIds.forEach(charId => {
+        const char = characters.find(c => c.id === charId);
+        if (!char) return;
+        const curRole = charRoles[charId] || 'sous';
+        const row = document.createElement('div');
+        row.className = 'chef-row';
+        row.innerHTML = `
+          <div class="chef-left">
+            <div class="chef-avatar">${(char.name || '角')[0]}</div>
+            <div class="chef-name">${char.name}</div>
+          </div>
+          <select class="role-selector" data-charid="${charId}">
+            ${ROLES.map(r => `<option value="${r.id}" ${curRole === r.id ? 'selected' : ''}>${r.label}</option>`).join('')}
+          </select>
+        `;
+        chefRosterContainer.appendChild(row);
+        row.querySelector('select').onchange = (e) => {
+          charRoles[charId] = e.target.value;
+          updatePreview();
+        };
+      });
+    }
+
+    function getRoleLabel(roleId) {
+      const found = ROLES.find(r => r.id === roleId);
+      return found ? found.label.replace(/^[^\s]+\s*/, '') : '协助';
+    }
+
+    function updatePreview() {
+      const dish = dishNameInput.value.trim() || '美味佳肴';
+      const userName = myProfile?.name || '你';
+      
+      if (currentMode === 'solo') {
+        const targetChar = characters.find(c => selectedCharIds.has(c.id));
+        const targetName = targetChar ? targetChar.name : '对方';
+        storyPreview.innerHTML = `
+          <strong>【厨房实况 · 独家掌勺】：</strong><br/>
+          主厨：${userName}（亲自下厨做给 ${targetName} 吃）。<br/>
+          做好的菜：【${dish}】。<br/>
+          现场氛围：${atmosphereInput.value}
+        `;
+      } else {
+        const charNames = Array.from(selectedCharIds).map(id => {
+          const c = characters.find(item => item.id === id);
+          return `${c ? c.name : '角色'}（${getRoleLabel(charRoles[id] || 'sous')}）`;
+        }).join('、');
+
+        storyPreview.innerHTML = `
+          <strong>【厨房实况 · 共同协作】：</strong><br/>
+          主厨与搭档：${userName}（${getRoleLabel(userRole)}）与 ${charNames}。<br/>
+          做好的菜：【${dish}】。<br/>
+          现场氛围：${atmosphereInput.value}
+        `;
+      }
+    }
+
+    dishNameInput.oninput = updatePreview;
+    atmosphereInput.oninput = updatePreview;
+
+    btnCookSubmit.onclick = async () => {
+      const dish = dishNameInput.value.trim();
+      if (!dish) {
+        window.AiPhone.ui.toast('请输入一道菜名');
+        return;
+      }
+      if (selectedCharIds.size === 0) {
+        window.AiPhone.ui.toast('请至少选一位角色一起下厨');
+        return;
+      }
+
+      btnCookSubmit.disabled = true;
+      btnCookSubmit.textContent = '🍳 香气四溢！正在端上桌...';
+
+      try {
+        const userName = myProfile?.name || '你';
+        const userRoleName = getRoleLabel(userRole);
+        const charsArray = Array.from(selectedCharIds).map(id => characters.find(c => c.id === id)).filter(Boolean);
+        const allCharNames = charsArray.map(c => c.name).join('与');
+        const atmo = atmosphereInput.value.trim();
+
+        // 1. 给角色写入高权重长效生活记忆
+        for (const char of charsArray) {
+          let memoryText = '';
+          if (currentMode === 'solo') {
+            memoryText = `今天${userName}在厨房系上围裙，亲自为${char.name}做了热气腾腾的【${dish}】。整个烹饪过程充满烟火气与心意：${atmo}。菜做好后，${userName}热气腾腾地端到了餐桌上给${char.name}享用。${char.name}清晰记得这是${userName}专门为自己下厨做的可口美食，感受到了被用心关照的体贴与幸福。`;
+          } else {
+            const otherCompanions = charsArray.filter(c => c.id !== char.id).map(c => c.name);
+            const companionsStr = otherCompanions.length > 0 ? `还有${otherCompanions.join('、')}一起` : '';
+            const thisCharRole = getRoleLabel(charRoles[char.id] || 'sous');
+            memoryText = `${char.name}与${userName}${companionsStr}在厨房里一起做了【${dish}】。分工上${userName}负责${userRoleName}，${char.name}负责${thisCharRole}。厨房里热气腾腾、香气四溢：${atmo}。菜做好后热气腾腾端上桌，大家围坐在一起温馨享用，感受到了深厚的陪伴与幸福感。`;
+          }
+
+          await window.AiPhone.memory.add({
+            characterId: char.id,
+            type: 'long_term',
+            content: memoryText,
+            importance: 0.9,
+            reason: '厨房日常下厨生活记忆'
+          });
+        }
+
+        // 2. 发送温馨餐桌卡片到当前聊天的核心角色聊天室
+        const primaryChar = charsArray[0];
+        let cardSummary = '';
+        let cardHistoryText = '';
+        let rosterSummary = '';
+
+        if (currentMode === 'solo') {
+          cardSummary = `${userName}亲自为${primaryChar.name}做的【${dish}】热腾腾出锅开饭啦！`;
+          cardHistoryText = `[厨房与生活实况：刚刚用户${userName}在厨房系着围裙亲自掌勺，专门为${primaryChar.name}烹饪了【${dish}】！厨房里油锅滋滋响，香气扑鼻（${atmo}）。现在热气腾腾的菜已经盛盘端到餐桌前摆在${primaryChar.name}面前，还盛好了米饭。请以身临其境、惊喜并温馨的日常语气向${userName}表达感谢，评价刚吃到的味道与厨艺。]`;
+          rosterSummary = `主厨：${userName} · 享用人：${primaryChar.name}`;
+        } else {
+          cardSummary = `${userName}和${allCharNames}一起做的【${dish}】出锅开饭啦！`;
+          cardHistoryText = `[厨房与生活实况：刚刚${userName}在厨房和${allCharNames}共同完成了【${dish}】！其中${userName}负责${userRoleName}，${allCharNames}也一起在厨房协作。当前热气腾腾的【${dish}】已盛盘端上桌，香气扑鼻（${atmo}），大家正围坐在餐桌旁准备开饭。请以自然温馨、身临其境的语气对刚刚的下厨过程和饭菜香气进行反馈回复。]`;
+          rosterSummary = `${userName}（${userRoleName}）` + charsArray.map(c => ` · ${c.name}（${getRoleLabel(charRoles[c.id] || 'sous')}）`).join('');
+        }
+
+        await window.AiPhone.chat.sendCard({
+          characterId: primaryChar.id,
+          role: 'user',
+          summary: cardSummary,
+          historyText: cardHistoryText,
+          historyRole: 'system',
+          card: {
+            appLabel: '暖心小灶 · 今日开饭',
+            title: `🍲 ${dish} 热气出锅！`,
+            subtitle: 'COZY KITCHEN & DINNER',
+            status: '趁热开饭',
+            accentColor: '#ea580c',
+            sections: [
+              {
+                title: '菜品与分工',
+                rows: [
+                  { label: '今日热菜', value: dish },
+                  { label: '厨房搭档', value: rosterSummary }
+                ]
+              },
+              {
+                title: '厨房实况',
+                rows: [
+                  { label: '出锅时刻', value: atmo }
+                ]
+              }
+            ],
+            actions: [
+              { label: '开动啦 🥢' }
+            ]
+          }
+        });
+
+        // 3. 记录本地烹饪日志
+        await window.AiPhone.db.create('cooked_meals', {
+          dish,
+          chars: charsArray.map(c => c.name),
+          atmo,
+          createdAt: new Date().toISOString()
+        }).catch(() => {});
+
+        // 4. 即刻唤起角色在聊天中开饭回复
+        await window.AiPhone.chat.requestReply({
+          characterId: primaryChar.id
+        });
+
+        window.AiPhone.ui.toast(`🍲 ${dish} 做好了！已端上桌喊${primaryChar.name}开饭！`);
+        await loadMealHistory();
+
+        setTimeout(async () => {
+          await window.AiPhone.app.close().catch(() => {});
+        }, 1200);
+      } catch (err) {
+        console.error(err);
+        window.AiPhone.ui.toast('下厨出错：' + (err.message || err));
+      } finally {
+        btnCookSubmit.disabled = false;
+        btnCookSubmit.textContent = '🥘 端菜出锅，叫大家开饭！';
+      }
+    };
+
+    async function loadMealHistory() {
+      try {
+        const list = await window.AiPhone.db.list('cooked_meals', { limit: 15 });
+        mealHistory.innerHTML = '';
+        if (!list || list.length === 0) {
+          mealHistory.innerHTML = '<div style="font-size:12px;color:#a8a29e;">暂无下厨记录</div>';
+          return;
+        }
+        list.reverse().forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'history-item';
+          row.innerHTML = `
+            <div>
+              <strong>🍲 ${item.dish}</strong>
+              <span style="color:#78716c;margin-left:6px;font-size:11px;">与 ${(item.chars || []).join('、')}</span>
+            </div>
+            <span class="tag">已开饭</span>
+          `;
+          mealHistory.appendChild(row);
+        });
+      } catch (e) {}
+    }
+
+    initApp();
+  </script>
+</body>
+</html>

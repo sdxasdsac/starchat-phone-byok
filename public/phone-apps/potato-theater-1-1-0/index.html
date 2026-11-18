@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+  <script src="/phone-apps/ai-phone-host.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>土豆放映室</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-2: #141414;
+    --bg-3: #1c1c1c;
+    --line: #262626;
+    --text: #e8e8e8;
+    --text-dim: #8a8a8a;
+    --orange: #ff7a1a;
+    --orange-2: #ff9647;
+    --orange-dim: #b3541a;
+    --danger: #e04b3e;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    width: 100%; min-height: 100%;
+    background: var(--bg); color: var(--text);
+    font: 14px/1.55 -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft Yahei", sans-serif;
+    overflow: hidden;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button {
+    background: transparent; border: none; cursor: pointer;
+    min-height: 40px; padding: 0 12px; color: var(--text);
+  }
+  .app {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    padding-bottom: var(--ai-phone-app-safe-bottom, 0px);
+  }
+
+  .topbar {
+    position: fixed;
+    top: var(--ai-phone-app-bar-top, 12px);
+    left: 12px;
+    right: var(--ai-phone-app-bar-clear-right, 96px);
+    min-height: var(--ai-phone-app-bar-height, 34px);
+    display: flex; align-items: center; gap: 10px;
+    z-index: 50;
+    pointer-events: none;
+  }
+  .topbar > * { pointer-events: auto; }
+  .brand {
+    display: flex; align-items: center; gap: 8px;
+    font-weight: 700; font-size: 15px; letter-spacing: 0.5px;
+  }
+  .brand .logo { width: 26px; height: 26px; flex: none; }
+  .brand .name { color: var(--text); }
+  .brand .name em { color: var(--orange); font-style: normal; }
+  .top-actions { margin-left: auto; display: flex; gap: 4px; }
+  .icon-btn {
+    width: 34px; height: 34px; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+  }
+  .icon-btn:active { background: rgba(255,255,255,0.14); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  .main {
+    flex: 1;
+    padding-top: calc(var(--ai-phone-app-bar-top, 12px) + 44px);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .view { flex: 1; overflow: hidden; display: none; flex-direction: column; }
+  .view.active { display: flex; }
+
+  #view-home { padding: 4px 16px 16px; overflow-y: auto; }
+  .home-hero {
+    background: linear-gradient(135deg, #1a1208 0%, #0f0a05 100%);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 18px;
+    margin-bottom: 16px;
+  }
+  .home-hero h2 { margin: 0 0 6px; font-size: 20px; }
+  .home-hero p { margin: 0; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+  .home-hero .accent { color: var(--orange); }
+
+  .home-section-title {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 20px 4px 10px;
+    color: var(--text-dim); font-size: 12px; letter-spacing: 0.5px;
+  }
+  .home-section-title .link { color: var(--orange); font-size: 12px; }
+
+  .char-picker {
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 8px;
+  }
+  .char-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 8px; border-radius: 8px;
+    cursor: pointer;
+  }
+  .char-item:active { background: var(--bg-3); }
+  .char-item.selected { background: rgba(255,122,26,0.12); }
+  .char-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--bg-3); flex: none;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--orange); font-weight: 700;
+    background-size: cover; background-position: center;
+  }
+  .char-name { flex: 1; font-size: 14px; }
+  .char-tick { color: var(--orange); font-size: 18px; display: none; }
+  .char-item.selected .char-tick { display: block; }
+
+  .big-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; height: 52px;
+    background: var(--orange); color: #fff;
+    border-radius: 12px;
+    font-size: 16px; font-weight: 700;
+    margin-top: 16px;
+    box-shadow: 0 6px 20px rgba(255,122,26,0.3);
+  }
+  .big-btn:disabled { background: var(--bg-3); color: var(--text-dim); box-shadow: none; }
+  .big-btn:active:not(:disabled) { background: var(--orange-2); }
+
+  .history-list { display: flex; flex-direction: column; gap: 8px; }
+  .history-empty {
+    padding: 24px 16px; text-align: center;
+    color: var(--text-dim); font-size: 13px;
+    background: var(--bg-2); border-radius: 12px;
+    border: 1px dashed var(--line);
+  }
+  .history-item {
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .history-item .h-top { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .history-item .h-title { flex: 1; font-weight: 600; }
+  .history-item .h-date { color: var(--text-dim); font-size: 11px; }
+  .history-item .h-mood {
+    display: inline-block;
+    padding: 2px 8px; border-radius: 10px;
+    background: rgba(255,122,26,0.14); color: var(--orange);
+    font-size: 11px;
+  }
+  .history-item .h-comment { color: var(--text-dim); font-size: 12px; line-height: 1.5; }
+  .history-item .h-del {
+    color: var(--text-dim); font-size: 11px;
+    align-self: flex-end;
+    padding: 2px 6px; min-height: auto;
+  }
+
+  #view-theater { padding: 0; display: none; }
+  #view-theater.active { display: flex; }
+  .theater-wrap {
+    flex: 1;
+    display: flex; flex-direction: column;
+    padding: 0 12px 12px;
+    gap: 10px;
+    overflow: hidden;
+  }
+  .player {
+    position: relative;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+    height: 38vh;
+  }
+  .player video {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    background: #000;
+  }
+  .player-empty {
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    color: var(--text-dim); padding: 20px; text-align: center;
+  }
+  .player-empty .file-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--orange); color: #fff;
+    padding: 10px 18px; border-radius: 24px;
+    font-weight: 600; font-size: 14px;
+  }
+  .player-empty input[type=file] { display: none; }
+  .player-hint {
+    position: absolute; left: 10px; bottom: 10px;
+    background: rgba(0,0,0,0.55);
+    padding: 4px 10px; border-radius: 12px;
+    font-size: 11px; color: #fff;
+    pointer-events: none;
+  }
+  .player-hint.on { color: var(--orange-2); }
+
+  .chat {
+    flex: 1;
+    display: flex; flex-direction: column;
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .chat-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px; color: var(--text-dim);
+  }
+  .chat-head .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 6px var(--orange);
+  }
+  .chat-head .chat-title { color: var(--text); font-weight: 600; }
+  .chat-head .rot-btn {
+    width: 26px; height: 26px; padding: 0; min-height: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.06); color: var(--orange);
+    border-radius: 50%;
+  }
+  .chat-head .rot-btn:active { background: rgba(255,122,26,0.2); }
+  .chat-head .rot-btn svg { width: 14px; height: 14px; }
+  .chat-head .auto-tag {
+    padding: 2px 8px; border-radius: 10px;
+    background: rgba(255,122,26,0.12); color: var(--orange);
+    font-size: 10px;
+    margin-left: auto;
+  }
+  .chat-head .end-btn {
+    padding: 4px 10px; height: auto; min-height: 0;
+    border-radius: 12px;
+    background: rgba(255,122,26,0.15);
+    color: var(--orange);
+    font-size: 11px; font-weight: 600;
+    border: 1px solid rgba(255,122,26,0.4);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .chat-head .end-btn:active { background: rgba(255,122,26,0.25); }
+  .chat-head .end-btn svg { width: 12px; height: 12px; }
+  .messages {
+    flex: 1; overflow-y: auto;
+    padding: 12px; display: flex; flex-direction: column; gap: 10px;
+    scroll-behavior: smooth;
+  }
+  .msg { display: flex; gap: 8px; max-width: 88%; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-bubble {
+    padding: 8px 12px; border-radius: 12px;
+    font-size: 13px; line-height: 1.55;
+    word-break: break-word; white-space: pre-wrap;
+    background: var(--bg-3); color: var(--text);
+  }
+  .msg.user .msg-bubble { background: var(--orange); color: #fff; }
+  .msg.sys .msg-bubble {
+    background: transparent; color: var(--text-dim);
+    font-size: 11px; padding: 2px 4px;
+    text-align: center;
+  }
+  .msg.sys { align-self: center; max-width: 100%; }
+  .msg-loading {
+    display: inline-flex; gap: 3px; align-items: center; padding: 4px 0;
+  }
+  .msg-loading span {
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--text-dim);
+    animation: dot 1.2s infinite;
+  }
+  .msg-loading span:nth-child(2) { animation-delay: 0.15s; }
+  .msg-loading span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dot { 0%,60%,100% { opacity: 0.3 } 30% { opacity: 1 } }
+
+  .composer {
+    display: flex; align-items: flex-end; gap: 5px;
+    padding: 8px 6px; border-top: 1px solid var(--line);
+    background: var(--bg-2);
+  }
+  .shot-btn {
+    width: 36px; height: 36px; flex: none; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--bg-3); border-radius: 50%;
+    color: var(--orange);
+    border: 1px solid rgba(255,122,26,0.35);
+  }
+  .shot-btn:disabled { color: var(--text-dim); border-color: var(--line); }
+  .shot-btn:active:not(:disabled) { background: rgba(255,122,26,0.18); }
+  .shot-btn svg { width: 16px; height: 16px; }
+  .composer textarea {
+    flex: 1;
+    background: var(--bg-3); border: none; border-radius: 18px;
+    padding: 9px 12px; resize: none;
+    max-height: 88px; min-height: 40px;
+    font-size: 13px; line-height: 1.4;
+    outline: none;
+  }
+  .send-btn {
+    width: 36px; height: 36px; flex: none; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border-radius: 50%;
+    color: var(--orange);
+    border: 1px solid rgba(255,122,26,0.5);
+  }
+  .send-btn:disabled { color: var(--text-dim); border-color: var(--line); }
+  .send-btn:active:not(:disabled) { background: rgba(255,122,26,0.15); }
+  .send-btn svg { width: 16px; height: 16px; }
+  .reply-btn {
+    height: 40px; flex: none; padding: 0 12px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+    background: var(--orange); border-radius: 20px;
+    color: #fff;
+    font-size: 12px; font-weight: 700;
+    box-shadow: 0 3px 10px rgba(255,122,26,0.28);
+  }
+  .reply-btn:disabled { background: var(--bg-3); color: var(--text-dim); box-shadow: none; }
+  .reply-btn:active:not(:disabled) { background: var(--orange-2); }
+  .reply-btn svg { width: 14px; height: 14px; }
+
+  .app.rotated #view-theater {
+    position: fixed;
+    top: 0; left: 100vw;
+    width: 100vh; height: 100vw;
+    transform-origin: top left;
+    transform: rotate(90deg);
+    z-index: 30;
+    background: var(--bg);
+  }
+  .app.rotated .theater-wrap {
+    flex-direction: row;
+    padding: 10px; gap: 10px;
+  }
+  .app.rotated .player { flex: 1; height: auto; max-height: none; }
+  .app.rotated .chat { width: 38%; min-width: 240px; max-width: 360px; flex: none; }
+  @media (min-aspect-ratio: 1/1) {
+    .theater-wrap { flex-direction: row; padding: 0 10px 10px; }
+    .player { flex: 1; height: auto; max-height: none; }
+    .chat { width: 42%; max-width: 340px; flex: none; }
+  }
+  .app.playing .topbar { display: none; }
+  .app.playing .main { padding-top: 8px; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 200;
+    padding: 24px;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    width: 100%; max-width: 340px;
+    background: var(--bg-2); border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 18px 12px;
+    max-height: 82vh; overflow-y: auto;
+  }
+  .modal h3 { margin: 0 0 12px; font-size: 16px; }
+  .modal p { color: var(--text-dim); font-size: 13px; margin: 0 0 12px; line-height: 1.55; }
+  .modal-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0; border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .modal-row:last-child { border-bottom: none; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .modal-actions button {
+    flex: 1; height: 42px; border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    background: var(--bg-3);
+  }
+  .modal-actions button.primary { background: var(--orange); color: #fff; }
+  .modal-actions button.danger { background: var(--danger); color: #fff; }
+  select {
+    background: var(--bg-3); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 8px; font-size: 13px;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%; top: 20%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    color: #fff; padding: 10px 16px;
+    border-radius: 20px; font-size: 13px;
+    z-index: 500; opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    max-width: 80%;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 40 40">
+        <ellipse cx="20" cy="21" rx="14" ry="16" fill="#ff7a1a"/>
+        <ellipse cx="14" cy="16" rx="1.6" ry="2" fill="#b3541a"/>
+        <ellipse cx="24" cy="14" rx="1.6" ry="2" fill="#b3541a"/>
+        <ellipse cx="19" cy="26" rx="1.4" ry="1.8" fill="#b3541a"/>
+        <ellipse cx="28" cy="24" rx="1.4" ry="1.8" fill="#b3541a"/>
+        <path d="M17 6 Q18 3 21 4 L22 7" stroke="#4a7a2a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </svg>
+      <span class="name">土豆<em>放映室</em></span>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" id="btn-settings" title="设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="view active" id="view-home">
+      <div class="home-hero">
+        <h2>和 <span class="accent">TA</span> 一起窝在沙发上</h2>
+        <p>挑一段本地视频，把手机横过来。<br/>画面在左、聊天在右，就像真的坐在一起。</p>
+      </div>
+
+      <div class="home-section-title"><span>选一位陪你看片的角色</span></div>
+      <div class="char-picker" id="char-picker">
+        <div style="color:var(--text-dim);padding:16px;text-align:center;font-size:12px;">加载角色中…</div>
+      </div>
+
+      <button class="big-btn" id="btn-enter" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        进入放映室
+      </button>
+
+      <div class="home-section-title"><span>往期放映</span></div>
+      <div class="history-list" id="history-list">
+        <div class="history-empty">还没有观影记录，看完第一场就会出现在这里。</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-theater">
+      <div class="theater-wrap">
+        <div class="player" id="player">
+          <div class="player-empty" id="player-empty">
+            <label class="file-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v12H4zm2 2v8h12V8H6zm4 1.5v5l4-2.5-4-2.5z"/></svg>
+              选一段本地视频
+              <input type="file" id="file-input" accept="video/*" />
+            </label>
+            <div style="font-size:11px;color:var(--text-dim);">支持 mp4 / webm / mov 等常见格式，文件不会上传。</div>
+          </div>
+          <video id="video" playsinline preload="metadata" style="display:none;" controls></video>
+          <div class="player-hint" id="player-hint" style="display:none;">自动截屏：<span id="auto-state">关闭</span></div>
+        </div>
+
+        <div class="chat">
+          <div class="chat-head">
+            <span class="dot"></span>
+            <span class="chat-title" id="chat-title">陪看中</span>
+            <button class="rot-btn" id="btn-rot-inline" title="切换横竖屏">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M8 4h8"/><path d="M12 4v4"/></svg>
+            </button>
+            <span class="auto-tag" id="auto-tag" style="display:none;">自动截屏</span>
+            <button class="end-btn" id="btn-end" title="结束这场放映">
+              <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+              结束观影
+            </button>
+          </div>
+          <div class="messages" id="messages"></div>
+          <div class="composer">
+            <button class="shot-btn" id="btn-shot" title="截屏当前画面发给TA" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </button>
+            <textarea id="input" rows="1" placeholder="随便聊点什么…"></textarea>
+            <button class="send-btn" id="btn-send" title="发送这一条" disabled>
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+            </button>
+            <button class="reply-btn" id="btn-reply" title="让TA回复">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+              让TA回
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-settings">
+  <div class="modal">
+    <h3>放映设置</h3>
+    <div class="modal-row">
+      <span>自动截屏</span>
+      <select id="set-auto">
+        <option value="0">关闭</option>
+        <option value="30">每 30 秒</option>
+        <option value="60" selected>每 60 秒</option>
+        <option value="120">每 2 分钟</option>
+        <option value="300">每 5 分钟</option>
+      </select>
+    </div>
+    <div class="modal-row">
+      <span>截屏画质</span>
+      <select id="set-quality">
+        <option value="0.5">标准</option>
+        <option value="0.7" selected>较清晰</option>
+        <option value="0.85">清晰</option>
+      </select>
+    </div>
+    <p style="margin-top:12px;font-size:12px;">自动截屏会隔一段时间把当前画面发给 TA，TA 会像真的抬头看了一眼屏幕一样和你聊。</p>
+    <div class="modal-actions">
+      <button id="set-close">完成</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-shot">
+  <div class="modal">
+    <h3>把这一幕的感想分享给TA吧</h3>
+    <p style="margin-bottom:10px;">画面已经停在此刻，TA 也看得到。把你想说的写下来发过去就好——吐槽、追问、感叹都可以。</p>
+    <img id="shot-preview" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-bottom:10px;display:block;opacity:.75;" />
+    <textarea id="shot-caption" rows="3" placeholder="比如：这段太离谱了吧！／你觉得女主是不是有点憨？／这个 BGM 我要听哭了…" style="width:100%;background:var(--bg-3);border:none;border-radius:10px;padding:10px 12px;resize:none;color:var(--text);font-size:13px;line-height:1.5;outline:none;"></textarea>
+    <div class="modal-actions">
+      <button id="shot-cancel">取消</button>
+      <button id="shot-send" class="primary">发送</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-exit">
+  <div class="modal">
+    <h3>要退出这场放映吗？</h3>
+    <p>退出后可以让 TA 总结一下这次一起看片的感觉，作为一张观影记忆卡片发到你们的主聊天里。</p>
+    <div class="modal-actions">
+      <button id="exit-cancel">再看会儿</button>
+      <button id="exit-plain">仅退出</button>
+      <button id="exit-share" class="primary">分享记忆</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-video-err">
+  <div class="modal">
+    <h3 style="color:var(--orange);">这段视频没法在这里播放</h3>
+    <p id="video-err-detail" style="margin-bottom:10px;">浏览器的视频播放器不认识这段视频的编码格式。</p>
+    <p style="font-size:12px;line-height:1.7;color:var(--text-dim);">
+      <b style="color:var(--text);">常见原因：</b>视频是 <b style="color:var(--orange-2);">H.265 (HEVC) 编码</b>——华为手机自带的屏幕录制、部分相机拍摄默认用这个格式，浏览器里没法直接播。<br/><br/>
+      <b style="color:var(--text);">解决办法（任选其一）：</b><br/>
+      · 换一段 <b style="color:var(--orange-2);">H.264 编码</b>的 mp4（微信收发过、B站/抖音下载的一般都是）<br/>
+      · 用「格式工厂」「剪映」等 App 把视频转成 H.264 后再来<br/>
+      · 华为屏幕录制可以在「设置 → 辅助功能 → 快捷启动及手势 → 录屏」里改成"更高兼容性"档
+    </p>
+    <div class="modal-actions">
+      <button id="video-err-close" class="primary">好的，换一段</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-summary">
+  <div class="modal">
+    <h3>正在写这张记忆卡…</h3>
+    <p id="summary-status">TA 正在回味这场放映，请稍等。</p>
+    <div class="modal-actions">
+      <button id="summary-skip">跳过</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const AiPhone = window.AiPhone || window.AiPhoneApp;
+  if (!AiPhone) {
+    document.body.innerHTML = '<div style="padding:40px;color:#e04b3e;">找不到 AiPhone SDK，此 APP 需要在小手机宿主里运行。</div>';
+    return;
+  }
+
+  const state = {
+    characters: [],
+    selectedCharacterId: null,
+    currentCharacter: null,
+    videoUrl: null,
+    videoName: '',
+    messages: [],
+    autoInterval: 60,
+    quality: 0.7,
+    autoTimer: null,
+    generating: false,
+    sessionStartedAt: null,
+    launchContext: null,
+    history: [],
+    settingsId: null,
+  };
+
+  const $ = (id) => document.getElementById(id);
+  function toast(msg, ms=1600) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(()=>t.classList.remove('show'), ms);
+  }
+  function fmtDate(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    if (sameDay) return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+    return (d.getMonth()+1)+'月'+d.getDate()+'日';
+  }
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  async function loadSettings() {
+    try {
+      const list = await AiPhone.db.list('settings', { limit: 1 });
+      if (list && list[0]) {
+        state.settingsId = list[0].id;
+        state.autoInterval = Number(list[0].autoInterval ?? 60);
+        state.quality = Number(list[0].quality ?? 0.7);
+      }
+    } catch (e) { console.warn('loadSettings', e); }
+  }
+  async function saveSettings() {
+    const payload = { autoInterval: state.autoInterval, quality: state.quality };
+    try {
+      if (state.settingsId) {
+        await AiPhone.db.update('settings', state.settingsId, payload);
+      } else {
+        const rec = await AiPhone.db.create('settings', payload);
+        state.settingsId = rec.id;
+      }
+    } catch (e) { console.warn('saveSettings', e); }
+  }
+  async function loadHistory() {
+    try {
+      const list = await AiPhone.db.list('sessions', { limit: 20 });
+      state.history = (list || []).sort((a,b)=> (b.endedAt||'').localeCompare(a.endedAt||''));
+    } catch (e) { state.history = []; }
+    renderHistory();
+  }
+  async function saveHistory(record) {
+    try { await AiPhone.db.create('sessions', record); }
+    catch (e) { console.warn('saveHistory', e); }
+  }
+  async function deleteHistory(id) {
+    try { await AiPhone.db.delete('sessions', id); await loadHistory(); }
+    catch (e) { console.warn('delete', e); }
+  }
+
+  async function loadCharacters() {
+    try { state.characters = await AiPhone.characters.list(); }
+    catch (e) { state.characters = []; }
+    renderCharPicker();
+  }
+  function renderCharPicker() {
+    const box = $('char-picker');
+    if (!state.characters.length) {
+      box.innerHTML = '<div style="color:var(--text-dim);padding:16px;text-align:center;font-size:12px;">还没有角色，去创建一个再来吧。</div>';
+      return;
+    }
+    box.innerHTML = state.characters.map(c => {
+      const sel = c.id === state.selectedCharacterId ? 'selected' : '';
+      const avatar = c.avatar ? `style="background-image:url('${escapeHtml(c.avatar)}')"` : '';
+      const initial = (c.name || '?').slice(0,1);
+      return `<div class="char-item ${sel}" data-id="${escapeHtml(c.id)}">
+        <div class="char-avatar" ${avatar}>${c.avatar ? '' : escapeHtml(initial)}</div>
+        <div class="char-name">${escapeHtml(c.name || '未命名')}</div>
+        <div class="char-tick">✓</div>
+      </div>`;
+    }).join('');
+    box.querySelectorAll('.char-item').forEach(el => {
+      el.addEventListener('click', ()=> {
+        state.selectedCharacterId = el.dataset.id;
+        renderCharPicker();
+        updateEnterBtn();
+      });
+    });
+    updateEnterBtn();
+  }
+  function updateEnterBtn() { $('btn-enter').disabled = !state.selectedCharacterId; }
+  function renderHistory() {
+    const box = $('history-list');
+    if (!state.history.length) {
+      box.innerHTML = '<div class="history-empty">还没有观影记录，看完第一场就会出现在这里。</div>';
+      return;
+    }
+    box.innerHTML = state.history.map(h => {
+      const summary = h.summary || {};
+      return `<div class="history-item" data-id="${escapeHtml(h.id)}">
+        <div class="h-top">
+          <div class="h-title">${escapeHtml(h.videoName || '一段视频')}</div>
+          ${summary.mood ? `<div class="h-mood">${escapeHtml(summary.mood)}</div>` : ''}
+          <div class="h-date">${fmtDate(h.endedAt)}</div>
+        </div>
+        <div class="h-comment">和 ${escapeHtml(h.characterName || '未知角色')} · ${escapeHtml(summary.comment || summary.highlight || '这场没写记忆卡')}</div>
+        <button class="h-del" data-del="${escapeHtml(h.id)}">删除</button>
+      </div>`;
+    }).join('');
+    box.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteHistory(btn.dataset.del);
+      });
+    });
+  }
+
+  async function enterTheater() {
+    if (!state.selectedCharacterId) return;
+    try {
+      state.currentCharacter = await AiPhone.characters.get(state.selectedCharacterId);
+    } catch (e) {
+      state.currentCharacter = state.characters.find(c => c.id === state.selectedCharacterId) || null;
+    }
+    state.messages = [];
+    state.sessionStartedAt = new Date().toISOString();
+    $('chat-title').textContent = '和 ' + (state.currentCharacter?.name || 'TA') + ' 一起看';
+    switchView('theater');
+    renderMessages();
+    pushSysMessage(`${state.currentCharacter?.name || 'TA'} 已经落座，选一段视频开始吧～`);
+    updateReplyBtn();
+  }
+  function switchView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    $('view-'+name).classList.add('active');
+    if (name === 'theater') $('app').classList.add('playing');
+    else $('app').classList.remove('playing');
+  }
+  function backHome() {
+    stopAutoTimer();
+    if (state.videoUrl) { try { URL.revokeObjectURL(state.videoUrl); } catch(e){} }
+    state.videoUrl = null;
+    state.videoName = '';
+    const v = $('video');
+    v.pause(); v.removeAttribute('src'); v.load();
+    v.style.display = 'none';
+    $('player-empty').style.display = 'flex';
+    $('player-hint').style.display = 'none';
+    $('btn-shot').disabled = true;
+    $('auto-tag').style.display = 'none';
+    switchView('home');
+    loadHistory();
+  }
+
+  function showVideoError(detail) {
+    $('video-err-detail').textContent = detail || '浏览器的视频播放器不认识这段视频的编码格式。';
+    $('modal-video-err').classList.add('show');
+    stopAutoTimer();
+    if (state.videoUrl) { try { URL.revokeObjectURL(state.videoUrl); } catch(e){} }
+    state.videoUrl = null;
+    state.videoName = '';
+    const v = $('video');
+    try { v.pause(); v.removeAttribute('src'); v.load(); } catch(e){}
+    v.style.display = 'none';
+    $('player-empty').style.display = 'flex';
+    $('btn-shot').disabled = true;
+    $('auto-tag').style.display = 'none';
+    try { $('file-input').value = ''; } catch(e){}
+  }
+
+  function detectHevc(file) {
+    const name = (file.name || '').toLowerCase();
+    const mime = (file.type || '').toLowerCase();
+    if (name.endsWith('.hevc') || name.endsWith('.h265')) return true;
+    if (/hevc|h265/i.test(mime)) return true;
+    return false;
+  }
+
+  function onFilePick(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (detectHevc(file)) {
+      showVideoError('这个文件看起来是 H.265 (HEVC) 编码，浏览器无法直接播放。');
+      return;
+    }
+    if (state.videoUrl) { try { URL.revokeObjectURL(state.videoUrl); } catch(e){} }
+    state.videoUrl = URL.createObjectURL(file);
+    state.videoName = file.name.replace(/\.[^.]+$/, '');
+    const v = $('video');
+    let settled = false;
+    const onLoaded = () => {
+      if (settled) return; settled = true;
+      cleanup();
+      $('player-empty').style.display = 'none';
+      v.style.display = 'block';
+      $('btn-shot').disabled = false;
+      updateAutoUI();
+      try { v.play().catch(()=>{}); } catch(e){}
+      pushSysMessage('开始播放：' + state.videoName);
+      if (state.autoInterval > 0) startAutoTimer();
+    };
+    const onError = () => {
+      if (settled) return; settled = true;
+      cleanup();
+      const err = v.error;
+      let detail = '这段视频加载失败了。';
+      if (err) {
+        if (err.code === 4) detail = '浏览器不认识这段视频的编码格式（通常是 H.265/HEVC）。';
+        else if (err.code === 3) detail = '这段视频文件解码时出错，可能已损坏或用了不兼容的编码。';
+        else if (err.code === 2) detail = '视频加载时出现网络错误。';
+        else if (err.code === 1) detail = '视频加载被中断了。';
+      }
+      showVideoError(detail);
+    };
+    const timeoutId = setTimeout(() => {
+      if (settled) return;
+      if (!v.videoWidth) {
+        settled = true;
+        cleanup();
+        showVideoError('视频加载超时，可能是编码格式不兼容（如 H.265）。');
+      }
+    }, 6000);
+    function cleanup() {
+      v.removeEventListener('loadedmetadata', onLoaded);
+      v.removeEventListener('error', onError);
+      clearTimeout(timeoutId);
+    }
+    v.addEventListener('loadedmetadata', onLoaded);
+    v.addEventListener('error', onError);
+    $('player-empty').style.display = 'none';
+    v.style.display = 'block';
+    v.src = state.videoUrl;
+    try { v.load(); } catch(e){}
+  }
+
+  function startAutoTimer() {
+    stopAutoTimer();
+    if (state.autoInterval <= 0) return;
+    state.autoTimer = setInterval(()=> {
+      const v = $('video');
+      if (!v.src || v.paused || v.ended) return;
+      if (state.generating) return;
+      if ($('modal-shot').classList.contains('show')) return;
+      autoCaptureAndSend();
+    }, state.autoInterval * 1000);
+  }
+  function stopAutoTimer() {
+    if (state.autoTimer) { clearInterval(state.autoTimer); state.autoTimer = null; }
+  }
+  function updateAutoUI() {
+    const hint = $('player-hint');
+    const st = $('auto-state');
+    const tag = $('auto-tag');
+    if (state.videoUrl) hint.style.display = 'block';
+    if (state.autoInterval > 0) {
+      st.textContent = '每 ' + state.autoInterval + ' 秒';
+      hint.classList.add('on');
+      tag.style.display = 'inline-block';
+      tag.textContent = '自动截屏 · ' + state.autoInterval + 's';
+    } else {
+      st.textContent = '关闭';
+      hint.classList.remove('on');
+      tag.style.display = 'none';
+    }
+  }
+
+  function captureFrame() {
+    const v = $('video');
+    if (!v || !v.videoWidth) return null;
+    const maxW = 640;
+    const scale = Math.min(1, maxW / v.videoWidth);
+    const w = Math.round(v.videoWidth * scale);
+    const h = Math.round(v.videoHeight * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    try {
+      ctx.drawImage(v, 0, 0, w, h);
+      return canvas.toDataURL('image/jpeg', state.quality);
+    } catch (e) {
+      console.warn('capture failed', e);
+      return null;
+    }
+  }
+
+  async function autoCaptureAndSend() {
+    if (state.generating) return;
+    const shot = captureFrame();
+    if (!shot) return;
+    await requestReply({ visualDataUrl: shot, mode: 'auto' });
+  }
+
+  let pendingShot = null;
+  function openManualShot() {
+    if (state.generating) { toast('TA 还在回上一条…'); return; }
+    const shot = captureFrame();
+    if (!shot) { toast('这一帧抓不到，稍等一下再试'); return; }
+    pendingShot = shot;
+    $('shot-preview').src = shot;
+    $('shot-caption').value = '';
+    $('modal-shot').classList.add('show');
+    const v = $('video');
+    if (v && !v.paused) { try { v.pause(); pendingShot._wasPlaying = true; } catch(e){} }
+    setTimeout(()=>$('shot-caption').focus(), 50);
+  }
+  function closeManualShot(resumePlay) {
+    $('modal-shot').classList.remove('show');
+    if (resumePlay && pendingShot && pendingShot._wasPlaying) {
+      const v = $('video');
+      try { v.play().catch(()=>{}); } catch(e){}
+    }
+    pendingShot = null;
+  }
+  async function sendManualShot() {
+    if (!pendingShot) return;
+    const caption = $('shot-caption').value.trim();
+    if (!caption) { toast('说点什么再发吧～'); return; }
+    const shot = pendingShot;
+    closeManualShot(true);
+    state.messages.push({
+      role: 'user',
+      content: caption,
+      createdAt: new Date().toISOString(),
+    });
+    renderMessages();
+    await requestReply({ visualDataUrl: shot, mode: 'manual', userText: caption });
+  }
+
+  function pushSysMessage(text) {
+    state.messages.push({ role: 'sys', content: text, createdAt: new Date().toISOString() });
+    renderMessages();
+  }
+  function renderMessages() {
+    const box = $('messages');
+    box.innerHTML = state.messages.map((m) => {
+      if (m.role === 'sys') return `<div class="msg sys"><div class="msg-bubble">${escapeHtml(m.content)}</div></div>`;
+      const cls = m.role === 'user' ? 'user' : 'assistant';
+      const loading = m.loading ? '<span class="msg-loading"><span></span><span></span><span></span></span>' : '';
+      const content = m.loading ? loading : escapeHtml(m.content);
+      return `<div class="msg ${cls}"><div class="msg-bubble">${content}</div></div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function sendText() {
+    const ta = $('input');
+    const text = ta.value.trim();
+    if (!text) return;
+    ta.value = '';
+    ta.style.height = 'auto';
+    $('btn-send').disabled = true;
+    state.messages.push({ role: 'user', content: text, createdAt: new Date().toISOString() });
+    renderMessages();
+    updateReplyBtn();
+  }
+  async function triggerReply() {
+    if (state.generating) return;
+    if (!hasUserMsgSinceLastAssistant()) { toast('先说点什么，TA 才好接话～'); return; }
+    await requestReply();
+    updateReplyBtn();
+  }
+  function hasUserMsgSinceLastAssistant() {
+    for (let i = state.messages.length - 1; i >= 0; i--) {
+      const m = state.messages[i];
+      if (m.role === 'user') return true;
+      if (m.role === 'assistant') return false;
+    }
+    return false;
+  }
+  function updateReplyBtn() {
+    const btn = $('btn-reply');
+    if (!btn) return;
+    btn.disabled = state.generating || !hasUserMsgSinceLastAssistant();
+  }
+
+  function buildAiMessages() {
+    const dialog = state.messages.filter(m => m.role === 'user' || m.role === 'assistant');
+    return dialog.slice(-16).map(m => ({
+      role: m.role,
+      content: m.content,
+      createdAt: m.createdAt,
+    }));
+  }
+  async function requestReply(visualOpts) {
+    if (!state.currentCharacter) return;
+    state.generating = true;
+    const placeholder = { role: 'assistant', content: '', loading: true, createdAt: new Date().toISOString() };
+    state.messages.push(placeholder);
+    renderMessages();
+    try {
+      const messages = buildAiMessages();
+      let instruction = `你正在和用户一起看视频「${state.videoName || '未命名视频'}」。请以当前角色身份自然回一句，短一点，像真的窝在沙发边一起看片时的语气。`;
+      if (visualOpts && visualOpts.visualDataUrl) {
+        messages.push({
+          role: 'user',
+          content: visualOpts.mode === 'auto'
+            ? '（这是你和用户正在共同观看的这一帧画面）'
+            : '（这是你和用户正在共同观看的这一帧画面，用户想聊聊此刻）',
+          image: visualOpts.visualDataUrl,
+          createdAt: new Date().toISOString(),
+        });
+        if (visualOpts.mode === 'auto') {
+          instruction = `你和用户此刻正在一起观看视频「${state.videoName || '未命名视频'}」——这不是异地视频通话，而是你们同时在各自屏幕上看同一部片子的场景。上面附上的这一帧就是你此刻眼睛正看到的画面，不是用户发给你的截图，是你自己看到的实时内容。请以当前角色身份，主动、自然地对用户说一句你刚看到这一幕的即时感想，就像真人一起看片时忍不住冒出的一句吐槽、感叹或惊呼。1~2 句，口语化，绝对不要出现"截图""图片""你发的"这类词。`;
+        } else {
+          instruction = `你和用户此刻正在一起观看视频「${state.videoName || '未命名视频'}」。上面附上的这一帧是你和用户此刻共同看到的画面（不是用户单独发给你的截图，是你自己也在看的实时内容）。用户看到这一幕后跟你说了："${visualOpts.userText || ''}"。请以当前角色身份自然接一句话，像真的坐在一起看片时的对话，可以顺着用户的话聊，也可以补一句自己的感受。1~2 句，口语化，不要提"截图""图片"这类词。`;
+        }
+      }
+      const result = await AiPhone.ai.generate({
+        characterId: state.currentCharacter.id,
+        appTags: ['potato_theater', 'watch'],
+        messages,
+        instruction,
+      });
+      const text = (result && result.text || '').trim();
+      state.messages = state.messages.filter(m => m !== placeholder);
+      if (text) state.messages.push({ role: 'assistant', content: text, createdAt: new Date().toISOString() });
+      else state.messages.push({ role: 'sys', content: 'TA 没接上话（生成结果为空）', createdAt: new Date().toISOString() });
+      renderMessages();
+    } catch (e) {
+      state.messages = state.messages.filter(m => m !== placeholder);
+      state.messages.push({ role: 'sys', content: '出错了：' + (e && e.message || e), createdAt: new Date().toISOString() });
+      renderMessages();
+    } finally {
+      state.generating = false;
+      updateReplyBtn();
+    }
+  }
+
+  function askExit() {
+    if (!state.videoUrl && state.messages.filter(m=>m.role==='user'||m.role==='assistant').length === 0) {
+      backHome(); return;
+    }
+    $('modal-exit').classList.add('show');
+  }
+  function closeExit() { $('modal-exit').classList.remove('show'); }
+
+  async function shareMemoryAndExit() {
+    closeExit();
+    const dialog = state.messages.filter(m => m.role === 'user' || m.role === 'assistant');
+    if (dialog.length === 0) { backHome(); return; }
+    $('modal-summary').classList.add('show');
+    $('summary-status').textContent = 'TA 正在回味这场放映，请稍等。';
+    let summary = null;
+    try {
+      let userName = '用户';
+      try {
+        const up = await AiPhone.user.getProfile({ characterId: state.currentCharacter.id });
+        userName = up?.name || '用户';
+      } catch (e) {}
+      const result = await AiPhone.ai.generate({
+        characterId: state.currentCharacter.id,
+        appTags: ['potato_theater', 'summary'],
+        messages: dialog.slice(-30).map(m => ({ role: m.role, content: m.content, createdAt: m.createdAt })),
+        instruction: `刚刚这场你和${userName}一起在土豆放映室看的视频是「${state.videoName || '一段视频'}」。请以第一人称、当前角色的语气，写这次共同观影的记忆——这段记忆之后会作为一张记忆卡片发到你们的主聊天里，你回到主聊天时能凭这段记忆自然衔接刚才这场，就像真的一起看完片后回味。\n\n严格按下面 JSON 输出（不要加解释、不要用代码块包裹、不要额外文字）：\n{\n  "mood": "一两个词描述整场心情/氛围（如：暖、意难平、笑麻、炸裂、平静、难过）",\n  "highlight": "整场最戳你的一个瞬间或画面，一句话，不超过 30 字",\n  "narrative": "第一人称完整叙述，150~300 字。必须覆盖：① 你和${userName}一起看的是什么内容；② 期间你们具体聊了哪些话题、${userName}或你说了哪些印象深的话；③ 你观察到${userName}当时的情绪状态；④ 你自己的情绪反应；⑤ 你们对剧情/人物/画面的感想。语气自然口语化，就像事后跟自己回味那场约会。提到对方时用「${userName}」这个名字，不要用「用户」「你」等占位词。",\n  "comment": "想对${userName}说的一句话，可以是撒娇、调侃、感慨、期待下次，保持角色语气，不超过 40 字"\n}\n\n只输出 JSON 本体，前后不要有任何其他字符。`,
+      });
+      summary = parseSummary(result && result.text || '');
+    } catch (e) {
+      $('summary-status').textContent = '生成失败：' + (e && e.message || e);
+      setTimeout(()=>{ $('modal-summary').classList.remove('show'); finishExit(null); }, 1500);
+      return;
+    }
+    $('modal-summary').classList.remove('show');
+    if (summary) await sendMemoryCard(summary);
+    finishExit(summary);
+  }
+  function parseSummary(text) {
+    if (!text) return null;
+    try { return normalize(JSON.parse(text)); } catch(e){}
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) { try { return normalize(JSON.parse(m[0])); } catch(e){} }
+    return normalize({ comment: text.slice(0, 60) });
+    function normalize(obj) {
+      return {
+        mood: (obj.mood || '').toString().slice(0, 20),
+        highlight: (obj.highlight || '').toString().slice(0, 40),
+        narrative: (obj.narrative || '').toString().slice(0, 500),
+        comment: (obj.comment || '').toString().slice(0, 60),
+      };
+    }
+  }
+
+  async function sendMemoryCard(summary) {
+    try {
+      const character = state.currentCharacter;
+      const userProfile = await AiPhone.user.getProfile({ characterId: character.id }).catch(()=>null);
+      const userName = userProfile?.name || '你';
+      const cname = character?.name || 'TA';
+      const dur = fmtDuration();
+      const html = `
+        <style>
+          .card { padding:16px; background:#0e0e0e; color:#e8e8e8;
+                  font:13px/1.7 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+                  border:1px solid #262626; border-radius:12px; }
+          .head { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+          .logo { width:22px; height:22px; flex:none; }
+          .title { font-weight:700; letter-spacing:.5px; }
+          .title em { color:#ff7a1a; font-style:normal; }
+          .sub { color:#8a8a8a; font-size:11px; margin-top:2px; }
+          .row { margin:8px 0; }
+          .label { color:#8a8a8a; font-size:11px; margin-bottom:3px; letter-spacing:.5px; }
+          .value { color:#e8e8e8; font-size:13px; }
+          .mood { display:inline-block; padding:3px 10px; border-radius:12px;
+                  background:rgba(255,122,26,.15); color:#ff9647; font-size:11px; margin-right:6px;}
+          .divider { border-top:1px dashed #333; margin:12px 0; }
+          .narrative { color:#d8d8d8; font-size:13px; line-height:1.75;
+                       background:rgba(255,255,255,0.02); padding:10px 12px;
+                       border-left:2px solid #ff7a1a; border-radius:0 6px 6px 0;
+                       white-space:pre-wrap; }
+          .comment { color:#ff9647; font-size:13px; font-style:italic; margin-top:10px; }
+          .foot { color:#666; font-size:11px; text-align:right; margin-top:10px; }
+        </style>
+        <div class="card">
+          <div class="head">
+            <svg class="logo" viewBox="0 0 40 40"><ellipse cx="20" cy="21" rx="14" ry="16" fill="#ff7a1a"/><ellipse cx="14" cy="16" rx="1.6" ry="2" fill="#b3541a"/><ellipse cx="24" cy="14" rx="1.6" ry="2" fill="#b3541a"/><path d="M17 6 Q18 3 21 4 L22 7" stroke="#4a7a2a" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+            <div>
+              <div class="title">土豆<em>放映室</em> · 观影记忆</div>
+              <div class="sub">${escapeHtml(cname)} 与 ${escapeHtml(userName)} 的这一场</div>
+            </div>
+          </div>
+          <div class="row"><div class="label">影片</div><div class="value">${escapeHtml(state.videoName || '一段视频')} · ${escapeHtml(dur)}</div></div>
+          ${summary.mood || summary.highlight ? `<div class="row">
+            ${summary.mood ? `<span class="mood">#${escapeHtml(summary.mood)}</span>` : ''}
+            ${summary.highlight ? `<span style="color:#8a8a8a;font-size:12px;">最戳的一瞬：${escapeHtml(summary.highlight)}</span>` : ''}
+          </div>` : ''}
+          <div class="divider"></div>
+          ${summary.narrative ? `<div class="row"><div class="label">回味</div><div class="narrative">${escapeHtml(summary.narrative)}</div></div>` : ''}
+          ${summary.comment ? `<div class="comment">"${escapeHtml(summary.comment)}"</div>` : ''}
+          <div class="foot">${new Date().toLocaleString('zh-CN', {hour12:false})}</div>
+        </div>`;
+      const historyParts = [
+        `【土豆放映室 · 观影记忆】刚刚${cname}和${userName}一起在土豆放映室看完了《${state.videoName || '一段视频'}》，用时约${dur}。`,
+      ];
+      if (summary.mood) historyParts.push(`整场氛围：${summary.mood}。`);
+      if (summary.highlight) historyParts.push(`最戳${cname}的瞬间：${summary.highlight}`);
+      if (summary.narrative) historyParts.push(`\n${cname}回味这场观影：${summary.narrative}`);
+      if (summary.comment) historyParts.push(`\n${cname}对${userName}说："${summary.comment}"`);
+      historyParts.push(`\n（以上是${cname}对刚才这场共同观影的记忆，${cname}后续在聊天中提到"电影""刚才那部""刚才那个"等，均指这场观影。）`);
+      const historyText = historyParts.join('');
+      await AiPhone.chat.sendCard({
+        characterId: state.currentCharacter.id,
+        role: 'assistant',
+        historyRole: 'system',
+        summary: `${cname}和${userName}一起看完《${state.videoName || '一段视频'}》，留下一张观影记忆。`,
+        historyText,
+        card: { height: 340, html },
+      });
+      toast('已把这张记忆发到主聊天');
+    } catch (e) {
+      console.warn('sendMemoryCard failed', e);
+      toast('记忆卡发送失败：' + (e && e.message || e), 2500);
+    }
+  }
+
+  function fmtDuration() {
+    if (!state.sessionStartedAt) return '';
+    const sec = Math.round((Date.now() - new Date(state.sessionStartedAt).getTime()) / 1000);
+    if (sec < 60) return sec + ' 秒';
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m + ' 分' + (s ? (' ' + s + ' 秒') : '');
+  }
+
+  async function finishExit(summary) {
+    try {
+      const chars = state.currentCharacter;
+      const rec = {
+        videoName: state.videoName,
+        characterId: chars?.id || '',
+        characterName: chars?.name || '',
+        startedAt: state.sessionStartedAt,
+        endedAt: new Date().toISOString(),
+        messages: state.messages
+          .filter(m => m.role === 'user' || m.role === 'assistant')
+          .slice(-30)
+          .map(m => ({ role: m.role, content: m.content, createdAt: m.createdAt })),
+        summary: summary || null,
+      };
+      await saveHistory(rec);
+    } catch (e) { console.warn(e); }
+    backHome();
+  }
+
+  function openSettings() {
+    $('set-auto').value = String(state.autoInterval);
+    $('set-quality').value = String(state.quality);
+    $('modal-settings').classList.add('show');
+  }
+  function closeSettings() { $('modal-settings').classList.remove('show'); }
+
+  function toggleRotate() {
+    const app = $('app');
+    const rotated = app.classList.toggle('rotated');
+    toast(rotated ? '已切到横屏 · 请把手机逆时针横握' : '已切回竖屏');
+  }
+
+  function bind() {
+    $('file-input').addEventListener('change', onFilePick);
+    $('btn-shot').addEventListener('click', openManualShot);
+    $('shot-cancel').addEventListener('click', ()=> closeManualShot(true));
+    $('shot-send').addEventListener('click', sendManualShot);
+    $('shot-caption').addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); sendManualShot(); }
+    });
+    $('btn-send').addEventListener('click', sendText);
+    $('btn-reply').addEventListener('click', triggerReply);
+    $('input').addEventListener('input', (e)=>{
+      const ta = e.target;
+      ta.style.height = 'auto';
+      ta.style.height = Math.min(88, ta.scrollHeight) + 'px';
+      $('btn-send').disabled = !ta.value.trim();
+    });
+    $('input').addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(); }
+    });
+    $('btn-enter').addEventListener('click', enterTheater);
+    $('btn-end').addEventListener('click', askExit);
+    $('btn-rot-inline').addEventListener('click', toggleRotate);
+    $('btn-settings').addEventListener('click', openSettings);
+    $('set-close').addEventListener('click', async ()=>{
+      state.autoInterval = Number($('set-auto').value);
+      state.quality = Number($('set-quality').value);
+      await saveSettings();
+      updateAutoUI();
+      if ($('view-theater').classList.contains('active') && state.videoUrl) {
+        if (state.autoInterval > 0) startAutoTimer(); else stopAutoTimer();
+      }
+      closeSettings();
+    });
+    $('exit-cancel').addEventListener('click', closeExit);
+    $('exit-plain').addEventListener('click', async ()=>{ closeExit(); await finishExit(null); });
+    $('exit-share').addEventListener('click', shareMemoryAndExit);
+    $('summary-skip').addEventListener('click', async ()=>{
+      $('modal-summary').classList.remove('show');
+      await finishExit(null);
+    });
+    $('video-err-close').addEventListener('click', ()=> $('modal-video-err').classList.remove('show'));
+
+    const obs = new MutationObserver(()=> {
+      const inTheater = $('view-theater').classList.contains('active');
+      if (!inTheater) $('app').classList.remove('rotated');
+    });
+    obs.observe($('view-theater'), { attributes: true, attributeFilter: ['class'] });
+  }
+
+  async function init() {
+    bind();
+    try { state.launchContext = await AiPhone.app.getLaunchContext(); }
+    catch(e) { state.launchContext = null; }
+    await loadSettings();
+    updateAutoUI();
+    await loadCharacters();
+    await loadHistory();
+    const cid = state.launchContext?.characterId;
+    if (cid) {
+      state.selectedCharacterId = cid;
+      renderCharPicker();
+      await enterTheater();
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{
+  "sdkVersion": "1.0",
+  "id": "theqoo.float.forum",
+  "name": "theqoo",
+  "version": "1.1.2",
+  "author": "ii",
+  "description": "韩式匿名论坛模拟 App。支持世界书、可选日历关联、中文论坛/中韩翻译模式、匿名楼主回复、延迟评论生态、配图与 Chat 分享。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "chat.sendCard",
+    "world.read",
+    "calendar.read",
+    "ai.chat",
+    "ai.generateImage",
+    "network.fetch",
+    "media.pick",
+    "ui.toast"
+  ],
+  "network": {
+    "allowedDomains": [
+      "api.openai.com",
+      "api.deepseek.com",
+      "openrouter.ai",
+      "api.siliconflow.cn",
+      "api.moonshot.cn",
+      "ark.cn-beijing.volces.com",
+      "api.minimax.chat",
+      "api.x.ai",
+      "api.groq.com",
+      "api.together.xyz",
+      "api.fireworks.ai"
+    ],
+    "mode": "proxy"
+  }
+}

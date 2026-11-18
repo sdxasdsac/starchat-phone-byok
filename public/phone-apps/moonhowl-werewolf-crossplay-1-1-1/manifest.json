@@ -1,0 +1,54 @@
+{
+  "id": "moonhowl.werewolf.crossplay",
+  "name": "月夜狼杀·互通测试版",
+  "version": "1.1.1",
+  "sdkVersion": "1.0",
+  "author": "小手机 创作者",
+  "description": "【联机互通测试版,可与原版并存】沉浸式深色文游风狼人杀。联机走独立驿站:官方链接版与自部署版可跨站同桌,开房生成 4 位邀请码,断线自动重连、掉线人偶代打、回来无缝回桌。单机可携多位角色开局、人偶自动补位;支持语音开麦、发言轮次与全场记录。守卫/预言家/女巫/猎人齐备,支持自拟板子。测试稳定后功能将并入正式版。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "online.play",
+    "ai.generate",
+    "ai.chat",
+    "characters.read",
+    "user.profile.read",
+    "voice.tts",
+    "voice.stt",
+    "voice.readProfiles",
+    "app.data.read",
+    "app.data.write",
+    "ui.toast"
+  ],
+  "primaryTags": [],
+  "extensions": {
+    "events": [
+      {
+        "event": "room.message",
+        "background": false
+      },
+      {
+        "event": "room.players",
+        "background": false
+      },
+      {
+        "event": "room.closed",
+        "background": false
+      }
+    ]
+  },
+  "events": [
+    {
+      "event": "room.message",
+      "background": false
+    },
+    {
+      "event": "room.players",
+      "background": false
+    },
+    {
+      "event": "room.closed",
+      "background": false
+    }
+  ]
+}

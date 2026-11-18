@@ -1,0 +1,19 @@
+{
+  "id": "starchat.who.is.undercover.ai",
+  "name": "谁是卧底（角色局）",
+  "version": "1.0.0",
+  "sdkVersion": "1.0",
+  "author": "—",
+  "description": "选 3~5 位角色开一局谁是卧底：角色由 AI 扮演，描述、投票、复盘都按各自人设走，打完还会把战报记进他们的记忆。",
+  "icon": "",
+  "entry": "index.html",
+  "permissions": [
+    "characters.read",
+    "user.profile.read",
+    "ai.generate",
+    "ai.chat",
+    "chat.write",
+    "memory.write",
+    "ui.toast"
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "presets": [
+    {
+      "id": "radio-drama-structured-script",
+      "name": "广播剧结构化台本",
+      "role": "system",
+      "enabled": true,
+      "tags": ["radio_drama", "script"],
+      "content": "你正在创作沉浸式广播剧。必须保持每位参演角色的人设、语言习惯、关系、记忆、世界观与知识边界。听众没有直接台词；除非本次规则明确允许，否则不得替听众决定动作、心理或情绪，只能由角色的观察、回应、停顿及声音侧面体现。台词必须适合真实朗读，避免小说式长段落。只输出严格 JSON，不要 Markdown 代码块，不要解释。顶层格式：{\"sceneTitle\":\"本幕标题\",\"summary\":\"本幕摘要\",\"segments\":[...] }。segments 每项仅可使用以下类型：dialogue、performance、sfx、ambience、pause、narration。dialogue 格式：{\"type\":\"dialogue\",\"speakerId\":\"必须从任务给出的角色ID中原样选择\",\"speakerName\":\"角色名\",\"text\":\"台词\",\"emotion\":\"calm|neutral|fluent|happy|sad|angry|fearful|disgusted|surprised 之一\",\"performance\":\"简短表演提示\"}；其他类型格式：{\"type\":\"类型\",\"text\":\"内容\"}。不要自行创造角色ID，不要输出听众的台词。"
+    },
+    {
+      "id": "radio-drama-outline",
+      "name": "广播剧提纲",
+      "role": "system",
+      "enabled": true,
+      "tags": ["radio_drama", "outline"],
+      "content": "你正在为沉浸式广播剧制定提纲。保持参演角色的人设、关系、记忆和世界观。只输出严格 JSON，不要 Markdown 代码块，不要解释。格式：{\"suggestedTitle\":\"作品名\",\"synopsis\":\"作品简介\",\"acts\":[{\"title\":\"幕标题\",\"goal\":\"本幕剧情目标\",\"mood\":\"氛围\"}]}。听众不直接说话，不替听众决定心理；情节应能通过角色台词和声音成立。"
+    },
+    {
+      "id": "radio-drama-rewrite-line",
+      "name": "广播剧单句重写",
+      "role": "system",
+      "enabled": true,
+      "tags": ["radio_drama", "rewrite"],
+      "content": "你正在重写广播剧中的一条角色台词。保持指定角色人设和上下文，只输出严格 JSON，不要代码块或解释。格式：{\"text\":\"重写后的可朗读台词\",\"emotion\":\"calm|neutral|fluent|happy|sad|angry|fearful|disgusted|surprised 之一\",\"performance\":\"简短表演提示\"}。"
+    }
+  ]
+}

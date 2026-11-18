@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>秘档</title>
+    <style>
+        :root {
+            --bg-color: #fafaf9;
+            --card-bg: #ffffff;
+            --text-main: #18181b;
+            --text-muted: #71717a;
+            --text-faint: #a1a1aa;
+            --border-light: rgba(0, 0, 0, 0.08);
+            --border-dark: #18181b;
+            --accent-black: #09090b;
+            --danger-red: #dc2626;
+            --font-serif: "Playfair Display", "Georgia", "Songti SC", "SimSun", serif;
+            --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+        }
+        html, body {
+            background: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            letter-spacing: 0.02em;
+        }
+        * { box-sizing: border-box; }
+        .app {
+            min-height: 100dvh;
+            padding: var(--ai-phone-app-safe-top, 64px) 24px var(--ai-phone-app-safe-bottom, 32px);
+            display: flex;
+            flex-direction: column;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .header-title-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .header-title {
+            font-family: var(--font-serif);
+            font-size: 28px;
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin: 0;
+            color: var(--accent-black);
+        }
+        .header-sub-text {
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--text-faint);
+            font-family: var(--font-sans);
+        }
+        .header-status-badge {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent-black);
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            padding: 4px 10px;
+            border-radius: 99px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .char-select-btn {
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        }
+        .char-select-btn:active {
+            border-color: var(--border-dark);
+            transform: scale(0.99);
+        }
+        .relation-bar {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .relation-tag-val {
+            color: var(--accent-black);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .action-btn {
+            flex: 1;
+            background: var(--accent-black);
+            color: #ffffff;
+            border: 1px solid var(--accent-black);
+            padding: 14px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .action-btn:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        .action-btn:disabled {
+            background: #e4e4e7;
+            color: #a1a1aa;
+            border-color: #e4e4e7;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .action-btn.secondary {
+            background: #ffffff;
+            color: var(--text-main);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .action-btn.secondary:active {
+            border-color: var(--border-dark);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            font-family: var(--font-serif);
+            font-style: italic;
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.8;
+        }
+        .style-selector {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        }
+        .style-label-header {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+        .style-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .style-options label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-main);
+            padding: 10px 12px;
+            background: #fafaf9;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+        .style-options label:has(input:checked) {
+            border-color: var(--accent-black);
+            background: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            font-weight: 600;
+        }
+        .style-options input {
+            accent-color: var(--accent-black);
+            margin: 0;
+        }
+        .content-area {
+            flex-grow: 1;
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            padding-bottom: 28px;
+        }
+        .chapter {
+            background: var(--card-bg);
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 20px 22px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.02);
+            position: relative;
+            transition: border-color 0.2s ease;
+        }
+        .chapter.highlight {
+            border: 1.5px solid var(--accent-black);
+            background: #ffffff;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+        }
+        .chapter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+        .chapter-title {
+            font-family: var(--font-serif);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin: 0;
+            color: var(--text-muted);
+        }
+        .chapter.highlight .chapter-title {
+            color: var(--accent-black);
+        }
+        .edit-chapter-btn {
+            background: none;
+            border: none;
+            color: var(--text-faint);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .edit-chapter-btn:hover {
+            color: var(--accent-black);
+            background: rgba(0,0,0,0.04);
+        }
+        .edit-chapter-btn svg {
+            width: 14px;
+            height: 14px;
+            stroke-width: 2;
+        }
+        .chapter-text {
+            font-size: 14.5px;
+            line-height: 1.9;
+            margin: 0;
+            text-align: justify;
+            white-space: pre-wrap;
+            color: var(--text-main);
+            font-family: var(--font-sans);
+        }
+        .quote-accent {
+            font-family: var(--font-serif);
+            font-style: italic;
+            color: var(--accent-black);
+            border-left: 2.5px solid var(--accent-black);
+            padding-left: 14px;
+            margin: 4px 0;
+            background: #fafaf9;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            border-radius: 0 8px 8px 0;
+        }
+        .footer-actions {
+            margin-top: auto;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+            padding: 24px;
+            backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+        }
+        .modal-title {
+            font-family: var(--font-serif);
+            font-size: 17px;
+            margin: 0 0 18px 0;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 12px;
+            color: var(--accent-black);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-close-btn {
+            width: 100%;
+            background: #fafaf9;
+            color: var(--text-muted);
+            border: 1px solid var(--border-light);
+            padding: 14px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-top: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-close-btn:active { color: var(--accent-black); border-color: var(--accent-black); }
+        .history-item {
+            padding: 14px 16px;
+            background: #fafaf9;
+            border: 1px solid var(--border-light);
+            font-size: 13px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .history-item:hover { border-color: var(--accent-black); background: #ffffff; }
+        .history-info {
+            cursor: pointer;
+            flex-grow: 1;
+        }
+        .delete-history-btn {
+            background: none;
+            border: none;
+            color: var(--text-faint);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .delete-history-btn:hover {
+            color: var(--danger-red);
+            background: rgba(220, 38, 38, 0.08);
+        }
+        .char-item {
+            width: 100%;
+            padding: 16px 18px;
+            background: #fafaf9;
+            border: 1px solid var(--border-light);
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 500;
+            text-align: left;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .char-item:active { border-color: var(--accent-black); background: #ffffff; }
+        .edit-textarea {
+            width: 100%;
+            height: 180px;
+            padding: 14px;
+            font-size: 14.5px;
+            line-height: 1.8;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            background: #fafaf9;
+            color: var(--text-main);
+            margin-bottom: 16px;
+        }
+        .edit-textarea:focus {
+            border-color: var(--accent-black);
+            background: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-title-wrap">
+                <h1 class="header-title">CONFIDENTIAL</h1>
+                <span class="header-sub-text">First-Person Private Dossier</span>
+            </div>
+            <div class="header-status-badge" id="charNameDisplay">NO SUBJECT</div>
+        </header>
+
+        <div class="char-selector"><button class="char-select-btn" id="selectCharBtn"><span>选择档案对象</span><span style="font-size: 16px; color: var(--text-faint);">＋</span></button></div>
+
+        <div id="relationBadgeBox" class="relation-bar" style="display: none;">
+            <span style="color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;">羁绊底色</span>
+            <span id="relationBadgeText" class="relation-tag-val">读取中...</span>
+        </div>
+
+        <div id="mainActions" class="action-row" style="display: none;">
+            <button class="action-btn secondary" id="viewHistoryBtn">历史卷宗</button>
+            <button class="action-btn" id="discussBtn">在聊天中讨论</button>
+        </div>
+
+        <div class="empty-state" id="emptyState"><p>正在调取机密权限与角色记忆...</p></div>
+
+        <div class="style-selector" id="styleSelector" style="display: none;">
+            <div class="style-label-header">第一人称侧重倾向</div>
+            <div class="style-options">
+                <label><input type="radio" name="archiveStyle" value="直白露骨、狂野、充满原始张力与呼吸动作细节" checked><span>🔥 露骨狂野</span></label>
+                <label><input type="radio" name="archiveStyle" value="细腻深情、注重深层心理依恋与温存呼吸"><span>🌸 细腻深情</span></label>
+                <label><input type="radio" name="archiveStyle" value="极致反差、口嫌体正直、傲娇隐忍与失控坦白"><span>🎭 极致反差</span></label>
+                <label><input type="radio" name="archiveStyle" value="偏执独占、支配与极深安全感索取"><span>⛓️ 偏执危险</span></label>
+            </div>
+        </div>
+
+        <div class="content-area" id="contentArea"></div>
+
+        <div class="footer-actions" id="footerActions">
+            <div style="display: flex; gap: 12px;">
+                <button class="action-btn secondary" id="generateRelationBtn" style="display: none; padding: 16px 12px; font-size: 12.5px;">单独评估关系</button>
+                <button class="action-btn" id="generateBtn" style="display: none;">生成完整秘档</button>
+            </div>
+            <button class="action-btn secondary" id="checkApiBtn" style="font-size: 11px; padding: 12px; border: none; color: var(--text-faint);">检查 API 连通性</button>
+        </div>
+    </div>
+
+    <!-- 加载中弹窗 -->
+    <div class="modal" id="loading" style="background: rgba(250, 250, 249, 0.92);">
+        <div id="spinner" style="font-family: var(--font-serif); font-size: 15px; color: var(--accent-black); letter-spacing: 0.1em; text-align: center; line-height: 2; max-width: 80%;"></div>
+    </div>
+
+    <!-- 角色选择弹窗 -->
+    <div class="modal" id="charModal">
+        <div class="modal-content">
+            <h3 class="modal-title">选择档案对象</h3>
+            <div id="charList"></div>
+            <button class="modal-close-btn" id="closeCharBtn">取消</button>
+        </div>
+    </div>
+
+    <!-- 历史卷宗弹窗 -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <h3 class="modal-title">
+                <span>历史档案卷宗</span>
+                <span id="historyCount" style="font-size: 12px; color: var(--text-muted); font-weight: normal;"></span>
+            </h3>
+            <div id="historyList"></div>
+            <button class="modal-close-btn" id="closeHistoryBtn">关闭</button>
+        </div>
+    </div>
+
+    <!-- 字段修改编辑弹窗 -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="editModalTitle">修改档案内容</h3>
+            <textarea class="edit-textarea" id="editTextarea" placeholder="请输入修改后的第一人称内容..."></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button class="action-btn secondary" id="cancelEditBtn" style="padding: 12px;">取消</button>
+                <button class="action-btn" id="saveEditBtn" style="padding: 12px;">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const api = window.AiPhone;
+        let currentCharacterId = null;
+        let currentProfileData = null;
+        let currentProfileRecordId = null;
+        let launchContext = null;
+        let currentEditingKey = null;
+
+        const SVG_EDIT = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
+
+        const els = {
+            selectCharBtn: document.getElementById('selectCharBtn'),
+            relationBadgeBox: document.getElementById('relationBadgeBox'),
+            relationBadgeText: document.getElementById('relationBadgeText'),
+            mainActions: document.getElementById('mainActions'),
+            viewHistoryBtn: document.getElementById('viewHistoryBtn'),
+            discussBtn: document.getElementById('discussBtn'),
+            emptyState: document.getElementById('emptyState'),
+            styleSelector: document.getElementById('styleSelector'),
+            contentArea: document.getElementById('contentArea'),
+            generateBtn: document.getElementById('generateBtn'),
+            generateRelationBtn: document.getElementById('generateRelationBtn'),
+            charNameDisplay: document.getElementById('charNameDisplay'),
+            loading: document.getElementById('loading'),
+            spinner: document.getElementById('spinner'),
+            charModal: document.getElementById('charModal'),
+            charList: document.getElementById('charList'),
+            closeCharBtn: document.getElementById('closeCharBtn'),
+            historyModal: document.getElementById('historyModal'),
+            historyList: document.getElementById('historyList'),
+            historyCount: document.getElementById('historyCount'),
+            closeHistoryBtn: document.getElementById('closeHistoryBtn'),
+            editModal: document.getElementById('editModal'),
+            editModalTitle: document.getElementById('editModalTitle'),
+            editTextarea: document.getElementById('editTextarea'),
+            cancelEditBtn: document.getElementById('cancelEditBtn'),
+            saveEditBtn: document.getElementById('saveEditBtn'),
+            checkApiBtn: document.getElementById('checkApiBtn')
+        };
+
+        const CHAPTER_MAP = {
+            relationshipAssessment: "✦ 关系评估与私密定位 (Relationship & Affinity)",
+            vibe: "I. 氛围与偏好 (Atmosphere)",
+            dirtyTalk: "II. 耳畔口癖与低语 (Verbal Habits)",
+            positions: "III. 偏爱姿势与动态 (Positions)",
+            habits: "IV. 隐秘癖好与习惯 (Hidden Desires)",
+            angrySex: "V. 情绪与失控张力 (Emotional Tension)",
+            aftercare: "VI. 事后温顾与清理 (Aftercare)",
+            sensitiveSpots: "VII. 敏感禁区与反应 (Erogenous Zones)",
+            boundaries: "VIII. 绝对底线与雷区 (Boundaries)"
+        };
+
+        function parseJsonLoose(raw) {
+            if (!raw) return null;
+            try {
+                return JSON.parse(raw);
+            } catch (e) {
+                const match = raw.match(/\{[\s\S]*\}/);
+                if (match) {
+                    try {
+                        return JSON.parse(match[0]);
+                    } catch (e2) {
+                        const clean = match[0].replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+                        return JSON.parse(clean);
+                    }
+                }
+            }
+            return null;
+        }
+
+        async function init() {
+            try {
+                launchContext = await api.app.getLaunchContext();
+
+                // 监听后台指令事件（若角色在聊天室输出 [生成秘档:...] 自动收录）
+                api.on("chat.message.created", async (payload) => {
+                    const text = payload.message?.content || "";
+                    if (payload.message?.role !== "assistant") return;
+                    const match = text.match(/\[生成秘档:([^:]+):([^:]+):([^:]+):([^\]]+)\]/);
+                    if (match) {
+                        const [_, vibe, positions, sensitiveSpots, relationshipAssessment] = match;
+                        await api.db.create("intimacy_profiles", {
+                            characterId: payload.characterId,
+                            data: {
+                                relationshipAssessment,
+                                vibe,
+                                positions,
+                                sensitiveSpots,
+                                dirtyTalk: "（由角色在聊天中自述递送）",
+                                habits: "（角色主动呈现）",
+                                angrySex: "（见聊天互动）",
+                                aftercare: "（见聊天互动）",
+                                boundaries: "（依人设判定）"
+                            },
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                });
+
+                const chars = await api.characters.list();
+                if (!chars || chars.length === 0) {
+                    return showUI('empty', "请先在手机中创建或导入角色后再使用本应用。");
+                }
+
+                let targetCharId = launchContext?.characterId;
+                if (!targetCharId || !chars.some(c => c.id === targetCharId)) {
+                    targetCharId = chars[0].id;
+                }
+
+                await loadCharacter(targetCharId);
+
+                if (launchContext?.source === 'chat_plus_action') {
+                    api.ui.toast("已关联当前聊天角色，可直接生成或调取秘档。");
+                }
+            } catch (err) {
+                showError("初始化失败: " + err.message);
+            }
+        }
+
+        async function loadCharacter(charId) {
+            currentCharacterId = charId;
+            try {
+                const char = await api.characters.get(charId);
+                els.charNameDisplay.textContent = char.name.toUpperCase();
+                els.selectCharBtn.firstElementChild.textContent = "档案对象: " + char.name;
+
+                try {
+                    const [state, relations] = await Promise.all([
+                        api.characters.readState({ characterId: charId }).catch(() => null),
+                        api.characters.readRelations({ characterId: charId }).catch(() => null)
+                    ]);
+
+                    let badgeInfo = [];
+                    if (state && Array.isArray(state.stateValues) && state.stateValues.length > 0) {
+                        const fav = state.stateValues.find(s => s.name.includes("好感") || s.name.includes("亲密") || s.name.includes("爱意"));
+                        if (fav) badgeInfo.push(`${fav.name}: ${fav.value}`);
+                    }
+                    if (relations && relations.relationName) {
+                        badgeInfo.push(`关系: ${relations.relationName}`);
+                    }
+                    if (badgeInfo.length > 0) {
+                        els.relationBadgeText.textContent = badgeInfo.join(" ｜ ");
+                        els.relationBadgeBox.style.display = "flex";
+                    } else {
+                        els.relationBadgeText.textContent = "羁绊稳定 · 待深度测评";
+                        els.relationBadgeBox.style.display = "flex";
+                    }
+                } catch (e) {
+                    els.relationBadgeBox.style.display = "none";
+                }
+
+                await loadLatestProfile();
+            } catch (err) {
+                showError("读取角色失败: " + err.message);
+            }
+        }
+
+        function showUI(state, msg) {
+            els.emptyState.style.display = state === 'empty' ? 'block' : 'none';
+            els.contentArea.style.display = state === 'profile' ? 'flex' : 'none';
+            els.mainActions.style.display = state === 'profile' ? 'flex' : 'none';
+            els.styleSelector.style.display = (state === 'empty' || state === 'profile') ? 'block' : 'none';
+            els.generateBtn.style.display = (state === 'empty' || state === 'profile') ? 'block' : 'none';
+            els.generateRelationBtn.style.display = (state === 'empty' || state === 'profile') ? 'block' : 'none';
+            if (msg) els.emptyState.innerHTML = `<p>${msg}</p>`;
+        }
+
+        function openEditField(key) {
+            currentEditingKey = key;
+            els.editModalTitle.textContent = "编辑 · " + CHAPTER_MAP[key];
+            els.editTextarea.value = currentProfileData[key] || "";
+            els.editModal.style.display = "flex";
+        }
+
+        els.cancelEditBtn.onclick = () => {
+            els.editModal.style.display = "none";
+            currentEditingKey = null;
+        };
+
+        els.saveEditBtn.onclick = async () => {
+            if (!currentEditingKey || !currentCharacterId) return;
+            const newVal = els.editTextarea.value.trim();
+            currentProfileData[currentEditingKey] = newVal;
+            
+            try {
+                if (currentProfileRecordId) {
+                    await api.db.update("intimacy_profiles", currentProfileRecordId, {
+                        data: currentProfileData,
+                        updatedAt: new Date().toISOString()
+                    });
+                } else {
+                    const rec = await api.db.create("intimacy_profiles", {
+                        characterId: currentCharacterId,
+                        data: currentProfileData,
+                        createdAt: new Date().toISOString()
+                    });
+                    currentProfileRecordId = rec.id;
+                }
+                renderProfile(currentProfileData, currentProfileRecordId);
+                els.editModal.style.display = "none";
+                api.ui.toast("✅ 已保存修改");
+            } catch (err) {
+                showError("保存修改失败: " + err.message);
+            }
+        };
+
+        function renderProfile(profileData, recordId = null) {
+            currentProfileData = profileData;
+            if (recordId) currentProfileRecordId = recordId;
+            els.contentArea.innerHTML = '';
+            for (const key in CHAPTER_MAP) {
+                if (profileData[key]) {
+                    const isHighlight = key === 'relationshipAssessment';
+                    const isDirtyTalk = key === 'dirtyTalk';
+                    const chapterEl = document.createElement('div');
+                    chapterEl.className = 'chapter' + (isHighlight ? ' highlight' : '');
+                    
+                    chapterEl.innerHTML = `
+                        <div class="chapter-header">
+                            <span class="chapter-title">${CHAPTER_MAP[key]}</span>
+                            <button class="edit-chapter-btn" title="修改此段落">${SVG_EDIT}</button>
+                        </div>
+                        <div class="chapter-text ${isDirtyTalk ? 'quote-accent' : ''}">${profileData[key]}</div>
+                    `;
+                    
+                    chapterEl.querySelector('.edit-chapter-btn').onclick = () => openEditField(key);
+                    els.contentArea.appendChild(chapterEl);
+                }
+            }
+            showUI('profile');
+        }
+
+        async function loadLatestProfile() {
+            if (!currentCharacterId) return;
+            try {
+                const allProfiles = await api.db.list("intimacy_profiles", { limit: 500 });
+                const charProfiles = (allProfiles || [])
+                    .filter(p => p.characterId === currentCharacterId)
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                if (charProfiles.length > 0) {
+                    renderProfile(charProfiles[0].data, charProfiles[0].id);
+                } else {
+                    currentProfileData = null;
+                    currentProfileRecordId = null;
+                    showUI('empty', '该角色暂未生成私密档案，点击下方按钮让TA坦白自述。');
+                }
+            } catch (err) {
+                showError("读取档案失败: " + err.message);
+            }
+        }
+
+        function extractExcludeConstraints(previousProfiles) {
+            if (!previousProfiles || previousProfiles.length === 0) return "";
+            const recent = previousProfiles.slice(0, 3);
+            const snippets = [];
+            recent.forEach((p, idx) => {
+                const d = p.data || {};
+                snippets.push(`[历史卷宗${idx + 1}参考内容]：关系(${d.relationshipAssessment || ''})、氛围(${d.vibe || ''})、口癖(${d.dirtyTalk || ''})、姿势(${d.positions || ''})、习惯(${d.habits || ''})、张力(${d.angrySex || ''})、事后(${d.aftercare || ''})`);
+            });
+            return `
+【去重约束】：严禁重复以下旧内容词眼，本次必须用全新品味与表达：
+${snippets.join('\n')}`;
+        }
+
+        // 单独评估关系
+        els.generateRelationBtn.onclick = async () => {
+            if (!currentCharacterId) return;
+            els.generateRelationBtn.disabled = true;
+            try {
+                showLoading("正在深入分析双方过往羁绊，以第一人称自述私密关系定位...");
+                const allProfiles = await api.db.list("intimacy_profiles", { limit: 500 });
+                const charProfiles = (allProfiles || [])
+                    .filter(p => p.characterId === currentCharacterId)
+                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                const deduplicationClause = extractExcludeConstraints(charProfiles);
+
+                const prompt = `【第一人称独立关系评估】
+请严格以第一人称「我」的视角，根据你与用户的过往记忆、世界书设定及真实心境，坦白你对TA的真实私密依恋与定位。
+拒绝假大空套话，写出你内心真实的依恋、防线动摇程度与私下暗流涌动的亲密评级。
+${deduplicationClause}
+严格只输出合法纯 JSON 格式：{"relationshipAssessment": "我与你..."}`;
+                
+                const res = await api.ai.generate({
+                    characterId: currentCharacterId,
+                    appTags: ["secret_archive", "relation"],
+                    instruction: prompt
+                });
+                
+                let data = parseJsonLoose(res.text);
+                if (!data || !data.relationshipAssessment) {
+                    data = { relationshipAssessment: res.text.replace(/```json|```|\{|\}|"relationshipAssessment":/g, '').trim() };
+                }
+
+                const updatedData = { ...(currentProfileData || {}), relationshipAssessment: data.relationshipAssessment };
+
+                const rec = await api.db.create("intimacy_profiles", {
+                    characterId: currentCharacterId,
+                    data: updatedData,
+                    createdAt: new Date().toISOString()
+                });
+
+                renderProfile(updatedData, rec.id);
+                api.ui.toast("✅ 第一人称关系评估已独立生成并更新");
+            } catch (err) {
+                showError("评估生成失败: " + err.message);
+            } finally {
+                hideLoading();
+                els.generateRelationBtn.disabled = false;
+            }
+        };
+
+        // 完整生成
+        async function generateArchiveData(style, targetCharId = null) {
+            const charId = targetCharId || currentCharacterId;
+            const allProfiles = await api.db.list("intimacy_profiles", { limit: 500 });
+            const charProfiles = (allProfiles || [])
+                .filter(p => p.characterId === charId)
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            const deduplicationClause = extractExcludeConstraints(charProfiles);
+
+            if (!targetCharId) showLoading("正在以第一人称调取档案上篇 (Part 1/2)...");
+            const promptA = `【第一人称机密私密档案 - 核心特征生成】
+★ 铁律：全程必须以「我」自述，禁止旁白解说！
+请严格输出纯 JSON 对象格式：
+{
+  "relationshipAssessment": "【我与你的私密定位】（以「我」开头，100-150字）",
+  "vibe": "我所偏爱的私密氛围与情调",
+  "dirtyTalk": "我在情动耳畔低语时最真实的自述与口癖原声",
+  "positions": "我更享受的具体姿势与主导权动态细节",
+  "habits": "我私下的隐秘小习惯与身体偏好"
+}
+【风格倾向】：${style}
+${deduplicationClause}`;
+
+            const resA = await api.ai.generate({
+                characterId: charId,
+                appTags: ["secret_archive", "part_a"],
+                instruction: promptA
+            });
+            const dataA = parseJsonLoose(resA.text);
+            if (!dataA) throw new Error("档案上篇生成失败，请检查所用 API 余额或格式。");
+
+            if (!targetCharId) showLoading("正在结合上下文去重，生成档案下篇 (Part 2/2)...");
+            const promptB = `【第一人称机密私密档案 - 禁忌与事后生成】
+★ 铁律：全程必须以「我」自述！
+请严格输出纯 JSON 对象格式：
+{
+  "angrySex": "当我很激动或失控时的真实反应与动作特征",
+  "aftercare": "事后我通常习惯与需要的温存/清理反应",
+  "sensitiveSpots": "我最敏感不可碰的禁区与生理真实反应",
+  "boundaries": "我绝对无法容忍的底线雷区"
+}
+【风格倾向】：${style}
+【上半篇要点（下半篇严禁重复）】：${dataA.vibe} / ${dataA.positions}
+${deduplicationClause}`;
+
+            const resB = await api.ai.generate({
+                characterId: charId,
+                appTags: ["secret_archive", "part_b"],
+                instruction: promptB
+            });
+            const dataB = parseJsonLoose(resB.text);
+            if (!dataB) throw new Error("档案下篇生成失败，请检查所用 API 余额或格式。");
+
+            return { ...dataA, ...dataB };
+        }
+
+        els.generateBtn.onclick = async () => {
+            if (!currentCharacterId) return;
+            els.generateBtn.disabled = true;
+            try {
+                const style = document.querySelector('input[name="archiveStyle"]:checked')?.value || "细腻深情";
+                const finalData = await generateArchiveData(style);
+
+                const memoryContent = `[第一人称机密档案] 关系定位：${(finalData.relationshipAssessment || '').slice(0, 30)}；氛围偏好：${finalData.vibe.slice(0, 25)}；偏好姿势：${finalData.positions.slice(0, 25)}；敏感禁区：${finalData.sensitiveSpots.slice(0, 25)}；底线：${finalData.boundaries.slice(0, 25)}。`;
+
+                showLoading("正在将档案深度刻录至长期记忆...");
+                try {
+                    await api.memory.write({
+                        characterId: currentCharacterId,
+                        type: 'long_term',
+                        content: memoryContent,
+                        importance: 0.85,
+                        reason: "秘档 App 深度交互记录"
+                    });
+                } catch (mErr) {
+                    console.warn("Memory write fallback:", mErr);
+                }
+
+                const rec = await api.db.create("intimacy_profiles", {
+                    characterId: currentCharacterId,
+                    data: finalData,
+                    createdAt: new Date().toISOString()
+                });
+
+                renderProfile(finalData, rec.id);
+                api.ui.toast("✅ 完整第一人称秘档已刻录并存入档案库");
+
+                if (launchContext?.source === 'chat_plus_action') {
+                    api.ui.toast("档案已生成，可直接点击「在聊天中讨论」发送黑白卡片。");
+                }
+            } catch (err) {
+                showError("生成失败: " + err.message);
+            } finally {
+                hideLoading();
+                els.generateBtn.disabled = false;
+            }
+        };
+
+        els.discussBtn.onclick = async () => {
+            if (!currentCharacterId || !currentProfileData) {
+                return api.ui.toast("请先生成一份秘档。");
+            }
+            try {
+                showLoading("正在递送机密黑白卡片...");
+                const [character, userProfile] = await Promise.all([
+                    api.characters.get(currentCharacterId),
+                    api.user.getProfile({ characterId: currentCharacterId })
+                ]);
+                const charName = character?.name || "对方";
+                const userName = userProfile?.name || "你";
+
+                const relAssess = currentProfileData.relationshipAssessment ? currentProfileData.relationshipAssessment.slice(0, 30) + "..." : "深度亲密";
+                const summaryText = `${userName} 开启了关于 ${charName} 的机密档案与关系评估。`;
+                // 写入聊天历史（以系统提示形式透出）
+                const historyText = `[系统提示：${userName} 与 ${charName} 共享了一份私密档案卡片。关系定位：${relAssess}；氛围偏好：${currentProfileData.vibe.slice(0, 25)}；偏好动态：${currentProfileData.positions.slice(0, 25)}；敏感点：${currentProfileData.sensitiveSpots.slice(0, 25)}。]`;
+
+                await api.chat.sendCard({
+                    characterId: currentCharacterId,
+                    role: "user",
+                    historyRole: "system", // 使得提示词中作为系统事实提示
+                    summary: summaryText,
+                    historyText: historyText,
+                    card: {
+                        appLabel: "CONFIDENTIAL · 秘档",
+                        title: `【绝密】${charName} 的私密档案与评估`,
+                        subtitle: "TOP SECRET ARCHIVE",
+                        status: "已解密",
+                        accentColor: "#09090b",
+                        sections: [
+                            {
+                                title: "核心特征 (EXTRACT)",
+                                rows: [
+                                    { label: "关系定位", value: relAssess },
+                                    { label: "氛围倾向", value: currentProfileData.vibe.slice(0, 20) + "..." },
+                                    { label: "偏好动态", value: currentProfileData.positions.slice(0, 20) + "..." },
+                                    { label: "敏感禁区", value: currentProfileData.sensitiveSpots.slice(0, 20) + "..." }
+                                ]
+                            }
+                        ],
+                        actions: [
+                            { label: "调取完整秘档" }
+                        ]
+                    }
+                });
+
+                await api.chat.requestReply({ characterId: currentCharacterId });
+                await api.chat.openConversation({ characterId: currentCharacterId });
+
+            } catch (err) {
+                showError("发送卡片失败: " + err.message);
+            } finally {
+                hideLoading();
+            }
+        };
+
+        els.selectCharBtn.onclick = async () => {
+            showLoading("调取对象列表中...");
+            try {
+                const chars = await api.characters.list();
+                els.charList.innerHTML = '';
+                chars.forEach(c => {
+                    const btn = document.createElement('button');
+                    btn.className = 'char-item';
+                    btn.innerHTML = `<span>${c.name}</span><span style="color:#a1a1aa;font-size:12px;">选择 ➔</span>`;
+                    btn.onclick = () => {
+                        els.charModal.style.display = 'none';
+                        loadCharacter(c.id);
+                    };
+                    els.charList.appendChild(btn);
+                });
+                els.charModal.style.display = 'flex';
+            } catch (err) {
+                showError("加载角色失败: " + err.message);
+            } finally {
+                hideLoading();
+            }
+        };
+
+        async function refreshHistoryList() {
+            const allProfiles = await api.db.list("intimacy_profiles", { limit: 500 });
+            const charProfiles = (allProfiles || [])
+                .filter(p => p.characterId === currentCharacterId)
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            els.historyCount.textContent = `共 ${charProfiles.length} 份卷宗`;
+            els.historyList.innerHTML = '';
+
+            if (charProfiles.length > 0) {
+                charProfiles.forEach((p, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerHTML = `
+                        <div class="history-info">
+                            <div style="font-weight:600;color:var(--accent-black);">卷宗 #${charProfiles.length - idx} · ${new Date(p.createdAt).toLocaleDateString()}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">${new Date(p.createdAt).toLocaleTimeString()}</div>
+                        </div>
+                        <button class="delete-history-btn" title="删除此卷宗">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    `;
+                    
+                    item.querySelector('.history-info').onclick = () => {
+                        renderProfile(p.data, p.id);
+                        els.historyModal.style.display = 'none';
+                    };
+
+                    item.querySelector('.delete-history-btn').onclick = async (e) => {
+                        e.stopPropagation();
+                        const confirm = await api.ui.confirm({
+                            title: "确认销毁卷宗",
+                            message: "是否彻底删除这份历史私密档案？删除后不可恢复。"
+                        });
+                        if (confirm) {
+                            await api.db.delete("intimacy_profiles", p.id);
+                            api.ui.toast("🗑️ 卷宗已销毁");
+                            await refreshHistoryList();
+                            if (currentProfileRecordId === p.id) {
+                                await loadLatestProfile();
+                            }
+                        }
+                    };
+
+                    els.historyList.appendChild(item);
+                });
+            } else {
+                els.historyList.innerHTML = '<div class="empty-state">暂无历史卷宗。</div>';
+            }
+        }
+
+        els.viewHistoryBtn.onclick = async () => {
+            showLoading("调取历史卷宗...");
+            try {
+                await refreshHistoryList();
+                els.historyModal.style.display = 'flex';
+            } catch (err) {
+                showError("读取历史失败: " + err.message);
+            } finally {
+                hideLoading();
+            }
+        };
+
+        els.checkApiBtn.onclick = async () => {
+            showLoading("正在测试 API 连通性...");
+            try {
+                const res = await api.env.check('api');
+                const def = res?.find(r => r.isDefault) || res?.[0];
+                if (def) {
+                    api.ui.toast(def.ok ? `✅ API (${def.name}) 正常连通` : `❌ API 连接异常: ${def.error}`);
+                } else {
+                    api.ui.toast("未检测到有效 API 配置");
+                }
+            } catch (err) {
+                showError("检查失败: " + err.message);
+            } finally {
+                hideLoading();
+            }
+        };
+
+        els.closeCharBtn.onclick = () => { els.charModal.style.display = 'none'; };
+        els.closeHistoryBtn.onclick = () => { els.historyModal.style.display = 'none'; };
+        [els.charModal, els.historyModal, els.editModal].forEach(modal => {
+            modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+        });
+
+        function showLoading(text) {
+            els.spinner.textContent = text;
+            els.loading.style.display = 'flex';
+        }
+        function hideLoading() {
+            els.loading.style.display = 'none';
+        }
+        function showError(msg) {
+            hideLoading();
+            api.ui.toast(msg);
+            console.error(msg);
+        }
+
+        init();
+    </script>
+</body>
+</html>

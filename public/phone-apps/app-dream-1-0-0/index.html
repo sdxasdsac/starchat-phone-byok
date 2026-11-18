@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>梦境</title>
+  <style>
+    :root {
+      --safe-top: var(--ai-phone-app-safe-top, 88px);
+      --safe-bottom: var(--ai-phone-app-safe-bottom, 24px);
+      --primary: rgba(255, 255, 255, 0.8);
+      --text: #333;
+    }
+    body, html {
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      font-family: inherit;
+      background: transparent;
+      color: var(--text);
+      overflow: hidden;
+    }
+    html { background: #1a1b41; }
+    * { box-sizing: border-box; }
+    
+    /* 雾气背景与动画 (温馨、朦胧、星空) */
+    .bg-overlay {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: url('https://www.imgfox.cn/apis/uploads/20260816/96f75d6bcf7547c3/IMG_9577.jpeg') no-repeat center center;
+      background-size: cover;
+      z-index: -3;
+    }
+    #view-home { background: transparent; }
+    #view-config { background: transparent; }
+    #view-echoes { background: transparent; }
+    .stars {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        radial-gradient(2px 2px at 20px 30px, #eee, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 40px 70px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 130px 80px, #fff, rgba(0,0,0,0)),
+        radial-gradient(2px 2px at 160px 120px, #ddd, rgba(0,0,0,0));
+      background-repeat: repeat;
+      background-size: 200px 200px;
+      animation: twinkle 4s infinite alternate;
+      z-index: -2;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .moon {
+      position: absolute;
+      top: 40px; right: 40px;
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: #fdfdfd;
+      box-shadow: 0 0 40px 10px rgba(255, 255, 255, 0.4), inset -10px -10px 20px rgba(0,0,0,0.1);
+      z-index: -2;
+      opacity: 0.8;
+      pointer-events: none;
+    }
+    .fog {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noise)" opacity="0.08"/></svg>');
+      background-blend-mode: screen;
+      animation: drift 60s linear infinite;
+      z-index: -1;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+    @keyframes drift { 0% { background-position: 0 0; } 100% { background-position: 1000px 1000px; } }
+    @keyframes twinkle { 0% { opacity: 0.3; } 100% { opacity: 0.8; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-10px); } }
+
+    /* 磨砂玻璃容器 */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+    }
+
+    .view {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      padding: var(--safe-top) 20px var(--safe-bottom);
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      animation: fadeIn 0.8s ease forwards;
+    }
+    .view.active { display: flex; }
+
+    /* 按钮样式 */
+    .btn {
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      color: #555;
+      font-size: 16px;
+      padding: 14px 24px;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      text-align: center;
+      display: inline-block;
+    }
+    .btn:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.7); }
+    .btn-primary { background: rgba(255, 255, 255, 0.8); color: #222; font-weight: 500; }
+
+    /* 首页 */
+    #view-home { justify-content: center; align-items: center; gap: 30px; }
+    .title { font-size: 32px; font-weight: 300; letter-spacing: 8px; color: #fff; margin-bottom: 20px; text-shadow: 0 0 10px rgba(255,255,255,0.8); }
+
+    /* 表单元素 */
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 14px; color: #333; margin-bottom: 8px; font-weight: 500; }
+    .form-control {
+      display: block; width: 100%; max-width: 100%; box-sizing: border-box; margin: 0;
+      background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255, 255, 255, 0.7);
+      padding: 12px 16px; border-radius: 12px; color: #333; font-size: 15px;
+      outline: none; transition: border 0.3s;
+      -webkit-appearance: none; appearance: none;
+    }
+    input[type="datetime-local"].form-control {
+      min-width: 100%; width: 100%;
+    }
+    .form-control:focus { border-color: #a0aec0; background: rgba(255, 255, 255, 0.7); }
+    textarea.form-control { resize: none; height: 100px; }
+    
+    .char-item {
+      display: inline-block; padding: 8px 16px; margin: 0 8px 8px 0;
+      border-radius: 20px; background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.6);
+      transition: all 0.2s; cursor: pointer;
+    }
+    .char-item.selected { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-color: #ddd; }
+
+    /* 梦境生成与展示 */
+    #view-scene { padding: 0; background: #000; color: #fff; }
+    #scene-bg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover; opacity: 0.6; z-index: 0; transition: opacity 1s;
+    }
+    .scene-content {
+      position: relative; z-index: 1; padding: var(--safe-top) 20px var(--safe-bottom);
+      height: 100%; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; }
+    .btn-exit { background: rgba(0,0,0,0.3); color: #fff; border: 1px solid rgba(255,255,255,0.3); padding: 8px 16px; border-radius: 20px; font-size: 13px; backdrop-filter: blur(4px); }
+    
+    .story-container {
+      flex: 1; overflow-y: auto; margin: 20px 0; padding-bottom: 20px;
+      -webkit-mask-image: linear-gradient(to top, transparent, black 5%, black 90%, transparent);
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .story-paragraph {
+      font-size: 16px; line-height: 1.8; margin-bottom: 16px; text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+      opacity: 0; transform: translateY(10px); transition: all 0.8s ease; cursor: pointer;
+      position: relative; width: 100%;
+    }
+    .story-paragraph.visible { opacity: 1; transform: translateY(0); }
+    
+    /* 梦境模式下，气泡位于底部并有磨砂质感 */
+    body:not(.story-mode-chat) .story-paragraph {
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(12px);
+      padding: 16px 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15);
+      margin-bottom: 0;
+    }
+    
+    /* 对话气泡模式 */
+    .story-mode-chat .story-container { justify-content: flex-start; }
+    .story-mode-chat .story-paragraph {
+      background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+      padding: 12px 16px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 24px;
+    }
+    
+    .msg-actions {
+      display: none; position: absolute; top: -36px; right: 0;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); border-radius: 12px;
+      padding: 4px 8px; z-index: 10;
+    }
+    /* 只有在对话气泡模式下，点击才显示编辑/删除菜单 */
+    .story-mode-chat .story-paragraph:active .msg-actions, 
+    .story-mode-chat .story-paragraph:focus .msg-actions { display: flex; gap: 8px; }
+    
+    .msg-action-btn { background: transparent; border: none; color: #fff; font-size: 12px; cursor: pointer; padding: 4px; }
+    .btn-voice { position: absolute; bottom: -24px; right: 8px; background: rgba(0,0,0,0.4); border: none; color: #fff; font-size: 12px; cursor: pointer; padding: 4px 8px; border-radius: 12px; display: none; }
+    .story-mode-chat .btn-voice { display: block; }
+    
+    .action-area {
+      background: rgba(0,0,0,0.4); backdrop-filter: blur(10px); border-radius: 20px; padding: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .action-input {
+      width: 100%; background: transparent; border: none; color: #fff; font-size: 15px; outline: none;
+      margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.2); padding: 8px 0;
+    }
+    .action-input::placeholder { color: rgba(255,255,255,0.4); }
+    .action-buttons { display: flex; justify-content: flex-end; gap: 10px; }
+    .action-btn { background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 8px 20px; border-radius: 16px; font-size: 14px; }
+
+    /* 回响 */
+    .record-item { background: rgba(255,255,255,0.5); padding: 16px; border-radius: 16px; margin-bottom: 16px; position: relative; }
+    .record-title { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+    .record-meta { font-size: 12px; color: #666; margin-bottom: 8px; }
+    .record-summary { font-size: 14px; color: #444; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .btn-delete-record { position: absolute; top: 16px; right: 16px; color: #ff4d4f; background: none; border: none; font-size: 14px; padding: 4px; }
+
+    /* 遮罩、Loading */
+    #loading {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(5px); z-index: 999; display: none; justify-content: center; align-items: center; flex-direction: column;
+    }
+    .spinner { width: 40px; height: 40px; border: 3px solid rgba(0,0,0,0.1); border-top-color: #555; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="bg-overlay"></div>
+  <div class="stars"></div>
+  <div class="moon"></div>
+  <div class="fog"></div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div id="loading-text" style="color:#555; font-size:14px; letter-spacing:2px;">正在连接意识深处...</div>
+  </div>
+
+  <!-- 首页 -->
+  <div id="view-home" class="view active">
+    <div class="title">梦 境</div>
+    <div class="btn btn-primary" style="width: 200px;" onclick="navTo('config')">入 梦</div>
+    <div class="btn" style="width: 200px;" onclick="loadEchoes()">回 响</div>
+  </div>
+
+  <!-- 配置页 -->
+  <div id="view-config" class="view">
+    <div style="display:flex; align-items:center; margin-bottom:20px;">
+      <div onclick="navTo('home')" style="font-size:24px; padding-right:10px; cursor:pointer;">&lsaquo;</div>
+      <h2 style="margin:0; font-weight:400;">入梦设定</h2>
+    </div>
+    
+    <div class="glass-panel" style="flex:1;">
+      <div class="form-group">
+        <label class="form-label">入梦者 (可多选)</label>
+        <div id="char-list">加载中...</div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">我是否参与梦境？</label>
+        <select id="cfg-participate" class="form-control">
+          <option value="yes">是 (我的意识将投射其中)</option>
+          <option value="no">否 (作为旁观者观察)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">入梦时间</label>
+        <input type="datetime-local" id="cfg-time" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">梦境类型</label>
+        <select id="cfg-type" class="form-control">
+          <option value="美梦">美梦 (温馨美好)</option>
+          <option value="噩梦">噩梦 (恐惧压抑)</option>
+          <option value="清醒梦">清醒梦 (知晓在做梦且能控梦)</option>
+          <option value="平行梦">平行梦 (平行世界的经历)</option>
+          <option value="启示梦">启示梦 (高维智慧的启迪)</option>
+          <option value="春梦">春梦 (NSFW，欲望与亲密)</option>
+          <option value="残思梦">残思梦 (白天残留情绪的加工)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">梦境指引 (选填)</label>
+        <textarea id="cfg-prompt" class="form-control" placeholder="输入你想指定的场景、开端，或留空让意识随机显化..."></textarea>
+      </div>
+
+      <div style="text-align: center; margin-top: 30px;">
+        <div class="btn btn-primary" style="width: 100%;" onclick="startDreamGen()">梦 启</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 生图确认页 -->
+  <div id="view-bggen" class="view" style="padding:0; background:#000;">
+    <img id="preview-bg" style="width:100%; height:100%; object-fit:cover; opacity:0.6;" src="">
+    <div style="position:absolute; bottom:var(--safe-bottom); left:0; right:0; padding:20px; display:flex; flex-direction:column; gap:16px;">
+      <div style="background:rgba(0,0,0,0.5); backdrop-filter:blur(10px); padding:16px; border-radius:16px;">
+        <div style="font-size:12px; color:#aaa; margin-bottom:8px;">AI 梦境视觉描述 (可修改)</div>
+        <textarea id="bg-prompt-edit" style="width:100%; height:80px; background:transparent; border:none; color:#fff; font-size:14px; outline:none; resize:none;"></textarea>
+      </div>
+      <div style="display:flex; justify-content:center; gap:20px;">
+        <div class="btn" style="background:rgba(255,255,255,0.2); color:#fff; border:none; flex:1;" onclick="regenerateBgWithPrompt()">重试生成</div>
+        <div class="btn" style="background:rgba(255,255,255,0.8); color:#000; border:none; flex:1;" onclick="enterDreamScene()">🔍 确认入梦</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 梦境场景页 -->
+  <div id="view-scene" class="view">
+    <img id="scene-bg" src="">
+    <div class="scene-content" onclick="if(!document.getElementById('story-box').classList.contains('story-mode-chat')) showNextParagraph()">
+      <div class="top-bar" onclick="event.stopPropagation()">
+        <div class="btn-exit" onclick="exitDream()">&lsaquo; 退出梦境</div>
+        <div id="scene-title" style="font-size:14px; opacity:0.8;"></div>
+        <div style="display:flex; gap:8px;">
+          <div class="btn-exit" id="btn-replay-view" onclick="replayFromStart()" style="background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.5); display:none; padding:4px 12px; border-radius:16px;">🔄 重播</div>
+          <div class="btn-exit" id="btn-toggle-view" onclick="toggleStoryMode()" style="background:rgba(255,255,255,0.2); border-color:rgba(255,255,255,0.5);">🗒️ 回溯</div>
+        </div>
+      </div>
+      
+      <div class="story-container" id="story-box">
+        <!-- 段落动态插入 -->
+      </div>
+      
+      <div class="action-area" id="action-area" style="display:none;" onclick="event.stopPropagation()">
+        <input type="text" id="user-input" class="action-input" placeholder="输入你的行动或话语...">
+        <div class="action-buttons">
+          <button class="action-btn" style="background:rgba(255,255,255,0.8); color:#000;" onclick="submitAction()">继续</button>
+        </div>
+      </div>
+      
+      <!-- 底部小巧的 loading 状态 -->
+      <div id="inline-loading" style="display:none; align-items:center; gap:8px; padding:8px 0; font-size:12px; color:rgba(255,255,255,0.6);">
+        <div class="spinner" style="width:16px; height:16px; border-width:2px; margin:0; border-top-color:#fff;"></div>
+        潜意识解析中...
+      </div>
+    </div>
+  </div>
+
+  <!-- 记忆总结确认弹窗 -->
+  <div id="view-memory-confirm" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.8); z-index:100; flex-direction:column; justify-content:center; padding:20px;">
+    <div style="background:rgba(255,255,255,0.1); backdrop-filter:blur(12px); border-radius:20px; padding:20px; border:1px solid rgba(255,255,255,0.2);">
+      <h3 style="margin-top:0; color:#fff;">确认梦境总结</h3>
+      <p style="font-size:14px; color:#aaa;">这段内容将被写入角色的短期记忆，可手动修改或补充：</p>
+      <textarea id="memory-summary-edit" style="width:100%; height:150px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:12px; padding:12px; font-size:14px; outline:none; resize:none;"></textarea>
+      
+      <div id="memory-target-select" style="margin-top:16px; display:none;">
+        <p style="font-size:14px; color:#aaa; margin-bottom:8px;">请选择要写入记忆的角色：</p>
+        <div id="memory-char-checkboxes" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+        <button class="btn" style="background:rgba(255,255,255,0.2); color:#fff; border:none;" onclick="document.getElementById('view-memory-confirm').style.display='none'; hideLoading(); navTo('home');">取消录入</button>
+        <button class="btn" style="background:rgba(255,255,255,0.8); color:#000; border:none;" onclick="confirmMemorySummary()">确认录入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 回响页 -->
+  <div id="view-echoes" class="view">
+    <div style="display:flex; align-items:center; margin-bottom:20px;">
+      <div onclick="navTo('home')" style="font-size:24px; padding-right:10px; cursor:pointer;">&lsaquo;</div>
+      <h2 style="margin:0; font-weight:400;">回响</h2>
+    </div>
+    <div class="glass-panel" style="flex:1; overflow-y:auto;" id="echoes-list">
+      <!-- 记录列表 -->
+    </div>
+  </div>
+
+  <script>
+    const api = window.AiPhone;
+    let characters = [];
+    let selectedCharIds = [];
+    let dreamConfig = {};
+    let dreamState = {
+      messages: [],
+      paragraphs: [],
+      currentParaIdx: 0,
+      bgRef: null,
+      bgDataUrl: null,
+      generating: false,
+      chatMode: false
+    };
+
+    // 初始化时间
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('cfg-time').value = now.toISOString().slice(0, 16);
+
+    async function initApp() {
+      try {
+        characters = await api.characters.list();
+        renderCharList();
+      } catch (e) {
+        api.ui.toast("读取角色失败: " + e.message);
+      }
+    }
+
+    function renderCharList() {
+      const ctn = document.getElementById('char-list');
+      ctn.innerHTML = '';
+      characters.forEach(c => {
+        const el = document.createElement('div');
+        el.className = 'char-item';
+        el.textContent = c.name;
+        el.onclick = () => {
+          if (selectedCharIds.includes(c.id)) {
+            selectedCharIds = selectedCharIds.filter(id => id !== c.id);
+            el.classList.remove('selected');
+          } else {
+            selectedCharIds.push(c.id);
+            el.classList.add('selected');
+          }
+        };
+        ctn.appendChild(el);
+      });
+    }
+
+    function navTo(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-' + viewId).classList.add('active');
+    }
+
+    function showLoading(text) {
+      document.getElementById('loading-text').textContent = text;
+      document.getElementById('loading').style.display = 'flex';
+    }
+    function hideLoading() {
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    // 梦境生成起点
+    async function startDreamGen() {
+      if (selectedCharIds.length === 0) return api.ui.toast("请至少选择一位入梦者");
+      
+      dreamConfig = {
+        charIds: selectedCharIds,
+        participate: document.getElementById('cfg-participate').value === 'yes',
+        time: document.getElementById('cfg-time').value,
+        type: document.getElementById('cfg-type').value,
+        prompt: document.getElementById('cfg-prompt').value.trim()
+      };
+
+      await generateBg();
+    }
+
+    async function generateBg() {
+      showLoading("正在构思梦境视觉...");
+      try {
+        let instruction = `请根据以下信息，生成一段用于 AI 绘画的英文 Prompt（只输出英文 prompt 本身，不要其他废话）。\n非常重要：生成的画面必须是纯风景/纯场景，绝对不能包含任何人物、人形、剪影、手脚等生物特征。请在 prompt 中加入 "no humans, empty scene, pure landscape" 等强约束词。\n\n梦境类型：${dreamConfig.type}\n`;
+        if (dreamConfig.prompt) instruction += `用户指引：${dreamConfig.prompt}\n`;
+        else instruction += "要求：模糊、朦胧、神秘的超现实景观，绝对没有人物。";
+
+        const aiRes = await api.ai.generate({
+          characterId: dreamConfig.charIds[0],
+          instruction: instruction
+        });
+        
+        const generatedPrompt = aiRes.text.trim();
+        document.getElementById('bg-prompt-edit').value = generatedPrompt;
+        
+        await regenerateBgWithPrompt(generatedPrompt);
+      } catch (e) {
+        hideLoading();
+        api.ui.toast("构思视觉失败: " + e.message);
+        console.error(e);
+      }
+    }
+
+    async function regenerateBgWithPrompt(promptOverride) {
+      showLoading("正在构建梦境...");
+      try {
+        const prompt = promptOverride || document.getElementById('bg-prompt-edit').value.trim();
+        const res = await api.ai.generateImage({
+          prompt: prompt,
+          characterId: dreamConfig.charIds[0],
+          useReferenceImage: false
+        });
+        
+        dreamState.bgDataUrl = res.dataUrl;
+        document.getElementById('preview-bg').src = res.dataUrl;
+        hideLoading();
+        navTo('bggen');
+      } catch (e) {
+        hideLoading();
+        api.ui.toast("生图失败: " + e.message);
+        console.error(e);
+      }
+    }
+
+    async function enterDreamScene() {
+      navTo('scene');
+      document.getElementById('scene-bg').src = dreamState.bgDataUrl;
+      document.getElementById('scene-title').textContent = `${dreamConfig.type}`;
+      document.getElementById('story-box').innerHTML = '';
+      document.getElementById('action-area').style.display = 'none';
+      document.getElementById('btn-replay-view').style.display = 'none';
+      
+      dreamState.messages = [];
+      dreamState.paragraphs = [];
+      dreamState.currentParaIdx = 0;
+      dreamState.chatMode = false;
+      dreamState.currentRecordId = null;
+      document.body.classList.remove('story-mode-chat');
+      document.getElementById('story-box').classList.remove('story-mode-chat');
+      document.getElementById('btn-toggle-view').innerHTML = '🗒️ 回溯';
+      
+      await genNextTurn(true);
+    }
+
+    function toggleStoryMode() {
+      dreamState.chatMode = !dreamState.chatMode;
+      const box = document.getElementById('story-box');
+      const btn = document.getElementById('btn-toggle-view');
+      
+      if (dreamState.chatMode) {
+        document.body.classList.add('story-mode-chat');
+        box.classList.add('story-mode-chat');
+        btn.innerHTML = '🌌 梦境';
+        document.getElementById('btn-replay-view').style.display = 'none';
+        // 在记录模式下显示所有历史段落
+        renderAllHistory();
+        
+        // 恢复输入框状态（如果本来应该是显示的）
+        if (dreamState.currentParaIdx >= dreamState.paragraphs.length && !dreamState.generating) {
+            showActionArea();
+        }
+      } else {
+        document.body.classList.remove('story-mode-chat');
+        box.classList.remove('story-mode-chat');
+        btn.innerHTML = '🗒️ 回溯';
+        
+        // 在梦境模式下只显示当前最新的一段
+        renderCurrentParagraphOnly();
+        
+        // 如果当前这批已经放完了，显示重播按钮
+        if (dreamState.currentParaIdx >= dreamState.paragraphs.length && !dreamState.generating && dreamState.paragraphs.length > 0) {
+            document.getElementById('btn-replay-view').style.display = 'block';
+        }
+      }
+    }
+
+    function renderAllHistory() {
+      const box = document.getElementById('story-box');
+      box.innerHTML = '';
+      
+      let msgIdx = 0;
+      for (const msg of dreamState.messages) {
+        if (msg.role === 'assistant') {
+          const paras = msg.content.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+          let subIdx = 0;
+          for (const text of paras) {
+            appendParagraphNode(box, text, msgIdx, msg.role, subIdx);
+            subIdx++;
+          }
+        } else if (msg.role === 'user') {
+          appendParagraphNode(box, msg.content, msgIdx, msg.role);
+        }
+        msgIdx++;
+      }
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function renderCurrentParagraphOnly() {
+      const box = document.getElementById('story-box');
+      box.innerHTML = '';
+      
+      if (dreamState.paragraphs.length > 0) {
+        const idx = Math.max(0, dreamState.currentParaIdx - 1);
+        const text = dreamState.paragraphs[idx];
+        const msgIdx = dreamState.messages.length - 1;
+        appendParagraphNode(box, text, msgIdx, 'assistant');
+      }
+    }
+
+    async function genNextTurn(isStart) {
+      if (dreamState.generating) return;
+      dreamState.generating = true;
+      document.getElementById('action-area').style.display = 'none';
+      document.getElementById('btn-replay-view').style.display = 'none';
+      
+      if (isStart) {
+        showLoading("连接意识深处...");
+      } else {
+        document.getElementById('inline-loading').style.display = 'flex';
+        const box = document.getElementById('story-box');
+        box.scrollTop = box.scrollHeight;
+      }
+
+      try {
+        let instruction = "";
+        let appTags = [];
+        
+        if (isStart) {
+          appTags = ["dream", "start"];
+          instruction = `当前梦境类型：${dreamConfig.type}\n入梦时间：${dreamConfig.time}\n用户是否在梦中：${dreamConfig.participate ? "是" : "否"}\n`;
+          
+          if (dreamConfig.charIds.length > 1) {
+            instruction += `警告：这是一场由多位角色共同参与的集体梦境，这是他们的梦，不是用户的梦。请确保多位角色在梦境中互动。\n`;
+          } else {
+            instruction += `警告：这是该角色的梦境，不是用户的梦。请以该角色的潜意识为主视角。\n`;
+          }
+          
+          if (dreamConfig.prompt) instruction += `初始指引：${dreamConfig.prompt}\n`;
+        } else {
+          appTags = ["dream", "continue"];
+          instruction = "请继续推进梦境。";
+        }
+
+        const args = {
+          appTags,
+          instruction,
+          messages: dreamState.messages
+        };
+
+        if (dreamConfig.charIds.length === 1) {
+          args.characterId = dreamConfig.charIds[0];
+        } else {
+          args.characterIds = dreamConfig.charIds;
+        }
+
+        const res = await api.ai.generate(args);
+        
+        // 保存消息历史
+        dreamState.messages.push(...(res.appendMessages || []));
+        
+        // 解析段落（按换行符），过滤空段落，去除多余空格
+        const text = res.text || "";
+        const paras = text.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+        
+        dreamState.paragraphs = paras;
+        dreamState.currentParaIdx = 0;
+        
+        hideLoading();
+        document.getElementById('inline-loading').style.display = 'none';
+        dreamState.generating = false;
+        showNextParagraph(); // 显示第一段
+      } catch (e) {
+        hideLoading();
+        document.getElementById('inline-loading').style.display = 'none';
+        dreamState.generating = false;
+        api.ui.toast("生成失败: " + e.message);
+      }
+    }
+
+    function appendParagraphNode(box, text, msgIdx, role, subIdx = -1) {
+      const p = document.createElement('div');
+      p.className = 'story-paragraph visible';
+      p.tabIndex = 0;
+      
+      let displayText = role === 'user' ? "> " + text : text;
+      if (role === 'user') p.style.color = '#c9a36a';
+      
+      p.innerHTML = `
+        ${displayText}
+        <div class="msg-actions">
+          <button class="msg-action-btn" style="color:#c9a36a;" onclick="event.stopPropagation(); jumpToParagraph(${msgIdx}, ${subIdx})">定位</button>
+          <button class="msg-action-btn" onclick="event.stopPropagation(); editMessage(this, ${msgIdx})">编辑</button>
+          <button class="msg-action-btn" onclick="event.stopPropagation(); deleteMessage(this, ${msgIdx})">删除</button>
+          <button class="msg-action-btn" onclick="event.stopPropagation(); rerollFrom(${msgIdx})">重塑</button>
+        </div>
+      `;
+      
+      // 如果包含对话内容且是 AI 生成的消息，添加语音按钮
+      // 判断是否有台词特征
+      const hasQuotes = /[“"「]/.test(text);
+      
+      if (role === 'assistant' && hasQuotes) {
+        const btnVoice = document.createElement('button');
+        btnVoice.className = 'btn-voice';
+        btnVoice.innerHTML = '🔊 听';
+        btnVoice.onclick = (e) => {
+          e.stopPropagation();
+          playVoice(text);
+        };
+        p.appendChild(btnVoice);
+      }
+      
+      box.appendChild(p);
+      return p;
+    }
+
+    async function playVoice(text) {
+      if (!dreamConfig.charIds || dreamConfig.charIds.length === 0) return;
+      try {
+        // 终极清洗逻辑：哪怕模型没遵守约束输出了乱七八糟的双引号，前端也必须拦住
+        let speakText = "";
+        let charNameReg = new RegExp((characters.find(c => c.id === dreamConfig.charIds[0])?.name || "角色").split('').join('.?'), 'i');
+        
+        // 匹配所有带前缀的引号内容，例如：前缀文案 + “台词”
+        const matches = text.match(/([^。！？\n]*?)[“"「]([^”"」]+)[”"」]/g);
+        
+        if (matches) {
+            for (const m of matches) {
+                const prefix = m.replace(/[“"「].*$/, '');
+                
+                // 1. 如果前缀明确是 user、你、我 在说话，直接过滤
+                if (/(?:你|user|我|玩家)[^，,。！？.!?]*?(?:说|问|道|答|喊|叫|叹|开口|回答|心想|想)/i.test(prefix)) {
+                    continue;
+                }
+                
+                // 2. 如果引号里只有1-3个字，极大概率是强调物品，过滤
+                const quoteMatch = m.match(/[“"「]([^”"」]+)[”"」]/);
+                if (!quoteMatch || quoteMatch[1].length <= 3) {
+                    continue;
+                }
+                
+                // 3. 如果前缀里没有角色的名字、也没有“他/她/它说”，并且引号里没有标点符号（像是一段短语），过滤
+                if (!charNameReg.test(prefix) && !/(?:他|她|它)[^，,。！？.!?]*?(?:说|问|道|答|喊|叫|叹|开口|回答)/.test(prefix) && !/[，,。！？.!?]/.test(quoteMatch[1])) {
+                    continue;
+                }
+
+                // 通过了重重考验，提取台词
+                speakText += quoteMatch[1] + "  ";
+            }
+        }
+        
+        if (!speakText.trim()) {
+           api.ui.toast("未检测到角色的有效台词");
+           return;
+        }
+
+        api.ui.toast("唤醒角色声纹...");
+        const speech = await api.voice.tts({ characterId: dreamConfig.charIds[0], text: speakText.trim() });
+        await api.voice.play({ dataUrl: speech.dataUrl });
+      } catch (e) {
+        api.ui.toast("语音播放失败: " + e.message);
+      }
+    }
+
+    function showNextParagraph() {
+      if (dreamState.paragraphs.length === 0) return;
+      if (dreamState.currentParaIdx >= dreamState.paragraphs.length) {
+        if (!dreamState.generating) {
+           showActionArea();
+           if (!dreamState.chatMode) document.getElementById('btn-replay-view').style.display = 'block';
+        }
+        return;
+      }
+
+      document.getElementById('btn-replay-view').style.display = 'none';
+
+      const box = document.getElementById('story-box');
+      const text = dreamState.paragraphs[dreamState.currentParaIdx];
+      const msgIdx = dreamState.messages.length - 1;
+      const subIdx = dreamState.currentParaIdx;
+      
+      if (!dreamState.chatMode) {
+        // 梦境模式：清空旧的，只显示当前的
+        box.innerHTML = '';
+      }
+      
+      const p = appendParagraphNode(box, text, msgIdx, 'assistant', subIdx);
+      p.classList.remove('visible');
+      
+      requestAnimationFrame(() => {
+        p.classList.add('visible');
+        box.scrollTop = box.scrollHeight;
+      });
+      
+      // 梦境模式下，只自动朗读 AI 回复中包含对话的段落
+      // 由于这里渲染的全部是 assistant 的段落，如果有引号，交给 playVoice 内部做进一步清洗
+      if (!dreamState.chatMode && /[“"「]/.test(text)) {
+        playVoice(text);
+      }
+
+      dreamState.currentParaIdx++;
+    }
+
+    function replayFromStart() {
+      // 重新从当前这一轮的第一段开始展示
+      if (dreamState.chatMode) return;
+      document.getElementById('btn-replay-view').style.display = 'none';
+      document.getElementById('action-area').style.display = 'none';
+      dreamState.currentParaIdx = 0;
+      showNextParagraph();
+    }
+
+    function jumpToParagraph(msgIdx, subIdx) {
+      if (!dreamState.chatMode) return; // 只能在记录模式下点击定位
+      
+      // 切换到梦境模式
+      toggleStoryMode();
+      
+      const box = document.getElementById('story-box');
+      box.innerHTML = '';
+      document.getElementById('action-area').style.display = 'none';
+      document.getElementById('btn-replay-view').style.display = 'block';
+      
+      const msg = dreamState.messages[msgIdx];
+      if (!msg) return;
+      
+      let textToDisplay = msg.content;
+      
+      if (msg.role === 'assistant') {
+         const paras = msg.content.split('\n').map(p => p.trim()).filter(p => p.length > 0);
+         dreamState.paragraphs = paras;
+         if (subIdx >= 0 && subIdx < paras.length) {
+            dreamState.currentParaIdx = subIdx + 1;
+            textToDisplay = paras[subIdx];
+         } else {
+            dreamState.currentParaIdx = paras.length;
+            textToDisplay = paras[paras.length - 1]; // 默认展示最后一句
+         }
+      } else {
+         dreamState.paragraphs = [msg.content];
+         dreamState.currentParaIdx = 1;
+      }
+      
+      const p = appendParagraphNode(box, textToDisplay, msgIdx, msg.role, subIdx);
+      requestAnimationFrame(() => {
+        box.scrollTop = box.scrollHeight;
+      });
+    }
+
+    async function editMessage(btn, idx) {
+      const p = btn.closest('.story-paragraph');
+      // 简单实现：将文本替换为输入框
+      const oldText = p.childNodes[0].nodeValue.trim();
+      const input = document.createElement('textarea');
+      input.value = oldText;
+      input.style.width = '100%';
+      input.style.background = 'rgba(0,0,0,0.5)';
+      input.style.color = '#fff';
+      input.style.border = '1px solid rgba(255,255,255,0.3)';
+      input.style.borderRadius = '8px';
+      input.style.padding = '8px';
+      input.style.minHeight = '60px';
+      
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent = '保存';
+      saveBtn.style.marginTop = '8px';
+      saveBtn.onclick = (e) => {
+        e.stopPropagation();
+        const newText = input.value.trim();
+        if (dreamState.messages[idx]) {
+          dreamState.messages[idx].content = newText;
+        }
+        p.childNodes[0].nodeValue = newText + ' ';
+        p.removeChild(input);
+        p.removeChild(saveBtn);
+      };
+      
+      p.childNodes[0].nodeValue = '';
+      p.insertBefore(saveBtn, p.querySelector('.msg-actions'));
+      p.insertBefore(input, saveBtn);
+    }
+
+    async function deleteMessage(btn, idx) {
+      const ok = await api.ui.confirm({ title: "删除", message: "确定删除此段记忆？" });
+      if (ok) {
+        btn.closest('.story-paragraph').remove();
+        if (dreamState.messages[idx]) {
+           dreamState.messages.splice(idx, 1);
+        }
+      }
+    }
+
+    async function rerollFrom(idx) {
+      // 截断该消息之后的所有历史
+      dreamState.messages = dreamState.messages.slice(0, idx);
+      // 清空 UI，重新基于当前历史渲染
+      document.getElementById('story-box').innerHTML = '';
+      // 简单恢复前面的 UI（粗略实现，实际需更精细的渲染逻辑）
+      if (dreamState.chatMode) {
+        renderAllHistory();
+      } else {
+        renderCurrentParagraphOnly();
+      }
+      await genNextTurn(dreamState.messages.length === 0);
+    }
+
+    function showActionArea() {
+      const area = document.getElementById('action-area');
+      const input = document.getElementById('user-input');
+      const btnReroll = document.getElementById('btn-reroll');
+
+      area.style.display = 'block';
+      
+      if (dreamConfig.participate) {
+        input.style.display = 'block';
+        input.value = '';
+      } else {
+        input.style.display = 'none';
+      }
+
+      // 重塑按钮只在第一轮（或没输入时）明显有用，这里简单都放出
+      btnReroll.style.display = 'block';
+      
+      // 滚动到底部
+      const box = document.getElementById('story-box');
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function submitAction() {
+      const input = document.getElementById('user-input');
+      const text = input.value.trim();
+      
+      if (dreamConfig.participate && text) {
+        dreamState.messages.push({
+          role: "user",
+          content: text,
+          createdAt: new Date().toISOString()
+        });
+        
+        // 界面上显示用户的输入
+        const box = document.getElementById('story-box');
+        if (!dreamState.chatMode) box.innerHTML = '';
+        const p = appendParagraphNode(box, text, dreamState.messages.length - 1, 'user');
+        
+        requestAnimationFrame(() => {
+          box.scrollTop = box.scrollHeight;
+        });
+      }
+      
+      await genNextTurn(false);
+    }
+
+    async function rerollLast() {
+      // 简单实现：移除最后一次 assistant 的消息，重新生成
+      const lastAssIdx = dreamState.messages.map(m => m.role).lastIndexOf("assistant");
+      if (lastAssIdx !== -1) {
+        dreamState.messages = dreamState.messages.slice(0, lastAssIdx);
+      }
+      // UI 上清空上一轮的文字... 简单起见，清空整个展示，只显示之前的历史（实现较复杂，这里简化为清空全部文本框重来，体验上类似刷新当前页）
+      document.getElementById('story-box').innerHTML = '';
+      await genNextTurn(dreamState.messages.length === 0);
+    }
+
+    function renderMemoryCheckboxes(targetCharIds) {
+      const ctn = document.getElementById('memory-char-checkboxes');
+      ctn.innerHTML = '';
+      if (targetCharIds.length <= 1) {
+        document.getElementById('memory-target-select').style.display = 'none';
+        return;
+      }
+      document.getElementById('memory-target-select').style.display = 'block';
+      
+      targetCharIds.forEach(cid => {
+        const cInfo = characters.find(c => c.id === cid);
+        if (!cInfo) return;
+        
+        const label = document.createElement('label');
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.style.gap = '4px';
+        label.style.color = '#fff';
+        label.style.fontSize = '14px';
+        label.style.background = 'rgba(255,255,255,0.1)';
+        label.style.padding = '4px 8px';
+        label.style.borderRadius = '12px';
+        
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = cid;
+        cb.checked = true; // 默认全选
+        
+        label.appendChild(cb);
+        label.appendChild(document.createTextNode(cInfo.name));
+        ctn.appendChild(label);
+      });
+    }
+
+    function getSelectedMemoryCharIds(defaultIds) {
+      if (defaultIds.length <= 1) return defaultIds;
+      const checkboxes = document.querySelectorAll('#memory-char-checkboxes input[type="checkbox"]:checked');
+      const ids = Array.from(checkboxes).map(cb => cb.value);
+      return ids.length > 0 ? ids : defaultIds; // 如果一个没选就默认全选，容错
+    }
+
+    async function exitDream() {
+      if (dreamState.messages.length === 0) {
+        navTo('home');
+        return;
+      }
+
+      const remember = await api.ui.confirm({
+        title: "退出梦境",
+        message: "你已离开梦境。不用担心，哪怕不录入记忆，你始终可以在「回响」中找到并继续这段潜意识之旅。\n\n是否同时让角色将这段经历录入记忆？"
+      });
+
+      if (!remember) {
+         // 选择不录入记忆，也要存记录并回到主页
+         await saveDreamRecord(false, null, "");
+         return;
+      }
+      
+      // 让用户选择记忆形式
+      const recordType = await api.ui.confirm({
+        title: "记忆形式",
+        message: "如何沉淀这段记忆？\n\n[确认] 生成精简总结录入\n[取消] 将全文直接录入"
+      });
+
+      if (recordType) {
+         showLoading("正在浓缩梦境印记...");
+         try {
+            const userProfile = await api.user.getProfile({ characterId: dreamConfig.charIds[0] });
+            const userName = userProfile?.name || "你";
+            const charName = characters.find(c => c.id === dreamConfig.charIds[0])?.name || "角色";
+            
+            const aiRes = await api.ai.generate({
+               characterId: dreamConfig.charIds[0],
+               messages: dreamState.messages,
+               instruction: `请根据完整的梦境记录，生成一段简短的总结（约50-100字），用于写入角色的短期记忆。必须使用人物真实全名（${charName} 和 ${userName}）进行客观描述，不要用“我”或“你”。`
+            });
+            const summary = aiRes.text.trim();
+            hideLoading();
+            
+            // 展示编辑框和多选框
+            document.getElementById('memory-summary-edit').value = summary;
+            renderMemoryCheckboxes(dreamConfig.charIds);
+            document.getElementById('view-memory-confirm').style.display = 'flex';
+         } catch(e) {
+            hideLoading();
+            api.ui.toast("总结失败，将使用全文");
+            await saveDreamRecord(true, "full");
+         }
+      } else {
+         await saveDreamRecord(true, "full");
+      }
+    }
+
+    async function confirmMemorySummary() {
+      document.getElementById('view-memory-confirm').style.display = 'none';
+      const text = document.getElementById('memory-summary-edit').value.trim();
+      const targetIds = getSelectedMemoryCharIds(dreamConfig.charIds);
+      await saveDreamRecord(true, "summary", text, targetIds);
+    }
+
+    async function saveDreamRecord(doRemember, memoryType, summaryText, specificMemoryCharIds = null) {
+      showLoading("正在封装梦境...");
+      try {
+        // 保存背景图到媒体库
+        let bgRef = null;
+        if (dreamState.bgDataUrl) {
+          const stored = await api.media.put({ dataUrl: dreamState.bgDataUrl });
+          bgRef = stored.ref;
+        }
+
+        // 提取摘要
+        const fullText = dreamState.messages.filter(m=>m.role==='assistant').map(m=>m.content).join('\n');
+        const summary = fullText.substring(0, 100) + "...";
+
+        // 存入私有数据库（如果是回放则更新）
+        let record;
+        if (dreamState.currentRecordId) {
+          const old = await api.db.get('dreams', dreamState.currentRecordId);
+          // 如果背景一样就保留，不一样就换
+          const finalBgRef = bgRef || old.bgRef;
+          await api.db.update('dreams', dreamState.currentRecordId, {
+            summary: summary,
+            bgRef: finalBgRef,
+            messages: dreamState.messages
+          });
+        } else {
+          record = await api.db.create('dreams', {
+            charIds: dreamConfig.charIds,
+            type: dreamConfig.type,
+            time: dreamConfig.time,
+            summary: summary,
+            bgRef: bgRef,
+            messages: dreamState.messages,
+            createdAt: new Date().toISOString()
+          });
+        }
+
+        // 写入记忆
+        if (doRemember) {
+          let memContent = "";
+          if (memoryType === "summary") {
+            memContent = `做了一个${dreamConfig.type}：${summaryText}`;
+          } else {
+            memContent = `做了一个${dreamConfig.type}，全过程如下：\n` + fullText;
+          }
+          
+          const targetIds = specificMemoryCharIds || dreamConfig.charIds;
+          
+          for (const cid of targetIds) {
+            await api.memory.add({
+              characterId: cid,
+              type: "short_term",
+              content: memContent,
+              importance: 0.6,
+              reason: "梦境模拟器记录"
+            });
+          }
+          api.ui.toast("记忆已沉淀");
+        } else {
+          api.ui.toast("记录已封存");
+        }
+      } catch (e) {
+        console.error(e);
+        api.ui.toast("保存出错");
+      } finally {
+        hideLoading();
+        navTo('home');
+      }
+    }
+
+    async function loadEchoes() {
+      navTo('echoes');
+      const listDiv = document.getElementById('echoes-list');
+      listDiv.innerHTML = '<div style="text-align:center;color:#666;">读取中...</div>';
+      
+      try {
+        const records = await api.db.list('dreams', { limit: 50 });
+        if (records.length === 0) {
+          listDiv.innerHTML = '<div style="text-align:center;color:#666;margin-top:40px;">暂无回响</div>';
+          return;
+        }
+        
+        listDiv.innerHTML = '';
+        records.forEach(r => {
+          const el = document.createElement('div');
+          el.className = 'record-item';
+          el.style.cursor = 'pointer';
+          const d = new Date(r.createdAt).toLocaleString();
+          el.innerHTML = `
+            <div class="record-title">【${r.type}】</div>
+            <div class="record-meta">${d}</div>
+            <div class="record-summary">${r.summary || '无记录'}</div>
+            <div style="position: absolute; top: 16px; right: 16px; display: flex; gap: 8px;">
+              <button style="background: none; border: 1px solid rgba(255,255,255,0.4); color: #444; font-size: 12px; padding: 4px 8px; border-radius: 12px;" onclick="event.stopPropagation(); archiveRecordToMemory('${r.id}')">录入记忆</button>
+              <button class="btn-delete-record" style="position: static;" onclick="event.stopPropagation(); deleteRecord('${r.id}', '${r.bgRef}')">删除</button>
+            </div>
+          `;
+          el.onclick = () => replayDream(r);
+          listDiv.appendChild(el);
+        });
+      } catch (e) {
+        listDiv.innerHTML = '加载失败';
+        console.error(e);
+      }
+    }
+
+    async function replayDream(record) {
+      // 从记录中恢复并直接进入记录模式
+      dreamConfig = {
+        charIds: record.charIds,
+        type: record.type,
+        time: record.time,
+        participate: true // 回放默认允许参与
+      };
+      dreamState.currentRecordId = record.id;
+      dreamState.messages = record.messages || [];
+      dreamState.paragraphs = [];
+      dreamState.currentParaIdx = 0;
+      dreamState.generating = false;
+      
+      navTo('scene');
+      
+      // 恢复背景
+      if (record.bgRef) {
+        try {
+          const img = await api.media.get({ ref: record.bgRef });
+          document.getElementById('scene-bg').src = img.dataUrl;
+        } catch(e) {
+          document.getElementById('scene-bg').src = '';
+        }
+      } else {
+        document.getElementById('scene-bg').src = '';
+      }
+      
+      document.getElementById('scene-title').textContent = `${record.type} (回放)`;
+      
+      // 强制切换到记录模式
+      dreamState.chatMode = true;
+      document.body.classList.add('story-mode-chat');
+      const box = document.getElementById('story-box');
+      box.classList.add('story-mode-chat');
+      document.getElementById('btn-toggle-view').innerHTML = '🌌 梦境';
+      
+      renderAllHistory();
+      
+      // 恢复输入框
+      showActionArea();
+    }
+
+    async function archiveRecordToMemory(recordId) {
+      const record = await api.db.get('dreams', recordId);
+      if (!record) return api.ui.toast("记录不存在");
+      
+      showLoading("正在浓缩梦境印记...");
+      try {
+        const userProfile = await api.user.getProfile({ characterId: record.charIds[0] });
+        const userName = userProfile?.name || "你";
+        const charName = characters.find(c => c.id === record.charIds[0])?.name || "角色";
+        
+        const aiRes = await api.ai.generate({
+           characterId: record.charIds[0],
+           messages: record.messages,
+           instruction: `请根据完整的梦境记录，生成一段简短的总结（约50-100字），用于写入角色的短期记忆。必须使用人物真实全名（${charName} 和 ${userName}）进行客观描述，不要用“我”或“你”。`
+        });
+        const summary = aiRes.text.trim();
+        hideLoading();
+        
+        // 借用退出时的编辑弹窗
+        document.getElementById('memory-summary-edit').value = summary;
+        renderMemoryCheckboxes(record.charIds);
+        
+        // 临时覆盖确认按钮行为
+        const confirmBtn = document.querySelector('#view-memory-confirm button:last-child');
+        const oldOnclick = confirmBtn.onclick;
+        confirmBtn.onclick = async () => {
+           document.getElementById('view-memory-confirm').style.display = 'none';
+           const text = document.getElementById('memory-summary-edit').value.trim();
+           const targetIds = getSelectedMemoryCharIds(record.charIds);
+           
+           showLoading("写入记忆中...");
+           for (const cid of targetIds) {
+             await api.memory.add({
+               characterId: cid,
+               type: "short_term",
+               content: `做了一个${record.type}：${text}`,
+               importance: 0.6,
+               reason: "梦境模拟器记录(手动归档)"
+             });
+           }
+           hideLoading();
+           api.ui.toast("记忆已沉淀");
+           confirmBtn.onclick = oldOnclick; // 恢复
+        };
+        
+        document.getElementById('view-memory-confirm').style.display = 'flex';
+      } catch(e) {
+        hideLoading();
+        api.ui.toast("总结失败: " + e.message);
+      }
+    }
+
+    async function deleteRecord(id, bgRef) {
+      const ok = await api.ui.confirm({ title: "删除记录", message: "确认抹除这段回响？" });
+      if (!ok) return;
+      
+      try {
+        await api.db.delete('dreams', id);
+        if (bgRef) await api.media.delete({ ref: bgRef });
+        api.ui.toast("已抹除");
+        loadEchoes();
+      } catch (e) {
+        api.ui.toast("删除失败");
+      }
+    }
+
+    // 启动
+    window.onload = initApp;
+  </script>
+</body>
+</html>

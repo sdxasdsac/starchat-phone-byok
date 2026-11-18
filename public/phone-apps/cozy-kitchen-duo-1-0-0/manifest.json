@@ -1,0 +1,62 @@
+{
+  "id": "cozy.kitchen.duo",
+  "name": "暖心小灶",
+  "version": "1.0.0",
+  "sdkVersion": "1.0",
+  "author": "小坊",
+  "description": "双人与多人合力下厨料理管家。支持自由分配主厨、备菜、品尝分工，完成后为所有参与角色同步注入真实厨房记忆并端上聊天室餐桌。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "chat.read",
+    "chat.write",
+    "chat.sendCard",
+    "chat.requestReply",
+    "memory.write",
+    "ui.toast"
+  ],
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "plusActions": [
+        {
+          "id": "kitchen-cooking",
+          "label": "🍳 一起做饭",
+          "description": "从聊天室快速开启小灶下厨，做一道热气腾腾的美食端上桌。",
+          "entry": "cooking",
+          "presentation": "panel",
+          "panelHeight": "82vh",
+          "tags": []
+        }
+      ]
+    }
+  },
+  "chatPlusActions": [
+    {
+      "id": "kitchen-cooking",
+      "label": "🍳 一起做饭",
+      "description": "从聊天室快速开启小灶下厨，做一道热气腾腾的美食端上桌。",
+      "entry": "cooking",
+      "presentation": "panel",
+      "panelHeight": "82vh",
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "plusActions": [
+      {
+        "id": "kitchen-cooking",
+        "label": "🍳 一起做饭",
+        "description": "从聊天室快速开启小灶下厨，做一道热气腾腾的美食端上桌。",
+        "entry": "cooking",
+        "presentation": "panel",
+        "panelHeight": "82vh",
+        "tags": []
+      }
+    ]
+  }
+}

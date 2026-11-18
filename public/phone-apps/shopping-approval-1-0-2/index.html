@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>购物审批</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;background:#fafafa;color:#262626;-webkit-tap-highlight-color:transparent}
+.topbar{position:fixed;top:var(--ai-phone-app-bar-top,56px);left:20px;right:var(--ai-phone-app-bar-clear-right,96px);min-height:var(--ai-phone-app-bar-height,30px);display:flex;align-items:center;z-index:100}
+.topbar h1{font-size:17px;font-weight:600;letter-spacing:.3px}
+.topbar .back-btn{display:none;background:none;border:none;padding:0 10px 0 0;cursor:pointer;font-size:22px;color:#262626;line-height:1;min-width:30px;min-height:30px}
+.app{min-height:100dvh;padding:0 20px var(--ai-phone-app-safe-bottom,24px);padding-top:calc(var(--ai-phone-app-bar-top,56px) + 36px + 12px)}
+.tabs{display:flex;gap:24px;margin-bottom:20px;border-bottom:1px solid #efefef;padding-bottom:10px}
+.tabs span{font-size:14px;color:#999;cursor:pointer;padding-bottom:2px;transition:all .2s}
+.tabs span.active{color:#262626;font-weight:600;border-bottom:1.5px solid #262626}
+.form-section{display:flex;flex-direction:column;gap:14px}
+.field label{display:block;font-size:12px;color:#999;margin-bottom:5px;letter-spacing:.5px;text-transform:uppercase}
+.field input,.field textarea{width:100%;border:1px solid #e0e0e0;border-radius:10px;padding:12px 14px;font-size:14px;background:#fff;outline:none;transition:border .2s;font-family:inherit;resize:none}
+.field input:focus,.field textarea:focus{border-color:#262626}
+.field textarea{min-height:72px}
+.img-upload{width:100%;height:120px;border:1.5px dashed #d0d0d0;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:#fff;transition:border-color .2s;overflow:hidden;position:relative}
+.img-upload:active{border-color:#262626}
+.img-upload svg{width:28px;height:28px;stroke:#bbb;stroke-width:1.5;fill:none}
+.img-upload span{font-size:12px;color:#bbb;margin-top:6px}
+.img-upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:10px}
+.img-upload .remove-img{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;z-index:2;border:none;cursor:pointer}
+.chip-picker{display:flex;gap:10px;flex-wrap:wrap}
+.chip{padding:8px 16px;border-radius:20px;border:1.5px solid #e0e0e0;font-size:13px;color:#666;cursor:pointer;background:#fff;transition:all .2s}
+.chip.active{border-color:#262626;color:#262626;font-weight:600;background:#f5f5f5}
+.submit-btn{width:100%;height:48px;border:none;border-radius:12px;background:#262626;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .2s;margin-top:6px;letter-spacing:.3px}
+.submit-btn:active{opacity:.7}
+.submit-btn:disabled{background:#ccc;cursor:default}
+.card{background:#fff;border-radius:16px;padding:18px;margin-bottom:14px;border:1px solid #efefef;cursor:pointer;transition:box-shadow .2s}
+.card:active{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.card-title{font-size:15px;font-weight:600;flex:1;margin-right:8px;line-height:1.4}
+.card-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.card-badge.approved{background:#e8f5e9;color:#2e7d32}
+.card-badge.rejected{background:#fce4ec;color:#c62828}
+.card-meta{font-size:12px;color:#aaa;margin-bottom:6px}
+.card-reviewers{display:flex;gap:4px;align-items:center;margin-top:8px}
+.card-reviewers .mini-avatar{width:22px;height:22px;border-radius:50%;background:#eee;border:1.5px solid #fff;font-size:10px;display:flex;align-items:center;justify-content:center;color:#999;overflow:hidden}
+.card-reviewers .mini-avatar img{width:100%;height:100%;object-fit:cover}
+.card-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #f5f5f5}
+.card-time{font-size:11px;color:#ccc}
+.card-delete{font-size:12px;color:#ccc;background:none;border:none;cursor:pointer;padding:4px 0}
+.card-delete:active{color:#c62828}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 0}
+.empty svg{width:48px;height:48px;stroke:#ddd;stroke-width:1.2;fill:none;margin-bottom:12px}
+.empty p{font-size:13px;color:#ccc}
+.detail-page{display:none;flex-direction:column;gap:20px}
+.detail-page.visible{display:flex}
+.detail-result{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 0 8px}
+.result-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.result-icon.pass{background:#e8f5e9}
+.result-icon.fail{background:#fce4ec}
+.result-icon svg{width:28px;height:28px;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.result-icon.pass svg{stroke:#2e7d32}
+.result-icon.fail svg{stroke:#c62828}
+.result-title{font-size:18px;font-weight:700;margin-top:2px}
+.result-title.pass{color:#2e7d32}
+.result-title.fail{color:#c62828}
+.result-sub{font-size:12px;color:#aaa}
+.detail-applicant{display:flex;align-items:center;gap:10px;padding:0 4px}
+.detail-applicant .avatar{width:36px;height:36px;border-radius:50%;background:#eee;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:14px;color:#999;flex-shrink:0}
+.detail-applicant .avatar img{width:100%;height:100%;object-fit:cover}
+.detail-applicant .name{font-size:14px;font-weight:600}
+.detail-applicant .role-label{font-size:11px;color:#aaa}
+.ticket{background:#fff;border-radius:16px;padding:24px 20px;border:1px solid #efefef;position:relative;overflow:hidden}
+.ticket-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.ticket-head-left h2{font-size:16px;font-weight:700;margin-bottom:2px}
+.ticket-head-left .en{font-size:10px;color:#bbb;letter-spacing:1.5px;text-transform:uppercase}
+.ticket-no{font-size:10px;color:#ccc;text-align:right;line-height:1.4}
+.ticket-stamp{position:absolute;top:14px;right:14px;width:56px;height:56px;border-radius:50%;border:2.5px solid;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;transform:rotate(15deg);opacity:.55;pointer-events:none}
+.ticket-stamp.pass{border-color:#2e7d32;color:#2e7d32}
+.ticket-stamp.fail{border-color:#c62828;color:#c62828}
+.ticket-divider{border:none;border-top:1px dashed #e8e8e8;margin:16px -20px}
+.ticket-rows{display:flex;flex-direction:column;gap:12px}
+.ticket-row{display:flex;justify-content:space-between;align-items:flex-start}
+.ticket-row .lbl{font-size:12px;color:#999;flex-shrink:0}
+.ticket-row .val{font-size:13px;color:#444;text-align:right;max-width:62%;word-break:break-all;line-height:1.5}
+.ticket-img{width:100%;height:150px;border-radius:10px;object-fit:cover;margin-top:12px}
+.review-group{background:#fff;border-radius:16px;padding:20px;border:1px solid #efefef}
+.review-group-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.review-group-rule{font-size:12px;color:#aaa;margin-bottom:16px;line-height:1.5}
+.review-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid #f5f5f5}
+.review-item:first-of-type{border-top:none}
+.review-item .r-avatar{width:32px;height:32px;border-radius:50%;background:#eee;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:12px;color:#999;flex-shrink:0}
+.review-item .r-avatar img{width:100%;height:100%;object-fit:cover}
+.review-item .r-info{flex:1;min-width:0}
+.review-item .r-name{font-size:13px;font-weight:600}
+.review-item .r-comment{font-size:12px;color:#888;margin-top:2px;line-height:1.4}
+.review-item .r-tag{font-size:11px;padding:2px 10px;border-radius:12px;font-weight:600;flex-shrink:0;align-self:flex-start;margin-top:2px}
+.review-item .r-tag.pass{background:#e8f5e9;color:#2e7d32}
+.review-item .r-tag.fail{background:#fce4ec;color:#c62828}
+.review-item .r-translate{font-size:10px;color:#bbb;background:none;border:1px solid #e0e0e0;border-radius:8px;padding:1px 8px;cursor:pointer;margin-top:4px;display:inline-block;transition:all .2s}
+.review-item .r-translate:active{border-color:#999;color:#999}
+.review-item .r-translated{font-size:12px;color:#666;margin-top:4px;line-height:1.4;font-style:italic}
+.loading-overlay{position:fixed;inset:0;background:rgba(250,250,250,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200}
+.spinner{width:28px;height:28px;border:2.5px solid #e0e0e0;border-top-color:#262626;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay p{margin-top:14px;font-size:13px;color:#999}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+<div class="topbar"><button class="back-btn" id="back-btn">‹</button><h1 id="topbar-title">购物审批</h1></div>
+<div class="app" id="app">
+  <div id="main-view">
+    <div class="tabs"><span class="active" data-tab="new">新申请</span><span data-tab="history">历史记录</span></div>
+    <div id="tab-new" class="form-section">
+      <div class="field"><label>商品名称</label><input id="f-item" type="text" placeholder="想买什么？" maxlength="60"></div>
+      <div class="field"><label>价格</label><input id="f-price" type="text" placeholder="￥" maxlength="20"></div>
+      <div class="field"><label>申请人</label><div class="chip-picker" id="applicant-picker"></div></div>
+      <div class="field"><label>购买理由</label><textarea id="f-reason" placeholder="说说为什么想买…" maxlength="200"></textarea></div>
+      <div class="field"><label>商品图片（可选）</label><div class="img-upload" id="img-upload"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg><span>点击上传图片</span></div></div>
+      <div class="field"><label>审批人（可多选）</label><div class="chip-picker" id="char-picker"></div></div>
+      <button class="submit-btn" id="submit-btn" disabled>提交申请</button>
+    </div>
+    <div id="tab-history" class="hidden"><div id="history-list"></div><div class="empty hidden" id="empty-state"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 13h4" stroke-linecap="round"/></svg><p>还没有审批记录</p></div></div>
+  </div>
+  <div class="detail-page" id="detail-page"></div>
+</div>
+<div class="loading-overlay hidden" id="loading"><div class="spinner"></div><p id="loading-text">审批中…</p></div>
+<script>
+const api=window.AiPhone;let characters=[],charAvatars={},selectedCharIds=[],personas=[],selectedPersona=null,imageDataUrl=null,approvalCounter=0;const $=id=>document.getElementById(id),$tabs=document.querySelectorAll('.tabs span');function showMain(){$('main-view').style.display='';$('detail-page').classList.remove('visible');$('detail-page').innerHTML='';$('back-btn').style.display='none';$('topbar-title').textContent='购物审批';window.scrollTo(0,0)}function showDetail(){$('main-view').style.display='none';$('detail-page').classList.add('visible');$('back-btn').style.display='inline-flex';$('topbar-title').textContent='审批详情';window.scrollTo(0,0)}$('back-btn').addEventListener('click',showMain);$tabs.forEach(tab=>{tab.addEventListener('click',()=>{$tabs.forEach(t=>t.classList.remove('active'));tab.classList.add('active');const t=tab.dataset.tab;$('tab-new').classList.toggle('hidden',t!=='new');$('tab-history').classList.toggle('hidden',t!=='history');if(t==='history')loadHistory()})});async function loadCharacters(){try{characters=await api.characters.list();for(const c of characters)charAvatars[c.id]=c.avatar||c.image||null;renderCharPicker()}catch(e){console.error(e)}}function renderCharPicker(){const el=$('char-picker');el.innerHTML='';characters.forEach(c=>{const chip=document.createElement('div');chip.className='chip'+(selectedCharIds.includes(c.id)?' active':'');chip.textContent=c.name;chip.addEventListener('click',()=>{const idx=selectedCharIds.indexOf(c.id);if(idx>=0)selectedCharIds.splice(idx,1);else selectedCharIds.push(c.id);renderCharPicker();checkSubmit()});el.appendChild(chip)})}async function loadPersonas(){try{const seen=new Map();for(const c of characters){const p=await api.user.getProfile({characterId:c.id});if(p&&p.name&&!seen.has(p.name))seen.set(p.name,{name:p.name,avatar:p.avatar||p.image||null})}if(seen.size===0){try{const gp=await api.user.getProfile({});if(gp&&gp.name)seen.set(gp.name,{name:gp.name,avatar:gp.avatar||gp.image||null})}catch(e){}}personas=Array.from(seen.values());renderApplicantPicker()}catch(e){console.error(e)}}function renderApplicantPicker(){const el=$('applicant-picker');el.innerHTML='';if(!personas.length){el.innerHTML='<span style="font-size:12px;color:#bbb">暂无身份</span>';return}personas.forEach(p=>{const chip=document.createElement('div');chip.className='chip'+(selectedPersona&&selectedPersona.name===p.name?' active':'');chip.textContent=p.name;chip.addEventListener('click',()=>{selectedPersona=p;renderApplicantPicker();checkSubmit()});el.appendChild(chip)})}$('img-upload').addEventListener('click',async e=>{if(e.target.closest('.remove-img')){e.stopPropagation();imageDataUrl=null;renderImg();return}if(imageDataUrl)return;try{const picked=await api.media.pick({accept:'image/*'});if(picked?.file?.dataUrl){imageDataUrl=picked.file.dataUrl;renderImg()}}catch(e){}});function renderImg(){const el=$('img-upload');if(imageDataUrl)el.innerHTML=`<img src="${imageDataUrl}"><button class="remove-img" type="button">✕</button>`;else el.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg><span>点击上传图片</span>'}function checkSubmit(){$('submit-btn').disabled=!($('f-item').value.trim()&&$('f-price').value.trim()&&selectedPersona&&$('f-reason').value.trim()&&selectedCharIds.length>0)}['f-item','f-price','f-reason'].forEach(id=>$(id).addEventListener('input',checkSubmit));$('submit-btn').addEventListener('click',async()=>{if($('submit-btn').disabled)return;const itemName=$('f-item').value.trim(),price=$('f-price').value.trim();const applicant=selectedPersona.name,applicantAvatar=selectedPersona.avatar||null;const reason=$('f-reason').value.trim(),reviewerIds=[...selectedCharIds];showLoading('审批中，请稍候…');try{let storedRef=null;if(imageDataUrl)storedRef=(await api.media.put({dataUrl:imageDataUrl})).ref;const reviews=[];for(let i=0;i<reviewerIds.length;i++){const cid=reviewerIds[i],ch=await api.characters.get(cid);const charName=ch?.name||'审批人';$('loading-text').textContent=`${charName} 审批中…（${i+1}/${reviewerIds.length}）`;const result=await api.ai.generate({characterId:cid,appTags:['shopping','approval'],instruction:`以下是一份购物申请单，请审批：\n\n商品名称：${itemName}\n价格：${price}\n申请人：${applicant}\n购买理由：${reason}\n\n请严格按格式输出：\n[审批结果:通过或驳回]\n[审批意见:你的一句话意见]`});const text=result.text||'';let vote='rejected',comment=text;const sm=text.match(/\[审批结果[:：](.+?)\]/),cm=text.match(/\[审批意见[:：](.+?)\]/);if(sm&&sm[1].includes('通过'))vote='approved';if(cm)comment=cm[1].trim();reviews.push({characterId:cid,characterName:charName,vote,comment})}const yesCount=reviews.filter(r=>r.vote==='approved').length,total=reviews.length;const threshold=total%2===0?total/2:Math.floor(total/2)+1;const finalStatus=yesCount>=threshold?'approved':'rejected';approvalCounter++;await api.db.create('approvals',{no:String(approvalCounter).padStart(4,'0'),itemName,price,applicant,applicantAvatar,reason,imageRef:storedRef,reviews,status:finalStatus,yesCount,noCount:total-yesCount,total,threshold,createdAt:new Date().toISOString()});hideLoading();await api.ui.toast(finalStatus==='approved'?'申请通过了！':'申请被驳回了');$('f-item').value='';$('f-price').value='';$('f-reason').value='';imageDataUrl=null;renderImg();checkSubmit();$tabs.forEach(t=>t.classList.remove('active'));document.querySelector('[data-tab="history"]').classList.add('active');$('tab-new').classList.add('hidden');$('tab-history').classList.remove('hidden');await loadHistory()}catch(e){hideLoading();console.error(e);await api.ui.toast('审批失败，请检查 API 设置')}});async function loadHistory(){try{const list=await api.db.list('approvals',{limit:200});list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));if(list.length>0){const mx=Math.max(...list.map(r=>parseInt(r.no)||0));if(mx>approvalCounter)approvalCounter=mx}renderList(list)}catch(e){console.error(e)}}function renderList(list){const el=$('history-list');el.innerHTML='';$('empty-state').classList.toggle('hidden',list.length>0);list.forEach(item=>{const card=document.createElement('div');card.className='card';const passed=item.status==='approved',time=fmtTime(item.createdAt);let avs='';(item.reviews||[]).forEach(r=>{const a=charAvatars[r.characterId];avs+=a?`<div class="mini-avatar"><img src="${a}"></div>`:`<div class="mini-avatar">${(r.characterName||'?')[0]}</div>`});card.innerHTML=`<div class="card-header"><div class="card-title">${esc(item.itemName)}</div><span class="card-badge ${passed?'approved':'rejected'}">${passed?'已通过':'已驳回'}</span></div><div class="card-meta">${esc(item.price)} · ${esc(item.applicant)}</div><div class="card-reviewers">${avs}</div><div class="card-footer"><span class="card-time">${time}</span><button class="card-delete" data-stop>删除</button></div>`;card.querySelector('.card-delete').addEventListener('click',async e=>{e.stopPropagation();if(!await api.ui.confirm({title:'删除这条记录？',message:'删除后不可恢复。'}))return;try{if(item.imageRef)try{await api.media.delete({ref:item.imageRef})}catch(e){}await api.db.delete('approvals',item.id);await api.ui.toast('已删除');await loadHistory()}catch(e){console.error(e)}});card.addEventListener('click',e=>{if(e.target.closest('[data-stop]'))return;openDetail(item)});el.appendChild(card)})}async function openDetail(item){const pg=$('detail-page');const passed=item.status==='approved';const yc=item.yesCount||0,nc=item.noCount||0;const total=item.total||(yc+nc),threshold=item.threshold||Math.ceil(total/2);let appAvHtml=item.applicantAvatar?`<img src="${item.applicantAvatar}">`:(item.applicant||'?')[0];let prodImg='';if(item.imageRef){try{const m=await api.media.get({ref:item.imageRef});if(m?.dataUrl)prodImg=`<img class="ticket-img" src="${m.dataUrl}">`}catch(e){}}let rvHtml='';(item.reviews||[]).forEach((r,idx)=>{const av=charAvatars[r.characterId];const avIn=av?`<img src="${av}">`:(r.characterName||'?')[0];const p=r.vote==='approved';const hasCn=/[\u4e00-\u9fff]/.test(r.comment);const trBtn=hasCn?'':`<button class="r-translate" data-ridx="${idx}">译</button>`;rvHtml+=`<div class="review-item"><div class="r-avatar">${avIn}</div><div class="r-info"><div class="r-name">${esc(r.characterName)}</div><div class="r-comment">${esc(r.comment)}</div>${trBtn}<div class="r-translated" data-trans="${idx}" style="display:none"></div></div><span class="r-tag ${p?'pass':'fail'}">${p?'同意':'驳回'}</span></div>`});pg.innerHTML=`<div class="detail-result"><div class="result-icon ${passed?'pass':'fail'}">${passed?'<svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>':'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>'}</div><div class="result-title ${passed?'pass':'fail'}">${passed?'通过':'不通过'}</div><div class="result-sub">审批已完成 · 同意${yc}票，反对${nc}票</div></div><div class="detail-applicant"><div class="avatar">${appAvHtml}</div><div><div class="name">${esc(item.applicant)}</div><div class="role-label">申请人</div></div></div><div class="ticket"><div class="ticket-stamp ${passed?'pass':'fail'}">${passed?'通过':'驳回'}</div><div class="ticket-head"><div class="ticket-head-left"><h2>购物申请</h2><div class="en">Shopping Request</div></div><div class="ticket-no">No.${esc(item.no||'0001')}</div></div><hr class="ticket-divider"><div class="ticket-rows"><div class="ticket-row"><span class="lbl">商品</span><span class="val">${esc(item.itemName)}</span></div><div class="ticket-row"><span class="lbl">价格</span><span class="val">${esc(item.price)}</span></div><div class="ticket-row"><span class="lbl">申请人</span><span class="val">${esc(item.applicant)}</span></div><div class="ticket-row"><span class="lbl">理由</span><span class="val">${esc(item.reason)}</span></div></div>${prodImg}</div><div class="review-group"><div class="review-group-title">审批组</div><div class="review-group-rule">目标${total}人审批 · 至少${threshold}人同意</div>${rvHtml}</div>`;pg.querySelectorAll('.r-translate').forEach(btn=>{btn.addEventListener('click',async()=>{const idx=parseInt(btn.dataset.ridx),r=(item.reviews||[])[idx];if(!r)return;btn.textContent='…';btn.disabled=true;try{const res=await api.ai.chat({messages:[{role:'system',content:'你是翻译助手，只输出中文翻译结果，不加解释，不加引号。'},{role:'user',content:r.comment}]});const te=pg.querySelector(`[data-trans="${idx}"]`);if(te&&res.text){te.textContent=res.text.trim();te.style.display=''}btn.style.display='none'}catch(e){btn.textContent='译';btn.disabled=false}})});showDetail()}function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}function fmtTime(iso){const d=new Date(iso);return`${d.getFullYear()}.${S(d.getMonth()+1)}.${S(d.getDate())} ${S(d.getHours())}:${S(d.getMinutes())}`}function S(n){return String(n).padStart(2,'0')}function showLoading(t){$('loading-text').textContent=t||'处理中…';$('loading').classList.remove('hidden')}function hideLoading(){$('loading').classList.add('hidden')}async function init(){await loadCharacters();await loadPersonas();if(personas.length&&!selectedPersona){selectedPersona=personas[0];renderApplicantPicker()}try{const all=await api.db.list('approvals',{limit:200});if(all.length)approvalCounter=Math.max(0,...all.map(r=>parseInt(r.no)||0))}catch(e){}checkSubmit()}init();
+</script>
+</body>
+</html>

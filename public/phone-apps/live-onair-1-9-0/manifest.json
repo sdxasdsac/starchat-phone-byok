@@ -1,0 +1,26 @@
+{
+  "sdkVersion": "1.0",
+  "id": "live.onair",
+  "name": "粒粒bo",
+  "version": "1.9.0",
+  "author": "我的名字好长好长好长好长a",
+  "description": "沉浸式模拟直播间小玩具：可以看Ta开播，弹幕互动、送礼、听语音回应；也可以自己开播，被围观、被刷礼物。除了内置礼物，还有可自己上传图片/GIF做的自定义礼物（头像框礼物/定制礼物），支持七档价值分级和盲盒抽奖，头像框点亮次数永久累计。个人主页能查看钱包、管理粉丝群，私信还能戴上\"面具\"匿名试探。应用字体、主页壁纸、头像框都可以自由个性化。",
+  "icon": "icon.jpg",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "user.profile.read",
+    "characters.read",
+    "ai.generate",
+    "voice.tts",
+    "media.pick",
+    "wallet.read",
+    "wallet.pay"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ]
+  }
+}

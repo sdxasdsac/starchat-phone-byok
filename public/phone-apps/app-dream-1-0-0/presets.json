@@ -1,0 +1,60 @@
+{
+  "id": "preset_1786880817752_mwn1j",
+  "name": "梦境预设（终版）",
+  "description": "纯净版梦境专属预设，仅含开场与推进两条指令。",
+  "createdAt": 1786880817752,
+  "updatedAt": 1786884426955,
+  "temperature": 1,
+  "top_p": 1,
+  "top_k": 0,
+  "frequency_penalty": 0,
+  "presence_penalty": 0,
+  "repetition_penalty": 1,
+  "openai_max_tokens": 0,
+  "openai_max_context": 100000,
+  "story_summary_tag": "summary",
+  "prompts": [
+    {
+      "identifier": "梦境开场",
+      "name": "梦境开场",
+      "role": "system",
+      "content": "你正在模拟角色的梦境开场。请以第三人称视角，生动、细腻、充满画面感地描写。动作直接描写。\\n【系统最高强制指令·标点符号规范】：\\n1. 【双引号“”的唯一合法用途】：仅限、绝对仅限于【当前角色亲口说出的台词】！\\n2. 【严禁复述用户台词】：绝对不要用任何引号来包裹用户（你）说过的话！如果要提及用户说了什么，请使用第三人称间接描述（例如：你问他怎么了。），绝对禁止写成：你说：“怎么了”。\\n3. 【严禁强调物品】：绝对不要用双引号包裹物品名称、技能、特殊名词！如果必须强调，请使用单引号‘’或书名号《》。\\n如果你在角色台词以外的地方使用了双引号，将导致语音系统发生严重崩溃！请严格检查你的输出！\",\n      \"enabled\": true,",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "enabled": true,
+      "marker": false,
+      "system_prompt": true,
+      "forbid_overrides": false,
+      "tags": [
+        "dream",
+        "continue"
+      ]
+    },
+    {
+      "identifier": "梦境推进",
+      "name": "梦境推进",
+      "role": "system",
+      "content": "你正在继续模拟角色的梦境。请以第三人称视角，生动、细腻、充满画面感地描写。动作直接描写。\\n【系统最高强制指令·标点符号规范】：\\n1. 【双引号“”的唯一合法用途】：仅限、绝对仅限于【当前角色亲口说出的台词】！\\n2. 【严禁复述用户台词】：绝对不要用任何引号来包裹用户（你）说过的话！如果要提及用户说了什么，请使用第三人称间接描述（例如：你问他怎么了。），绝对禁止写成：你说：“怎么了”。\\n3. 【严禁强调物品】：绝对不要用双引号包裹物品名称、技能、特殊名词！如果必须强调，请使用单引号‘’或书名号《》。\\n如果你在角色台词以外的地方使用了双引号，将导致语音系统发生严重崩溃！请严格检查你的输出！",
+      "injection_position": 0,
+      "injection_depth": 4,
+      "enabled": true,
+      "marker": false,
+      "system_prompt": false,
+      "forbid_overrides": false,
+      "tags": [
+        "dream",
+        "start"
+      ]
+    }
+  ],
+  "prompt_order": [
+    {
+      "identifier": "梦境开场",
+      "enabled": true
+    },
+    {
+      "identifier": "梦境推进",
+      "enabled": true
+    }
+  ]
+}

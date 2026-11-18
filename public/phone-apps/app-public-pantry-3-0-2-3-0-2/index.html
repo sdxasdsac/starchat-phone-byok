@@ -1,0 +1,3036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <script src="/phone-apps/ai-phone-host.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>公共储物架 · 壹集市</title>
+  <style>
+    :root {
+      --bg-primary: #fbfbfb;
+      --bg-card: #ffffff;
+      --bg-card-subtle: #f8f6f2;
+      --text-main: #1c1917;
+      --text-muted: #8c8885;
+      --text-light: #b5b1ad;
+      --accent: #1c1917;
+      --accent-warm: #e07a5f;
+      --accent-warm-light: #fbeee9;
+      --border: #eceae8;
+      --border-dark: #292524;
+      --tag-bg: #f3f2f0;
+      --font-serif: "Songti SC", "Source Han Serif SC", "Noto Serif CJK SC", "STSong", serif;
+      --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #121110;
+        --bg-card: #1c1a18;
+        --bg-card-subtle: #242220;
+        --text-main: #f5f4f2;
+        --text-muted: #9e9a95;
+        --text-light: #635f5a;
+        --accent: #f5f4f2;
+        --accent-warm: #e07a5f;
+        --accent-warm-light: rgba(224, 122, 95, 0.2);
+        --border: #2b2825;
+        --border-dark: #e6e4e0;
+        --tag-bg: #262320;
+      }
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: var(--font-sans);
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+    }
+    .header-archive {
+      padding: max(var(--ai-phone-app-safe-top, 58px), calc(env(safe-area-inset-top, 0px) + 54px)) 20px 8px;
+      background: var(--bg-primary);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    body.is-toolbar-mode .header-archive {
+      padding-top: 14px;
+    }
+    .header-nav-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .nav-tab {
+      font-family: var(--font-serif);
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-light);
+      cursor: pointer;
+      transition: color 0.2s, transform 0.15s;
+      display: inline-block;
+    }
+    .nav-tab.active {
+      color: var(--text-main);
+    }
+    .nav-tab:active {
+      transform: scale(0.96);
+    }
+    .nav-divider {
+      width: 2px;
+      height: 18px;
+      background-color: #d1cdc7;
+      border-radius: 1px;
+    }
+    .cat-bar-wrapper {
+      display: flex;
+      align-items: center;
+      background: var(--bg-primary);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 16px 8px;
+      width: 100%;
+      box-sizing: border-box;
+      flex-shrink: 0;
+    }
+    .capsule-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex: 1;
+      min-width: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    .capsule-row::-webkit-scrollbar { display: none; }
+    .capsule {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 4px;
+      background: var(--tag-bg);
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .capsule.active {
+      background: var(--text-main);
+      color: var(--bg-primary);
+    }
+    body.view-market-active .capsule.active {
+      background: var(--accent-warm);
+      color: #ffffff;
+    }
+    .cat-manage-btn-fixed {
+      flex-shrink: 0;
+      margin-left: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--tag-bg);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .cat-manage-btn-fixed svg {
+      width: 15px;
+      height: 15px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 16px calc(env(safe-area-inset-bottom, 16px) + 80px);
+      -webkit-overflow-scrolling: touch;
+    }
+    .shelf-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .item-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: all 0.2s;
+      cursor: pointer;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .item-card:active {
+      border-color: var(--text-muted);
+      transform: scale(0.99);
+    }
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .item-emoji {
+      font-size: 24px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .item-badges-wrap {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      min-width: 0;
+    }
+    .item-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      background: var(--tag-bg);
+      color: var(--text-muted);
+      border-radius: 3px;
+      font-weight: 500;
+      white-space: nowrap;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 2px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+    .item-owner {
+      font-size: 11px;
+      color: var(--text-light);
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 0;
+    }
+    .item-quote {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-primary);
+      padding: 6px 8px;
+      border-radius: 4px;
+      line-height: 1.35;
+      min-height: 38px;
+      box-sizing: border-box;
+      word-break: break-word;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 10px;
+    }
+    .item-actions {
+      margin-top: auto;
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .btn-take-mini {
+      flex: 1;
+      padding: 6px 0;
+      border: 1px solid var(--border);
+      background: var(--bg-primary);
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .btn-take-mini:active {
+      background: var(--tag-bg);
+      border-color: var(--text-muted);
+    }
+    .goods-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .goods-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .goods-card:active {
+      transform: scale(0.99);
+      border-color: var(--accent-warm);
+    }
+    .goods-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      gap: 6px;
+    }
+    .goods-emoji { font-size: 24px; line-height: 1; }
+    .goods-tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      background: var(--accent-warm-light);
+      color: var(--accent-warm);
+      border-radius: 3px;
+      font-weight: 500;
+      white-space: nowrap;
+      max-width: 80px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .goods-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 2px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .goods-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-primary);
+      padding: 6px 8px;
+      border-radius: 4px;
+      line-height: 1.35;
+      min-height: 30px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 10px;
+      word-break: break-word;
+    }
+    .goods-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+      padding-top: 4px;
+    }
+    .goods-price {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-warm);
+    }
+    .btn-buy {
+      padding: 5px 12px;
+      background: var(--accent-warm);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(224, 122, 95, 0.25);
+    }
+    .btn-buy:active { opacity: 0.85; transform: scale(0.96); }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-text { font-size: 13px; line-height: 1.6; }
+    .footer-dock {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 14px) + 8px);
+      left: 16px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 30;
+    }
+    .dock-btn-sub {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      border-radius: 6px;
+      padding: 12px 0;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .dock-btn-sub:active { background: var(--tag-bg); }
+    .dock-btn-main {
+      flex: 1.6;
+      background: var(--text-main);
+      border: 1px solid var(--text-main);
+      color: var(--bg-primary);
+      border-radius: 6px;
+      padding: 12px 0;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .dock-btn-main:active { opacity: 0.85; transform: scale(0.99); }
+    .dock-btn-market-main {
+      background: var(--accent-warm);
+      border-color: var(--accent-warm);
+      color: #ffffff;
+      box-shadow: 0 3px 10px rgba(224, 122, 95, 0.28);
+    }
+    .cat-modal-overlay, .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.45); z-index: 60;
+      display: flex; align-items: flex-end;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .cat-modal-overlay.open, .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .cat-modal-sheet, .modal-sheet {
+      width: 100%; background: var(--bg-card); border-radius: 12px 12px 0 0;
+      transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-sizing: border-box;
+      margin-top: max(var(--ai-phone-app-safe-top, 58px), 54px);
+    }
+    .cat-modal-overlay.open .cat-modal-sheet, .modal-overlay.open .modal-sheet { transform: translateY(0); }
+    .sheet-head {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-shrink: 0;
+    }
+    .sheet-title {
+      font-family: var(--font-serif); font-size: 18px; font-weight: 600; color: var(--text-main);
+    }
+    .sheet-close {
+      background: none; border: none; font-size: 16px; color: var(--text-muted); cursor: pointer; padding: 4px;
+    }
+    .form-item { margin-bottom: 8px; }
+    .form-item-label, .form-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-muted);
+      text-transform: uppercase; margin-bottom: 4px; display: block;
+    }
+    .form-input {
+      width: 100%; background: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: 4px; padding: 8px 12px; font-size: 13px; color: var(--text-main); outline: none;
+    }
+    .form-input:focus { border-color: var(--text-main); }
+    .form-textarea {
+      width: 100%; min-height: 70px; background: var(--bg-primary); border: 1px solid var(--border);
+      border-radius: 4px; padding: 8px 12px; font-size: 13px; color: var(--text-main); outline: none;
+      resize: none; line-height: 1.4;
+    }
+    .emoji-picker-row {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .emoji-picker-row::-webkit-scrollbar { display: none; }
+    .emoji-opt {
+      width: 36px; height: 36px; border: 1px solid var(--border); background: var(--bg-primary);
+      border-radius: 4px; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; cursor: pointer; flex-shrink: 0;
+    }
+    .emoji-opt.active { border-color: var(--accent-warm); background: var(--accent-warm-light); }
+    .modal-action-btn {
+      width: 100%; background: var(--text-main); border: 1px solid var(--text-main);
+      color: var(--bg-primary); border-radius: 8px; height: 40px; font-size: 13px;
+      font-weight: 600; letter-spacing: 0.5px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; transition: all 0.15s ease;
+    }
+    .modal-action-btn.warm {
+      background: var(--accent-warm); border-color: var(--accent-warm); color: #ffffff;
+      box-shadow: 0 3px 10px rgba(224, 122, 95, 0.28);
+    }
+    .modal-action-btn:active { opacity: 0.85; transform: scale(0.99); }
+    .post-list {
+      display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 20px; flex: 1; overflow-y: auto;
+    }
+    .post-list::before {
+      content: ""; position: absolute; left: 7px; top: 10px; bottom: 10px; width: 2px; background: var(--border);
+    }
+    .post-item { position: relative; padding-bottom: 20px; }
+    .post-item::before {
+      content: ""; position: absolute; left: -17px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-warm); border: 2px solid var(--bg-primary);
+    }
+    .post-item.take::before { background: var(--text-muted); }
+    .post-content-box {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+    }
+    .post-author-row {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+    }
+    .post-author { font-size: 13px; font-weight: 600; color: var(--text-main); }
+    .post-time { font-size: 11px; color: var(--text-light); }
+    .post-body { font-size: 13px; color: var(--text-main); line-height: 1.5; margin-bottom: 6px; }
+    .post-tag-badge {
+      display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-right: 6px; background: var(--accent-warm-light); color: var(--accent-warm); font-weight: 600;
+    }
+    .post-tag-badge.take { background: var(--tag-bg); color: var(--text-muted); }
+    .post-memo {
+      font-size: 12px; color: var(--text-muted); border-left: 2px solid var(--accent-warm); padding-left: 8px; background: var(--bg-primary); padding: 6px 8px; border-radius: 0 4px 4px 0; font-style: italic; word-break: break-word;
+    }
+    .order-list {
+      display: flex; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1; padding-bottom: 12px; -webkit-overflow-scrolling: touch;
+    }
+    .order-card {
+      background: var(--bg-primary); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .order-head {
+      display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);
+    }
+    .order-body { display: flex; gap: 10px; align-items: center; }
+    .order-emoji { font-size: 28px; line-height: 1; flex-shrink: 0; }
+    .order-info { flex: 1; min-width: 0; }
+    .order-title {
+      font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .order-desc {
+      font-size: 11px; color: var(--text-muted); line-height: 15px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-word;
+    }
+    .btn-action-pantry {
+      padding: 6px 12px; background: var(--accent-warm); color: #ffffff; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; text-align: center; border: none; flex-shrink: 0; white-space: nowrap; box-shadow: 0 2px 6px rgba(224, 122, 95, 0.25);
+    }
+    .btn-action-pantry:active { opacity: 0.85; transform: scale(0.96); }
+    .switch-wrap {
+      position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; cursor: pointer;
+    }
+    .switch-wrap input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .switch-slider {
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: #d1d5db; transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 24px;
+    }
+    .switch-slider:before {
+      position: absolute; content: ""; height: 20px; width: 20px; left: 2px; bottom: 2px; background-color: #ffffff; transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .switch-wrap input:checked + .switch-slider { background-color: var(--accent-warm); }
+    .switch-wrap input:checked + .switch-slider:before { transform: translateX(20px); }
+    .app-toast {
+      position: fixed; bottom: calc(50vh + 12px); left: 50%; transform: translateX(-50%) translateY(6px) scale(0.95); background: #1c1917; color: #ffffff; padding: 8px 16px; border-radius: 18px; font-size: 12px; font-weight: 500; letter-spacing: 0.3px; z-index: 9999; pointer-events: none; opacity: 0; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: 0 4px 14px rgba(0,0,0,0.18); white-space: nowrap;
+    }
+    .app-toast.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    .custom-dialog-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .custom-dialog-overlay.open { opacity: 1; pointer-events: auto; }
+    .custom-dialog-box {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; width: 85%; max-width: 320px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .custom-dialog-title {
+      font-size: 15px; font-weight: 600; color: var(--text-main); margin-bottom: 12px;
+    }
+    .custom-dialog-body {
+      font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;
+    }
+    .custom-dialog-actions {
+      display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;
+    }
+    .custom-dialog-btn {
+      padding: 8px 14px; font-size: 13px; font-weight: 500; border-radius: 6px; cursor: pointer;
+    }
+    .custom-dialog-cancel {
+      background: var(--tag-bg); border: 1px solid var(--border); color: var(--text-muted);
+    }
+    .custom-dialog-confirm {
+      background: var(--accent-warm); border: none; color: #ffffff;
+    }
+    .custom-dialog-danger {
+      background: #dc2626; border: none; color: #ffffff;
+    }
+    #bootOverlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--bg-primary); z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.25s ease;
+    }
+    #bootOverlay.hide { opacity: 0; pointer-events: none; }
+  </style>
+</head>
+<body class="view-shelf-active">
+
+  <!-- 启动遮罩：避免恢复上次视图时闪烁 -->
+  <div id="bootOverlay"></div>
+
+  <!-- 顶部双 Tab 标题栏 -->
+  <header class="header-archive">
+    <div class="header-nav-wrap">
+      <span class="nav-tab active" id="tabPantry">公共储物架</span>
+      <span class="nav-divider"></span>
+      <span class="nav-tab" id="tabMarket">壹集市</span>
+      <button id="btnOpenHelp" style="background: var(--tag-bg); border: 1px solid var(--border); width: 22px; height: 22px; border-radius: 50%; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; margin-left: 2px; transform: translateY(-1px);" title="使用说明">?</button>
+    </div>
+  </header>
+
+  <!-- 使用说明弹窗 -->
+  <div class="cat-modal-overlay" id="helpModal">
+    <div class="cat-modal-sheet" style="max-height: 82vh; height: auto; display: flex; flex-direction: column; padding: 18px 20px calc(env(safe-area-inset-bottom, 16px) + 16px);" onclick="event.stopPropagation()">
+      <div class="sheet-head" style="flex-shrink: 0; margin-bottom: 14px;">
+        <span class="sheet-title" id="helpModalTitle" style="font-size: 17px;">使用说明</span>
+        <button class="sheet-close" id="btnCloseHelp">✕</button>
+      </div>
+      <div id="helpModalContent" style="flex: 1; overflow-y: auto; font-size: 13px; color: var(--text-main); line-height: 1.5; -webkit-overflow-scrolling: touch; padding-bottom: 4px;"></div>
+    </div>
+  </div>
+
+  <!-- 分类栏 (储物架) -->
+  <div class="cat-bar-wrapper" id="catBarPantry">
+    <div class="capsule-row" id="categoryRowPantry"></div>
+    <button class="cat-manage-btn-fixed" id="btnOpenCatModal" title="管理分类">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 分类栏 (壹集市) -->
+  <div class="cat-bar-wrapper" id="catBarMarket" style="display: none;">
+    <div class="capsule-row" id="categoryRowMarket"></div>
+    <button class="cat-manage-btn-fixed" id="btnManageMarketCats" title="管理品类与AI设定">
+      <svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- 内容区 -->
+  <main class="content-area" id="mainContentArea">
+    <!-- 储物架视图 -->
+    <div id="viewShelf">
+      <div class="shelf-grid" id="shelfGrid"></div>
+      <div class="empty-state" id="emptyShelf" style="display: none;">
+        <div class="empty-icon">🛋️</div>
+        <div class="empty-text">该分类下空空如也<br>买点好吃的或存入小物件吧</div>
+      </div>
+    </div>
+
+    <!-- 壹集市视图 -->
+    <div id="viewMarket" style="display: none;">
+      <div class="goods-grid" id="goodsGrid"></div>
+      <div class="empty-state" id="emptyMarket" style="display: none;">
+        <div class="empty-icon">🍃</div>
+        <div class="empty-text">当前分类下暂无商品<br>点击下方「AI 进货」生成专属好物！</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- 底部 Dock (储物架) -->
+  <footer class="footer-dock" id="dockShelf">
+    <button class="dock-btn-sub" id="btnOpenLogs">
+      <span>📜</span>
+      <span>记录</span>
+    </button>
+    <button class="dock-btn-sub" id="btnDockShare">
+      <span>≡</span>
+      <span>清单</span>
+    </button>
+    <button class="dock-btn-main" id="btnDockDeposit">
+      <span>＋</span>
+      <span>存入物品</span>
+    </button>
+  </footer>
+
+  <!-- 底部 Dock (壹集市) -->
+  <footer class="footer-dock" id="dockMarket" style="display: none;">
+    <button class="dock-btn-sub" id="btnOpenOrders">
+      <span>📦</span>
+      <span>我的包裹</span>
+    </button>
+    <button class="dock-btn-sub" id="btnManualAdd">
+      <span>＋</span>
+      <span>自制商品</span>
+    </button>
+    <button class="dock-btn-main dock-btn-market-main" id="btnAiRestock">
+      <span>✨</span>
+      <span>AI 进货</span>
+    </button>
+  </footer>
+
+  <!-- 存取流水记录抽屉 -->
+  <div class="cat-modal-overlay" id="logsModal">
+    <div class="cat-modal-sheet" style="height: 380px; max-height: 90%; display: flex; flex-direction: column; padding: 16px 20px calc(env(safe-area-inset-bottom, 16px) + 16px); box-sizing: border-box;" onclick="event.stopPropagation()">
+      <div class="sheet-head" style="margin-bottom: 12px; flex-shrink: 0;">
+        <span class="sheet-title" style="font-size: 16px;">存取记录流水</span>
+        <button class="sheet-close" id="btnCloseLogs">✕</button>
+      </div>
+      <div class="post-list" id="postList" style="flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;"></div>
+      <div class="empty-state" id="emptyPosts" style="display: none;">
+        <div class="empty-icon">📜</div>
+        <div class="empty-text">暂无手记记录</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 存入物品抽屉 -->
+  <div class="cat-modal-overlay" id="depositModal">
+    <div class="cat-modal-sheet" style="height: 380px; max-height: 90%; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 20px calc(env(safe-area-inset-bottom, 16px) + 16px); box-sizing: border-box; overflow-y: auto;" onclick="event.stopPropagation()">
+      <div class="sheet-head" style="margin-bottom: 4px; flex-shrink: 0;">
+        <span class="sheet-title" style="font-size: 16px;">存入物品</span>
+        <button class="sheet-close" id="btnCloseDeposit">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 5px; flex: 1; justify-content: center;">
+        <div class="form-item">
+          <label class="form-item-label">选择图标</label>
+          <div class="emoji-picker-row" id="emojiPicker">
+            <div class="emoji-opt active" data-emoji="🧃">🧃</div>
+            <div class="emoji-opt" data-emoji="🍪">🍪</div>
+            <div class="emoji-opt" data-emoji="☕">☕</div>
+            <div class="emoji-opt" data-emoji="🥪">🥪</div>
+            <div class="emoji-opt" data-emoji="🍰">🍰</div>
+            <div class="emoji-opt" data-emoji="🍎">🍎</div>
+            <div class="emoji-opt" data-emoji="🎁">🎁</div>
+            <div class="emoji-opt" data-emoji="📚">📚</div>
+            <div class="emoji-opt" data-emoji="🎧">🎧</div>
+            <div class="emoji-opt" data-emoji="💊">💊</div>
+          </div>
+        </div>
+        <div class="form-item">
+          <label class="form-item-label">物品名称</label>
+          <input type="text" class="form-input" id="inputName" placeholder="例如：手工曲奇 / 冰美式 / 润喉糖" maxlength="24" autocomplete="off">
+        </div>
+        <div class="form-item">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="form-item-label" style="margin-bottom: 0;">物品分类标签</label>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span class="form-item-label" style="margin-bottom: 0; text-transform: none; font-size: 11px;">数量:</span>
+              <input type="number" inputmode="numeric" class="form-input" id="inputCount" value="1" min="1" max="99" style="width: 54px; padding: 3px 6px; text-align: center; font-size: 12px; height: 26px;">
+            </div>
+          </div>
+          <div class="emoji-picker-row" id="depositCatPicker" style="gap: 6px; padding: 2px 0;"></div>
+        </div>
+        <div class="form-item">
+          <label class="form-item-label">便利贴留言</label>
+          <input type="text" class="form-input" id="inputNote" placeholder="例如：买多了大家随便拿~ / 记得冷藏" maxlength="50" autocomplete="off">
+        </div>
+      </div>
+      <div style="padding-top: 10px; flex-shrink: 0;">
+        <button class="modal-action-btn" id="btnConfirmDeposit">确认存入并贴上便签</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修改物品抽屉 -->
+  <div class="cat-modal-overlay" id="editCatModal">
+    <div class="cat-modal-sheet" style="max-height: 92%; height: auto; display: flex; flex-direction: column; padding: 16px 20px calc(env(safe-area-inset-bottom, 16px) + 16px); overflow-y: auto;" onclick="event.stopPropagation()">
+      <div class="sheet-head" style="margin-bottom: 6px; flex-shrink: 0;">
+        <span class="sheet-title" style="font-size: 16px;">修改物品</span>
+        <button class="sheet-close" id="btnCloseEditCat">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center;">
+        <div class="form-item">
+          <label class="form-item-label">选择图标</label>
+          <div class="emoji-picker-row" id="editEmojiPicker"></div>
+        </div>
+        <div class="form-item">
+          <label class="form-item-label">物品名称</label>
+          <input type="text" class="form-input" id="editInputName" placeholder="例如：手工曲奇" maxlength="24">
+        </div>
+        <div class="form-item">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="form-item-label" style="margin-bottom: 0;">物品分类标签</label>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span class="form-item-label" style="margin-bottom: 0; text-transform: none; font-size: 11px;">数量:</span>
+              <input type="number" inputmode="numeric" class="form-input" id="editInputCount" value="1" min="1" max="99" style="width: 54px; padding: 3px 6px; text-align: center; font-size: 12px; height: 26px;">
+            </div>
+          </div>
+          <div class="emoji-picker-row" id="editCatPicker" style="gap: 6px; padding: 2px 0;"></div>
+        </div>
+        <div class="form-item">
+          <label class="form-item-label">便利贴留言</label>
+          <input type="text" class="form-input" id="editInputNote" placeholder="例如：买多了大家随便拿~ / 记得冷藏" maxlength="50">
+        </div>
+      </div>
+      <div style="padding-top: 10px; flex-shrink: 0;">
+        <button class="modal-action-btn" id="btnConfirmEditCat">保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 取出物品抽屉 -->
+  <div class="cat-modal-overlay" id="takeModal">
+    <div class="cat-modal-sheet" style="padding: 20px 20px calc(env(safe-area-inset-bottom, 16px) + 16px);" onclick="event.stopPropagation()">
+      <div class="sheet-head">
+        <span class="sheet-title">取走物品</span>
+        <button class="sheet-close" id="btnCloseTake">✕</button>
+      </div>
+      <div class="form-item" style="margin-bottom: 12px;">
+        <label class="form-item-label">即将取走</label>
+        <div id="takeItemTitle" style="font-size: 15px; font-weight: 600; margin-bottom: 4px;"></div>
+        <div style="font-size: 11px; color: var(--text-muted);">库存: <span id="takeItemStock">0</span> 件</div>
+      </div>
+      <div class="form-item" style="margin-bottom: 12px;">
+        <label class="form-item-label">取走数量</label>
+        <div style="display: flex; align-items: center; gap: 12px; justify-content: center;">
+          <button id="takeCountMinus" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-primary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">−</button>
+          <input type="number" id="takeCountInput" value="1" min="1" max="99" style="width: 50px; text-align: center; font-size: 16px; font-weight: 600; border: none; background: transparent; outline: none;">
+          <button id="takeCountPlus" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg-primary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">+</button>
+        </div>
+      </div>
+      <div class="form-item">
+        <label class="form-item-label">留一张便签（感谢或调侃）</label>
+        <input type="text" class="form-input" id="inputTakeNote" placeholder="例如：刚好口渴，多谢款待！" maxlength="50">
+      </div>
+      <button class="modal-action-btn" id="btnConfirmTake" style="margin-top: 16px;">确认取走</button>
+    </div>
+  </div>
+
+  <!-- 储物架分类管理抽屉 -->
+  <div class="cat-modal-overlay" id="catModal">
+    <div class="cat-modal-sheet" style="height: 50vh; display: flex; flex-direction: column; padding: 20px 20px calc(env(safe-area-inset-bottom, 16px) + 12px);" onclick="event.stopPropagation()">
+      <div class="sheet-head" style="flex-shrink: 0; margin-bottom: 14px;">
+        <span class="sheet-title">分类管理</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="btnSwitchToMarket" style="background: var(--accent-warm-light); color: var(--accent-warm); border: 1px solid var(--accent-warm); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s ease;">
+            <span>⇄</span><span>前往壹集市</span>
+          </button>
+          <button class="sheet-close" id="btnCloseCatModal">✕</button>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-shrink: 0;">
+        <input type="text" class="form-input" id="newCatInput" placeholder="输入新分类名称..." maxlength="12" style="flex: 1;">
+        <button class="dock-btn-main" id="btnAddCat" style="flex: 0 0 70px; padding: 0; font-size: 13px;">添加</button>
+      </div>
+      <div id="catListContainer" style="display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px;"></div>
+    </div>
+  </div>
+
+  <!-- 我的包裹抽屉 -->
+  <div class="modal-overlay" id="ordersModal">
+    <div class="modal-sheet" style="height: 75vh; max-height: 75vh; display: flex; flex-direction: column; padding: 20px 20px calc(env(safe-area-inset-bottom, 16px) + 12px);" onclick="event.stopPropagation()">
+      <div class="sheet-head">
+        <span class="sheet-title">已购包裹</span>
+        <button class="sheet-close" id="btnCloseOrders">✕</button>
+      </div>
+      <div class="order-list" id="orderList"></div>
+      <div class="empty-state" id="emptyOrders" style="display: none;">
+        <div class="empty-icon">📦</div>
+        <div class="empty-text">还没有购买包裹<br>快去小铺挑选心仪的好物吧~</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 放入公共储物架抽屉 -->
+  <div class="modal-overlay" id="pantryDepositModal">
+    <div class="modal-sheet" style="max-height: 92%; height: auto; display: flex; flex-direction: column; padding: 16px 20px calc(env(safe-area-inset-bottom, 16px) + 16px); overflow-y: auto;" onclick="event.stopPropagation()">
+      <div class="sheet-head" style="margin-bottom: 6px; flex-shrink: 0;">
+        <span class="sheet-title" style="font-size: 16px;">放入公共储物架</span>
+        <button class="sheet-close" id="btnClosePantryDeposit">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; flex: 1; justify-content: center;">
+        <div class="form-item" style="margin-bottom: 0;">
+          <label class="form-label">物品图标</label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div id="pantryDepositEmoji" style="font-size: 28px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--bg-primary); border-radius: 6px; border: 1px solid var(--border);">🎁</div>
+            <div style="font-size: 11px; color: var(--text-muted);">物品图标从包裹中继承</div>
+          </div>
+        </div>
+        <div class="form-item" style="margin-bottom: 0;">
+          <label class="form-label">物品名称</label>
+          <input type="text" class="form-input" id="pantryDepositName" placeholder="例如：手作香草舒芙蕾" maxlength="24">
+        </div>
+        <div class="form-item" style="margin-bottom: 0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label class="form-label" style="margin-bottom: 0;">所属分组 / 分类标签</label>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span class="form-label" style="margin-bottom: 0; text-transform: none; font-size: 11px;">存入数量:</span>
+              <input type="number" inputmode="numeric" class="form-input" id="pantryDepositCount" value="1" min="1" max="99" style="width: 54px; padding: 3px 6px; text-align: center; font-size: 12px; height: 26px;">
+            </div>
+          </div>
+          <div class="capsule-row" id="pantryCatPicker" style="gap: 6px; padding: 2px 0;"></div>
+        </div>
+        <div class="form-item" style="margin-bottom: 0;">
+          <label class="form-label">便利贴留言</label>
+          <input type="text" class="form-input" id="pantryDepositNote" placeholder="例如：在壹集市买的，大家随便用~" maxlength="50">
+        </div>
+      </div>
+      <div style="padding-top: 10px; flex-shrink: 0;">
+        <button class="modal-action-btn warm" id="btnConfirmPantryDeposit">确认放入储物架</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 品类与 AI 进货设定抽屉 -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal-sheet" style="height: 50vh; display: flex; flex-direction: column; justify-content: space-between; padding: 20px 20px calc(env(safe-area-inset-bottom, 16px) + 12px);" onclick="event.stopPropagation()">
+      <div class="sheet-head" style="margin-bottom: 8px;">
+        <span class="sheet-title">品类与 AI 进货设定</span>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="btnSwitchToShelf" style="background: var(--tag-bg); color: var(--text-main); border: 1px solid var(--border); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 14px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s ease;">
+            <span>⇄</span><span>前往储物架</span>
+          </button>
+          <button class="sheet-close" id="btnCloseCatModalMarket">✕</button>
+        </div>
+      </div>
+      <div style="flex: 1; overflow-y: auto;">
+        <div class="form-item">
+          <label class="form-label">商品品类（用逗号隔开）</label>
+          <input type="text" class="form-input" id="inputCategories" placeholder="例如：零食甜点, 冰镇特调, 日用杂物, 浪漫心意">
+        </div>
+        <div class="form-item">
+          <label class="form-label">AI 进货风格提示词</label>
+          <textarea class="form-textarea" id="inputPrompt" style="min-height: 90px;" placeholder="例如：生成具有日系治愈、温馨生活感、手作甜点和治愈系杂货风格的商品..."></textarea>
+        </div>
+        <div class="form-item" style="display: flex; align-items: center; justify-content: space-between; background: transparent; padding: 14px 2px 8px; border: none; margin-top: 14px; border-top: 1px dashed var(--border);">
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--text-main);">极速免密支付</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">开启后点击购买直接扣除钱包入库包裹</div>
+          </div>
+          <label class="switch-wrap">
+            <input type="checkbox" id="checkQuickPay">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </div>
+      <button class="modal-action-btn warm" id="btnSaveCatSettings">保存设定</button>
+    </div>
+  </div>
+
+  <!-- 手工录入好物抽屉 -->
+  <div class="modal-overlay" id="manualModal">
+    <div class="modal-sheet" style="height: 50vh; display: flex; flex-direction: column; justify-content: space-between; padding: 16px 20px calc(env(safe-area-inset-bottom, 16px) + 12px);" onclick="event.stopPropagation()">
+      <div class="sheet-head" style="margin-bottom: 6px;">
+        <span class="sheet-title" style="font-size: 16px;">手工录入好物</span>
+        <button class="sheet-close" id="btnCloseManual">✕</button>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 8px; justify-content: center;">
+        <div class="form-item" style="margin-bottom: 0;">
+          <label class="form-label">物品名称</label>
+          <input type="text" class="form-input" id="inputManualName" placeholder="例如：手作香草舒芙蕾" maxlength="24">
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <div class="form-item" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label">图标 (Emoji)</label>
+            <input type="text" class="form-input" id="inputManualEmoji" value="🍰" maxlength="4">
+          </div>
+          <div class="form-item" style="flex: 1.5; margin-bottom: 0;">
+            <label class="form-label">所属分类</label>
+            <select class="form-input" id="selectManualCat"></select>
+          </div>
+        </div>
+        <div class="form-item" style="margin-bottom: 0;">
+          <label class="form-label">一句话描述</label>
+          <input type="text" class="form-input" id="inputManualDesc" placeholder="例如：蓬松如云朵，入口即化~" maxlength="50">
+        </div>
+        <div class="form-item" style="margin-bottom: 0;">
+          <label class="form-label">价格</label>
+          <input type="text" class="form-input" id="inputManualPrice" value="¥ 28.00" maxlength="16">
+        </div>
+      </div>
+      <div style="padding-top: 10px;">
+        <button class="modal-action-btn warm" id="btnConfirmManual">上架到小铺</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 下架商品确认 -->
+  <div class="custom-dialog-overlay" id="deleteGoodDialog">
+    <div class="custom-dialog-box" onclick="event.stopPropagation()">
+      <div class="custom-dialog-title" id="deleteGoodTitle">下架商品</div>
+      <div class="custom-dialog-body" id="deleteGoodDesc">确定要将此商品从货架上下架删除吗？</div>
+      <div class="custom-dialog-actions">
+        <button class="custom-dialog-btn custom-dialog-cancel" id="btnCancelDeleteGood">取消</button>
+        <button class="custom-dialog-btn custom-dialog-danger" id="btnConfirmDeleteGood">确定下架</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修改商品分组 -->
+  <div class="custom-dialog-overlay" id="changeCatDialog">
+    <div class="custom-dialog-box" style="position: relative; padding: 18px 20px 20px;" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <div class="custom-dialog-title" id="changeCatTitle" style="margin-bottom: 0;">修改商品分组</div>
+        <button class="sheet-close" id="btnCloseChangeCat" style="font-size: 16px; padding: 2px 4px; line-height: 1;">✕</button>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;" id="changeCatGoodName">请选择要归入的分组：</div>
+      <div class="capsule-row" id="changeCatList" style="display: flex; flex-wrap: wrap; gap: 8px; max-height: 160px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- 确认购买收银台 -->
+  <div class="custom-dialog-overlay" id="buyConfirmDialog">
+    <div class="custom-dialog-box" style="width: 88%; max-width: 320px; padding: 18px 20px;" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div class="custom-dialog-title" style="margin-bottom: 0; font-size: 16px;">确认购买</div>
+        <button class="sheet-close" id="btnCloseBuyConfirm" style="font-size: 16px; padding: 2px 4px; line-height: 1;">✕</button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px; background: var(--bg-primary); padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px;">
+        <div id="buyDialogEmoji" style="font-size: 28px; line-height: 1;">🎁</div>
+        <div style="flex: 1; min-width: 0;">
+          <div id="buyDialogName" style="font-size: 14px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">商品名称</div>
+          <div id="buyDialogSinglePrice" style="font-size: 12px; color: var(--accent-warm); font-weight: 600; margin-top: 2px;">¥ 0.00 / 件</div>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">购买数量</span>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button type="button" id="btnBuyCountMinus" style="width: 26px; height: 26px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">-</button>
+          <input type="number" inputmode="numeric" id="buyDialogCount" value="1" min="1" max="99" style="width: 44px; height: 26px; text-align: center; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-primary); font-size: 13px; font-weight: 600;">
+          <button type="button" id="btnBuyCountPlus" style="width: 26px; height: 26px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer;">+</button>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+        <span style="font-size: 12px; color: var(--text-muted);">总计金额</span>
+        <span id="buyDialogTotalPrice" style="font-size: 15px; font-weight: 700; color: var(--accent-warm);">¥ 0.00</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-top: 6px; border-top: 1px dashed var(--border);">
+        <span style="font-size: 12px; color: var(--text-muted);">当前钱包余额</span>
+        <span id="buyDialogWalletBalance" style="font-size: 12px; font-weight: 600; color: var(--text-main);">¥ --</span>
+      </div>
+      <div class="custom-dialog-actions" style="display: flex; gap: 8px;">
+        <button class="custom-dialog-btn custom-dialog-cancel" id="btnCancelBuyConfirm" style="flex: 1; text-align: center; padding: 10px 0;">取消</button>
+        <button class="custom-dialog-btn custom-dialog-confirm" id="btnSubmitBuyConfirm" style="flex: 1.6; text-align: center; padding: 10px 0;">确认支付并购买</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用输入与确认弹窗 -->
+  <div class="custom-dialog-overlay" id="promptDialog">
+    <div class="custom-dialog-box" onclick="event.stopPropagation()">
+      <div class="custom-dialog-title" id="promptDialogTitle">修改分类名称</div>
+      <input type="text" class="form-input" id="promptDialogInput" maxlength="12">
+      <div class="custom-dialog-actions">
+        <button class="custom-dialog-btn custom-dialog-cancel" id="btnPromptCancel">取消</button>
+        <button class="custom-dialog-btn custom-dialog-confirm" id="btnPromptConfirm">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="custom-dialog-overlay" id="confirmDialog">
+    <div class="custom-dialog-box" onclick="event.stopPropagation()">
+      <div class="custom-dialog-title" id="confirmDialogText">确定执行此操作吗？</div>
+      <div class="custom-dialog-actions">
+        <button class="custom-dialog-btn custom-dialog-cancel" id="btnConfirmCancel">取消</button>
+        <button class="custom-dialog-btn custom-dialog-confirm" id="btnConfirmOk">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 浮动 Toast -->
+  <div class="app-toast" id="appToast"></div>
+  <script>
+    (async function() {
+      const api = window.AiPhone;
+      let currentSessionId = null;
+      let currentCharacterId = null;
+      let userProfile = { name: "我" };
+      let charactersCache = [];
+      let isToolbarMode = false;
+
+      const safeStorage = {
+        get(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
+        set(k, v) { try { localStorage.setItem(k, v); } catch(e) {} },
+        remove(k) { try { localStorage.removeItem(k); } catch(e) {} }
+      };
+      safeStorage.remove("global_shelf_categories");
+
+      let savedTab = null;
+      try { savedTab = safeStorage.get("pantry_market_last_tab"); } catch(e){}
+      let currentMainTab = (savedTab === "market") ? "market" : "shelf";
+
+      // 储物架状态
+      let selectedEmoji = "🧃";
+      let activeFilterCat = "all";
+      let takingItemId = null;
+      let editingCatItemId = null;
+      let shelfItems = [];
+      let pantryLogs = [];
+
+      const DEFAULT_PRESET_CATS = [
+        { id: "uncategorized", name: "未分类" }
+      ];
+
+      function sanitizeCategories(rawList) {
+        const seen = new Set();
+        const list = [];
+        if (Array.isArray(rawList)) {
+          rawList.forEach(c => {
+            if (c && c.id && c.id !== "uncategorized" && !seen.has(c.id)) {
+              seen.add(c.id);
+              list.push({ id: String(c.id), name: String(c.name || c.id) });
+            }
+          });
+        }
+        list.push({ id: "uncategorized", name: "未分类" });
+        return list;
+      }
+
+      function loadInitialCategories() {
+        const raw = safeStorage.get("shelf_user_categories");
+        if (raw !== null && raw !== undefined) {
+          try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return sanitizeCategories(parsed);
+          } catch(e){}
+        }
+        return sanitizeCategories(DEFAULT_PRESET_CATS);
+      }
+
+      let categories = loadInitialCategories();
+
+      // 壹集市状态
+      let activeMarketCat = "all";
+      let walletAccounts = [];
+      let deletingGoodId = null;
+      let changingCatGoodId = null;
+      let pendingPantryOrder = null;
+      let selectedPantryCat = null;
+      let pendingBuyProduct = null;
+      let pendingBuyCount = 1;
+
+      let marketSettings = {
+        categories: ["零食甜点", "特调饮品", "生活杂物", "心意礼物", "日用囤货"],
+        prompt: "21世纪现代都市生活好物，涵盖吃喝玩乐与日常趣味好品。",
+        quickPay: false
+      };
+
+      const defaultProducts = [
+        { name: "手作香草巴斯克", emoji: "🍰", category: "零食甜点", desc: "微焦芝士外皮，内馅半熟流心", price: "¥ 32.00" },
+        { name: "冰镇海盐生椰拿铁", emoji: "☕", category: "特调饮品", desc: "浓郁椰香，夏日午后提神首选", price: "¥ 26.00" },
+        { name: "草莓大福雪媚娘", emoji: "🍓", category: "零食甜点", desc: "整颗多汁草莓与细腻奶油", price: "¥ 18.00" },
+        { name: "洋甘菊安睡香薰蜡烛", emoji: "🕯️", category: "生活杂物", desc: "天然大豆蜡，温暖治愈香气", price: "¥ 48.00" },
+        { name: "手工烘焙黄油曲奇盒", emoji: "🍪", category: "零食甜点", desc: "酥脆掉渣，奶香浓郁", price: "¥ 35.00" },
+        { name: "冷萃白桃乌龙茶", emoji: "🧃", category: "特调饮品", desc: "原叶冷萃，清甜回甘", price: "¥ 22.00" },
+        { name: "热敷蒸汽眼罩·洋甘菊", emoji: "🧖", category: "日用囤货", desc: "40℃恒温发热，舒缓眼部疲劳", price: "¥ 29.90" },
+        { name: "复古皮质手账本", emoji: "📖", category: "心意礼物", desc: "加厚道林纸，记录生活碎碎念", price: "¥ 56.00" }
+      ];
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const toastEl = document.getElementById("appToast");
+        if (toastEl) {
+          toastEl.innerText = msg;
+          toastEl.classList.add("show");
+          if (toastTimer) clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => { toastEl.classList.remove("show"); }, 1800);
+        }
+      }
+
+      function showPrompt(title, defaultVal = "") {
+        return new Promise((resolve) => {
+          const dialog = document.getElementById("promptDialog");
+          const input = document.getElementById("promptDialogInput");
+          document.getElementById("promptDialogTitle").innerText = title;
+          input.value = defaultVal;
+          dialog.classList.add("open");
+          input.focus();
+
+          const handleConfirm = () => { cleanup(); resolve(input.value.trim()); };
+          const handleCancel = () => { cleanup(); resolve(null); };
+          const cleanup = () => {
+            dialog.classList.remove("open");
+            document.getElementById("btnPromptConfirm").removeEventListener("click", handleConfirm);
+            document.getElementById("btnPromptCancel").removeEventListener("click", handleCancel);
+          };
+          document.getElementById("btnPromptConfirm").addEventListener("click", handleConfirm);
+          document.getElementById("btnPromptCancel").addEventListener("click", handleCancel);
+        });
+      }
+
+      function showConfirm(text) {
+        return new Promise((resolve) => {
+          const dialog = document.getElementById("confirmDialog");
+          document.getElementById("confirmDialogText").innerText = text;
+          dialog.classList.add("open");
+
+          const handleOk = () => { cleanup(); resolve(true); };
+          const handleCancel = () => { cleanup(); resolve(false); };
+          const cleanup = () => {
+            dialog.classList.remove("open");
+            document.getElementById("btnConfirmOk").removeEventListener("click", handleOk);
+            document.getElementById("btnConfirmCancel").removeEventListener("click", handleCancel);
+          };
+          document.getElementById("btnConfirmOk").addEventListener("click", handleOk);
+          document.getElementById("btnConfirmCancel").addEventListener("click", handleCancel);
+        });
+      }
+
+      const tabPantry = document.getElementById("tabPantry");
+      const tabMarket = document.getElementById("tabMarket");
+      const catBarPantry = document.getElementById("catBarPantry");
+      const catBarMarket = document.getElementById("catBarMarket");
+      const viewShelf = document.getElementById("viewShelf");
+      const viewMarket = document.getElementById("viewMarket");
+      const dockShelf = document.getElementById("dockShelf");
+      const dockMarket = document.getElementById("dockMarket");
+
+      function switchTab(tab) {
+        currentMainTab = tab;
+        if (!isToolbarMode) {
+          safeStorage.set("pantry_market_last_tab", tab);
+          if (api?.db?.list) {
+            api.db.list("pantry_app_state", { limit: 1 }).then(async (stateRecs) => {
+              try {
+                const rec = Array.isArray(stateRecs) ? stateRecs[0] : null;
+                if (rec && rec.id) {
+                  await api.db.update("pantry_app_state", rec.id, { lastTab: tab, updatedAt: new Date().toISOString() });
+                } else {
+                  await api.db.create("pantry_app_state", { lastTab: tab, updatedAt: new Date().toISOString() });
+                }
+              } catch(e){}
+            }).catch(()=>{});
+          }
+        }
+        const modeClass = isToolbarMode ? " is-toolbar-mode" : "";
+        if (tab === "shelf") {
+          document.body.className = "view-shelf-active" + modeClass;
+          tabPantry.classList.add("active");
+          tabMarket.classList.remove("active");
+          catBarPantry.style.display = "flex";
+          catBarMarket.style.display = "none";
+          viewShelf.style.display = "block";
+          viewMarket.style.display = "none";
+          dockShelf.style.display = "flex";
+          dockMarket.style.display = "none";
+          renderCategoryTabs();
+          renderShelf();
+        } else {
+          document.body.className = "view-market-active" + modeClass;
+          tabMarket.classList.add("active");
+          tabPantry.classList.remove("active");
+          catBarPantry.style.display = "none";
+          catBarMarket.style.display = "flex";
+          viewShelf.style.display = "none";
+          viewMarket.style.display = "block";
+          dockShelf.style.display = "none";
+          dockMarket.style.display = "flex";
+          renderMarketCategoryCapsules();
+          renderGoods();
+        }
+      }
+
+      tabPantry.addEventListener("click", () => switchTab("shelf"));
+      tabMarket.addEventListener("click", () => switchTab("market"));
+
+      const mainContentArea = document.getElementById("mainContentArea");
+      let touchStartX = 0;
+      let touchStartY = 0;
+
+      mainContentArea.addEventListener("touchstart", (e) => {
+        if (e.touches && e.touches[0]) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+        }
+      }, { passive: true });
+
+      mainContentArea.addEventListener("touchend", (e) => {
+        if (!e.changedTouches || !e.changedTouches[0]) return;
+        const dx = e.changedTouches[0].clientX - touchStartX;
+        const dy = e.changedTouches[0].clientY - touchStartY;
+
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+          if (currentMainTab === "shelf") {
+            const allCatIds = ["all", ...categories.map(c => c.id)];
+            const curIdx = allCatIds.indexOf(activeFilterCat);
+            if (curIdx === -1) return;
+
+            if (dx < 0) {
+              if (curIdx < allCatIds.length - 1) {
+                activeFilterCat = allCatIds[curIdx + 1];
+                renderCategoryTabs();
+                renderShelf();
+                scrollActiveCatIntoView("categoryRowPantry");
+              }
+            } else {
+              if (curIdx > 0) {
+                activeFilterCat = allCatIds[curIdx - 1];
+                renderCategoryTabs();
+                renderShelf();
+                scrollActiveCatIntoView("categoryRowPantry");
+              }
+            }
+          } else if (currentMainTab === "market") {
+            const allMarketCats = ["all", ...marketSettings.categories];
+            const curIdx = allMarketCats.indexOf(activeMarketCat);
+            if (curIdx === -1) return;
+
+            if (dx < 0) {
+              if (curIdx < allMarketCats.length - 1) {
+                activeMarketCat = allMarketCats[curIdx + 1];
+                renderMarketCategoryCapsules();
+                renderGoods();
+                scrollActiveCatIntoView("categoryRowMarket");
+              }
+            } else {
+              if (curIdx > 0) {
+                activeMarketCat = allMarketCats[curIdx - 1];
+                renderMarketCategoryCapsules();
+                renderGoods();
+                scrollActiveCatIntoView("categoryRowMarket");
+              }
+            }
+          }
+        }
+      }, { passive: true });
+
+      function scrollActiveCatIntoView(containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const activeCap = container.querySelector(".capsule.active");
+        if (activeCap) {
+          activeCap.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        }
+      }
+
+      async function matchOrCreateCategory(catNameInput) {
+        if (!catNameInput || catNameInput === "uncategorized" || catNameInput === "未分类") return "uncategorized";
+        const raw = String(catNameInput).trim();
+        if (!raw) return "uncategorized";
+        const rawLower = raw.toLowerCase();
+
+        let found = categories.find(c => c.id.toLowerCase() === rawLower || c.name.toLowerCase() === rawLower);
+        if (found) return found.id;
+
+        const validCats = categories.filter(c => c.id !== "uncategorized");
+        found = validCats.find(c => {
+          const cName = c.name.toLowerCase();
+          return cName.includes(rawLower) || rawLower.includes(cName);
+        });
+        if (found) return found.id;
+
+        const newId = "cat_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4);
+        const uncatIndex = categories.findIndex(c => c.id === "uncategorized");
+        const newCatObj = { id: newId, name: raw };
+        if (uncatIndex >= 0) {
+          categories.splice(uncatIndex, 0, newCatObj);
+        } else {
+          categories.push(newCatObj);
+        }
+        await saveCategories();
+        return newId;
+      }
+
+      function resolveCategoryId(nameOrId) {
+        if (!nameOrId || nameOrId === "uncategorized" || nameOrId === "未分类") return "uncategorized";
+        const raw = String(nameOrId).trim().toLowerCase();
+        let found = categories.find(c => c.id.toLowerCase() === raw || c.name.toLowerCase() === raw);
+        if (found) return found.id;
+        const validCats = categories.filter(c => c.id !== "uncategorized");
+        found = validCats.find(c => {
+          const cName = c.name.toLowerCase();
+          return cName.includes(raw) || raw.includes(cName);
+        });
+        return found ? found.id : "uncategorized";
+      }
+
+      function getCategoryDisplayName(catId) {
+        const found = categories.find(c => c.id === catId);
+        return found ? found.name : (catId === "uncategorized" || !catId ? "未分类" : catId);
+      }
+
+      async function saveCategories() {
+        categories = sanitizeCategories(categories);
+        safeStorage.set("shelf_user_categories", JSON.stringify(categories));
+        if (api?.db) {
+          try {
+            const list = await api.db.list("shelf_categories", { limit: 10 });
+            const rec = Array.isArray(list) ? (list.find(x => x.type === "categories_data") || list[0]) : null;
+            if (rec && rec.id) {
+              await api.db.update("shelf_categories", rec.id, { type: "categories_data", list: categories });
+            } else {
+              await api.db.create("shelf_categories", { type: "categories_data", list: categories });
+            }
+          } catch(err) {}
+        }
+        renderCategoryTabs();
+        renderCategoryModalList();
+        renderDepositCategoryPicker();
+        renderShelf();
+      }
+
+      function renderCategoryTabs() {
+        const row = document.getElementById("categoryRowPantry");
+        if (!row) return;
+        let html = `<button class="capsule ${activeFilterCat === 'all' ? 'active' : ''}" data-cat="all">全部</button>`;
+        categories.forEach(c => {
+          html += `<button class="capsule ${activeFilterCat === c.id ? 'active' : ''}" data-cat="${c.id}">${c.name}</button>`;
+        });
+        row.innerHTML = html;
+
+        row.querySelectorAll(".capsule").forEach(cap => {
+          cap.addEventListener("click", () => {
+            row.querySelectorAll(".capsule").forEach(c => c.classList.remove("active"));
+            cap.classList.add("active");
+            activeFilterCat = cap.dataset.cat;
+            renderShelf();
+          });
+        });
+      }
+
+      let selectedDepositCat = null;
+      let selectedEditCat = null;
+
+      function renderDepositCategoryPicker() {
+        const container = document.getElementById("depositCatPicker");
+        if (!container) return;
+        const displayCats = categories.filter(c => c.id !== "uncategorized");
+        if (displayCats.length === 0) {
+          container.innerHTML = `<span style="font-size: 11px; color: var(--text-light); padding: 4px 0;">暂无其他分类标签</span>`;
+          return;
+        }
+        container.innerHTML = displayCats.map(c => `
+          <button type="button" class="capsule ${c.id === selectedDepositCat ? 'active' : ''}" data-catid="${c.id}" style="font-size: 11px; padding: 5px 10px;">${c.name}</button>
+        `).join("");
+        container.querySelectorAll(".capsule").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const clickedId = btn.dataset.catid;
+            selectedDepositCat = (selectedDepositCat === clickedId) ? null : clickedId;
+            renderDepositCategoryPicker();
+          });
+        });
+      }
+
+      function renderEditCategoryPicker(currentCat) {
+        const container = document.getElementById("editCatPicker");
+        if (!container) return;
+        selectedEditCat = (currentCat === "uncategorized" || !currentCat) ? null : currentCat;
+        const displayCats = categories.filter(c => c.id !== "uncategorized");
+        if (displayCats.length === 0) {
+          container.innerHTML = `<span style="font-size: 11px; color: var(--text-light); padding: 4px 0;">暂无其他分类标签</span>`;
+          return;
+        }
+        container.innerHTML = displayCats.map(c => `
+          <button type="button" class="capsule ${c.id === selectedEditCat ? 'active' : ''}" data-catid="${c.id}" style="font-size: 11px; padding: 5px 10px;">${c.name}</button>
+        `).join("");
+        container.querySelectorAll(".capsule").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const clickedId = btn.dataset.catid;
+            selectedEditCat = (selectedEditCat === clickedId) ? null : clickedId;
+            container.querySelectorAll(".capsule").forEach(b => b.classList.toggle("active", b.dataset.catid === selectedEditCat));
+          });
+        });
+      }
+
+      function renderCategoryModalList() {
+        const list = document.getElementById("catListContainer");
+        if (!list) return;
+        list.innerHTML = "";
+        categories.forEach((cat, index) => {
+          const isSystemUncat = cat.id === "uncategorized";
+          const row = document.createElement("div");
+          row.style.cssText = "display: flex; align-items: center; justify-content: space-between; background: var(--bg-primary); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);";
+          row.innerHTML = `
+            <span style="font-size: 14px; font-weight: 500; color: var(--text-main);">${cat.name} ${isSystemUncat ? '<span style="font-size: 10px; color: var(--text-muted);">(系统预置)</span>' : ''}</span>
+            <div style="display: flex; gap: 6px;">
+              <button class="cat-action-btn cat-up" data-idx="${index}" style="padding: 4px 8px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px; font-size: 11px; cursor: pointer;">⬆</button>
+              <button class="cat-action-btn cat-down" data-idx="${index}" style="padding: 4px 8px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px; font-size: 11px; cursor: pointer;">⬇</button>
+              ${isSystemUncat ? '' : `<button class="cat-action-btn cat-edit" data-idx="${index}" style="padding: 4px 8px; border: 1px solid var(--border); background: var(--bg-card); border-radius: 4px; font-size: 11px; cursor: pointer;">改名</button>`}
+              ${isSystemUncat ? '' : `<button class="cat-action-btn cat-del" data-idx="${index}" style="padding: 4px 8px; border: 1px solid var(--border); background: var(--bg-card); color: #dc2626; border-radius: 4px; font-size: 11px; cursor: pointer;">删除</button>`}
+            </div>
+          `;
+          list.appendChild(row);
+        });
+
+        list.querySelectorAll(".cat-up").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const idx = parseInt(btn.dataset.idx);
+            if (idx > 0) {
+              const temp = categories[idx]; categories[idx] = categories[idx - 1]; categories[idx - 1] = temp;
+              saveCategories();
+            }
+          });
+        });
+        list.querySelectorAll(".cat-down").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const idx = parseInt(btn.dataset.idx);
+            if (idx < categories.length - 1) {
+              const temp = categories[idx]; categories[idx] = categories[idx + 1]; categories[idx + 1] = temp;
+              saveCategories();
+            }
+          });
+        });
+        list.querySelectorAll(".cat-edit").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const idx = parseInt(btn.dataset.idx);
+            const oldName = categories[idx].name;
+            const newName = await showPrompt("修改分类名称", oldName);
+            if (newName && newName.trim() && newName.trim() !== oldName) {
+              categories[idx].name = newName.trim();
+              await saveCategories();
+              showToast("分类已修改");
+            }
+          });
+        });
+        list.querySelectorAll(".cat-del").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const idx = parseInt(btn.dataset.idx);
+            const targetCat = categories[idx];
+            if (targetCat.id === "uncategorized") {
+              showToast("系统预置分类无法删除");
+              return;
+            }
+            const ok = await showConfirm(`确定删除分类“${targetCat.name}”吗？该分类下的物品将自动转为“未分类”。`);
+            if (ok) {
+              const deletedId = targetCat.id;
+              if (activeFilterCat === deletedId) activeFilterCat = "all";
+              categories.splice(idx, 1);
+              shelfItems.forEach(it => { if (it.category === deletedId) it.category = "uncategorized"; });
+              safeStorage.set("shelf_items_cache", JSON.stringify(shelfItems));
+              if (api?.db?.list) {
+                try {
+                  const dbList = await api.db.list("shelf_items", { limit: 200 });
+                  if (Array.isArray(dbList)) {
+                    for (const it of dbList) {
+                      if (it.category === deletedId && it.id) {
+                        await api.db.update("shelf_items", it.id, { category: "uncategorized" });
+                      }
+                    }
+                  }
+                } catch(e){}
+              }
+              await saveCategories();
+              showToast("已删除并归入未分类");
+            }
+          });
+        });
+      }
+
+      document.getElementById("btnAddCat").addEventListener("click", () => {
+        const input = document.getElementById("newCatInput");
+        const val = input.value.trim();
+        if (!val) return;
+        const newId = "cat_" + Date.now();
+        categories.push({ id: newId, name: val });
+        input.value = "";
+        saveCategories();
+      });
+
+      const catModal = document.getElementById("catModal");
+      document.getElementById("btnOpenCatModal").addEventListener("click", () => {
+        renderCategoryModalList();
+        catModal.classList.add("open");
+      });
+      document.getElementById("btnSwitchToMarket").addEventListener("click", () => {
+        catModal.classList.remove("open");
+        switchTab("market");
+        showToast("已切换至壹集市");
+      });
+      document.getElementById("btnCloseCatModal").addEventListener("click", () => catModal.classList.remove("open"));
+      catModal.addEventListener("click", () => catModal.classList.remove("open"));
+
+      const logsModal = document.getElementById("logsModal");
+      document.getElementById("btnOpenLogs").addEventListener("click", () => {
+        renderLogs();
+        logsModal.classList.add("open");
+      });
+      document.getElementById("btnCloseLogs").addEventListener("click", () => logsModal.classList.remove("open"));
+      logsModal.addEventListener("click", () => logsModal.classList.remove("open"));
+
+      const depositModal = document.getElementById("depositModal");
+      depositModal.addEventListener("click", () => depositModal.classList.remove("open"));
+      document.getElementById("btnCloseDeposit").addEventListener("click", () => depositModal.classList.remove("open"));
+      document.getElementById("btnDockDeposit").addEventListener("click", () => {
+        const nameInput = document.getElementById("inputName");
+        const countInput = document.getElementById("inputCount");
+        const noteInput = document.getElementById("inputNote");
+        if (nameInput) nameInput.value = "";
+        if (countInput) countInput.value = "1";
+        if (noteInput) noteInput.value = "";
+        selectedDepositCat = null;
+        renderDepositCategoryPicker();
+        depositModal.classList.add("open");
+      });
+
+      const takeModal = document.getElementById("takeModal");
+      document.getElementById("btnCloseTake").addEventListener("click", () => takeModal.classList.remove("open"));
+      takeModal.addEventListener("click", () => takeModal.classList.remove("open"));
+
+      const takeCountMinus = document.getElementById("takeCountMinus");
+      const takeCountPlus = document.getElementById("takeCountPlus");
+      const takeCountInput = document.getElementById("takeCountInput");
+      if (takeCountMinus && takeCountPlus && takeCountInput) {
+        takeCountMinus.addEventListener("click", () => {
+          let val = parseInt(takeCountInput.value) || 1;
+          if (val > 1) takeCountInput.value = val - 1;
+        });
+        takeCountPlus.addEventListener("click", () => {
+          let val = parseInt(takeCountInput.value) || 1;
+          const max = parseInt(takeCountInput.max) || 99;
+          if (val < max) takeCountInput.value = val + 1;
+        });
+      }
+
+      const editCatModal = document.getElementById("editCatModal");
+      editCatModal.addEventListener("click", () => editCatModal.classList.remove("open"));
+      document.getElementById("btnCloseEditCat").addEventListener("click", () => editCatModal.classList.remove("open"));
+
+      const EMOJI_LIST = ["🧃","🍪","☕","🥪","🍰","🍎","🎁","📚","🎧","💊","🍬","🥤","🥐","🍙","🧻","🧼"];
+      function buildEditEmojiPicker(currentEmoji) {
+        const container = document.getElementById("editEmojiPicker");
+        if (!container) return;
+        container.innerHTML = EMOJI_LIST.map(e =>
+          `<div class="emoji-opt ${e === currentEmoji ? 'active' : ''}" data-emoji="${e}">${e}</div>`
+        ).join("");
+        container.querySelectorAll(".emoji-opt").forEach(opt => {
+          opt.addEventListener("click", () => {
+            container.querySelectorAll(".emoji-opt").forEach(o => o.classList.remove("active"));
+            opt.classList.add("active");
+            selectedEmoji = opt.dataset.emoji;
+          });
+        });
+      }
+
+      document.getElementById("btnConfirmEditCat").addEventListener("click", async () => {
+        if (!editingCatItemId) return;
+        const target = shelfItems.find(i => i.id === editingCatItemId);
+        if (!target) return;
+
+        const newName = document.getElementById("editInputName").value.trim();
+        if (!newName) { showToast("请输入物品名称"); return; }
+
+        const newCat = selectedEditCat || "uncategorized";
+        const countInput = document.getElementById("editInputCount");
+        const newCount = parseInt(countInput ? countInput.value.trim() : "", 10);
+        const newNote = document.getElementById("editInputNote").value.trim();
+
+        if (isNaN(newCount) || newCount < 1) { showToast("物品数量不能小于1"); return; }
+        const newEmojiEl = document.querySelector("#editEmojiPicker .emoji-opt.active");
+        const newEmoji = newEmojiEl ? newEmojiEl.dataset.emoji : target.emoji;
+
+        target.name = newName;
+        target.category = newCat;
+        target.count = newCount;
+        target.note = newNote;
+        target.emoji = newEmoji;
+
+        safeStorage.set("shelf_items_cache", JSON.stringify(shelfItems));
+        if (api?.db?.update && target.id) {
+          try {
+            await api.db.update("shelf_items", target.id, {
+              name: newName,
+              category: newCat,
+              count: newCount,
+              note: newNote,
+              emoji: newEmoji
+            });
+          } catch(e) {}
+        }
+        editCatModal.classList.remove("open");
+        renderShelf();
+        showToast("已保存修改");
+      });
+
+      const emojiOpts = document.querySelectorAll("#emojiPicker .emoji-opt");
+      emojiOpts.forEach(opt => {
+        opt.addEventListener("click", () => {
+          emojiOpts.forEach(o => o.classList.remove("active"));
+          opt.classList.add("active");
+          selectedEmoji = opt.dataset.emoji;
+        });
+      });
+
+      function guessEmoji(name, cat) {
+        const text = ((name || "") + " " + (cat || "")).toLowerCase();
+        if (text.includes("橙") || text.includes("柑橘") || text.includes("橘") || text.includes("柚") || text.includes("柠檬")) return "🍊";
+        if (text.includes("桃") || text.includes("蜜桃") || text.includes("白桃")) return "🍑";
+        if (text.includes("草莓") || text.includes("莓")) return "🍓";
+        if (text.includes("苹果")) return "🍎";
+        if (text.includes("西瓜")) return "🍉";
+        if (text.includes("葡萄") || text.includes("提子")) return "🍇";
+        if (text.includes("香蕉")) return "🍌";
+        if (text.includes("樱桃") || text.includes("车厘子")) return "🍒";
+        if (text.includes("水蜜桃") || text.includes("梨") || text.includes("芒果")) return "🍎";
+        if (text.includes("司康") || text.includes("饼干") || text.includes("曲奇") || text.includes("海苔") || text.includes("脆片") || text.includes("薯片") || text.includes("蛋挞") || text.includes("舒芙蕾") || text.includes("巴斯克") || text.includes("华夫饼") || text.includes("松饼")) return "🍪";
+        if (text.includes("布丁") || text.includes("蛋糕") || text.includes("甜点") || text.includes("甜品") || text.includes("大福") || text.includes("雪媚娘") || text.includes("泡芙") || text.includes("派") || text.includes("芝士")) return "🍰";
+        if (text.includes("坚果") || text.includes("花生") || text.includes("巴旦木") || text.includes("腰果") || text.includes("核桃") || text.includes("开心果") || text.includes("栗子")) return "🥜";
+        if (text.includes("糖") || text.includes("巧克力") || text.includes("糖果") || text.includes("生巧")) return "🍬";
+        if (text.includes("冰淇淋") || text.includes("雪糕") || text.includes("冰棒")) return "🍦";
+        if (text.includes("咖啡") || text.includes("美式") || text.includes("拿铁") || text.includes("摩卡") || text.includes("生椰") || text.includes("卡布")) return "☕";
+        if (text.includes("茶") || text.includes("乌龙") || text.includes("绿茶") || text.includes("红茶") || text.includes("普洱") || text.includes("花茶") || text.includes("抹茶")) return "🍵";
+        if (text.includes("果汁") || text.includes("牛奶") || text.includes("可乐") || text.includes("饮") || text.includes("汽水") || text.includes("特调") || text.includes("苏打") || text.includes("气泡水")) return "🧃";
+        if (text.includes("酒") || text.includes("微醺") || text.includes("鸡尾酒") || text.includes("啤酒")) return "🍺";
+        if (text.includes("三明治") || text.includes("面包") || text.includes("汉堡") || text.includes("吐司") || text.includes("贝果") || text.includes("可颂")) return "🥪";
+        if (text.includes("饭") || text.includes("面") || text.includes("寿司") || text.includes("肉") || text.includes("便当") || text.includes("饭团") || text.includes("拉面") || text.includes("饺子")) return "🍙";
+        if (text.includes("猫") || text.includes("狗") || text.includes("宠物") || text.includes("披肩") || text.includes("项圈") || text.includes("衣服") || text.includes("针织") || text.includes("围巾")) return "🎁";
+        if (text.includes("香薰") || text.includes("蜡烛") || text.includes("精油")) return "🕯️";
+        if (text.includes("眼罩") || text.includes("蒸汽") || text.includes("毛巾")) return "🧖";
+        if (text.includes("手账") || text.includes("本") || text.includes("书") || text.includes("笔记") || text.includes("文具") || text.includes("笔")) return "📖";
+        if (text.includes("药") || text.includes("润喉") || text.includes("创可贴") || text.includes("眼药水") || text.includes("维c")) return "💊";
+        if (text.includes("纸") || text.includes("巾") || text.includes("湿巾")) return "🧻";
+        if (text.includes("皂") || text.includes("洗手") || text.includes("沐浴")) return "🧼";
+        if (text.includes("耳机") || text.includes("音响")) return "🎧";
+        return "🎁";
+      }
+
+      async function getSenderDisplayName(senderCharId, senderRole, senderNameHint) {
+        if (senderRole === "user") return userProfile.name || "我";
+        if (senderCharId) {
+          let found = charactersCache.find(c => c.id === senderCharId);
+          if (found && found.name) return found.name;
+          if (api?.characters?.get) {
+            try {
+              const char = await api.characters.get(senderCharId);
+              if (char && char.name) {
+                if (!charactersCache.some(c => c.id === senderCharId)) charactersCache.push(char);
+                return char.name;
+              }
+            } catch(e) {}
+          }
+        }
+        if (senderNameHint && typeof senderNameHint === "string" && senderNameHint.trim()) return senderNameHint.trim();
+        return "角色";
+      }
+
+      function cleanDirectiveContent(insideText) {
+        if (!insideText) return [];
+        let parts = insideText.split(/[:：;；|]/).map(p => p.trim()).filter(Boolean);
+        if (parts.length === 1 && (insideText.includes(",") || insideText.includes("，"))) {
+          parts = insideText.split(/[,，]/).map(p => p.trim()).filter(Boolean);
+        }
+        return parts;
+      }
+
+      function extractDirectiveSnippets(rawText) {
+        const list = [];
+        if (!rawText || typeof rawText !== "string") return list;
+        const bracketDep = rawText.matchAll(/[\[【]\s*存入储物架\s*[:：,，;；|]?\s*([^\]】]+)[\]】]/g);
+        for (const m of bracketDep) list.push({ type: "deposit", inside: m[1] });
+        if (list.length === 0 && rawText.includes("存入储物架")) {
+          const noBracketDep = rawText.matchAll(/(?:^|[^\[【\w])存入储物架\s*[:：,，;；|]\s*([^\]】\n\r]+)/g);
+          for (const m of noBracketDep) list.push({ type: "deposit", inside: m[1] });
+        }
+        const bracketTake = rawText.matchAll(/[\[【]\s*取出储物架\s*[:：,，;；|]?\s*([^\]】]+)[\]】]/g);
+        for (const m of bracketTake) list.push({ type: "take", inside: m[1] });
+        if (!list.some(x => x.type === "take") && rawText.includes("取出储物架")) {
+          const noBracketTake = rawText.matchAll(/(?:^|[^\[【\w])取出储物架\s*[:：,，;；|]\s*([^\]】\n\r]+)/g);
+          for (const m of noBracketTake) list.push({ type: "take", inside: m[1] });
+        }
+        return list;
+      }
+
+      async function handleMessageContent(rawText, senderCharId, senderRole, msgId, msgTime, senderNameHint) {
+        if (!rawText || typeof rawText !== "string") return false;
+        if (rawText.includes("公共储物架实时清单") || rawText.includes("储物架交互规则")) return false;
+        const snippets = extractDirectiveSnippets(rawText);
+        if (snippets.length === 0) return false;
+        let acted = false;
+
+        for (const item of snippets) {
+          const inside = item.inside.trim();
+          if (!inside) continue;
+          const parts = cleanDirectiveContent(inside);
+          if (parts.length === 0) continue;
+          let senderName = await getSenderDisplayName(senderCharId, senderRole, senderNameHint);
+
+          if (item.type === "deposit") {
+            let catPart = "";
+            let itemName = "";
+            let note = "";
+            let itemCount = 1;
+            if (parts.length >= 4) {
+              catPart = parts[0]; itemName = parts[1]; itemCount = Math.max(1, parseInt(parts[2], 10) || 1); note = parts.slice(3).join("，");
+            } else if (parts.length >= 3) {
+              catPart = parts[0]; itemName = parts[1]; note = parts.slice(2).join("，");
+            } else if (parts.length === 2) {
+              itemName = parts[0]; note = parts[1] || "大家随便享用~";
+            } else if (parts.length === 1) {
+              itemName = parts[0]; note = "大家随便享用~";
+            }
+            const invalidNames = ["物品名称", "物品", "好物", "分类", "xxx", "测试"];
+            if (itemName && !invalidNames.includes(itemName.toLowerCase())) {
+              const matchedCatId = await matchOrCreateCategory(catPart);
+              const emoji = guessEmoji(itemName, catPart || "uncategorized");
+              const res = await addDepositItem(itemName, itemCount, note, emoji, senderName, matchedCatId, msgId, msgTime);
+              if (res) acted = true;
+            }
+          } else if (item.type === "take") {
+            let itemName = "";
+            let takeCount = 1;
+            let note = "谢谢啦~";
+            if (parts.length >= 4) {
+              const num3 = parseInt(parts[2], 10);
+              const num2 = parseInt(parts[1], 10);
+              if (!isNaN(num3) && num3 > 0 && String(num3) === parts[2].trim()) {
+                itemName = parts[1]; takeCount = num3; note = parts.slice(3).join("，") || "谢谢啦~";
+              } else if (!isNaN(num2) && num2 > 0 && String(num2) === parts[1].trim()) {
+                itemName = parts[0]; takeCount = num2; note = parts.slice(2).join("，") || "谢谢啦~";
+              } else {
+                itemName = parts[0]; note = parts.slice(1).join("，") || "谢谢啦~";
+              }
+            } else if (parts.length >= 3) {
+              const num2 = parseInt(parts[1], 10);
+              const num3 = parseInt(parts[2], 10);
+              if (!isNaN(num2) && num2 > 0 && String(num2) === parts[1].trim()) {
+                itemName = parts[0]; takeCount = num2; note = parts[2] || "谢谢啦~";
+              } else if (!isNaN(num3) && num3 > 0 && String(num3) === parts[2].trim()) {
+                itemName = parts[1]; takeCount = num3; note = "谢谢啦~";
+              } else {
+                itemName = parts[0]; note = parts.slice(1).join("，") || "谢谢啦~";
+              }
+            } else if (parts.length >= 2) {
+              const num2 = parseInt(parts[1], 10);
+              if (!isNaN(num2) && num2 > 0 && String(num2) === parts[1].trim()) {
+                itemName = parts[0]; takeCount = num2; note = "谢谢啦~";
+              } else {
+                itemName = parts[0]; note = parts[1] || "谢谢啦~";
+              }
+            } else if (parts.length === 1) {
+              itemName = parts[0]; note = "谢谢啦~";
+            }
+            if (itemName) {
+              await performTakeByName(itemName, takeCount, senderName, note, msgId, msgTime);
+              acted = true;
+            }
+          }
+        }
+        return acted;
+      }
+
+      try {
+        if (api?.on) {
+          api.on("chat.message.created", async (msgPayload) => {
+            if (!msgPayload) return;
+            const msgObj = msgPayload.message || msgPayload;
+            const text = msgObj.content || msgObj.text || (typeof msgPayload === "string" ? msgPayload : "") || "";
+            if (!text || (!text.includes("存入储物架") && !text.includes("取出储物架"))) return;
+            const charId = msgObj.characterId || msgObj.senderId || msgPayload.characterId || currentCharacterId || null;
+            const role = msgObj.role || msgPayload.role;
+            const msgId = msgObj.id || msgPayload.messageId || null;
+            const msgTime = msgObj.createdAt || msgObj.time || null;
+            const senderNameHint = msgObj.senderName || msgObj.authorName || msgPayload.senderName || null;
+            await handleMessageContent(text, charId, role, msgId, msgTime, senderNameHint);
+          });
+        }
+      } catch(e) {}
+
+      async function addDepositItem(name, count, note, emoji, ownerName, cat, sourceMsgId, sourceTime) {
+        if (sourceMsgId && shelfItems.some(i => i.sourceMsgId === sourceMsgId)) return null;
+        const isDuplicate = shelfItems.some(i => 
+          i.name === name && i.note === note && i.owner === ownerName && (Date.now() - new Date(i.createdAt).getTime() < 10000)
+        );
+        if (isDuplicate) return null;
+
+        let newRecord = {
+          name,
+          count: parseInt(count) || 1,
+          note: note || "大家随便享用~",
+          emoji: emoji || guessEmoji(name, cat),
+          owner: ownerName || userProfile.name || "我",
+          category: cat || "uncategorized",
+          sourceMsgId: sourceMsgId || null,
+          createdAt: sourceTime || new Date().toISOString()
+        };
+
+        const logRecord = {
+          type: "deposit",
+          actor: ownerName || userProfile.name || "我",
+          itemName: name,
+          count: newRecord.count,
+          note: newRecord.note,
+          sourceMsgId: sourceMsgId || null,
+          time: sourceTime || new Date().toISOString()
+        };
+
+        if (api?.db?.create) {
+          try {
+            const dbCreated = await api.db.create("shelf_items", newRecord);
+            if (dbCreated && dbCreated.id) newRecord.id = dbCreated.id;
+            await api.db.create("pantry_logs", logRecord);
+          } catch(err) {}
+        }
+
+        if (!newRecord.id) {
+          newRecord.id = "item_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+        }
+
+        shelfItems.unshift(newRecord);
+        pantryLogs.unshift(logRecord);
+        safeStorage.set("shelf_items_cache", JSON.stringify(shelfItems));
+        safeStorage.set("shelf_logs_cache", JSON.stringify(pantryLogs));
+
+        renderCategoryTabs();
+        renderShelf();
+        return newRecord;
+      }
+
+      document.getElementById("btnConfirmDeposit").addEventListener("click", async () => {
+        const nameInput = document.getElementById("inputName");
+        const name = nameInput ? nameInput.value.trim() : "";
+        const cat = selectedDepositCat || "uncategorized";
+        const countInput = document.getElementById("inputCount");
+        const count = parseInt(countInput ? countInput.value.trim() : "", 10);
+        const noteInput = document.getElementById("inputNote");
+        const note = noteInput ? noteInput.value.trim() : "";
+
+        if (!name) { showToast("请输入物品名称"); return; }
+        if (isNaN(count) || count < 1) { showToast("物品数量不能小于1"); return; }
+
+        try {
+          await addDepositItem(name, count, note, selectedEmoji, userProfile.name, cat);
+          depositModal.classList.remove("open");
+          if (activeFilterCat !== "all" && activeFilterCat !== cat) {
+            activeFilterCat = cat;
+            renderCategoryTabs();
+          }
+          renderShelf();
+          showToast("已存入公共储物架");
+
+          if (currentSessionId && api?.chat?.sendCard) {
+            const catObj = categories.find(c => c.id === cat);
+            const catName = catObj ? catObj.name : "未分类";
+            try {
+              const senderDisplay = userProfile.name || "我";
+              const depSummary = `[公共储物架] ${senderDisplay} 存入了「${name}」x${count}（分类：${catName}，留言：${note || '大家快来尝尝/使用吧~'}）`;
+              await api.chat.sendCard({
+                sessionId: currentSessionId,
+                role: "user",
+                summary: depSummary,
+                historyText: depSummary,
+                body: "已存入新物品，快来看吧～",
+                card: {
+                  appLabel: "公共储物架",
+                  title: "存入储物架",
+                  body: "已存入新物品，快来看吧～",
+                  status: "已存入",
+                  accentColor: "#e07a5f",
+                  sections: [
+                    {
+                      title: "物品详情",
+                      rows: [
+                        { label: "分类", value: catName },
+                        { label: "物品", value: name },
+                        { label: "数量", value: String(count) },
+                        { label: "留言", value: note || "大家快来尝尝/使用吧~" }
+                      ]
+                    }
+                  ],
+                  actions: []
+                }
+              });
+            } catch(e){}
+          }
+        } catch(err) {
+          showToast("存入失败，请重试");
+        }
+      });
+
+      async function performTakeByName(name, countToTake, takerName, note, sourceMsgId, sourceTime) {
+        if (api?.db?.list) {
+          try {
+            const dbItems = await api.db.list("shelf_items", { limit: 200 });
+            if (Array.isArray(dbItems) && dbItems.length > 0) shelfItems = dbItems;
+          } catch(e){}
+          try {
+            const dbLogs = await api.db.list("pantry_logs", { limit: 200 });
+            if (Array.isArray(dbLogs)) pantryLogs = dbLogs;
+          } catch(e){}
+        }
+
+        if (sourceMsgId && pantryLogs.some(l => l.sourceMsgId === sourceMsgId)) return;
+        const cleanName = String(name || "").trim().toLowerCase();
+        let target = shelfItems.find(i => (i.name || "").trim().toLowerCase() === cleanName);
+        if (!target) {
+          target = shelfItems.find(i => {
+            const iName = (i.name || "").trim().toLowerCase();
+            return iName && (iName.includes(cleanName) || cleanName.includes(iName));
+          });
+        }
+
+        if (target) {
+          const desiredCount = Math.max(1, parseInt(countToTake, 10) || 1);
+          const currentCount = Math.max(1, parseInt(target.count, 10) || 1);
+          const actualTake = Math.min(desiredCount, currentCount);
+
+          const logRecord = {
+            type: "take",
+            actor: takerName,
+            itemName: target.name,
+            count: actualTake,
+            note: note || "多谢款待！",
+            sourceMsgId: sourceMsgId || null,
+            time: sourceTime || new Date().toISOString()
+          };
+
+          if (currentCount > actualTake) {
+            target.count = currentCount - actualTake;
+            if (api?.db?.update && target.id) {
+              try { await api.db.update("shelf_items", target.id, { count: target.count }); } catch(e){}
+            }
+          } else {
+            shelfItems = shelfItems.filter(i => i.id !== target.id);
+            if (api?.db?.delete && target.id) {
+              try { await api.db.delete("shelf_items", target.id); } catch(e){}
+            }
+          }
+
+          pantryLogs.unshift(logRecord);
+          if (api?.db?.create) {
+            try { await api.db.create("pantry_logs", logRecord); } catch(e){}
+          }
+          safeStorage.set("shelf_items_cache", JSON.stringify(shelfItems));
+          safeStorage.set("shelf_logs_cache", JSON.stringify(pantryLogs));
+          renderShelf();
+        }
+      }
+
+      document.getElementById("btnConfirmTake").addEventListener("click", async () => {
+        if (!takingItemId) return;
+        const note = document.getElementById("inputTakeNote").value.trim() || "多谢款待！";
+        try {
+          const targetItem = shelfItems.find(i => i.id === takingItemId);
+          if (targetItem) {
+            const takeCountInput = document.getElementById("takeCountInput");
+            const takeCount = parseInt(takeCountInput?.value) || 1;
+            const logRecord = {
+              type: "take",
+              actor: userProfile.name,
+              itemName: targetItem.name,
+              count: takeCount,
+              note: note,
+              time: new Date().toISOString()
+            };
+
+            if (targetItem.count > takeCount) {
+              targetItem.count -= takeCount;
+              if (api?.db?.update && targetItem.id) {
+                try { await api.db.update("shelf_items", targetItem.id, { count: targetItem.count }); } catch(e){}
+              }
+            } else {
+              shelfItems = shelfItems.filter(i => i.id !== targetItem.id);
+              if (api?.db?.delete && targetItem.id) {
+                try { await api.db.delete("shelf_items", targetItem.id); } catch(e){}
+              }
+            }
+
+            pantryLogs.unshift(logRecord);
+            if (api?.db?.create) {
+              try { await api.db.create("pantry_logs", logRecord); } catch(e){}
+            }
+            safeStorage.set("shelf_items_cache", JSON.stringify(shelfItems));
+            safeStorage.set("shelf_logs_cache", JSON.stringify(pantryLogs));
+
+            takeModal.classList.remove("open");
+            renderShelf();
+            showToast("已取走 " + targetItem.name);
+
+            if (currentSessionId && api?.chat?.sendCard) {
+              try {
+                const senderDisplay = userProfile.name || "我";
+                const ownerDisplay = targetItem.owner || "未知";
+                const takeSummary = `[公共储物架] ${senderDisplay} 取走了「${targetItem.name}」x${takeCount}（原存放人：${ownerDisplay}，留言：${note}）`;
+                const catObj = categories.find(c => c.id === targetItem.category);
+                const catName = catObj ? catObj.name : "未分类";
+                await api.chat.sendCard({
+                  sessionId: currentSessionId,
+                  role: "user",
+                  summary: takeSummary,
+                  historyText: takeSummary,
+                  body: "已取出物品。",
+                  card: {
+                    appLabel: "公共储物架",
+                    title: "取出储物架",
+                    body: "已取出物品。",
+                    status: "已取出",
+                    accentColor: "#1c1917",
+                    sections: [
+                      {
+                        title: "物品详情",
+                        rows: [
+                          { label: "分类", value: catName },
+                          { label: "物品", value: targetItem.name },
+                          { label: "数量", value: String(takeCount) },
+                          { label: "留言", value: note }
+                        ]
+                      }
+                    ],
+                    actions: []
+                  }
+                });
+              } catch(e){}
+            }
+          }
+        } catch(e) {
+          showToast("取出失败");
+        }
+      });
+
+      document.getElementById("btnDockShare").addEventListener("click", async () => {
+        if (shelfItems.length === 0) { showToast("储物架上还没有物品"); return; }
+        if (!currentSessionId) { showToast("请在聊天窗口中打开以分享清单"); return; }
+        try {
+          const totalCount = shelfItems.length;
+          const topItems = shelfItems.slice(0, 5);
+          const itemsTextArr = shelfItems.map(i => `${i.emoji || '📦'} ${i.name}${i.count > 1 ? ' x' + i.count : ''}（存放人：${i.owner || '未知'}，留言：${(i.note || '大家随便享用~').replace(/^[“"「『]+|[”"」』]+$/g, '')}）`);
+          const itemsSummaryText = `【公共储物架实时清单（共 ${totalCount} 种物品）】\n` + itemsTextArr.join("\n") + `\n【储物架交互规则】：\n1. 角色如需取走物品，必须在发言中附带指令：[取出储物架:分类:物品名称:数量:留言]\n   例如：[取出储物架:零食:蛋糕:1:多谢款待！]\n2. 角色如需放入物品，必须在发言中附带指令：[存入储物架:分类:物品名称:数量:留言]\n   例如：[存入储物架:饮品:冰美式:1:买多了大家喝]\n（严格约束：只能取走上方清单中实际存在的物品与数量，不可捏造）`;
+          const rows = topItems.map(i => {
+            const rawName = (i.name || "好物") + (i.count > 1 ? (" x" + i.count) : "");
+            const rawNote = (i.note && i.note.trim()) ? i.note.trim().replace(/^[“"「『]+|[”"」』]+$/g, '').trim() : "大家随便享用~";
+            return { label: (i.emoji || "📦") + " " + rawName, value: rawNote };
+          });
+
+          await api.chat.sendCard({
+            sessionId: currentSessionId,
+            role: "user",
+            summary: `公共储物架清单（当前共 ${totalCount} 种好物）`,
+            historyText: itemsSummaryText,
+            body: "随时存取，记得打上便签～",
+            card: {
+              appLabel: "公共储物架",
+              title: "📋 公共储物架清单",
+              subtitle: "当前共有 " + totalCount + " 种好物",
+              body: "随时存取，记得打上便签～",
+              status: "生活共享中",
+              accentColor: "#1c1917",
+              sections: [{ title: "架上最新好物", rows: rows }],
+              actions: []
+            }
+          });
+          showToast("已发送储物架清单");
+          setTimeout(async () => {
+            if (api?.app?.close) try { await api.app.close(); } catch(e){}
+          }, 300);
+        } catch(e) {} 
+      });
+
+      function renderShelf() {
+        let displayItems = shelfItems || [];
+        if (activeFilterCat !== "all") {
+          displayItems = displayItems.filter(i => i.category === activeFilterCat);
+        }
+        const currentCatIds = new Set(categories.map(c => c.id));
+        displayItems.forEach(i => {
+          if (!i.category || !currentCatIds.has(i.category)) {
+            i.category = resolveCategoryId(i.category);
+          }
+        });
+
+        const shelfGrid = document.getElementById("shelfGrid");
+        const emptyShelf = document.getElementById("emptyShelf");
+        if (!shelfGrid) return;
+        shelfGrid.innerHTML = "";
+
+        if (displayItems.length === 0) {
+          if (emptyShelf) emptyShelf.style.display = "block";
+        } else {
+          if (emptyShelf) emptyShelf.style.display = "none";
+          displayItems.forEach((item) => {
+            const card = document.createElement("div");
+            card.className = "item-card";
+            const catLabel = getCategoryDisplayName(item.category);
+            const noteContent = (item.note && item.note.trim()) ? item.note.trim().replace(/^[“"「『]+|[”"」』]+$/g, '').trim() : "大家随便享用~";
+            card.innerHTML = `
+              <div class="item-header">
+                <span class="item-emoji">${item.emoji || '📦'}</span>
+                <div class="item-badges-wrap">
+                  <span class="item-badge" style="background: var(--accent-warm-light); color: var(--accent-warm);">${catLabel}</span>
+                  <span class="item-badge">x${item.count || 1}</span>
+                </div>
+              </div>
+              <div class="item-name" title="${item.name || '物品'}">${item.name || '物品'}</div>
+              <div class="item-owner">${item.owner || '匿名'} 存入</div>
+              <div class="item-quote" title="${noteContent}">${noteContent}</div>
+              <div class="item-actions">
+                <button class="btn-take-mini" data-id="${item.id}" data-name="${item.name || '物品'}">取走</button>
+              </div>
+            `;
+
+            card.addEventListener("click", () => {
+              const myFlag = !item.owner || item.owner === (userProfile.name || "我") || item.owner === "我";
+              if (myFlag) {
+                editingCatItemId = item.id;
+                const nameInput = document.getElementById("editInputName");
+                if (nameInput) nameInput.value = item.name || "";
+                const countEl = document.getElementById("editInputCount");
+                if (countEl) countEl.value = item.count || 1;
+                const noteEl = document.getElementById("editInputNote");
+                if (noteEl) noteEl.value = item.note || "";
+                renderEditCategoryPicker(item.category);
+                buildEditEmojiPicker(item.emoji || "📦");
+                editCatModal.classList.add("open");
+              } else {
+                showToast("叫 " + (item.owner || "TA") + " 来修改吧～");
+              }
+            });
+
+            const takeBtn = card.querySelector(".btn-take-mini");
+            if (takeBtn) {
+              takeBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                takingItemId = item.id;
+                document.getElementById("takeItemTitle").innerText = item.name || "";
+                document.getElementById("inputTakeNote").value = "";
+                document.getElementById("takeItemStock").innerText = String(item.count || 0);
+                const countInput = document.getElementById("takeCountInput");
+                if (countInput) {
+                  countInput.value = 1;
+                  countInput.min = 1;
+                  countInput.max = String(item.count || 1);
+                }
+                takeModal.classList.add("open");
+              });
+            }
+            shelfGrid.appendChild(card);
+          });
+        }
+      }
+
+      function renderLogs() {
+        const postList = document.getElementById("postList");
+        const emptyPosts = document.getElementById("emptyPosts");
+        if (!postList || !emptyPosts) return;
+        postList.innerHTML = "";
+        if (!pantryLogs || pantryLogs.length === 0) {
+          emptyPosts.style.display = "block";
+        } else {
+          emptyPosts.style.display = "none";
+          pantryLogs.forEach(log => {
+            const item = document.createElement("div");
+            const isDeposit = log.type === "deposit";
+            item.className = "post-item " + (isDeposit ? "deposit" : "take");
+            const dateStr = log.time ? new Date(log.time).toLocaleDateString() + " " + new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            item.innerHTML = `
+              <div class="post-content-box">
+                <div class="post-author-row">
+                  <span class="post-author">${log.actor || '我'}</span>
+                  <span class="post-time">${dateStr}</span>
+                </div>
+                <div class="post-body">
+                  <span class="post-tag-badge ${isDeposit ? '' : 'take'}">${isDeposit ? '存入' : '取走'}</span>
+                  ${isDeposit ? '放上架了' : '取走了'} <b>${log.itemName}</b>${log.count > 1 ? ` x${log.count}` : ''}
+                </div>
+                ${log.note ? `<div class="post-memo">“${log.note}”</div>` : ''}
+              </div>
+            `;
+            postList.appendChild(item);
+          });
+        }
+      }
+
+      // 壹集市核心逻辑：仅使用原生钱包零钱余额 (REAL BALANCE)
+      let realWalletBalance = 0;
+      async function refreshWalletBalance() {
+        try {
+          if (api?.wallet?.get) {
+            const w = await api.wallet.get();
+            if (typeof w?.balance === 'number') {
+              realWalletBalance = w.balance;
+            } else if (Array.isArray(w?.accounts)) {
+              const balAcc = w.accounts.find(a => a.type === 'balance' || a.id === 'wallet_balance_account');
+              realWalletBalance = balAcc ? (Number(balAcc.balance) || 0) : (Number(w.accounts[0]?.balance) || 0);
+            } else if (w && typeof w.balance !== 'undefined') {
+              realWalletBalance = Number(w.balance) || 0;
+            }
+          }
+        } catch(e) {
+          console.warn('钱包数据读取异常:', e);
+        }
+      }
+
+      function parsePrice(priceStr) {
+        if (!priceStr) return 10;
+        const num = parseFloat(String(priceStr).replace(/[^0-9.]/g, ""));
+        return isNaN(num) ? 10 : num;
+      }
+
+      function getWalletTotalBalance() {
+        return realWalletBalance;
+      }
+
+      function renderMarketCategoryCapsules() {
+        const catRow = document.getElementById("categoryRowMarket");
+        if (!catRow) return;
+        catRow.innerHTML = "";
+
+        const allBtn = document.createElement("button");
+        allBtn.className = "capsule" + (activeMarketCat === "all" ? " active" : "");
+        allBtn.innerText = "全部";
+        allBtn.dataset.cat = "all";
+        allBtn.addEventListener("click", () => {
+          activeMarketCat = "all";
+          renderMarketCategoryCapsules();
+          renderGoods();
+        });
+        catRow.appendChild(allBtn);
+
+        marketSettings.categories.forEach(cat => {
+          const btn = document.createElement("button");
+          btn.className = "capsule" + (activeMarketCat === cat ? " active" : "");
+          btn.innerText = cat;
+          btn.dataset.cat = cat;
+          btn.addEventListener("click", () => {
+            activeMarketCat = cat;
+            renderMarketCategoryCapsules();
+            renderGoods();
+          });
+          catRow.appendChild(btn);
+        });
+
+        const sel = document.getElementById("selectManualCat");
+        if (sel) {
+          sel.innerHTML = "";
+          marketSettings.categories.forEach(c => {
+            const opt = document.createElement("option");
+            opt.value = c;
+            opt.innerText = c;
+            sel.appendChild(opt);
+          });
+        }
+      }
+
+      async function renderGoods() {
+        if (!api?.db) return;
+        try {
+          const allGoods = await api.db.list("market_goods", { limit: 200 }) || [];
+          let displayGoods = allGoods;
+          if (activeMarketCat !== "all") {
+            displayGoods = displayGoods.filter(g => g.category === activeMarketCat);
+          }
+          const grid = document.getElementById("goodsGrid");
+          const empty = document.getElementById("emptyMarket");
+          if (!grid) return;
+          grid.innerHTML = "";
+
+          if (displayGoods.length === 0) {
+            if (empty) empty.style.display = "block";
+          } else {
+            if (empty) empty.style.display = "none";
+            displayGoods.forEach(prod => {
+              const card = document.createElement("div");
+              card.className = "goods-card";
+              card.innerHTML = `
+                <div class="goods-top">
+                  <span class="goods-emoji">${prod.emoji || '🎁'}</span>
+                  <span class="goods-tag">${prod.category || '生活'}</span>
+                </div>
+                <div class="goods-name" title="${prod.name}">${prod.name}</div>
+                <div class="goods-desc" title="${prod.desc || '生活精选好物'}">${prod.desc || '生活精选好物'}</div>
+                <div class="goods-price-row">
+                  <span class="goods-price">${prod.price || '¥ 19.90'}</span>
+                  <button class="btn-buy" data-id="${prod.id}">购买</button>
+                </div>
+              `;
+
+              const tagEl = card.querySelector(".goods-tag");
+              if (tagEl) {
+                tagEl.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  openChangeCatDialog(prod);
+                });
+              }
+
+              card.addEventListener("click", (e) => {
+                if (e.target && (e.target.classList.contains("btn-buy") || e.target.classList.contains("goods-tag"))) return;
+                deletingGoodId = prod.id;
+                document.getElementById("deleteGoodTitle").innerText = `下架「${prod.name}」`;
+                document.getElementById("deleteGoodDesc").innerText = `确定要将「${prod.name}」（${prod.price || ''}）从货架上下架删除吗？`;
+                document.getElementById("deleteGoodDialog").classList.add("open");
+              });
+
+              const buyBtn = card.querySelector(".btn-buy");
+              if (buyBtn) {
+                buyBtn.addEventListener("click", async (e) => {
+                  e.stopPropagation();
+                  await buyProduct(prod);
+                });
+              }
+              grid.appendChild(card);
+            });
+          }
+        } catch(e){}
+      }
+
+      const buyConfirmDialog = document.getElementById("buyConfirmDialog");
+      const buyDialogCountInput = document.getElementById("buyDialogCount");
+      const buyDialogTotalPriceEl = document.getElementById("buyDialogTotalPrice");
+      const buyDialogWalletBalanceEl = document.getElementById("buyDialogWalletBalance");
+
+      function updateBuyConfirmTotal() {
+        if (!pendingBuyProduct) return;
+        let count = parseInt(buyDialogCountInput.value, 10);
+        if (isNaN(count) || count < 1) count = 1;
+        if (count > 99) count = 99;
+        buyDialogCountInput.value = count;
+        pendingBuyCount = count;
+        const unitCost = parsePrice(pendingBuyProduct.price);
+        const total = unitCost * count;
+        buyDialogTotalPriceEl.innerText = "¥ " + total.toFixed(2);
+      }
+
+      async function openBuyConfirmDialog(prod) {
+        pendingBuyProduct = prod;
+        pendingBuyCount = 1;
+        await refreshWalletBalance();
+        document.getElementById("buyDialogEmoji").innerText = prod.emoji || "🎁";
+        document.getElementById("buyDialogName").innerText = prod.name || "商品";
+        document.getElementById("buyDialogSinglePrice").innerText = (prod.price || "¥ 0.00") + " / 件";
+        buyDialogCountInput.value = "1";
+        const currentBal = getWalletTotalBalance();
+        buyDialogWalletBalanceEl.innerText = "¥ " + currentBal.toFixed(2);
+        updateBuyConfirmTotal();
+        buyConfirmDialog.classList.add("open");
+      }
+
+      function closeBuyConfirmDialog() {
+        buyConfirmDialog.classList.remove("open");
+        pendingBuyProduct = null;
+        pendingBuyCount = 1;
+      }
+
+      document.getElementById("btnCloseBuyConfirm").addEventListener("click", closeBuyConfirmDialog);
+      document.getElementById("btnCancelBuyConfirm").addEventListener("click", closeBuyConfirmDialog);
+      buyConfirmDialog.addEventListener("click", closeBuyConfirmDialog);
+
+      document.getElementById("btnBuyCountMinus").addEventListener("click", () => {
+        let count = parseInt(buyDialogCountInput.value, 10) || 1;
+        if (count > 1) {
+          buyDialogCountInput.value = count - 1;
+          updateBuyConfirmTotal();
+        }
+      });
+      document.getElementById("btnBuyCountPlus").addEventListener("click", () => {
+        let count = parseInt(buyDialogCountInput.value, 10) || 1;
+        if (count < 99) {
+          buyDialogCountInput.value = count + 1;
+          updateBuyConfirmTotal();
+        }
+      });
+      buyDialogCountInput.addEventListener("input", updateBuyConfirmTotal);
+      buyDialogCountInput.addEventListener("change", updateBuyConfirmTotal);
+
+      document.getElementById("btnSubmitBuyConfirm").addEventListener("click", async () => {
+        if (!pendingBuyProduct) return;
+        const count = pendingBuyCount || 1;
+        const prod = pendingBuyProduct;
+        const ok = await executeBuy(prod, count);
+        if (ok) closeBuyConfirmDialog();
+      });
+
+      async function executeBuy(prod, count = 1) {
+        const unitCost = parsePrice(prod.price);
+        const totalCost = unitCost * count;
+        await refreshWalletBalance();
+        const currentBal = getWalletTotalBalance();
+
+        if (currentBal < totalCost) {
+          showToast("钱包余额不足，请去充值一点吧～");
+          return false;
+        }
+
+        if (api?.wallet?.pay) {
+          try {
+            const payRes = await api.wallet.pay({
+              amount: totalCost,
+              accountId: "wallet_balance_account",
+              title: "壹集市购物",
+              detail: `${prod.name} x${count}`,
+              category: "购物",
+              relatedOrderId: "market_" + Date.now()
+            });
+            if (!payRes || payRes.ok === false) {
+              showToast("钱包余额不足，请去充值一点吧～");
+              return false;
+            }
+          } catch(err) {
+            showToast("钱包余额不足，请去充值一点吧～");
+            return false;
+          }
+        }
+
+        try {
+          const existingOrders = await api.db.list("market_orders", { limit: 500 }) || [];
+          const matchedOrder = existingOrders.find(o => o.name && (o.name.trim() === prod.name.trim()));
+          if (matchedOrder && matchedOrder.id) {
+            const currentCount = parseInt(matchedOrder.count, 10) || 1;
+            await api.db.update("market_orders", matchedOrder.id, {
+              count: currentCount + count,
+              boughtAt: new Date().toISOString()
+            });
+          } else {
+            const order = {
+              name: prod.name.trim(),
+              emoji: prod.emoji || "🎁",
+              count: count,
+              category: prod.category || "好物",
+              desc: prod.desc || "小铺精选好物",
+              price: prod.price || ("¥ " + unitCost.toFixed(2)),
+              boughtAt: new Date().toISOString()
+            };
+            await api.db.create("market_orders", order);
+          }
+          await refreshWalletBalance();
+          showToast(`您已购买 ${count} 件「${prod.name}」`);
+          return true;
+        } catch(e) {
+          showToast("购买失败，请重试");
+          return false;
+        }
+      }
+
+      async function buyProduct(prod) {
+        if (marketSettings.quickPay) {
+          await executeBuy(prod, 1);
+        } else {
+          await openBuyConfirmDialog(prod);
+        }
+      }
+
+      async function refreshOrders() {
+        if (!api?.db) return;
+        try {
+          const rawOrders = await api.db.list("market_orders", { limit: 500 }) || [];
+          const mergedMap = new Map();
+          const toDeleteIds = [];
+
+          for (const ord of rawOrders) {
+            const key = (ord.name || "").trim();
+            if (!key) continue;
+            const currentCount = parseInt(ord.count, 10) || 1;
+            if (!mergedMap.has(key)) {
+              mergedMap.set(key, { ...ord, count: currentCount });
+            } else {
+              const prev = mergedMap.get(key);
+              prev.count += currentCount;
+              if (new Date(ord.boughtAt || 0) > new Date(prev.boughtAt || 0)) {
+                prev.boughtAt = ord.boughtAt;
+              }
+              toDeleteIds.push(ord.id);
+            }
+          }
+
+          if (toDeleteIds.length > 0) {
+            for (const [key, finalOrd] of mergedMap.entries()) {
+              await api.db.update("market_orders", finalOrd.id, {
+                count: finalOrd.count,
+                boughtAt: finalOrd.boughtAt
+              });
+            }
+            for (const delId of toDeleteIds) {
+              await api.db.delete("market_orders", delId);
+            }
+          }
+
+          const orders = Array.from(mergedMap.values());
+          const list = document.getElementById("orderList");
+          const empty = document.getElementById("emptyOrders");
+          if (!list) return;
+          list.innerHTML = "";
+
+          if (!orders || orders.length === 0) {
+            if (empty) empty.style.display = "block";
+          } else {
+            if (empty) empty.style.display = "none";
+            orders.slice().sort((a, b) => new Date(b.boughtAt || 0) - new Date(a.boughtAt || 0)).forEach(ord => {
+              const card = document.createElement("div");
+              card.className = "order-card";
+              card.dataset.id = ord.id;
+              const timeStr = ord.boughtAt ? new Date(ord.boughtAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+              const countText = (ord.count && ord.count > 1) ? ` x${ord.count}` : '';
+              card.innerHTML = `
+                <div class="order-head">
+                  <span>${ord.category}</span>
+                  <span>${timeStr}</span>
+                </div>
+                <div class="order-body">
+                  <div class="order-emoji">${ord.emoji}</div>
+                  <div class="order-info">
+                    <div class="order-title">${ord.name}${countText}</div>
+                    <div class="order-desc">${ord.desc}</div>
+                  </div>
+                  <button class="btn-action-pantry" data-id="${ord.id}">
+                    <span>放入储物架</span>
+                  </button>
+                </div>
+              `;
+              list.appendChild(card);
+            });
+
+            list.querySelectorAll(".btn-action-pantry").forEach(btn => {
+              btn.addEventListener("click", () => {
+                const ord = orders.find(o => o.id === btn.dataset.id);
+                if (ord) openPantryDepositDialog(ord);
+              });
+            });
+          }
+        } catch(e){}
+      }
+
+      const ordersModal = document.getElementById("ordersModal");
+      document.getElementById("btnOpenOrders").addEventListener("click", () => {
+        refreshOrders();
+        ordersModal.classList.add("open");
+      });
+      document.getElementById("btnCloseOrders").addEventListener("click", () => ordersModal.classList.remove("open"));
+      ordersModal.addEventListener("click", () => ordersModal.classList.remove("open"));
+
+      const pantryDepositModal = document.getElementById("pantryDepositModal");
+      async function openPantryDepositDialog(ord) {
+        pendingPantryOrder = ord;
+        document.getElementById("pantryDepositEmoji").innerText = ord.emoji || "🎁";
+        document.getElementById("pantryDepositName").value = ord.name || "";
+        const maxCount = parseInt(ord.count, 10) || 1;
+        const countInput = document.getElementById("pantryDepositCount");
+        countInput.value = "1";
+        countInput.max = maxCount;
+        countInput.min = "1";
+        document.getElementById("pantryDepositNote").value = ord.desc || "在壹集市买的，大家随便用~";
+
+        const pantryCatPicker = document.getElementById("pantryCatPicker");
+        pantryCatPicker.innerHTML = "";
+        selectedPantryCat = null;
+
+        const displayCats = categories.filter(c => c.id !== "uncategorized");
+        if (displayCats.length === 0) {
+          pantryCatPicker.innerHTML = `<span style="font-size: 11px; color: var(--text-light); padding: 4px 0;">暂无其他分类标签</span>`;
+        } else {
+          displayCats.forEach(c => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "capsule";
+            btn.style.fontSize = "11px";
+            btn.style.padding = "5px 10px";
+            btn.innerText = c.name;
+            btn.addEventListener("click", () => {
+              if (selectedPantryCat === c.id) {
+                selectedPantryCat = null;
+                btn.classList.remove("active");
+              } else {
+                selectedPantryCat = c.id;
+                pantryCatPicker.querySelectorAll(".capsule").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+              }
+            });
+            pantryCatPicker.appendChild(btn);
+          });
+        }
+        pantryDepositModal.classList.add("open");
+      }
+
+      document.getElementById("btnClosePantryDeposit").addEventListener("click", () => pantryDepositModal.classList.remove("open"));
+      pantryDepositModal.addEventListener("click", () => pantryDepositModal.classList.remove("open"));
+
+      document.getElementById("btnConfirmPantryDeposit").addEventListener("click", async () => {
+        if (!pendingPantryOrder) return;
+        const ord = pendingPantryOrder;
+        const finalName = document.getElementById("pantryDepositName").value.trim() || ord.name;
+        const countInput = document.getElementById("pantryDepositCount");
+        let count = parseInt(countInput ? countInput.value.trim() : "1", 10);
+        const maxAvailable = parseInt(ord.count, 10) || 1;
+        if (isNaN(count) || count < 1) count = 1;
+        if (count > maxAvailable) count = maxAvailable;
+        const finalNote = document.getElementById("pantryDepositNote").value.trim() || (ord.desc || "在壹集市买的，大家随便用~");
+        const finalCat = selectedPantryCat || "uncategorized";
+
+        try {
+          await addDepositItem(finalName, count, finalNote, ord.emoji || "🎁", userProfile.name || "我", finalCat);
+          if (ord.count > count) {
+            await api.db.update("market_orders", ord.id, { count: ord.count - count });
+          } else {
+            await api.db.delete("market_orders", ord.id);
+          }
+          pantryDepositModal.classList.remove("open");
+          await refreshOrders();
+          renderShelf();
+          showToast(`已将 ${count} 件「${finalName}」放入储物架`);
+        } catch(e) {
+          showToast("放入储物架失败");
+        }
+      });
+
+      const catModalMarket = document.getElementById("categoryModal");
+      document.getElementById("btnManageMarketCats").addEventListener("click", () => {
+        document.getElementById("inputCategories").value = marketSettings.categories.join(", ");
+        document.getElementById("inputPrompt").value = marketSettings.prompt || "";
+        document.getElementById("checkQuickPay").checked = !!marketSettings.quickPay;
+        catModalMarket.classList.add("open");
+      });
+      document.getElementById("btnSwitchToShelf").addEventListener("click", () => {
+        catModalMarket.classList.remove("open");
+        switchTab("shelf");
+        showToast("已切换至公共储物架");
+      });
+      document.getElementById("btnCloseCatModalMarket").addEventListener("click", () => catModalMarket.classList.remove("open"));
+      catModalMarket.addEventListener("click", () => catModalMarket.classList.remove("open"));
+
+      document.getElementById("btnSaveCatSettings").addEventListener("click", async () => {
+        const rawCats = document.getElementById("inputCategories").value;
+        const parsedCats = rawCats.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+        if (parsedCats.length > 0) marketSettings.categories = parsedCats;
+        marketSettings.prompt = document.getElementById("inputPrompt").value.trim();
+        marketSettings.quickPay = document.getElementById("checkQuickPay").checked;
+
+        if (api?.db) {
+          try {
+            const saved = await api.db.list("market_settings", { limit: 1 });
+            if (saved && saved.length > 0) {
+              await api.db.update("market_settings", saved[0].id, marketSettings);
+            } else {
+              await api.db.create("market_settings", marketSettings);
+            }
+          } catch(e){ showToast("设定保存失败，请重试"); return; }
+        }
+        renderMarketCategoryCapsules();
+        catModalMarket.classList.remove("open");
+        showToast("设定已保存");
+      });
+
+      const manualModal = document.getElementById("manualModal");
+      document.getElementById("btnManualAdd").addEventListener("click", () => {
+        document.getElementById("inputManualName").value = "";
+        document.getElementById("inputManualDesc").value = "";
+        document.getElementById("inputManualPrice").value = "¥ 28.00";
+        document.getElementById("inputManualEmoji").value = "🍰";
+        manualModal.classList.add("open");
+      });
+      document.getElementById("btnCloseManual").addEventListener("click", () => manualModal.classList.remove("open"));
+      manualModal.addEventListener("click", () => manualModal.classList.remove("open"));
+
+      document.getElementById("btnConfirmManual").addEventListener("click", async () => {
+        const name = document.getElementById("inputManualName").value.trim();
+        const emoji = document.getElementById("inputManualEmoji").value.trim() || "🎁";
+        const category = document.getElementById("selectManualCat").value || marketSettings.categories[0] || "生活";
+        const desc = document.getElementById("inputManualDesc").value.trim() || "独家自制好物";
+        const price = document.getElementById("inputManualPrice").value.trim() || "¥ 28.00";
+
+        if (!name) { showToast("请输入好物名称"); return; }
+        const newGood = { name, emoji, category, desc, price };
+        if (api?.db) {
+          try {
+            await api.db.create("market_goods", newGood);
+            manualModal.classList.remove("open");
+            renderGoods();
+            showToast("已上架新好物");
+          } catch(e) { showToast("上架失败"); }
+        }
+      });
+
+      document.getElementById("btnAiRestock").addEventListener("click", async () => {
+        const btn = document.getElementById("btnAiRestock");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `<span>⏳</span><span>进货中...</span>`;
+        btn.style.pointerEvents = "none";
+
+        try {
+          const userStyle = (marketSettings.prompt && marketSettings.prompt.trim()) ? marketSettings.prompt.trim() : "21世纪现代都市生活好物，涵盖吃喝玩乐与日常趣味好品。";
+          const promptText = `你是一位集市管理人，集市里商品琳琅满目、五花八门，请按集市管理人的设定来挑选和创作商品。\n\n【世界观与集市风格设定（最高优先级，务必严格执行，所有选品都必须符合这个设定）】: ${userStyle}\n【目标品类】: ${activeMarketCat === "all" ? marketSettings.categories.join("、") : activeMarketCat}\n【硬性要求】: 生成的全部商品必须严格属于「目标品类」，不得跨品类\n\n请基于以上设定与目标品类，生成 4 款有真实细节、让人想逛想买的特色好物。\n\n请严格返回 JSON 数组格式，不要包含 Markdown 标记或任何其他多余文本，格式如下：\n[\n  {\n    "name": "商品名称（1-10字，简短具体）",\n    "emoji": "与该商品名称直接对应的单个Emoji，务必贴合商品，不要用🎁敷衍；若不确定可参考下方【Emoji图标库】",\n    "category": "从品类范围中严格选一个",\n    "desc": "一句话商品描述（20字以内，简洁生动，突出该商品的核心功能、特色或吸引力）",\n    "price": "¥ XX.00（根据商品属性与定位合理定价）"\n  }\n]\n\n【Emoji图标库参考（可从中挑选或自由使用其他贴合的Emoji）】: 🍏🍎🍐🍊🍋🍌🍉🍇🥑🥥🥝🍍🍑🍒🍈🍓🥦🍅🍆🥒🥕🌶🌽🥔🍗🧀🥖🍞🥐🍯🥜🍠🍖🥚🍳🥓🥩🥞🍤🍕🥫🥘🥗🥙🍟🍔🌭🥪🍝🌮🌯🍜🍲🍥🍣🍱🍧🍡🍢🥠🍘🍚🍙🍛🍨🍦🥧🍰🎂🍮🍬🍭🍻🍺🥛🍪🥟🍩🍿🍫🥂🍷🥃🍸🍹🍾🍶🍵🥡🥣🍽🍴🥄🍼🥤☕️🥢⚽️🏀🏈⚾️🎾🏐🏉🎱🎿🏏🏑🏒🏸🏓🏌⛳️🏹🥊🥋🎣🚣🏻🏇🏆🎤🎻🎸🎺🎷🥁🎨🚗🚒🚐🚚🚲🚔🚨🚜🛴🛵🏍🚠🚖🚘🚁✈️🚁🚄🚃🚂⛵️`;
+
+          let resultText = "";
+          if (api?.ai?.chat) {
+            const resp = await api.ai.chat({
+              messages: [{ role: "user", content: promptText }],
+              temperature: 0.8
+            });
+            resultText = resp?.text || resp?.content || "";
+          } else if (api?.ai?.generate) {
+            const resp = await api.ai.generate({
+              prompt: promptText,
+              temperature: 0.8
+            });
+            resultText = resp?.text || resp?.content || "";
+          }
+
+          const jsonMatch = resultText.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            const newItems = JSON.parse(jsonMatch[0]);
+            if (Array.isArray(newItems) && newItems.length > 0 && api?.db) {
+              const usedEmojis = new Set();
+              const fallbackEmojis = ["🍰","🧁","🍮","🍩","🥐","🍞","🧈","🧀","🥛","☕","🧋","🍵","🥤","🧃","🍊","🍓","🍑","🍒","🍇","🍉","🍌","🥝","🍍","🥭","🍯","🍫","🍬","🍭","🍪","🥨","🥖","🥯","🌭","🍔","🍕","🥪","🍙","🍜","🍲","🍱","🕯️","🧸","🌸","🌿","🍃","🧴","🧼","🛁","🧽","🧹","🧺","🧣","🧦","🧤","🧢","🎀","📔","📖","✏️","🖌️","🎨","🎁","🧿","💐","🌷","🌻","🍄","🐻","🐰","🦊","🐱","🐶"];
+              for (const item of newItems) {
+                if (item.name && item.category) {
+                  let emoji = String(item.emoji || '').trim();
+                  const guessed = guessEmoji(item.name, item.category);
+                  if (!emoji || emoji.length > 4 || emoji === "🎁") {
+                    emoji = guessed;
+                  }
+                  let guard = 0;
+                  while ((!emoji || usedEmojis.has(emoji) || emoji === "🎁") && guard < 12) {
+                    emoji = fallbackEmojis[Math.floor(Math.random() * fallbackEmojis.length)];
+                    guard++;
+                  }
+                  usedEmojis.add(emoji);
+                  let itemDesc = String(item.desc || '生活精选好物').trim();
+                  if (itemDesc.length > 20) itemDesc = itemDesc.slice(0, 20) + "…";
+                  await api.db.create("market_goods", {
+                    name: String(item.name).trim(),
+                    emoji: emoji,
+                    category: String(item.category).trim(),
+                    desc: itemDesc,
+                    price: String(item.price || '¥ 28.00').trim()
+                  });
+                }
+              }
+              renderGoods();
+              showToast("✨ 进货成功！4 款好物已上架");
+            } else { showToast("进货解析异常，请重试"); }
+          } else { showToast("AI 生成未返回有效商品列表"); }
+        } catch(err) {
+          showToast("进货遇到一点小问题，请重试");
+        } finally {
+          btn.innerHTML = originalText;
+          btn.style.pointerEvents = "auto";
+        }
+      });
+
+      const deleteDialog = document.getElementById("deleteGoodDialog");
+      document.getElementById("btnCancelDeleteGood").addEventListener("click", () => deleteDialog.classList.remove("open"));
+      deleteDialog.addEventListener("click", () => deleteDialog.classList.remove("open"));
+      document.getElementById("btnConfirmDeleteGood").addEventListener("click", async () => {
+        if (deletingGoodId && api?.db) {
+          try {
+            await api.db.delete("market_goods", deletingGoodId);
+            deleteDialog.classList.remove("open");
+            deletingGoodId = null;
+            renderGoods();
+            showToast("商品已下架");
+          } catch(e){}
+        }
+      });
+
+      const changeCatDialog = document.getElementById("changeCatDialog");
+      function openChangeCatDialog(prod) {
+        changingCatGoodId = prod.id;
+        document.getElementById("changeCatGoodName").innerText = `将「${prod.name}」移至分组：`;
+        const list = document.getElementById("changeCatList");
+        list.innerHTML = "";
+        marketSettings.categories.forEach(c => {
+          const btn = document.createElement("button");
+          btn.className = "capsule" + (prod.category === c ? " active" : "");
+          btn.innerText = c;
+          btn.addEventListener("click", async () => {
+            if (changingCatGoodId && api?.db) {
+              try {
+                await api.db.update("market_goods", changingCatGoodId, { category: c });
+                changeCatDialog.classList.remove("open");
+                changingCatGoodId = null;
+                renderGoods();
+                showToast(`已归入「${c}」`);
+              } catch(e){}
+            }
+          });
+          list.appendChild(btn);
+        });
+        changeCatDialog.classList.add("open");
+      }
+      document.getElementById("btnCloseChangeCat").addEventListener("click", () => changeCatDialog.classList.remove("open"));
+      changeCatDialog.addEventListener("click", () => changeCatDialog.classList.remove("open"));
+
+      const helpModal = document.getElementById("helpModal");
+      document.getElementById("btnOpenHelp").addEventListener("click", () => {
+        const titleEl = document.getElementById("helpModalTitle");
+        const contentEl = document.getElementById("helpModalContent");
+        const rowStyle = 'display: flex; align-items: flex-start; gap: 8px;';
+        const dotStyle = 'width: 5px; height: 5px; border-radius: 50%; background: var(--accent-warm); margin-top: 8px; flex-shrink: 0;';
+        const textStyle = 'color: var(--text-main); font-size: 13.5px; line-height: 1.65; flex: 1;';
+        const keyStyle = 'font-weight: 600; color: var(--text-main);';
+
+        if (currentMainTab === 'shelf') {
+          titleEl.innerText = '公共储物架 · 使用说明';
+          contentEl.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div style="${rowStyle}">
+                <div style="${dotStyle}"></div>
+                <div style="${textStyle}"><span style="${keyStyle}">修改物品</span>：点击卡片可修改自己放入储物架的物品。</div>
+              </div>
+              <div style="${rowStyle}">
+                <div style="${dotStyle}"></div>
+                <div style="${textStyle}"><span style="${keyStyle}">聊天互动</span>：在聊天工具栏界面打开公共储物架，点击<span style="color: var(--accent-warm); font-weight: 600;">「≡ 清单」</span>可发送清单卡片到聊天里；在聊天界面取出或存入物品会自动发送存取卡片到聊天界面。</div>
+              </div>
+              <div style="${rowStyle}; margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--border);">
+                <span style="font-size: 14px; line-height: 1.5; flex-shrink: 0;">💡</span>
+                <div style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6;">
+                  <strong style="color: var(--accent-warm); font-weight: 600;">注：</strong>储物架中的物品并没有通过世界书或系统设定实时常驻挂载。角色对储物架现状的感知完全依赖当前的聊天上下文。</div>
+              </div>
+            </div>
+          `;
+        } else {
+          titleEl.innerText = '壹集市 · 使用说明';
+          contentEl.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div style="${rowStyle}">
+                <div style="${dotStyle}"></div>
+                <div style="${textStyle}"><span style="${keyStyle}">快捷换组</span>：点击商品卡片上的分类标签，可快捷更改该商品的分组。</div>
+              </div>
+              <div style="${rowStyle}">
+                <div style="${dotStyle}"></div>
+                <div style="${textStyle}"><span style="${keyStyle}">下架管理</span>：点击商品卡片可下架物品。</div>
+              </div>
+              <div style="${rowStyle}">
+                <div style="${dotStyle}"></div>
+                <div style="${textStyle}"><span style="${keyStyle}">分组设置</span>：点击分类栏右侧「⚙️」可自由增加、删除或修改商品的分组分类，分类通过英文逗号和空格区分。</div>
+              </div>
+              <div style="${rowStyle}">
+                <div style="${dotStyle}"></div>
+                <div style="${textStyle}"><span style="${keyStyle}">风格定制</span>：自定义提示词决定生成的商品风格，建议输入世界观，如 21 世纪、星际机甲、修仙等。</div>
+              </div>
+              <div style="${rowStyle}">
+                <div style="${dotStyle}"></div>
+                <div style="${textStyle}"><span style="${keyStyle}">AI 进货</span>：AI 进货会根据设定自动生成当前分组的 4 款特色好物。</div>
+              </div>
+              <div style="${rowStyle}">
+                <div style="${dotStyle}"></div>
+                <div style="${textStyle}"><span style="${keyStyle}">包裹转存</span>：可在包裹中将物品放入公共储物架。</div>
+              </div>
+            </div>
+          `;
+        }
+        helpModal.classList.add("open");
+      });
+      document.getElementById("btnCloseHelp").addEventListener("click", () => helpModal.classList.remove("open"));
+      helpModal.addEventListener("click", () => helpModal.classList.remove("open"));
+
+      // 初始化与启动
+      async function initAppContext() {
+        try {
+          if (api?.app?.getLaunchContext) {
+            const launchCtx = await api.app.getLaunchContext();
+            if (launchCtx) {
+              currentSessionId = launchCtx.sessionId || null;
+              currentCharacterId = launchCtx.characterId || null;
+              if (launchCtx.source === "chat_plus_action" || (launchCtx.sessionId && window.innerHeight < 650)) {
+                isToolbarMode = true;
+              }
+            }
+          }
+          // 仅依赖真实的上下文环境判定工具栏，避免误判小屏设备
+          if (!isToolbarMode && launchCtx?.presentation === "panel") {
+            isToolbarMode = true;
+          }
+          if (api?.characters?.list) {
+            try { charactersCache = await api.characters.list() || []; } catch(e){}
+          }
+          if (api?.user?.getProfile) {
+            const prof = await api.user.getProfile({ characterId: currentCharacterId });
+            if (prof && prof.name) userProfile.name = prof.name;
+          }
+        } catch(e) {}
+      }
+
+      async function initMarketData() {
+        if (api?.db) {
+          try {
+            const savedSettings = await api.db.list("market_settings", { limit: 1 });
+            if (savedSettings && savedSettings.length > 0) {
+              marketSettings = savedSettings[0];
+            } else {
+              await api.db.create("market_settings", marketSettings);
+            }
+            const existingGoods = await api.db.list("market_goods", { limit: 1 });
+            if (!existingGoods || existingGoods.length === 0) {
+              for (const prod of defaultProducts) {
+                await api.db.create("market_goods", prod);
+              }
+            }
+          } catch(e){}
+        }
+      }
+
+      try {
+        const cachedRaw = safeStorage.get("shelf_items_cache");
+        if (cachedRaw) shelfItems = JSON.parse(cachedRaw) || [];
+      } catch(e){}
+
+      renderCategoryTabs();
+      renderDepositCategoryPicker();
+      renderShelf();
+
+      (async function startUp() {
+        await initAppContext();
+        await initMarketData();
+        await refreshWalletBalance();
+
+        if (api?.db?.list) {
+          try {
+            const dbItems = await api.db.list("shelf_items", { limit: 200 });
+            if (Array.isArray(dbItems)) {
+              shelfItems = dbItems.filter(it => !(it.name === "物品名称" && it.note === "留言"));
+            }
+          } catch(e){}
+          try {
+            const dbLogs = await api.db.list("pantry_logs", { limit: 200 });
+            if (Array.isArray(dbLogs)) {
+              pantryLogs = dbLogs.filter(lg => !(lg.itemName === "物品名称" && lg.note === "留言"));
+            }
+          } catch(e){}
+          try {
+            const hasLocal = safeStorage.get("shelf_user_categories") !== null;
+            const dbCats = await api.db.list("shelf_categories", { limit: 10 });
+            const catRec = Array.isArray(dbCats) ? dbCats.find(x => x.type === "categories_data") : null;
+            if (!hasLocal && catRec && Array.isArray(catRec.list)) {
+              categories = sanitizeCategories(catRec.list);
+              safeStorage.set("shelf_user_categories", JSON.stringify(categories));
+            }
+          } catch(e){}
+
+          safeStorage.set("shelf_items_cache", JSON.stringify(shelfItems));
+          safeStorage.set("shelf_logs_cache", JSON.stringify(pantryLogs));
+          renderCategoryTabs();
+          renderDepositCategoryPicker();
+          renderShelf();
+        }
+
+        renderMarketCategoryCapsules();
+        renderGoods();
+
+        // 工具栏模式下强制锁定储物架且隐藏壹集市；桌面模式才恢复上次持久化 Tab
+        let restoredTab = "shelf";
+        if (isToolbarMode) {
+          const dividerEl = document.querySelector(".header-nav-wrap .nav-divider");
+          if (dividerEl) dividerEl.style.display = "none";
+          if (tabMarket) tabMarket.style.display = "none";
+          restoredTab = "shelf";
+        } else {
+          restoredTab = currentMainTab;
+          if (api?.db?.list) {
+            try {
+              const stateRecs = await api.db.list("pantry_app_state", { limit: 1 });
+              const rec = Array.isArray(stateRecs) ? stateRecs[0] : null;
+              if (rec && rec.lastTab === "market") restoredTab = "market";
+              else if (rec && rec.lastTab === "shelf") restoredTab = "shelf";
+            } catch(e){}
+          }
+        }
+        switchTab(restoredTab);
+
+        // 正确视图已渲染，揭开启动遮罩
+        requestAnimationFrame(() => {
+          const overlay = document.getElementById("bootOverlay");
+          if (overlay) overlay.classList.add("hide");
+        });
+      })();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+// 全局数据类型：人设 / 会话 / API 配置 / 社交内容
+
+export type Id = string;
+
+export interface Persona {
+  id: Id;
+  name: string;
+  /** emoji 或 dataURL */
+  avatar?: string;
+  tagline?: string;
+  description: string;
+  style?: string;
+  scenario?: string;
+  firstMes?: string;
+  example?: string;
+  worldbook?: string;
+  forbidden?: string;
+  voiceId?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export type MessageRole = 'user' | 'assistant' | 'system';
+
+export interface ChatMessage {
+  id: Id;
+  role: MessageRole;
+  text: string;
+  /** 图片存在 IndexedDB，消息里只留 key */
+  imageId?: string;
+  /** 远程图片地址（生图接口直接返回 url 时使用） */
+  imageUrl?: string;
+  createdAt: number;
+  error?: boolean;
+}
+
+export type Channel = 'chat' | 'wechat' | 'line';
+
+export interface Conversation {
+  id: Id;
+  personaId: Id;
+  channel: Channel;
+  messages: ChatMessage[];
+  updatedAt: number;
+}
+
+export interface TextConfig {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+}
+
+export interface ImageConfig {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  size: string;
+}
+
+export type TtsProvider = 'volc' | 'minimax' | 'openai' | 'browser';
+
+export interface TtsConfig {
+  provider: TtsProvider;
+  apiKey: string;
+  voiceId: string;
+  speed: number;
+  pitch: number;
+  /** MiniMax 必填 */
+  groupId: string;
+  /** MiniMax 模型，如 speech-02-hd */
+  model: string;
+  /** OpenAI 兼容语音的 base url */
+  baseUrl: string;
+}
+
+export interface SttConfig {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+}
+
+export interface UserPersona {
+  name: string;
+  bio: string;
+  avatar?: string;
+}
+
+export interface Settings {
+  text: TextConfig;
+  image: ImageConfig;
+  tts: TtsConfig;
+  stt: SttConfig;
+  user: UserPersona;
+  autoRead: boolean;
+  apiMode: 'proxy' | 'direct';
+  activePersonaId?: Id;
+}
+
+export interface MomentComment {
+  id: Id;
+  author: string;
+  text: string;
+  createdAt: number;
+}
+
+export interface MomentPost {
+  id: Id;
+  personaId: Id;
+  authorName: string;
+  authorAvatar?: string;
+  text: string;
+  images: { emoji: string; color: string }[];
+  createdAt: number;
+  likes: string[];
+  comments: MomentComment[];
+}
+
+export interface XhsNote {
+  id: Id;
+  personaId: Id;
+  title: string;
+  content: string;
+  coverEmoji: string;
+  coverColor: string;
+  likes: string;
+  createdAt: number;
+  liked?: boolean;
+}
+
+export interface XhsProfile {
+  personaId: Id;
+  nickname: string;
+  handle: string;
+  bio: string;
+  ip: string;
+  gender: '男' | '女';
+  age: string;
+  job: string;
+  following: string;
+  fans: string;
+  likes: string;
+}

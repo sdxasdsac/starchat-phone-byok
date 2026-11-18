@@ -1,0 +1,195 @@
+{
+  "id": "waimai.demo",
+  "name": "外卖",
+  "version": "2.0.0",
+  "sdkVersion": "1.0",
+  "description": "仿真外卖APP，支持给自己/角色点外卖、角色请客付款、聊天室卡片联动、角色主动点外卖。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "wallet.read",
+    "wallet.pay",
+    "ui.toast",
+    "ui.notification",
+    "chat.sendCard",
+    "chat.write",
+    "chat.requestReply",
+    "notifications.write"
+  ],
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "directives": [
+        {
+          "id": "waimai-order",
+          "label": "外卖下单",
+          "syntax": "[外卖下单:店铺:餐品:金额:备注]",
+          "description": "当角色想主动给用户点一份外卖时使用。角色自己选店铺和餐品，填写金额，用户在聊天室收到卡片后可确认接收。",
+          "card": {
+            "appLabel": "外卖",
+            "title": "🍱 TA给你点了外卖！",
+            "subtitle": "{{店铺}}",
+            "body": "{{餐品}} · ¥{{金额}}",
+            "status": "待确认",
+            "accentColor": "#ff6b35",
+            "sections": [
+              {
+                "title": "订单详情",
+                "rows": [
+                  {
+                    "label": "店铺",
+                    "value": "{{店铺}}"
+                  },
+                  {
+                    "label": "餐品",
+                    "value": "{{餐品}}"
+                  },
+                  {
+                    "label": "金额",
+                    "value": "¥{{金额}}"
+                  },
+                  {
+                    "label": "备注",
+                    "value": "{{备注}}"
+                  }
+                ]
+              }
+            ],
+            "actions": [
+              {
+                "label": "确认收餐"
+              }
+            ]
+          },
+          "tags": []
+        }
+      ],
+      "plusActions": [
+        {
+          "id": "order-for-char",
+          "label": "给TA点外卖",
+          "description": "从聊天室打开外卖APP，直接给当前聊天对象点外卖。",
+          "entry": "order-for-character",
+          "presentation": "app",
+          "tags": []
+        }
+      ]
+    }
+  },
+  "chatDirectives": [
+    {
+      "id": "waimai-order",
+      "label": "外卖下单",
+      "syntax": "[外卖下单:店铺:餐品:金额:备注]",
+      "description": "当角色想主动给用户点一份外卖时使用。角色自己选店铺和餐品，填写金额，用户在聊天室收到卡片后可确认接收。",
+      "card": {
+        "appLabel": "外卖",
+        "title": "🍱 TA给你点了外卖！",
+        "subtitle": "{{店铺}}",
+        "body": "{{餐品}} · ¥{{金额}}",
+        "status": "待确认",
+        "accentColor": "#ff6b35",
+        "sections": [
+          {
+            "title": "订单详情",
+            "rows": [
+              {
+                "label": "店铺",
+                "value": "{{店铺}}"
+              },
+              {
+                "label": "餐品",
+                "value": "{{餐品}}"
+              },
+              {
+                "label": "金额",
+                "value": "¥{{金额}}"
+              },
+              {
+                "label": "备注",
+                "value": "{{备注}}"
+              }
+            ]
+          }
+        ],
+        "actions": [
+          {
+            "label": "确认收餐"
+          }
+        ]
+      },
+      "tags": []
+    }
+  ],
+  "chatPlusActions": [
+    {
+      "id": "order-for-char",
+      "label": "给TA点外卖",
+      "description": "从聊天室打开外卖APP，直接给当前聊天对象点外卖。",
+      "entry": "order-for-character",
+      "presentation": "app",
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "directives": [
+      {
+        "id": "waimai-order",
+        "label": "外卖下单",
+        "syntax": "[外卖下单:店铺:餐品:金额:备注]",
+        "description": "当角色想主动给用户点一份外卖时使用。角色自己选店铺和餐品，填写金额，用户在聊天室收到卡片后可确认接收。",
+        "card": {
+          "appLabel": "外卖",
+          "title": "🍱 TA给你点了外卖！",
+          "subtitle": "{{店铺}}",
+          "body": "{{餐品}} · ¥{{金额}}",
+          "status": "待确认",
+          "accentColor": "#ff6b35",
+          "sections": [
+            {
+              "title": "订单详情",
+              "rows": [
+                {
+                  "label": "店铺",
+                  "value": "{{店铺}}"
+                },
+                {
+                  "label": "餐品",
+                  "value": "{{餐品}}"
+                },
+                {
+                  "label": "金额",
+                  "value": "¥{{金额}}"
+                },
+                {
+                  "label": "备注",
+                  "value": "{{备注}}"
+                }
+              ]
+            }
+          ],
+          "actions": [
+            {
+              "label": "确认收餐"
+            }
+          ]
+        },
+        "tags": []
+      }
+    ],
+    "plusActions": [
+      {
+        "id": "order-for-char",
+        "label": "给TA点外卖",
+        "description": "从聊天室打开外卖APP，直接给当前聊天对象点外卖。",
+        "entry": "order-for-character",
+        "presentation": "app",
+        "tags": []
+      }
+    ]
+  }
+}

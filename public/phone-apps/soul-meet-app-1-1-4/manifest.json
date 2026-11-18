@@ -1,0 +1,142 @@
+{
+  "id": "soul.meet.app",
+  "name": "Soul",
+  "version": "1.1.4",
+  "sdkVersion": "1.0",
+  "author": "Stella",
+  "description": "匿名匹配交友，广场动态、私聊互动，线下约会，角色查岗，交友群聊。",
+  "icon": "1787221090224_edit_241613405522934.png",
+  "entry": "Soul3.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "app.assets.read",
+    "app.manifest.read",
+    "characters.read",
+    "characters.state.read",
+    "characters.state.write",
+    "characters.relations.read",
+    "chat.read",
+    "chat.read.background",
+    "chat.write",
+    "chat.sendMessage",
+    "chat.sendCard",
+    "chat.requestReply",
+    "chat.contacts.write",
+    "chat.tools",
+    "ai.generate",
+    "ai.chat",
+    "ai.embed",
+    "ai.classify",
+    "ai.generateImage",
+    "memory.readCore",
+    "memory.readLongTerm",
+    "memory.readShortTerm",
+    "memory.search",
+    "memory.write",
+    "memory.suggest",
+    "world.read",
+    "calendar.read",
+    "calendar.write",
+    "ui.toast",
+    "ui.notification",
+    "user.profile.read",
+    "user.persona.read",
+    "user.preferences.read",
+    "wallet.read",
+    "wallet.pay",
+    "network.fetch",
+    "voice.tts",
+    "voice.stt",
+    "voice.clone",
+    "voice.readProfiles",
+    "media.pick",
+    "media.save",
+    "notifications.read",
+    "notifications.write",
+    "tasks.schedule",
+    "bridge.send",
+    "bridge.read",
+    "online.play"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "plusActions": [
+        {
+          "id": "open-soul-meet",
+          "label": "Soul遇见",
+          "description": "打开 Soul遇见 进行匹配和广场互动。",
+          "entry": "main",
+          "presentation": "fullscreen",
+          "tags": []
+        }
+      ]
+    }
+  },
+  "network": {
+    "allowedDomains": [
+      "*",
+      "*.openai.com",
+      "api.openai.com",
+      "*.deepseek.com",
+      "api.deepseek.com",
+      "*.siliconflow.cn",
+      "api.siliconflow.cn",
+      "*.moonshot.cn",
+      "api.moonshot.cn",
+      "*.aliyuncs.com",
+      "dashscope.aliyuncs.com",
+      "*.volcengineapi.com",
+      "open.volcengineapi.com",
+      "*.xf-yun.com",
+      "spark-api.xf-yun.com",
+      "*.bigmodel.cn",
+      "open.bigmodel.cn",
+      "*.zhipuapi.cn",
+      "open.zhipuapi.cn",
+      "*.anthropic.com",
+      "api.anthropic.com",
+      "*.tencent.com",
+      "*.baidu.com",
+      "*.google.com",
+      "*.googleapis.com",
+      "*.azure.com",
+      "*.cloudflare.com"
+    ],
+    "mode": "proxy"
+  },
+  "chatPlusActions": [
+    {
+      "id": "open-soul-meet",
+      "label": "Soul遇见",
+      "description": "打开 Soul遇见 进行匹配和广场互动。",
+      "entry": "main",
+      "presentation": "fullscreen",
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "plusActions": [
+      {
+        "id": "open-soul-meet",
+        "label": "Soul遇见",
+        "description": "打开 Soul遇见 进行匹配和广场互动。",
+        "entry": "main",
+        "presentation": "fullscreen",
+        "tags": []
+      }
+    ]
+  }
+}

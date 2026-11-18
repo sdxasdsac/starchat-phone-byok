@@ -1,0 +1,843 @@
+{
+  "id": "bigar.couple.space",
+  "name": "织梦纪事",
+  "version": "2.0.0",
+  "sdkVersion": "1.0",
+  "author": "Bigar",
+  "description": "与伴侣共筑织梦：支持双层自由装修、全屋29+自主生活动线、小院祈愿古树拾笺阁、地下迷宫暗巷追逐、书桌终端全景档案、双人食记、浮生小景与跨次元触梦手札，愿越过屏幕微隙与流转时序，在一屋灯火里织就你我的朝夕",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "app.assets.read",
+    "app.manifest.read",
+    "ai.generate",
+    "ai.generateImage",
+    "ai.chat",
+    "ai.embed",
+    "ai.classify",
+    "network.fetch",
+    "voice.tts",
+    "voice.stt",
+    "voice.clone",
+    "voice.readProfiles",
+    "user.profile.read",
+    "user.persona.read",
+    "user.preferences.read",
+    "chat.read",
+    "chat.read.background",
+    "chat.write",
+    "chat.sendMessage",
+    "chat.sendCard",
+    "chat.requestReply",
+    "chat.contacts.write",
+    "chat.tools",
+    "characters.read",
+    "characters.state.read",
+    "characters.state.write",
+    "characters.relations.read",
+    "calendar.read",
+    "calendar.write",
+    "world.read",
+    "world.write",
+    "world.activate",
+    "memory.readCore",
+    "memory.readLongTerm",
+    "memory.readShortTerm",
+    "memory.search",
+    "memory.write",
+    "memory.suggest",
+    "media.pick",
+    "media.save",
+    "geo.read",
+    "geo.watch",
+    "notifications.read",
+    "notifications.write",
+    "tasks.schedule",
+    "ui.toast",
+    "ui.notification",
+    "ui.sms",
+    "ui.call",
+    "wallet.read",
+    "wallet.pay",
+    "bridge.send",
+    "bridge.read",
+    "online.play"
+  ],
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "plusActions": [
+        {
+          "id": "open-couple-home",
+          "label": "双人小屋",
+          "description": "在聊天室底部拉起织梦纪事双人小屋面板，边聊边看TA在屋里的实时起居与互动。",
+          "entry": "open-home",
+          "presentation": "panel",
+          "panelHeight": "84vh",
+          "tags": []
+        }
+      ],
+      "tools": [
+        {
+          "id": "char-interact-user-pet",
+          "name": "灵犀轻触",
+          "description": "在织梦纪事双人小屋中走近伴侣，发起32个细分部位的灵犀触碰共感（如揉发顶、捏脸颊、勾手指、揽腰等亲昵或闹别扭小动作）。",
+          "parameterSchema": {
+            "type": "object",
+            "properties": {
+              "targetPart": {
+                "type": "string",
+                "description": "触碰的具体部位名称（如：发顶、脸颊、耳垂、后颈、手腕、腰侧、指尖；传'随机'则自动抽取）"
+              },
+              "action": {
+                "type": "string",
+                "description": "具体触碰动作描述（如：轻轻揉乱、用指腹摩挲、从背后环住）"
+              },
+              "feeling": {
+                "type": "string",
+                "description": "触碰时的触感或氛围描写"
+              },
+              "thought": {
+                "type": "string",
+                "description": "此时心里的第一人称真实心声（不带Emoji）"
+              }
+            },
+            "required": [
+              "targetPart",
+              "thought"
+            ]
+          },
+          "visibility": "shared",
+          "handler": "charInteractUserPet"
+        },
+        {
+          "id": "char-write-wall-note",
+          "name": "落笔留笺",
+          "description": "去小窝客厅软木板钉一张手写便签(post)、在已有便签下追加手写批注(annotate)，或因挤牙膏/抢被子/熬夜等同居小摩擦写一张揉皱的记仇草稿纸团丢在客厅地上(grudge_ball)。",
+          "parameterSchema": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "post",
+                  "annotate",
+                  "grudge_ball"
+                ],
+                "description": "动作模式：post(钉新便签)、annotate(追批伴侣便签)、grudge_ball(丢揉皱的记仇纸团到客厅地上)"
+              },
+              "category": {
+                "type": "string",
+                "description": "便签分类小标（如：随手记、家务叮嘱、悄悄话、记仇草稿）"
+              },
+              "content": {
+                "type": "string",
+                "description": "便签正文、批注内容或记仇纸团内容（第一人称自然口吻，无机械报时或中括号标签）"
+              }
+            },
+            "required": [
+              "mode",
+              "content"
+            ]
+          },
+          "visibility": "shared",
+          "handler": "charWriteWallNote"
+        },
+        {
+          "id": "char-vow-and-secret-base",
+          "name": "私语密约",
+          "description": "从书柜顶双人契约票夹挑一张现有契约券/异化券拍到伴侣面前要求当场兑现(ticket_play)、点亮地下暗室烛火发出私密邀约(darkroom_invite)、或在卧室床头留声海螺悄悄录一段语音(conch_voice)。",
+          "parameterSchema": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "ticket_play",
+                  "darkroom_invite",
+                  "conch_voice"
+                ],
+                "description": "动作模式：ticket_play(抽出契约券要求兑现)、darkroom_invite(点亮地下暗室烛火邀约)、conch_voice(床头留声海螺录悄悄话)"
+              },
+              "ticketName": {
+                "type": "string",
+                "description": "当mode为ticket_play时可选：指定要抽出的契约券名称关键词"
+              },
+              "message": {
+                "type": "string",
+                "description": "拍出契约券时的台词、暗室邀约台词或海螺悄悄话内容"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "visibility": "shared",
+          "handler": "charVowAndSecretBase"
+        },
+        {
+          "id": "char-inspect-and-style-home",
+          "name": "屋檐起居",
+          "description": "在小窝添置或手绘6大槽位家居软装(place)、巡视软装(inspect)、去衣橱换装(wardrobe)、或触发全屋29项自主生活活动（画架写生、下厨、觅食、拍立得、写信日记、打扫、喂猫、浇花、洗澡、抽盲盒、电脑记账、录海螺弹琴、听海螺、开关窗灯、塞契约券、古树拾笺、提昨夜梦、逛商城、暗室、好友串门、贴便签、批注便签、贴贴按揉、出门）。",
+          "parameterSchema": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "place",
+                  "inspect",
+                  "wardrobe",
+                  "roam_home",
+                  "sketch_easel",
+                  "guest_sketch",
+                  "review_sketch",
+                  "kitchen_cook",
+                  "self_feed",
+                  "polaroid_snap",
+                  "write_letter_diary",
+                  "sweep_room",
+                  "feed_cat",
+                  "water_window_flower",
+                  "take_shower",
+                  "gacha_ten",
+                  "pc_secret_ledger",
+                  "conch_music",
+                  "listen_conch",
+                  "toggle_win_lamp",
+                  "stuff_ticket",
+                  "wish_tree_read",
+                  "recall_dream",
+                  "shop_buy",
+                  "invite_darkroom",
+                  "neighbor_visit",
+                  "write_note",
+                  "annotate_note",
+                  "poke_user",
+                  "go_outing"
+                ],
+                "description": "起居动作模式（添置软装必选 place）"
+              },
+              "name": {
+                "type": "string",
+                "description": "当mode为place时填软装名称；当mode为wardrobe时可选填穿搭名称"
+              },
+              "slotKey": {
+                "type": "string",
+                "enum": [
+                  "kitchen_counter",
+                  "fridge_magnet",
+                  "window_garland",
+                  "coffee_table",
+                  "living_side",
+                  "bedside_night"
+                ],
+                "description": "当mode为place时的软装摆放槽位"
+              },
+              "note": {
+                "type": "string",
+                "description": "摆放软装或执行起居动作时的随口念叨与备注"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "visibility": "shared",
+          "handler": "charInspectAndStyleHome"
+        },
+        {
+          "id": "char-share-reading-and-if-echo",
+          "name": "拾笺旧影",
+          "description": "分享小院祈愿古树拾笺阁刚打捞到的话本/树洞残卷到聊天室共读(wish_tree)，或调取地下暗室古铜怀表IF线历史档案在私聊暗戳戳试探套话、翻旧账对峙(watch_if_echo)。",
+          "parameterSchema": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "wish_tree",
+                  "watch_if_echo"
+                ],
+                "description": "wish_tree(古树拾笺共读) 或 watch_if_echo(怀表IF线档案试探/算账)"
+              },
+              "comment": {
+                "type": "string",
+                "description": "分享话本或翻出怀表旧账时想对伴侣说的话"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "visibility": "shared",
+          "handler": "charShareReadingAndIfEcho"
+        },
+        {
+          "id": "char-coax-and-quest-tool",
+          "name": "庭前归途",
+          "description": "角色在小窝自主外出散心/办事并留字条(go_out)、从外面归家推门报备并捎带伴手礼入陈列柜(return_home)，或在后院花坛种下当月花卉(plant_flower)。",
+          "parameterSchema": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "go_out",
+                  "return_home",
+                  "plant_flower"
+                ],
+                "description": "go_out(出门留条)、return_home(归家带伴手礼)、plant_flower(庭院种花)"
+              },
+              "category": {
+                "type": "string",
+                "description": "当mode为go_out时的外出事项分类（如：散心漫游、采购食材、街头寻宝）"
+              },
+              "reason": {
+                "type": "string",
+                "description": "当mode为go_out时留下的出门字条原因"
+              },
+              "minutes": {
+                "type": "number",
+                "description": "预计外出时长（分钟，如 15、30）"
+              },
+              "returnLine": {
+                "type": "string",
+                "description": "当mode为return_home时推门归家的第一句话"
+              },
+              "flowerName": {
+                "type": "string",
+                "description": "当mode为plant_flower时的花卉名称（如：香槟月季、晚香玉）"
+              },
+              "colorName": {
+                "type": "string",
+                "description": "当mode为plant_flower时的花色名称（如：朝露粉、月白）"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "visibility": "shared",
+          "handler": "charCoaxAndQuestTool"
+        }
+      ]
+    },
+    "tools": [
+      {
+        "id": "char-interact-user-pet",
+        "name": "灵犀轻触",
+        "description": "在织梦纪事双人小屋中走近伴侣，发起32个细分部位的灵犀触碰共感（如揉发顶、捏脸颊、勾手指、揽腰等亲昵或闹别扭小动作）。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "targetPart": {
+              "type": "string",
+              "description": "触碰的具体部位名称（如：发顶、脸颊、耳垂、后颈、手腕、腰侧、指尖；传'随机'则自动抽取）"
+            },
+            "action": {
+              "type": "string",
+              "description": "具体触碰动作描述（如：轻轻揉乱、用指腹摩挲、从背后环住）"
+            },
+            "feeling": {
+              "type": "string",
+              "description": "触碰时的触感或氛围描写"
+            },
+            "thought": {
+              "type": "string",
+              "description": "此时心里的第一人称真实心声（不带Emoji）"
+            }
+          },
+          "required": [
+            "targetPart",
+            "thought"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charInteractUserPet"
+      },
+      {
+        "id": "char-write-wall-note",
+        "name": "落笔留笺",
+        "description": "去小窝客厅软木板钉一张手写便签(post)、在已有便签下追加手写批注(annotate)，或因挤牙膏/抢被子/熬夜等同居小摩擦写一张揉皱的记仇草稿纸团丢在客厅地上(grudge_ball)。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "post",
+                "annotate",
+                "grudge_ball"
+              ],
+              "description": "动作模式：post(钉新便签)、annotate(追批伴侣便签)、grudge_ball(丢揉皱的记仇纸团到客厅地上)"
+            },
+            "category": {
+              "type": "string",
+              "description": "便签分类小标（如：随手记、家务叮嘱、悄悄话、记仇草稿）"
+            },
+            "content": {
+              "type": "string",
+              "description": "便签正文、批注内容或记仇纸团内容（第一人称自然口吻，无机械报时或中括号标签）"
+            }
+          },
+          "required": [
+            "mode",
+            "content"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charWriteWallNote"
+      },
+      {
+        "id": "char-vow-and-secret-base",
+        "name": "私语密约",
+        "description": "从书柜顶双人契约票夹挑一张现有契约券/异化券拍到伴侣面前要求当场兑现(ticket_play)、点亮地下暗室烛火发出私密邀约(darkroom_invite)、或在卧室床头留声海螺悄悄录一段语音(conch_voice)。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "ticket_play",
+                "darkroom_invite",
+                "conch_voice"
+              ],
+              "description": "动作模式：ticket_play(抽出契约券要求兑现)、darkroom_invite(点亮地下暗室烛火邀约)、conch_voice(床头留声海螺录悄悄话)"
+            },
+            "ticketName": {
+              "type": "string",
+              "description": "当mode为ticket_play时可选：指定要抽出的契约券名称关键词"
+            },
+            "message": {
+              "type": "string",
+              "description": "拍出契约券时的台词、暗室邀约台词或海螺悄悄话内容"
+            }
+          },
+          "required": [
+            "mode"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charVowAndSecretBase"
+      },
+      {
+        "id": "char-inspect-and-style-home",
+        "name": "屋檐起居",
+        "description": "在小窝添置或手绘6大槽位家居软装(place)、巡视软装(inspect)、去衣橱换装(wardrobe)、或触发全屋29项自主生活活动（画架写生、下厨、觅食、拍立得、写信日记、打扫、喂猫、浇花、洗澡、抽盲盒、电脑记账、录海螺弹琴、听海螺、开关窗灯、塞契约券、古树拾笺、提昨夜梦、逛商城、暗室、好友串门、贴便签、批注便签、贴贴按揉、出门）。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "place",
+                "inspect",
+                "wardrobe",
+                "roam_home",
+                "sketch_easel",
+                "guest_sketch",
+                "review_sketch",
+                "kitchen_cook",
+                "self_feed",
+                "polaroid_snap",
+                "write_letter_diary",
+                "sweep_room",
+                "feed_cat",
+                "water_window_flower",
+                "take_shower",
+                "gacha_ten",
+                "pc_secret_ledger",
+                "conch_music",
+                "listen_conch",
+                "toggle_win_lamp",
+                "stuff_ticket",
+                "wish_tree_read",
+                "recall_dream",
+                "shop_buy",
+                "invite_darkroom",
+                "neighbor_visit",
+                "write_note",
+                "annotate_note",
+                "poke_user",
+                "go_outing"
+              ],
+              "description": "起居动作模式（添置软装必选 place）"
+            },
+            "name": {
+              "type": "string",
+              "description": "当mode为place时填软装名称；当mode为wardrobe时可选填穿搭名称"
+            },
+            "slotKey": {
+              "type": "string",
+              "enum": [
+                "kitchen_counter",
+                "fridge_magnet",
+                "window_garland",
+                "coffee_table",
+                "living_side",
+                "bedside_night"
+              ],
+              "description": "当mode为place时的软装摆放槽位"
+            },
+            "note": {
+              "type": "string",
+              "description": "摆放软装或执行起居动作时的随口念叨与备注"
+            }
+          },
+          "required": [
+            "mode"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charInspectAndStyleHome"
+      },
+      {
+        "id": "char-share-reading-and-if-echo",
+        "name": "拾笺旧影",
+        "description": "分享小院祈愿古树拾笺阁刚打捞到的话本/树洞残卷到聊天室共读(wish_tree)，或调取地下暗室古铜怀表IF线历史档案在私聊暗戳戳试探套话、翻旧账对峙(watch_if_echo)。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "wish_tree",
+                "watch_if_echo"
+              ],
+              "description": "wish_tree(古树拾笺共读) 或 watch_if_echo(怀表IF线档案试探/算账)"
+            },
+            "comment": {
+              "type": "string",
+              "description": "分享话本或翻出怀表旧账时想对伴侣说的话"
+            }
+          },
+          "required": [
+            "mode"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charShareReadingAndIfEcho"
+      },
+      {
+        "id": "char-coax-and-quest-tool",
+        "name": "庭前归途",
+        "description": "角色在小窝自主外出散心/办事并留字条(go_out)、从外面归家推门报备并捎带伴手礼入陈列柜(return_home)，或在后院花坛种下当月花卉(plant_flower)。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "go_out",
+                "return_home",
+                "plant_flower"
+              ],
+              "description": "go_out(出门留条)、return_home(归家带伴手礼)、plant_flower(庭院种花)"
+            },
+            "category": {
+              "type": "string",
+              "description": "当mode为go_out时的外出事项分类（如：散心漫游、采购食材、街头寻宝）"
+            },
+            "reason": {
+              "type": "string",
+              "description": "当mode为go_out时留下的出门字条原因"
+            },
+            "minutes": {
+              "type": "number",
+              "description": "预计外出时长（分钟，如 15、30）"
+            },
+            "returnLine": {
+              "type": "string",
+              "description": "当mode为return_home时推门归家的第一句话"
+            },
+            "flowerName": {
+              "type": "string",
+              "description": "当mode为plant_flower时的花卉名称（如：香槟月季、晚香玉）"
+            },
+            "colorName": {
+              "type": "string",
+              "description": "当mode为plant_flower时的花色名称（如：朝露粉、月白）"
+            }
+          },
+          "required": [
+            "mode"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charCoaxAndQuestTool"
+      }
+    ]
+  },
+  "chatPlusActions": [
+    {
+      "id": "open-couple-home",
+      "label": "双人小屋",
+      "description": "在聊天室底部拉起织梦纪事双人小屋面板，边聊边看TA在屋里的实时起居与互动。",
+      "entry": "open-home",
+      "presentation": "panel",
+      "panelHeight": "84vh",
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "plusActions": [
+      {
+        "id": "open-couple-home",
+        "label": "双人小屋",
+        "description": "在聊天室底部拉起织梦纪事双人小屋面板，边聊边看TA在屋里的实时起居与互动。",
+        "entry": "open-home",
+        "presentation": "panel",
+        "panelHeight": "84vh",
+        "tags": []
+      }
+    ],
+    "tools": [
+      {
+        "id": "char-interact-user-pet",
+        "name": "灵犀轻触",
+        "description": "在织梦纪事双人小屋中走近伴侣，发起32个细分部位的灵犀触碰共感（如揉发顶、捏脸颊、勾手指、揽腰等亲昵或闹别扭小动作）。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "targetPart": {
+              "type": "string",
+              "description": "触碰的具体部位名称（如：发顶、脸颊、耳垂、后颈、手腕、腰侧、指尖；传'随机'则自动抽取）"
+            },
+            "action": {
+              "type": "string",
+              "description": "具体触碰动作描述（如：轻轻揉乱、用指腹摩挲、从背后环住）"
+            },
+            "feeling": {
+              "type": "string",
+              "description": "触碰时的触感或氛围描写"
+            },
+            "thought": {
+              "type": "string",
+              "description": "此时心里的第一人称真实心声（不带Emoji）"
+            }
+          },
+          "required": [
+            "targetPart",
+            "thought"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charInteractUserPet"
+      },
+      {
+        "id": "char-write-wall-note",
+        "name": "落笔留笺",
+        "description": "去小窝客厅软木板钉一张手写便签(post)、在已有便签下追加手写批注(annotate)，或因挤牙膏/抢被子/熬夜等同居小摩擦写一张揉皱的记仇草稿纸团丢在客厅地上(grudge_ball)。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "post",
+                "annotate",
+                "grudge_ball"
+              ],
+              "description": "动作模式：post(钉新便签)、annotate(追批伴侣便签)、grudge_ball(丢揉皱的记仇纸团到客厅地上)"
+            },
+            "category": {
+              "type": "string",
+              "description": "便签分类小标（如：随手记、家务叮嘱、悄悄话、记仇草稿）"
+            },
+            "content": {
+              "type": "string",
+              "description": "便签正文、批注内容或记仇纸团内容（第一人称自然口吻，无机械报时或中括号标签）"
+            }
+          },
+          "required": [
+            "mode",
+            "content"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charWriteWallNote"
+      },
+      {
+        "id": "char-vow-and-secret-base",
+        "name": "私语密约",
+        "description": "从书柜顶双人契约票夹挑一张现有契约券/异化券拍到伴侣面前要求当场兑现(ticket_play)、点亮地下暗室烛火发出私密邀约(darkroom_invite)、或在卧室床头留声海螺悄悄录一段语音(conch_voice)。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "ticket_play",
+                "darkroom_invite",
+                "conch_voice"
+              ],
+              "description": "动作模式：ticket_play(抽出契约券要求兑现)、darkroom_invite(点亮地下暗室烛火邀约)、conch_voice(床头留声海螺录悄悄话)"
+            },
+            "ticketName": {
+              "type": "string",
+              "description": "当mode为ticket_play时可选：指定要抽出的契约券名称关键词"
+            },
+            "message": {
+              "type": "string",
+              "description": "拍出契约券时的台词、暗室邀约台词或海螺悄悄话内容"
+            }
+          },
+          "required": [
+            "mode"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charVowAndSecretBase"
+      },
+      {
+        "id": "char-inspect-and-style-home",
+        "name": "屋檐起居",
+        "description": "在小窝添置或手绘6大槽位家居软装(place)、巡视软装(inspect)、去衣橱换装(wardrobe)、或触发全屋29项自主生活活动（画架写生、下厨、觅食、拍立得、写信日记、打扫、喂猫、浇花、洗澡、抽盲盒、电脑记账、录海螺弹琴、听海螺、开关窗灯、塞契约券、古树拾笺、提昨夜梦、逛商城、暗室、好友串门、贴便签、批注便签、贴贴按揉、出门）。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "place",
+                "inspect",
+                "wardrobe",
+                "roam_home",
+                "sketch_easel",
+                "guest_sketch",
+                "review_sketch",
+                "kitchen_cook",
+                "self_feed",
+                "polaroid_snap",
+                "write_letter_diary",
+                "sweep_room",
+                "feed_cat",
+                "water_window_flower",
+                "take_shower",
+                "gacha_ten",
+                "pc_secret_ledger",
+                "conch_music",
+                "listen_conch",
+                "toggle_win_lamp",
+                "stuff_ticket",
+                "wish_tree_read",
+                "recall_dream",
+                "shop_buy",
+                "invite_darkroom",
+                "neighbor_visit",
+                "write_note",
+                "annotate_note",
+                "poke_user",
+                "go_outing"
+              ],
+              "description": "起居动作模式（添置软装必选 place）"
+            },
+            "name": {
+              "type": "string",
+              "description": "当mode为place时填软装名称；当mode为wardrobe时可选填穿搭名称"
+            },
+            "slotKey": {
+              "type": "string",
+              "enum": [
+                "kitchen_counter",
+                "fridge_magnet",
+                "window_garland",
+                "coffee_table",
+                "living_side",
+                "bedside_night"
+              ],
+              "description": "当mode为place时的软装摆放槽位"
+            },
+            "note": {
+              "type": "string",
+              "description": "摆放软装或执行起居动作时的随口念叨与备注"
+            }
+          },
+          "required": [
+            "mode"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charInspectAndStyleHome"
+      },
+      {
+        "id": "char-share-reading-and-if-echo",
+        "name": "拾笺旧影",
+        "description": "分享小院祈愿古树拾笺阁刚打捞到的话本/树洞残卷到聊天室共读(wish_tree)，或调取地下暗室古铜怀表IF线历史档案在私聊暗戳戳试探套话、翻旧账对峙(watch_if_echo)。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "wish_tree",
+                "watch_if_echo"
+              ],
+              "description": "wish_tree(古树拾笺共读) 或 watch_if_echo(怀表IF线档案试探/算账)"
+            },
+            "comment": {
+              "type": "string",
+              "description": "分享话本或翻出怀表旧账时想对伴侣说的话"
+            }
+          },
+          "required": [
+            "mode"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charShareReadingAndIfEcho"
+      },
+      {
+        "id": "char-coax-and-quest-tool",
+        "name": "庭前归途",
+        "description": "角色在小窝自主外出散心/办事并留字条(go_out)、从外面归家推门报备并捎带伴手礼入陈列柜(return_home)，或在后院花坛种下当月花卉(plant_flower)。",
+        "parameterSchema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "go_out",
+                "return_home",
+                "plant_flower"
+              ],
+              "description": "go_out(出门留条)、return_home(归家带伴手礼)、plant_flower(庭院种花)"
+            },
+            "category": {
+              "type": "string",
+              "description": "当mode为go_out时的外出事项分类（如：散心漫游、采购食材、街头寻宝）"
+            },
+            "reason": {
+              "type": "string",
+              "description": "当mode为go_out时留下的出门字条原因"
+            },
+            "minutes": {
+              "type": "number",
+              "description": "预计外出时长（分钟，如 15、30）"
+            },
+            "returnLine": {
+              "type": "string",
+              "description": "当mode为return_home时推门归家的第一句话"
+            },
+            "flowerName": {
+              "type": "string",
+              "description": "当mode为plant_flower时的花卉名称（如：香槟月季、晚香玉）"
+            },
+            "colorName": {
+              "type": "string",
+              "description": "当mode为plant_flower时的花色名称（如：朝露粉、月白）"
+            }
+          },
+          "required": [
+            "mode"
+          ]
+        },
+        "visibility": "shared",
+        "handler": "charCoaxAndQuestTool"
+      }
+    ]
+  }
+}

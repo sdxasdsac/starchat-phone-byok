@@ -1,0 +1,68 @@
+{
+  "id": "potato.theater",
+  "name": "土豆放映室",
+  "version": "1.1.0",
+  "sdkVersion": "1.0",
+  "author": "小坊",
+  "description": "和角色一起看本地视频，边看边聊，看完还能把这场的观影记忆发到主聊天。",
+  "icon": "icon.png",
+  "entry": "index.html",
+  "permissions": [
+    "app.data.read",
+    "app.data.write",
+    "characters.read",
+    "user.profile.read",
+    "ai.generate",
+    "chat.sendCard",
+    "chat.write",
+    "ui.toast"
+  ],
+  "resources": {
+    "presets": [
+      "presets.json"
+    ],
+    "regexes": [],
+    "worldBooks": [],
+    "bindings": [],
+    "tools": [],
+    "voices": [],
+    "assets": []
+  },
+  "primaryTags": [],
+  "extensions": {
+    "chat": {
+      "plusActions": [
+        {
+          "id": "start-theater",
+          "label": "一起看视频",
+          "description": "打开土豆放映室，和当前角色一起看本地视频。",
+          "entry": "theater",
+          "presentation": "fullscreen",
+          "tags": []
+        }
+      ]
+    }
+  },
+  "chatPlusActions": [
+    {
+      "id": "start-theater",
+      "label": "一起看视频",
+      "description": "打开土豆放映室，和当前角色一起看本地视频。",
+      "entry": "theater",
+      "presentation": "fullscreen",
+      "tags": []
+    }
+  ],
+  "chatExtensions": {
+    "plusActions": [
+      {
+        "id": "start-theater",
+        "label": "一起看视频",
+        "description": "打开土豆放映室，和当前角色一起看本地视频。",
+        "entry": "theater",
+        "presentation": "fullscreen",
+        "tags": []
+      }
+    ]
+  }
+}
