@@ -117,8 +117,8 @@ export function PersonaApp({ onClose }: { onClose: () => void }) {
 
   return (
     <Screen
-      title="人设"
-      subtitle={`${personas.length} 个角色`}
+      title="角色库"
+      subtitle={`${personas.length} 个角色 · 自己创建或导入`}
       onBack={onClose}
       right={
         <button type="button" className="icon-btn-plain" onClick={startNew} aria-label="新建人设">
@@ -130,7 +130,7 @@ export function PersonaApp({ onClose }: { onClose: () => void }) {
 
       <div className="persona-actions">
         <button type="button" className="soft-btn" onClick={startNew}>
-          <Mdi path={ICONS.plus} size={16} /> 新建
+          <Mdi path={ICONS.plus} size={16} /> 新建角色
         </button>
         <button type="button" className="soft-btn" onClick={() => fileRef.current?.click()} disabled={importing}>
           {importing ? <Spinner size={16} /> : <Mdi path={ICONS.upload} size={16} />}

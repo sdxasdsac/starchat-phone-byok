@@ -107,7 +107,7 @@ export const ICONS: Record<IconId, IconMeta> = {
   theme: { id: 'theme', label: '主题', tone: 'var(--c-icon-violet)', placeholder: true },
   resources: { id: 'resources', label: '资源库', tone: 'var(--c-icon-teal)', placeholder: false },
   resource_hub: { id: 'resource_hub', label: '素材仓库', tone: 'var(--c-icon-amber)', placeholder: false },
-  characters: { id: 'characters', label: '人设', tone: 'var(--c-icon-lilac)', placeholder: false },
+  characters: { id: 'characters', label: '角色库', tone: 'var(--c-icon-lilac)', placeholder: false },
   worldbuilder: { id: 'worldbuilder', label: '筑境', tone: 'var(--c-icon-amber)', placeholder: false, path: '/world-builder' },
   qa: { id: 'qa', label: '工坊', tone: 'var(--c-icon-qa, #4a505c99)', placeholder: false },
   mixology: { id: 'mixology', label: '角色库', tone: 'var(--c-icon-violet)', placeholder: false },
