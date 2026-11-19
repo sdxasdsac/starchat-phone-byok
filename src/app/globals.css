@@ -2699,3 +2699,424 @@ select {
   border-radius: 14px;
   background: #0d1117;
 }
+
+/* ══════════════════════════════════════════════════════════
+   品牌图标（微信 / LINE）：整块底色 + 白色 logo，去掉玻璃底
+   ══════════════════════════════════════════════════════════ */
+.fp-root .icon-brand {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.fp-root .icon-brand > .icon-glyph {
+  width: 58%;
+  height: 58%;
+  display: block;
+}
+
+.fp-root .icon-glyph-box:has(.icon-brand) {
+  background: transparent;
+  box-shadow: 0 6px 16px rgba(6, 80, 40, 0.18);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.fp-root .icon-glyph-box:has(.icon-brand)::before,
+.fp-root .icon-glyph-box:has(.icon-brand)::after {
+  content: none;
+  display: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   微信聊天：对齐 uwu 仿微信定稿参数
+   ══════════════════════════════════════════════════════════ */
+.chat-room.wechat .chat-head-name {
+  font-size: 16.5px;
+  font-weight: 500;
+  color: #111;
+}
+
+.chat-room.wechat .chat-messages {
+  padding: 14px 12px 16px;
+  gap: 14px;
+}
+
+.chat-room.wechat .msg-row > .avatar {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px;
+  border-radius: 4px !important;
+}
+
+.chat-room.wechat .msg-main {
+  max-width: 68%;
+}
+
+.chat-room.wechat .bubble {
+  min-height: 40px;
+  box-sizing: border-box;
+  padding: 9px 13px;
+  border-radius: 4px;
+  font-size: 15px;
+  line-height: 1.42;
+}
+
+.chat-room.wechat .msg-row.assistant .bubble {
+  margin-left: 8px;
+  margin-right: 4px;
+}
+
+.chat-room.wechat .msg-row.user .bubble {
+  margin-left: 4px;
+  margin-right: 8px;
+}
+
+.chat-room.wechat .msg-row.assistant .bubble::before {
+  top: 14.5px;
+  left: -5px;
+  border-top-width: 5.5px;
+  border-bottom-width: 5.5px;
+  border-right: 6px solid #fff;
+}
+
+.chat-room.wechat .msg-row.user .bubble::after {
+  top: 14.5px;
+  right: -5px;
+  border-top-width: 5.5px;
+  border-bottom-width: 5.5px;
+  border-left: 6px solid #95ec69;
+}
+
+.chat-room.wechat .composer-input textarea {
+  min-height: 40px;
+  padding: 9px 12px;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.chat-room.wechat .send-btn {
+  width: auto;
+  min-width: 56px;
+  height: 36px;
+  border-radius: 4px;
+  padding: 0 12px;
+}
+
+.chat-room.wechat .send-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  line-height: 1;
+}
+
+/* 微信会话列表：白底行 + 0.5px 分隔，头像 4px 圆角 */
+.wechat-list-screen .app-body {
+  background: #fff;
+}
+
+.wechat-list-screen .conv-row {
+  background: #fff;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.07);
+}
+
+.wechat-list-screen .conv-row .avatar {
+  border-radius: 4px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   微信内页：底部四栏 / 通讯录 / 发现 / 我 / 拍一拍
+   ══════════════════════════════════════════════════════════ */
+.wechat-app {
+  background: #ededed;
+}
+
+.wechat-app .app-header {
+  background: #ededed;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: none;
+}
+
+.wechat-app .app-title-wrap h1 {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.wechat-tab-body {
+  padding: 0;
+  background: #ededed;
+}
+
+.wechat-app .wechat-search {
+  margin: 8px 12px;
+  padding: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: #fff;
+  color: #8a8a8a;
+  font-size: 14px;
+}
+
+.wechat-app .conv-list {
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.wechat-app .conv-row {
+  padding: 12px 16px;
+  gap: 12px;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.07);
+}
+
+.wechat-app .conv-row .avatar {
+  border-radius: 4px;
+}
+
+.wechat-app .conv-name {
+  font-size: 16px;
+  color: #111;
+}
+
+.wechat-app .conv-preview {
+  font-size: 13px;
+  color: #9a9a9a;
+}
+
+.wechat-tabbar {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: #f7f7f7;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.12);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.wechat-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 52px;
+  color: #7a7a7a;
+  font-size: 10px;
+}
+
+.wechat-tab.active {
+  color: #07c160;
+}
+
+.wx-cell-group {
+  background: #fff;
+  margin-bottom: 10px;
+}
+
+.wx-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0 16px;
+  height: 54px;
+  background: #fff;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.07);
+  text-align: left;
+}
+
+.wx-cell:last-child {
+  border-bottom: 0;
+}
+
+.wx-cell-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wx-cell-icon {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: #f0f0f0;
+  color: #4a4a4a;
+  flex: 0 0 auto;
+}
+
+.wx-cell-icon.wx-icon-green {
+  color: #07c160;
+}
+
+.wx-cell-badge {
+  font-size: 13px;
+  color: #999;
+}
+
+.wx-cell-center {
+  justify-content: center;
+  color: #576b95;
+  font-size: 15px;
+}
+
+.wx-me-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  padding: 22px 16px;
+  margin-bottom: 10px;
+}
+
+.wx-me-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+}
+
+.wx-me-id {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #8a8a8a;
+}
+
+/* 拍一拍 / 系统提示 */
+.msg-system {
+  align-self: center;
+  max-width: 82%;
+  margin: 2px auto;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.045);
+  color: #8a8a8a;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.msg-avatar-hit {
+  display: inline-flex;
+  border-radius: 4px;
+  flex: 0 0 auto;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── 豆瓣：电影 / 读书 本地记录 ── */
+.db-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.db-tab {
+  flex: 1;
+  height: 34px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #5c6b7a;
+}
+
+.db-tab.active {
+  background: #e8f6ee;
+  color: #1f8a4c;
+  font-weight: 600;
+}
+
+.db-compose {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(20, 40, 70, 0.05);
+}
+
+.db-stars {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.db-star {
+  font-size: 22px;
+  line-height: 1;
+  color: #d7dee8;
+}
+
+.db-star.on {
+  color: #2fbf6a;
+}
+
+.db-rating-text {
+  margin-left: 6px;
+  font-size: 12px;
+  color: #8b99a8;
+}
+
+.db-save {
+  align-self: flex-end;
+}
+
+.db-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.db-card {
+  padding: 12px;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.db-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.db-cover {
+  font-size: 22px;
+}
+
+.db-card-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.db-card-title strong {
+  font-size: 15px;
+}
+
+.db-card-stars {
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #2fbf6a;
+}
+
+.db-comment {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #5c6b7a;
+}

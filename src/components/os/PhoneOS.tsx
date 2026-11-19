@@ -19,6 +19,7 @@ import { DiaryApp } from './apps/DiaryApp';
 import { ReadingApp } from './apps/ReadingApp';
 import { AnniversaryApp } from './apps/AnniversaryApp';
 import { AlbumApp } from './apps/AlbumApp';
+import { DoubanApp } from './apps/DoubanApp';
 import { PhoneCalendarApp } from '@/components/phone/apps/calendar/PhoneCalendarApp';
 import { ICONS, Mdi, Screen } from './ui';
 
@@ -38,6 +39,7 @@ type AppId =
   | 'reading'
   | 'anniversary'
   | 'album'
+  | 'douban'
   | 'unknown';
 
 const ICON_TO_APP: Partial<Record<IconId, AppId>> = {
@@ -56,6 +58,7 @@ const ICON_TO_APP: Partial<Record<IconId, AppId>> = {
   reading: 'reading',
   anniversary: 'anniversary',
   album: 'album',
+  douban: 'douban',
 };
 
 export function PhoneOS() {
@@ -156,7 +159,12 @@ function PhoneShell() {
                 <ChatApp onClose={close} onOpenPersonas={() => setApp('personas')} />
               ) : null}
               {app === 'wechat' ? (
-                <WeChatApp onClose={close} onOpenPersonas={() => setApp('personas')} />
+                <WeChatApp
+                  onClose={close}
+                  onOpenPersonas={() => setApp('personas')}
+                  onOpenSettings={() => setApp('settings')}
+                  onOpenTheme={() => setApp('theme')}
+                />
               ) : null}
               {app === 'line' ? (
                 <LineApp onClose={close} onOpenPersonas={() => setApp('personas')} />
@@ -172,6 +180,7 @@ function PhoneShell() {
               {app === 'reading' ? <ReadingApp onClose={close} /> : null}
               {app === 'anniversary' ? <AnniversaryApp onClose={close} /> : null}
               {app === 'album' ? <AlbumApp onClose={close} /> : null}
+              {app === 'douban' ? <DoubanApp onClose={close} /> : null}
               {app === 'calendar' ? (
                 <PhoneCalendarApp
                   onClose={close}

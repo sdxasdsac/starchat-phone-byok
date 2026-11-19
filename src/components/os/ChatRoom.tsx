@@ -341,6 +341,21 @@ export function ChatRoom({
     });
   }, [appendMessage, channel, clearConversation, persona, stopAudio]);
 
+  const pat = useCallback(
+    (target: 'me' | 'them') => {
+      const meName = settings.user.name || '我';
+      const text =
+        target === 'them' ? `${meName} 拍了拍 ${persona.name}` : `${persona.name} 拍了拍 ${meName}`;
+      appendMessage(channel, persona.id, {
+        id: uid('m_'),
+        role: 'system',
+        text,
+        createdAt: Date.now(),
+      });
+    },
+    [appendMessage, channel, persona.id, persona.name, settings.user.name],
+  );
+
   return (
     <section className={`chat-room ${variant}`}>
       <header className="chat-head">
@@ -365,11 +380,32 @@ export function ChatRoom({
 
       <div className="chat-messages" ref={scrollRef}>
         {messages.map((message) => {
+          if (message.role === 'system') {
+            return (
+              <div key={message.id} className="msg-system">
+                {message.text}
+              </div>
+            );
+          }
           const html = message.role === 'assistant' ? splitHtmlBlocks(message.text) : null;
           const shownText = html ? html.plain : message.text;
           return (
             <div key={message.id} className={`msg-row ${message.role}${message.error ? ' failed' : ''}`}>
-              {message.role === 'assistant' && <Avatar persona={persona} size={30} />}
+              {variant === 'wechat' ? (
+                <span
+                  className="msg-avatar-hit"
+                  onDoubleClick={() => pat(message.role === 'assistant' ? 'them' : 'me')}
+                  title="双击拍一拍"
+                >
+                  <Avatar
+                    name={message.role === 'assistant' ? persona.name : settings.user.name || '我'}
+                    avatar={message.role === 'assistant' ? persona.avatar : settings.user.avatar}
+                    size={40}
+                  />
+                </span>
+              ) : message.role === 'assistant' ? (
+                <Avatar persona={persona} size={30} />
+              ) : null}
               <div className="msg-main">
                 <div className="bubble">
                   {shownText ? <p>{renderWithStickers(shownText)}</p> : null}
@@ -514,7 +550,7 @@ export function ChatRoom({
             onClick={() => void send()}
             aria-label="发送"
           >
-            <Mdi path={ICONS.send} size={18} />
+            {variant === 'wechat' ? <span className="send-text">发送</span> : <Mdi path={ICONS.send} size={18} />}
           </button>
         </div>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => void onPickImage(e)} />
