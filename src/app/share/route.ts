@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-static';
+export const dynamic = 'force-dynamic';
 
 /** 分享页：/share/ 直接输出 public/share.html（同一份内容，便于对外发链接） */
 export async function GET() {
