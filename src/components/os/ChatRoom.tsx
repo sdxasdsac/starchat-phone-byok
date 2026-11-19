@@ -97,6 +97,7 @@ export function ChatRoom({
   const [listening, setListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [stickerOpen, setStickerOpen] = useState(false);
+  const [packIndex, setPackIndex] = useState(0);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
@@ -472,14 +473,23 @@ export function ChatRoom({
       <div className="chat-composer">
         {stickerOpen ? (
           <div className="sticker-panel">
-            <div className="sticker-panel-head">
-              <span>{STICKER_PACKS[0]?.label}</span>
-              <button type="button" onClick={() => setStickerOpen(false)}>
+            <div className="sticker-pack-tabs">
+              {STICKER_PACKS.map((pack, index) => (
+                <button
+                  key={pack.label}
+                  type="button"
+                  className={`sticker-pack-tab${index === packIndex ? ' on' : ''}`}
+                  onClick={() => setPackIndex(index)}
+                >
+                  {pack.label}
+                </button>
+              ))}
+              <button type="button" className="sticker-pack-close" onClick={() => setStickerOpen(false)}>
                 收起
               </button>
             </div>
             <div className="sticker-grid">
-              {(STICKER_PACKS[0]?.items ?? []).map((item) => (
+              {(STICKER_PACKS[packIndex]?.items ?? []).map((item) => (
                 <button
                   type="button"
                   key={item.name}
