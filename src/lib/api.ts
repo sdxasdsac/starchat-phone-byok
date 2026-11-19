@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   chatCompletionsUrl,
@@ -9,6 +9,13 @@ import {
 import type { ImageConfig, Settings, SttConfig, TextConfig, TtsConfig } from './types';
 
 export type ApiMessage = { role: 'system' | 'user' | 'assistant'; content: string };
+
+/** 子路径部署（NEXT_PUBLIC_BASE_PATH=/phone）时，内部 API 也要带上前缀 */
+const BASE_PATH = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\/+$/, '');
+
+function apiPath(path: string): string {
+  return `${BASE_PATH}${path}`;
+}
 
 type StreamHandler = (delta: string, full: string) => void;
 
@@ -141,7 +148,7 @@ export async function chatComplete(
       signal,
     });
   } else {
-    res = await fetch('/api/llm', {
+    res = await fetch(apiPath('/api/llm'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ config: cfg, ...body }),
@@ -180,7 +187,7 @@ export async function generateImage(
       body: JSON.stringify({ ...body, response_format: 'b64_json' }),
     });
   } else {
-    res = await fetch('/api/image', {
+    res = await fetch(apiPath('/api/image'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ config: cfg, ...body }),
@@ -206,7 +213,7 @@ export async function synthesizeSpeech(settings: Settings, text: string): Promis
   if (cfg.provider === 'browser') {
     throw new Error('BROWSER_TTS');
   }
-  const res = await fetch('/api/tts', {
+  const res = await fetch(apiPath('/api/tts'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ config: cfg, text }),
@@ -236,7 +243,7 @@ export async function transcribe(
       body: form,
     });
   } else {
-    res = await fetch('/api/stt', {
+    res = await fetch(apiPath('/api/stt'), {
       method: 'POST',
       headers: {
         'x-stt-base-url': cfg.baseUrl,

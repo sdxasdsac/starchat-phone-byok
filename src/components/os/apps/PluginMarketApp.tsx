@@ -7,6 +7,7 @@ import { mdiMagnify } from '@mdi/js';
 import { usePhone } from '../PhoneContext';
 import { EmptyState, Mdi, Screen, Spinner } from '../ui';
 import { PhonePluginApp, type PluginMeta } from './PhonePluginApp';
+import { assetPath } from '@/lib/base-path';
 
 export function PluginMarketApp({ onClose }: { onClose: () => void }) {
   const { activePersona, settings } = usePhone();
@@ -15,9 +16,19 @@ export function PluginMarketApp({ onClose }: { onClose: () => void }) {
   const [active, setActive] = useState<PluginMeta | null>(null);
 
   useEffect(() => {
-    fetch('/phone-apps/index.json', { cache: 'no-store' })
+    fetch(assetPath('/phone-apps/index.json'), { cache: 'no-store' })
       .then((res) => res.json())
-      .then((data: unknown) => setPlugins(Array.isArray(data) ? (data as PluginMeta[]) : []))
+      .then((data: unknown) =>
+        setPlugins(
+          Array.isArray(data)
+            ? (data as PluginMeta[]).map((item) => ({
+                ...item,
+                entry: assetPath(item.entry),
+                icon: assetPath(item.icon),
+              }))
+            : [],
+        ),
+      )
       .catch(() => setPlugins([]));
   }, []);
 

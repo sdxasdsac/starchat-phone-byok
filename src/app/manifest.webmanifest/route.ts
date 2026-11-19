@@ -1,13 +1,15 @@
 const appName = process.env.NEXT_PUBLIC_APP_NAME || '小手机';
+const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\/+$/, '');
+const p = (path: string) => `${basePath}${path}`;
 
 export function GET() {
   const manifest = {
-    id: '/',
+    id: p('/'),
     name: `${appName} · BYOK AI 小手机`,
     short_name: appName,
     description: '自带 API Key 的 AI 小手机：聊天、语音、生图、人设、朋友圈。',
-    start_url: '/',
-    scope: '/',
+    start_url: p('/'),
+    scope: p('/'),
     display: 'standalone',
     display_override: ['standalone', 'minimal-ui'],
     orientation: 'portrait',
@@ -17,28 +19,28 @@ export function GET() {
     categories: ['social', 'entertainment', 'lifestyle'],
     icons: [
       {
-        src: '/icons/icon-192.png',
+        src: p('/icons/icon-192.png'),
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/icons/icon-512.png',
+        src: p('/icons/icon-512.png'),
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/icons/icon-maskable-512.png',
+        src: p('/icons/icon-maskable-512.png'),
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable',
       },
     ],
     shortcuts: [
-      { name: '聊天', url: '/?app=chat' },
-      { name: '微信', url: '/?app=wechat' },
-      { name: '朋友圈', url: '/?app=moments' },
+      { name: '聊天', url: p('/?app=chat') },
+      { name: '微信', url: p('/?app=wechat') },
+      { name: '朋友圈', url: p('/?app=moments') },
     ],
   };
 

@@ -10,6 +10,7 @@ import {
   type IconId,
 } from '@/components/phone/float-phone-icons';
 import { GRID_COLS, GRID_ROWS } from '@/components/phone/float-phone-grid';
+import { assetPath } from '@/lib/base-path';
 import {
   loadDesktopFolders,
   loadDockLayout,
@@ -162,8 +163,9 @@ function normalizePluginIcon(folder: string, icon?: string): string {
   const raw = (icon || '').trim();
   if (!raw) return '';
   // 清单里可能是相对文件名（如 icon.png），补全成插件包内路径
-  if (/^(https?:|data:|blob:|\/)/i.test(raw)) return raw;
-  return `/phone-apps/${folder}/${raw}`;
+  if (/^(https?:|data:|blob:)/i.test(raw)) return raw;
+  if (raw.startsWith('/')) return assetPath(raw);
+  return assetPath(`/phone-apps/${folder}/${raw}`);
 }
 
 /** 插件应用装到桌面：和普通应用共用同一份布局 */

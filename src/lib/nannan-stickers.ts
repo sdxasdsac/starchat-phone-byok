@@ -1,5 +1,6 @@
 // 南南の小猫表情包（76 张，2026-11-09）：图片已压缩到 public/stickers/nannan-cat。
 // 名字就是图上写的那句，聊天里用 [表情:名字] 发送。
+import { assetPath } from './base-path';
 
 export interface StickerItem {
   name: string;
@@ -186,6 +187,11 @@ export const STICKER_PACKS: StickerPack[] = [
     ],
   },
 ];
+
+/** 子路径部署（/phone）时给所有表情图补上部署前缀 */
+for (const pack of STICKER_PACKS) {
+  pack.items = pack.items.map((item) => ({ ...item, url: assetPath(item.url) }));
+}
 
 /** 名称 → 图片地址 */
 export const STICKER_INDEX: Record<string, string> = Object.fromEntries(

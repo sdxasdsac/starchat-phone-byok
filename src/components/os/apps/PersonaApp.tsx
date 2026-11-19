@@ -8,6 +8,7 @@ import { compressImage, dataUrlToBlob } from '@/lib/image-utils';
 import { VOICE_PRESETS } from '@/lib/defaults';
 import { BUILTIN_WORLDBOOKS } from '@/lib/builtin-worldbooks';
 import { uid } from '@/lib/store';
+import { assetPath } from '@/lib/base-path';
 import { localUid, readLocal, writeLocal } from '@/lib/local-data';
 import { Avatar, ErrorNote, Field, ICONS, Mdi, Screen, Spinner } from '../ui';
 
@@ -225,7 +226,7 @@ function PersonaEditor({
     let alive = true;
     Promise.all(
       ['/worldbooks/worldbooks.json', '/worldbooks/worldbooks-lianzong.json'].map((url) =>
-        fetch(url)
+        fetch(assetPath(url))
           .then((res) => (res.ok ? res.json() : []))
           .catch(() => []),
       ),

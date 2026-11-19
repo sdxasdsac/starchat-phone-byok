@@ -103,9 +103,34 @@ git push -u origin main
 | --- | --- |
 | `NEXT_PUBLIC_APP_NAME` | 桌面图标下显示的名字，默认「小手机」 |
 | `NEXT_PUBLIC_API_MODE` | `proxy`（默认）或 `direct`；用户在设置里还能再改 |
+| `NEXT_PUBLIC_BASE_PATH` | 部署在子路径时填写，例如 `/phone`；Vercel 根目录留空 |
 
 `proxy`：请求走当前这个 Vercel 项目的 Serverless Function，用来绕过第三方 API 的 CORS；Key 只在单次请求里透传，不写日志、不落盘。
 `direct`：浏览器直接请求第三方 API，完全不经过服务器，但部分中转站会被 CORS 拦。
+
+---
+
+## 自建服务器 / 子路径部署（国内网络推荐）
+
+Vercel 控制台（vercel.com）与 `*.vercel.app` 在部分国内网络会被 Cloudflare 403 拦截。
+如果打不开，可以直接部署到自己的服务器，用子路径 `https://你的域名/phone/`：
+
+```bash
+# 1. 本地构建（/phone 为子路径，按需修改）
+NEXT_PUBLIC_BASE_PATH=/phone npm run build
+
+# 2. 上传 .next / public / package*.json / next.config.mjs 到服务器
+# 3. 服务器上安装依赖并启动（不占 3000 端口，避免和主站冲突）
+npm ci --omit=dev
+NEXT_PUBLIC_BASE_PATH=/phone PORT=3001 pm2 start node_modules/next/dist/bin/next --name phone -- start -p 3001
+pm2 save
+
+# 4. Nginx 反向代理（放在主站 location / 之前）
+# location ^~ /phone/ { proxy_pass http://127.0.0.1:3001; ... }
+```
+
+`basePath` 会自动处理页面、`/_next` 静态资源、PWA manifest / Service Worker 的路径，
+`public` 下的表情包、主题包、应用市场插件也会自动带上前缀。
 
 ---
 

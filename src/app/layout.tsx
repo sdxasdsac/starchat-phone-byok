@@ -7,18 +7,19 @@ import './globals.css';
 import { PwaRegister } from '@/components/os/PwaRegister';
 
 const appName = process.env.NEXT_PUBLIC_APP_NAME || '小手机';
+const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\/+$/, '');
 
 export const metadata: Metadata = {
   title: `${appName} · BYOK`,
   description: '自带 API Key 的 AI 小手机：聊天、语音、生图、人设、朋友圈、小红薯。Vercel 一键部署 + PWA。',
   applicationName: appName,
-  manifest: '/manifest.webmanifest',
+  manifest: `${basePath}/manifest.webmanifest`,
   icons: {
     icon: [
-      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      { url: `${basePath}/icons/icon-192.png`, sizes: '192x192', type: 'image/png' },
+      { url: `${basePath}/icons/icon-512.png`, sizes: '512x512', type: 'image/png' },
     ],
-    apple: [{ url: '/icons/icon-180.png', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: `${basePath}/icons/icon-180.png`, sizes: '180x180', type: 'image/png' }],
   },
   appleWebApp: {
     capable: true,

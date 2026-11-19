@@ -1,9 +1,10 @@
-/**
+﻿/**
  * 主题包（美化库）：一个包 = 一张桌面壁纸 + 若干图标皮肤。
  * 数据来自 public/phone-assets/theme-packs/index.json（由美化库 zip 解包生成），
  * 应用后写入 localStorage，桌面 / Dock / 素材仓库共用同一份。
  */
 import { WALLPAPER_EVENT, WALLPAPER_KEY } from '@/lib/phone-theme';
+import { assetPath } from '@/lib/base-path';
 
 export interface ThemePack {
   slug: string;
@@ -34,7 +35,7 @@ export const DEFAULT_THEME_PACK: ThemePack = {
   name: '黑白熊',
   desc: '全局美化 · 黑白灰玻璃',
   icons: 0,
-  wallpaper: '/phone-assets/theme-packs/bear/01.jpg',
+  wallpaper: assetPath('/phone-assets/theme-packs/bear/01.jpg'),
   skins: {},
   cssVars: {
     '--desktop-global-shadow': '1',
@@ -72,11 +73,16 @@ export function readActiveThemePack(): ThemePack | null {
       name: row.name,
       desc: row.desc,
       icons: row.icons,
-      wallpaper: typeof row.wallpaper === 'string' ? row.wallpaper : null,
-      skins: row.skins && typeof row.skins === 'object' ? (row.skins as Record<string, string>) : {},
+      wallpaper: typeof row.wallpaper === 'string' ? assetPath(row.wallpaper) : null,
+      skins:
+        row.skins && typeof row.skins === 'object'
+          ? Object.fromEntries(
+              Object.entries(row.skins as Record<string, string>).map(([key, url]) => [key, assetPath(url)]),
+            )
+          : {},
       cssVars: row.cssVars && typeof row.cssVars === 'object' ? (row.cssVars as Record<string, string>) : {},
       customCss: typeof row.customCss === 'string' ? row.customCss : '',
-      fontUrl: typeof row.fontUrl === 'string' ? row.fontUrl : null,
+      fontUrl: typeof row.fontUrl === 'string' ? assetPath(row.fontUrl) : null,
       wallpaperScale: typeof row.wallpaperScale === 'number' ? row.wallpaperScale : 100,
     };
   } catch {
@@ -204,7 +210,7 @@ export function getThemePackSkin(iconId: string): string | null {
 /** 读取美化库里的全部主题包（index.json） */
 export async function loadThemePacks(): Promise<ThemePack[]> {
   try {
-    const res = await fetch('/phone-assets/theme-packs/index.json', { cache: 'force-cache' });
+    const res = await fetch(assetPath('/phone-assets/theme-packs/index.json'), { cache: 'force-cache' });
     const data: unknown = await res.json();
     if (!Array.isArray(data)) return [];
     return data
@@ -215,12 +221,17 @@ export async function loadThemePacks(): Promise<ThemePack[]> {
         name: String(row.name),
         desc: typeof row.desc === 'string' ? row.desc : '',
         icons: typeof row.icons === 'number' ? row.icons : 0,
-        wallpaper: typeof row.wallpaper === 'string' ? row.wallpaper : null,
-        skins: row.skins && typeof row.skins === 'object' ? (row.skins as Record<string, string>) : {},
+        wallpaper: typeof row.wallpaper === 'string' ? assetPath(row.wallpaper) : null,
+        skins:
+          row.skins && typeof row.skins === 'object'
+            ? Object.fromEntries(
+                Object.entries(row.skins as Record<string, string>).map(([key, url]) => [key, assetPath(url)]),
+              )
+            : {},
         // 配色 / 自定义 CSS / 字体 / 壁纸缩放：应用主题包时必须一起带上，否则主题只生效一半
         cssVars: row.cssVars && typeof row.cssVars === 'object' ? (row.cssVars as Record<string, string>) : {},
         customCss: typeof row.customCss === 'string' ? row.customCss : '',
-        fontUrl: typeof row.fontUrl === 'string' ? row.fontUrl : null,
+        fontUrl: typeof row.fontUrl === 'string' ? assetPath(row.fontUrl) : null,
         wallpaperScale: typeof row.wallpaperScale === 'number' ? row.wallpaperScale : 100,
       }));
   } catch {

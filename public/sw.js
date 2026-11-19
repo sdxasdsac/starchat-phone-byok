@@ -1,12 +1,14 @@
 /* 小手机 BYOK Service Worker：静态资源缓存优先，页面网络优先，API 不缓存 */
-const CACHE = 'sp-byok-v2';
+const CACHE = 'sp-byok-v3';
+// 支持子路径部署：/phone/sw.js → BASE=/phone/
+const BASE = new URL('./', self.location).pathname;
 const PRECACHE = [
-  '/',
-  '/manifest.webmanifest',
-  '/icons/icon-180.png',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/icons/icon-maskable-512.png',
+  BASE,
+  `${BASE}manifest.webmanifest`,
+  `${BASE}icons/icon-180.png`,
+  `${BASE}icons/icon-192.png`,
+  `${BASE}icons/icon-512.png`,
+  `${BASE}icons/icon-maskable-512.png`,
 ];
 const NAV_TIMEOUT = 4000;
 
@@ -46,7 +48,7 @@ function networkFirst(request) {
     const timer = setTimeout(() => {
       if (settled) return;
       settled = true;
-      caches.match(request).then((hit) => resolve(hit || caches.match('/')));
+      caches.match(request).then((hit) => resolve(hit || caches.match(BASE)));
     }, NAV_TIMEOUT);
 
     fetch(request)
@@ -62,7 +64,7 @@ function networkFirst(request) {
         if (settled) return;
         settled = true;
         clearTimeout(timer);
-        caches.match(request).then((hit) => resolve(hit || caches.match('/')));
+        caches.match(request).then((hit) => resolve(hit || caches.match(BASE)));
       });
   });
 }
@@ -73,7 +75,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api/')) return;
+  if (!url.pathname.startsWith(BASE)) return;
+  if (url.pathname.startsWith(`${BASE}api/`)) return;
 
   // 页面导航：网络优先，离线/超时回退缓存
   if (request.mode === 'navigate') {

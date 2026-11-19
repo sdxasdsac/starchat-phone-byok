@@ -2,12 +2,14 @@
 
 import { useEffect } from 'react';
 
+const BASE_PATH = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/\/+$/, '');
+
 /** 注册 Service Worker，并捕获 beforeinstallprompt 供「主题」页调用 */
 export function PwaRegister() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
-        .register('/sw.js', { updateViaCache: 'none' })
+        .register(`${BASE_PATH}/sw.js`, { updateViaCache: 'none' })
         .then((reg) => {
           // 部署新版本后自动检查更新，下次打开就是新壳
           reg.update().catch(() => undefined);
