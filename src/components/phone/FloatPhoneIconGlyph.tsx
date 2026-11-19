@@ -54,6 +54,7 @@ type IconGlyphProps = {
 const MDI_PATHS: Record<IconId, string> = {
   wechat: mdiWechat,
   qq: mdiQqchat,
+  qqapp: mdiQqchat,
   settings: mdiCogOutline,
   chat: mdiMessageProcessing,
   diary: mdiBookOpenPageVariant,
@@ -112,6 +113,8 @@ const MDI_PATHS: Record<IconId, string> = {
 const WECHAT_BG = 'linear-gradient(160deg,#41d97b 0%,#07c160 52%,#04a851 100%)';
 /** LINE 官方绿色图标：绿色底 + 白色气泡 + 绿色 LINE 字样 */
 const LINE_BG = 'linear-gradient(160deg,#3ad97f 0%,#06c755 55%,#04a948 100%)';
+/** QQ 官方蓝色图标 */
+const QQ_BG = 'linear-gradient(160deg,#4db2ff 0%,#2a8ce8 55%,#1667c4 100%)';
 
 function LineBrandGlyph({ className }: { className?: string }) {
   return (
@@ -137,6 +140,15 @@ function LineBrandGlyph({ className }: { className?: string }) {
 }
 
 export function IconGlyph({ id, className }: IconGlyphProps) {
+  if (id === 'qqapp') {
+    return (
+      <span className="icon-brand icon-brand-qq" style={{ background: QQ_BG }}>
+        <svg viewBox="0 0 24 24" className={className} aria-hidden>
+          <path d={mdiQqchat} fill="#ffffff" />
+        </svg>
+      </span>
+    );
+  }
   if (id === 'wechat' || id === 'qq') {
     return (
       <span className={`icon-brand${id === 'qq' ? ' icon-brand-line' : ''}`} style={{ background: id === 'qq' ? LINE_BG : WECHAT_BG }}>

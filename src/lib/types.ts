@@ -22,6 +22,19 @@ export interface Persona {
 
 export type MessageRole = 'user' | 'assistant' | 'system';
 
+/** 消息类型：普通文本 / 语音条 / 红包 / 转账 / 礼物 / 位置 / 通话记录 */
+export type MessageKind = 'text' | 'voice' | 'redpacket' | 'transfer' | 'gift' | 'location' | 'call';
+
+export interface MessagePayload {
+  amount?: string;
+  note?: string;
+  name?: string;
+  address?: string;
+  media?: 'voice' | 'video';
+  seconds?: number;
+  missed?: boolean;
+}
+
 export interface ChatMessage {
   id: Id;
   role: MessageRole;
@@ -30,11 +43,29 @@ export interface ChatMessage {
   imageId?: string;
   /** 远程图片地址（生图接口直接返回 url 时使用） */
   imageUrl?: string;
+  kind?: MessageKind;
+  /** 语音条音频存在 IndexedDB */
+  audioId?: string;
+  audioDuration?: number;
+  payload?: MessagePayload;
+  /** 群聊里区分说话人 */
+  senderId?: Id;
+  senderName?: string;
+  senderAvatar?: string;
   createdAt: number;
   error?: boolean;
 }
 
-export type Channel = 'chat' | 'wechat' | 'line';
+export type Channel = 'chat' | 'wechat' | 'line' | 'qq' | 'group';
+
+/** 群聊 */
+export interface Group {
+  id: Id;
+  name: string;
+  avatar?: string;
+  memberIds: Id[];
+  createdAt: number;
+}
 
 export interface Conversation {
   id: Id;

@@ -22,6 +22,7 @@ import { AnniversaryApp } from './apps/AnniversaryApp';
 import { AlbumApp } from './apps/AlbumApp';
 import { DoubanApp } from './apps/DoubanApp';
 import { AiAssistantApp } from './apps/AiAssistantApp';
+import { GroupApp, QqApp } from './apps/QqApp';
 import { PhoneCalendarApp } from '@/components/phone/apps/calendar/PhoneCalendarApp';
 import { ICONS, Mdi, Screen } from './ui';
 
@@ -29,6 +30,8 @@ type AppId =
   | 'chat'
   | 'wechat'
   | 'line'
+  | 'qqapp'
+  | 'group'
   | 'moments'
   | 'xhs'
   | 'personas'
@@ -49,6 +52,8 @@ const ICON_TO_APP: Partial<Record<IconId, AppId>> = {
   chat: 'chat',
   wechat: 'wechat',
   qq: 'line',
+  qqapp: 'qqapp',
+  group_chat: 'group',
   moments: 'moments',
   xiaohongshu: 'xhs',
   characters: 'personas',
@@ -187,6 +192,12 @@ function PhoneShell() {
               ) : null}
               {app === 'line' ? (
                 <LineApp onClose={close} onOpenPersonas={() => setApp('personas')} />
+              ) : null}
+              {app === 'qqapp' ? (
+                <QqApp onClose={close} onOpenPersonas={() => setApp('personas')} />
+              ) : null}
+              {app === 'group' ? (
+                <GroupApp onClose={close} onOpenPersonas={() => setApp('personas')} />
               ) : null}
               {app === 'moments' ? <MomentsApp onClose={close} /> : null}
               {app === 'xhs' ? <XhsApp onClose={close} /> : null}

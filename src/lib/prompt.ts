@@ -1,5 +1,6 @@
 import type { ChatMessage, Channel, Persona, Settings } from './types';
 import { MUFY_PRESET_SYSTEM } from './builtin-preset';
+import { CHAT_CARD_GUIDE } from './chat-cards';
 import { stickerNames } from './nannan-stickers';
 import { buildWechatPreset } from './wechat-preset';
 
@@ -32,6 +33,7 @@ export function buildSystemPrompt(persona: Persona, settings: Settings): string 
       '4. 保持角色一致，记得之前聊过的内容。',
       '5. 只输出角色要发给用户的消息本身，不要加“角色：”前缀。',
       `6. 你可以发真实表情包：单独一行写 [表情:名称]，名称只能从这些里原样选：${stickerNames().join('、')}。一条回复最多发一个，跟在你刚才那句话后面。`,
+      `7. ${CHAT_CARD_GUIDE}`,
     ].join('\n'),
   ];
 

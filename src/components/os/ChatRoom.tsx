@@ -7,11 +7,13 @@ import {
   useState,
   type ChangeEvent,
 } from 'react';
-import { mdiStickerEmoji } from '@mdi/js';
-import type { Channel, ChatMessage, Persona } from '@/lib/types';
+import { mdiStickerEmoji, mdiPhone, mdiVideo, mdiGiftOutline, mdiMicrophone, mdiPlusCircleOutline } from '@mdi/js';
+import type { Channel, ChatMessage, MessageKind, MessagePayload, Persona } from '@/lib/types';
 import { usePhone } from './PhoneContext';
 import { chatComplete, generateImage, synthesizeSpeech, transcribe, browserSpeak } from '@/lib/api';
 import { greetingFor, proactivePrompt, toApiMessages } from '@/lib/prompt';
+import { parseChatSegments } from '@/lib/chat-cards';
+import { CallOverlay, CardBubble, VoiceBubble, timeText } from './chat-extras';
 import { saveMedia, readMedia } from '@/lib/media-db';
 import { fileToDataUrl } from '@/lib/image-utils';
 import { extractTranscript, getRecognitionCtor, stripForSpeech, type SpeechRecognitionLike } from '@/lib/speech';
@@ -71,7 +73,16 @@ function renderWithStickers(text: string) {
   });
 }
 
-type Variant = 'chat' | 'wechat' | 'line';
+type Variant = 'chat' | 'wechat' | 'line' | 'qq';
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error ?? new Error('音频读取失败'));
+    reader.readAsDataURL(blob);
+  });
+}
 
 export function ChatRoom({
   persona,
@@ -98,13 +109,24 @@ export function ChatRoom({
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [stickerOpen, setStickerOpen] = useState(false);
   const [packIndex, setPackIndex] = useState(0);
+  const [recording, setRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [cardSheet, setCardSheet] = useState<MessageKind | null>(null);
+  const [cardAmount, setCardAmount] = useState('');
+  const [cardNote, setCardNote] = useState('');
+  const [call, setCall] = useState<{ media: 'voice' | 'video'; incoming: boolean } | null>(null);
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const voiceRecorderRef = useRef<MediaRecorder | null>(null);
+  const voiceChunksRef = useRef<Blob[]>([]);
+  const voiceStartedAtRef = useRef(0);
   const recRef = useRef<SpeechRecognitionLike | null>(null);
   const seededRef = useRef(false);
+  const callRef = useRef<{ media: 'voice' | 'video'; incoming: boolean } | null>(null);
+  callRef.current = call;
 
   // 第一次进入：放一句开场白，让对话不是空白
   useEffect(() => {
@@ -162,6 +184,26 @@ export function ChatRoom({
     })();
   }, [ready, settings, messages, sending, channel, persona, appendMessage]);
 
+  // 模拟来电：进入聊天一段时间后有概率收到语音/视频通话邀请
+  const incomingTried = useRef(false);
+  useEffect(() => {
+    if (!ready || incomingTried.current) return;
+    incomingTried.current = true;
+    const timer = window.setTimeout(() => {
+      if (callRef.current) return;
+      if (Math.random() > 0.35) return;
+      setCall({ media: Math.random() > 0.5 ? 'video' : 'voice', incoming: true });
+    }, 16000);
+    return () => window.clearTimeout(timer);
+  }, [ready]);
+
+  // 录音计时
+  useEffect(() => {
+    if (!recording) return;
+    const timer = window.setInterval(() => setRecordSeconds((prev) => prev + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [recording]);
+
   const stopAudio = useCallback(() => {
     audioRef.current?.pause();
     audioRef.current = null;
@@ -209,23 +251,11 @@ export function ChatRoom({
     [settings, speakingId, stopAudio],
   );
 
-  const send = useCallback(
-    async (raw?: string) => {
-      const text = (raw ?? input).trim();
-      if (!text || sending) return;
-      setInput('');
-      setError('');
-      const userMessage: ChatMessage = {
-        id: uid('m_'),
-        role: 'user',
-        text,
-        createdAt: Date.now(),
-      };
-      appendMessage(channel, persona.id, userMessage);
+  /** 把一段历史发给模型并写入回复 */
+  const respond = useCallback(
+    async (history: ChatMessage[]) => {
       setSending(true);
       setStreamText('');
-
-      const history = [...messages, userMessage];
       try {
         const full = await chatComplete(settings, toApiMessages(persona, settings, history, channel), (_delta, all) => {
           setStreamText(all);
@@ -256,7 +286,25 @@ export function ChatRoom({
         setStreamText('');
       }
     },
-    [appendMessage, channel, input, messages, persona, playTts, sending, settings],
+    [appendMessage, channel, persona, playTts, settings],
+  );
+
+  const send = useCallback(
+    async (raw?: string) => {
+      const text = (raw ?? input).trim();
+      if (!text || sending) return;
+      setInput('');
+      setError('');
+      const userMessage: ChatMessage = {
+        id: uid('m_'),
+        role: 'user',
+        text,
+        createdAt: Date.now(),
+      };
+      appendMessage(channel, persona.id, userMessage);
+      await respond([...messages, userMessage]);
+    },
+    [appendMessage, channel, input, messages, persona.id, respond, sending],
   );
 
   const onPickImage = useCallback(
@@ -279,6 +327,127 @@ export function ChatRoom({
       }
     },
     [appendMessage, channel, persona.id],
+  );
+
+  /** 语音条：点一下开始录，再点一下发送 */
+  const toggleVoiceRecord = useCallback(async () => {
+    if (recording) {
+      voiceRecorderRef.current?.stop();
+      return;
+    }
+    if (listening) {
+      setError('先结束语音输入再录语音条');
+      return;
+    }
+    setError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      voiceRecorderRef.current = recorder;
+      voiceChunksRef.current = [];
+      voiceStartedAtRef.current = Date.now();
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) voiceChunksRef.current.push(e.data);
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setRecording(false);
+        setRecordSeconds(0);
+        const seconds = Math.max(1, Math.round((Date.now() - voiceStartedAtRef.current) / 1000));
+        const blob = new Blob(voiceChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+        voiceChunksRef.current = [];
+        if (blob.size < 800) {
+          setError('录音太短了，再试一次');
+          return;
+        }
+        try {
+          const audioId = await saveMedia(await blobToDataUrl(blob));
+          appendMessage(channel, persona.id, {
+            id: uid('m_'),
+            role: 'user',
+            text: '[语音]',
+            kind: 'voice',
+            audioId,
+            audioDuration: seconds,
+            createdAt: Date.now(),
+          });
+          const history = [
+            ...messages,
+            {
+              id: uid('m_'),
+              role: 'user' as const,
+              text: `（发来一条 ${seconds} 秒的语音）`,
+              createdAt: Date.now(),
+            },
+          ];
+          void respond(history);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : '语音保存失败');
+        }
+      };
+      recorder.start();
+      setRecordSeconds(0);
+      setRecording(true);
+    } catch {
+      setError('没有拿到麦克风权限');
+    }
+  }, [appendMessage, channel, listening, messages, persona.id, recording, respond]);
+
+  /** 发红包 / 转账 / 礼物 / 位置 */
+  const sendCard = useCallback(() => {
+    if (!cardSheet) return;
+    const amount = cardAmount.trim() || '6.66';
+    const note = cardNote.trim();
+    let text = '';
+    let payload: MessagePayload = { amount, note };
+    if (cardSheet === 'redpacket') {
+      text = `[红包:${amount}:${note || '恭喜发财，大吉大利'}]`;
+      payload = { amount, note: note || '恭喜发财，大吉大利' };
+    } else if (cardSheet === 'transfer') {
+      text = `[转账:${amount}:${note || '转账'}]`;
+      payload = { amount, note: note || '转账' };
+    } else if (cardSheet === 'gift') {
+      const name = note || '鲜花';
+      text = `[礼物:${amount}:${name}]`;
+      payload = { amount, name };
+    } else if (cardSheet === 'location') {
+      const place = note || '外滩';
+      text = `[位置:${place}:${place}]`;
+      payload = { address: place, name: place };
+    }
+    const message: ChatMessage = {
+      id: uid('m_'),
+      role: 'user',
+      text,
+      kind: cardSheet,
+      payload,
+      createdAt: Date.now(),
+    };
+    appendMessage(channel, persona.id, message);
+    setCardSheet(null);
+    setCardAmount('');
+    setCardNote('');
+    void respond([...messages, message]);
+  }, [appendMessage, cardAmount, cardNote, cardSheet, channel, messages, persona.id, respond]);
+
+  /** 通话结束：写一条通话记录 */
+  const finishCall = useCallback(
+    (result: { seconds: number; missed: boolean }) => {
+      const media = call?.media ?? 'voice';
+      setCall(null);
+      if (!result.seconds && !result.missed) return;
+      appendMessage(channel, persona.id, {
+        id: uid('m_'),
+        role: 'system',
+        kind: 'call',
+        text: result.missed
+          ? `未接${media === 'video' ? '视频' : '语音'}通话`
+          : `${media === 'video' ? '视频' : '语音'}通话 ${timeText(result.seconds)}`,
+        payload: { media, seconds: result.seconds, missed: result.missed },
+        createdAt: Date.now(),
+      });
+    },
+    [appendMessage, call?.media, channel, persona.id],
   );
 
   const startListening = useCallback(async () => {
@@ -413,14 +582,48 @@ export function ChatRoom({
             </div>
           </div>
         </div>
-        <button type="button" className="icon-btn-plain" onClick={clearChat} aria-label="清空聊天">
-          {variant === 'wechat' ? <span className="wechat-more">⋯</span> : <Mdi path={ICONS.trash} size={18} />}
-        </button>
+        <div className="chat-head-actions">
+          <button
+            type="button"
+            className="icon-btn-plain"
+            onClick={() => setCall({ media: 'voice', incoming: false })}
+            aria-label="语音通话"
+            title="语音通话"
+          >
+            <Mdi path={mdiPhone} size={18} />
+          </button>
+          <button
+            type="button"
+            className="icon-btn-plain"
+            onClick={() => setCall({ media: 'video', incoming: false })}
+            aria-label="视频通话"
+            title="视频通话"
+          >
+            <Mdi path={mdiVideo} size={20} />
+          </button>
+          <button type="button" className="icon-btn-plain" onClick={clearChat} aria-label="清空聊天">
+            {variant === 'wechat' || variant === 'qq' ? (
+              <span className="wechat-more">⋯</span>
+            ) : (
+              <Mdi path={ICONS.trash} size={18} />
+            )}
+          </button>
+        </div>
       </header>
 
       <div className="chat-messages" ref={scrollRef}>
         {messages.map((message) => {
           if (message.role === 'system') {
+            if (message.kind === 'call') {
+              const missed = message.payload?.missed;
+              const isVideo = message.payload?.media === 'video';
+              return (
+                <div key={message.id} className={`msg-call${missed ? ' missed' : ''}`}>
+                  <Mdi path={isVideo ? mdiVideo : mdiPhone} size={15} />
+                  <span>{message.text}</span>
+                </div>
+              );
+            }
             return (
               <div key={message.id} className="msg-system">
                 {message.text}
@@ -429,9 +632,16 @@ export function ChatRoom({
           }
           const html = message.role === 'assistant' ? splitHtmlBlocks(message.text) : null;
           const shownText = html ? html.plain : message.text;
+          const segments = parseChatSegments(shownText);
+          const plainText = segments
+            .filter((seg): seg is { type: 'text'; text: string } => seg.type === 'text')
+            .map((seg) => seg.text)
+            .join('\n')
+            .trim();
+          const isVoice = message.kind === 'voice' && Boolean(message.audioId);
           return (
             <div key={message.id} className={`msg-row ${message.role}${message.error ? ' failed' : ''}`}>
-              {variant === 'wechat' ? (
+              {variant === 'wechat' || variant === 'qq' ? (
                 <span
                   className="msg-avatar-hit"
                   onDoubleClick={() => pat(message.role === 'assistant' ? 'them' : 'me')}
@@ -447,27 +657,37 @@ export function ChatRoom({
                 <Avatar persona={persona} size={30} />
               ) : null}
               <div className="msg-main">
-                <div className="bubble">
-                  {shownText ? <p>{renderWithStickers(shownText)}</p> : null}
-                  {html?.blocks.map((block, index) => (
-                    <iframe
-                      key={index}
-                      className="html-card"
-                      title="互动卡片"
-                      sandbox="allow-scripts allow-forms"
-                      referrerPolicy="no-referrer"
-                      srcDoc={buildHtmlDocument(block)}
-                    />
-                  ))}
-                  {message.imageId || message.imageUrl ? (
-                    <MediaImage imageId={message.imageId} imageUrl={message.imageUrl} />
-                  ) : null}
-                </div>
-                {message.role === 'assistant' && !message.error && shownText ? (
+                {isVoice ? (
+                  <VoiceBubble audioId={message.audioId!} duration={message.audioDuration ?? 1} mine={message.role === 'user'} />
+                ) : (
+                  <div className={`bubble${plainText ? '' : ' card-only'}`}>
+                    {segments.map((seg, index) =>
+                      seg.type === 'text' ? (
+                        <p key={index}>{renderWithStickers(seg.text)}</p>
+                      ) : (
+                        <CardBubble key={index} card={seg.card} mine={message.role === 'user'} />
+                      ),
+                    )}
+                    {html?.blocks.map((block, index) => (
+                      <iframe
+                        key={index}
+                        className="html-card"
+                        title="互动卡片"
+                        sandbox="allow-scripts allow-forms"
+                        referrerPolicy="no-referrer"
+                        srcDoc={buildHtmlDocument(block)}
+                      />
+                    ))}
+                    {message.imageId || message.imageUrl ? (
+                      <MediaImage imageId={message.imageId} imageUrl={message.imageUrl} />
+                    ) : null}
+                  </div>
+                )}
+                {message.role === 'assistant' && !message.error && plainText ? (
                   <button
                     type="button"
                     className={`tts-btn${speakingId === message.id ? ' on' : ''}`}
-                    onClick={() => void playTts(shownText, message.id)}
+                    onClick={() => void playTts(plainText, message.id)}
                     aria-label="朗读"
                   >
                     <Mdi path={ICONS.volume} size={14} />
@@ -546,6 +766,12 @@ export function ChatRoom({
             </div>
           </div>
         ) : null}
+        {recording ? (
+          <div className="recording-banner">
+            <span className="rec-dot" />
+            <span>正在录音 {timeText(recordSeconds)}，再点一次麦克风发送</span>
+          </div>
+        ) : null}
         <div className="composer-tools">
           <button type="button" className="tool-btn" onClick={() => fileRef.current?.click()} aria-label="发送图片">
             <Mdi path={ICONS.image} size={20} />
@@ -563,11 +789,30 @@ export function ChatRoom({
           </button>
           <button
             type="button"
+            className={`tool-btn${recording ? ' on' : ''}`}
+            onClick={() => void toggleVoiceRecord()}
+            aria-label="录语音条"
+            title="录语音条"
+          >
+            <Mdi path={mdiMicrophone} size={20} />
+          </button>
+          <button
+            type="button"
+            className="tool-btn"
+            onClick={() => setCardSheet(cardSheet ? null : 'redpacket')}
+            aria-label="红包转账"
+            title="红包 / 转账 / 礼物 / 位置"
+          >
+            <Mdi path={mdiGiftOutline} size={20} />
+          </button>
+          <button
+            type="button"
             className={`tool-btn${listening ? ' on' : ''}`}
             onClick={() => void startListening()}
             aria-label="语音输入"
+            title="语音转文字"
           >
-            <Mdi path={ICONS.mic} size={20} />
+            <Mdi path={mdiPlusCircleOutline} size={20} />
           </button>
           <button
             type="button"
@@ -599,7 +844,11 @@ export function ChatRoom({
             onClick={() => void send()}
             aria-label="发送"
           >
-            {variant === 'wechat' ? <span className="send-text">发送</span> : <Mdi path={ICONS.send} size={18} />}
+            {variant === 'wechat' || variant === 'qq' ? (
+              <span className="send-text">发送</span>
+            ) : (
+              <Mdi path={ICONS.send} size={18} />
+            )}
           </button>
         </div>
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => void onPickImage(e)} />
@@ -627,6 +876,72 @@ export function ChatRoom({
             </button>
           </div>
         </div>
+      ) : null}
+      {cardSheet ? (
+        <div className="sheet-mask" onClick={() => setCardSheet(null)}>
+          <div className="sheet card-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-title">
+              <span>发点什么</span>
+              <button type="button" className="icon-btn-plain" onClick={() => setCardSheet(null)}>
+                <Mdi path={ICONS.close} size={18} />
+              </button>
+            </div>
+            <div className="card-kind-tabs">
+              {(
+                [
+                  ['redpacket', '红包'],
+                  ['transfer', '转账'],
+                  ['gift', '礼物'],
+                  ['location', '位置'],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`card-kind-tab${cardSheet === key ? ' on' : ''}`}
+                  onClick={() => setCardSheet(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {cardSheet === 'location' ? null : (
+              <input
+                className="sheet-input"
+                value={cardAmount}
+                onChange={(e) => setCardAmount(e.target.value)}
+                placeholder={cardSheet === 'gift' ? '价格，例如 99' : '金额，例如 52.00'}
+                inputMode="decimal"
+              />
+            )}
+            <input
+              className="sheet-input"
+              value={cardNote}
+              onChange={(e) => setCardNote(e.target.value)}
+              placeholder={
+                cardSheet === 'redpacket'
+                  ? '红包留言'
+                  : cardSheet === 'transfer'
+                    ? '转账备注'
+                    : cardSheet === 'gift'
+                      ? '礼物名称，例如 一束玫瑰'
+                      : '地点，例如 外滩'
+              }
+            />
+            <button type="button" className="primary-btn" onClick={sendCard}>
+              发送
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {call ? (
+        <CallOverlay
+          persona={persona}
+          media={call.media}
+          incoming={call.incoming}
+          onClose={finishCall}
+        />
       ) : null}
     </section>
   );

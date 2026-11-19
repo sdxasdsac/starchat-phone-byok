@@ -2,6 +2,7 @@
 export type IconId =
   | 'wechat'
   | 'qq'
+  | 'qqapp'
   | 'chat'
   | 'diary'
   | 'music'
@@ -63,10 +64,10 @@ export type IconMeta = {
   path?: string;
 };
 
-export const PAGE_1_DEFAULT: IconId[] = ['wechat', 'qq', 'moments', 'xiaohongshu', 'douban', 'ai', 'appmarket', 'calendar'];
+export const PAGE_1_DEFAULT: IconId[] = ['wechat', 'qqapp', 'moments', 'xiaohongshu', 'douban', 'ai', 'appmarket', 'calendar'];
 
 /** 第二页：本地生活类应用（音乐/日记/阅读/纪念日/相册） */
-export const PAGE_DAILY_DEFAULT: IconId[] = ['music', 'diary', 'reading', 'anniversary', 'album'];
+export const PAGE_DAILY_DEFAULT: IconId[] = ['music', 'diary', 'reading', 'anniversary', 'album', 'group_chat'];
 
 export const PAGE_2_DEFAULT: IconId[] = [
   'cocreate',
@@ -86,6 +87,7 @@ export const DOCK_DEFAULT: IconId[] = ['chat', 'characters', 'theme', 'settings'
 export const ICONS: Record<IconId, IconMeta> = {
   wechat: { id: 'wechat', label: '微信', tone: 'var(--c-icon-green)', placeholder: false },
   qq: { id: 'qq', label: 'LINE', tone: 'var(--c-icon-green)', placeholder: false },
+  qqapp: { id: 'qqapp', label: 'QQ', tone: 'var(--c-icon-blue)', placeholder: false },
   chat: { id: 'chat', label: '聊天', tone: 'var(--c-icon-green)', placeholder: false },
   diary: { id: 'diary', label: '手记', tone: 'var(--c-icon-violet)', placeholder: false },
   music: { id: 'music', label: '音乐', tone: 'var(--c-icon-coral)', placeholder: false },

@@ -13,6 +13,7 @@ import type {
   Channel,
   ChatMessage,
   Conversation,
+  Group,
   MomentPost,
   Persona,
   Settings,
@@ -21,12 +22,14 @@ import type {
 } from '@/lib/types';
 import {
   loadConversations,
+  loadGroups,
   loadMoments,
   loadPersonas,
   loadSettings,
   loadXhsNotes,
   loadXhsProfile,
   saveConversations,
+  saveGroups,
   saveMoments,
   savePersonas,
   saveSettings,
@@ -55,6 +58,9 @@ type Ctx = {
   setXhs: (next: XhsNote[]) => void;
   xhsProfile: XhsProfile | null;
   setXhsProfile: (next: XhsProfile) => void;
+  groups: Group[];
+  upsertGroup: (group: Group) => void;
+  deleteGroup: (id: string) => void;
 };
 
 const PhoneCtx = createContext<Ctx | null>(null);
@@ -73,6 +79,7 @@ export function PhoneProvider({ children }: { children: ReactNode }) {
   const [moments, setMomentsState] = useState<MomentPost[]>([]);
   const [xhs, setXhsState] = useState<XhsNote[]>([]);
   const [xhsProfile, setXhsProfileState] = useState<XhsProfile | null>(null);
+  const [groups, setGroupsState] = useState<Group[]>([]);
 
   useEffect(() => {
     const loadedSettings = loadSettings();
@@ -83,6 +90,7 @@ export function PhoneProvider({ children }: { children: ReactNode }) {
     setMomentsState(loadMoments());
     setXhsState(loadXhsNotes());
     setXhsProfileState(loadXhsProfile());
+    setGroupsState(loadGroups());
 
     if (!loadedSettings.activePersonaId || !loadedPersonas.some((p) => p.id === loadedSettings.activePersonaId)) {
       const next = { ...loadedSettings, activePersonaId: loadedPersonas[0]?.id };
@@ -199,6 +207,28 @@ export function PhoneProvider({ children }: { children: ReactNode }) {
     saveXhsProfile(next);
   }, []);
 
+  const upsertGroup = useCallback((group: Group) => {
+    setGroupsState((prev) => {
+      const exists = prev.some((g) => g.id === group.id);
+      const next = exists ? prev.map((g) => (g.id === group.id ? group : g)) : [group, ...prev];
+      saveGroups(next);
+      return next;
+    });
+  }, []);
+
+  const deleteGroup = useCallback((id: string) => {
+    setGroupsState((prev) => {
+      const next = prev.filter((g) => g.id !== id);
+      saveGroups(next);
+      return next;
+    });
+    setConversations((prev) => {
+      const next = prev.filter((c) => !(c.channel === 'group' && c.personaId === id));
+      saveConversations(next);
+      return next;
+    });
+  }, []);
+
   const activePersona = useMemo(() => {
     if (!personas.length) return null;
     return personas.find((p) => p.id === settings.activePersonaId) ?? personas[0];
@@ -232,6 +262,9 @@ export function PhoneProvider({ children }: { children: ReactNode }) {
     setXhs,
     xhsProfile,
     setXhsProfile,
+    groups,
+    upsertGroup,
+    deleteGroup,
   };
 
   return <PhoneCtx.Provider value={value}>{children}</PhoneCtx.Provider>;

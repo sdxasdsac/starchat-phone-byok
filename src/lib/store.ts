@@ -3,6 +3,7 @@
 import { DEFAULT_SETTINGS, createDefaultPersona } from './defaults';
 import type {
   Conversation,
+  Group,
   MomentPost,
   Persona,
   Settings,
@@ -17,6 +18,7 @@ export const STORAGE_KEYS = {
   moments: 'sp.moments.v1',
   xhs: 'sp.xhs.v1',
   xhsProfile: 'sp.xhsProfile.v1',
+  groups: 'sp.groups.v1',
 } as const;
 
 export function uid(prefix = ''): string {
@@ -106,6 +108,14 @@ export function saveXhsProfile(profile: XhsProfile): void {
   write(STORAGE_KEYS.xhsProfile, profile);
 }
 
+export function loadGroups(): Group[] {
+  return read<Group[]>(STORAGE_KEYS.groups, []);
+}
+
+export function saveGroups(list: Group[]): void {
+  write(STORAGE_KEYS.groups, list);
+}
+
 export function exportAll(): string {
   const data = {
     version: 1,
@@ -116,6 +126,7 @@ export function exportAll(): string {
     moments: loadMoments(),
     xhs: loadXhsNotes(),
     xhsProfile: loadXhsProfile(),
+    groups: loadGroups(),
   };
   return JSON.stringify(data, null, 2);
 }
@@ -128,6 +139,7 @@ export function importAll(json: string): void {
   if (Array.isArray(data.moments)) write(STORAGE_KEYS.moments, data.moments);
   if (Array.isArray(data.xhs)) write(STORAGE_KEYS.xhs, data.xhs);
   if (data.xhsProfile) write(STORAGE_KEYS.xhsProfile, data.xhsProfile);
+  if (Array.isArray(data.groups)) write(STORAGE_KEYS.groups, data.groups);
 }
 
 export function clearAll(): void {
