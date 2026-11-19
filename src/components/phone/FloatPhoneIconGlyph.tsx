@@ -43,6 +43,7 @@ import {
   mdiStorefrontOutline,
   mdiWechat,
   mdiQqchat,
+  mdiRobotOutline,
 } from '@mdi/js';
 
 type IconGlyphProps = {
@@ -73,6 +74,7 @@ const MDI_PATHS: Record<IconId, string> = {
   qa: mdiHammerWrench,
   mixology: mdiGlassCocktail,
   douban: mdiBookOpenVariant,
+  ai: mdiRobotOutline,
   vnplay: mdiPlayCircle,
   vnchapters: mdiBookmark,
   moments: mdiCamera,

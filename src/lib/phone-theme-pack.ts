@@ -28,6 +28,38 @@ export const THEME_PACK_EVENT = 'starchat:phone-theme-pack';
 /** 壁纸 id 前缀：tp-<slug> 表示当前壁纸来自主题包 */
 export const THEME_PACK_WALLPAPER_PREFIX = 'tp-';
 
+/** 默认美化：黑白熊（全局美化包转成的主题包） */
+export const DEFAULT_THEME_PACK: ThemePack = {
+  slug: 'bear',
+  name: '黑白熊',
+  desc: '全局美化 · 黑白灰玻璃',
+  icons: 0,
+  wallpaper: '/phone-assets/theme-packs/bear/01.jpg',
+  skins: {},
+  cssVars: {
+    '--desktop-global-shadow': '1',
+    '--app-text-scale': '0.85',
+    '--desktop-icon-effect': 'glass',
+    '--desktop-outline-opacity': '1',
+    '--c-desktop-icon': '#ebebeb',
+    '--c-page-body-bg': '#f1f2f6',
+    '--c-input': '#f2f3f5',
+    '--c-header-bg': '#ffffff',
+    '--desktop-outline-width': '1.30308219178082',
+    '--c-desktop-icon-box': 'rgba(0, 0, 0, 0.166666666666667)',
+    '--c-home-label': '#c2c2c2',
+    '--c-home-card': 'rgba(0, 0, 0, 0)',
+    '--c-home-text': 'rgba(255, 255, 255, 0.533333333333333)',
+    '--c-home-border': 'rgba(71, 71, 71, 0.5)',
+    '--c-home-sub': '#c2c2c2',
+    '--c-home-pink': '#999999',
+    '--desktop-widget-effect': 'glass',
+  },
+  customCss: '',
+  fontUrl: null,
+  wallpaperScale: 100,
+};
+
 export function readActiveThemePack(): ThemePack | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -104,7 +136,7 @@ export function applyThemePackStyles(pack: ThemePack | null): void {
     : '';
   const css = [
     // 主题包变量只作用在小手机壳内，不影响站点其它页面
-    vars ? `.phone-screen{${vars}}` : '',
+    vars ? `.phone-screen,.os-root,.phone-shell{${vars}}` : '',
     font,
     iconFallback,
     pack.customCss ?? '',

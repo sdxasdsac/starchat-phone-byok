@@ -166,7 +166,8 @@ export function readLocalWallpaper(): string {
     // 一次性迁移：把旧版默认壁纸换成新的兔丸奶油主题
     if (window.localStorage.getItem(THEME_VERSION_KEY) !== THEME_VERSION) {
       window.localStorage.setItem(THEME_VERSION_KEY, THEME_VERSION);
-      window.localStorage.setItem(WALLPAPER_KEY, DEFAULT_WALLPAPER_ID);
+      // 已经装了主题包时不要覆盖它的壁纸
+      if (!readThemePackWallpaper()) window.localStorage.setItem(WALLPAPER_KEY, DEFAULT_WALLPAPER_ID);
     }
     const id = window.localStorage.getItem(WALLPAPER_KEY);
     if (id && PHONE_WALLPAPERS.some((w) => w.id === id)) return id;

@@ -3098,6 +3098,65 @@ select {
   display: block;
 }
 
+/* ── AI 助手 ── */
+.ai-room {
+  background: linear-gradient(180deg, #f3f7fc 0%, #e9eff7 100%);
+}
+
+.ai-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #7aa7ff, #4d7df0);
+  color: #fff;
+  flex: 0 0 auto;
+}
+
+.ai-welcome {
+  padding: 30px 12px 10px;
+  text-align: center;
+}
+
+.ai-welcome-title {
+  margin: 0 0 6px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #33465a;
+}
+
+.ai-welcome-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #7d8b9a;
+}
+
+.ai-quick {
+  display: flex;
+  gap: 8px;
+  padding: 8px 10px 0;
+  overflow-x: auto;
+  background: rgba(255, 255, 255, 0.7);
+  scrollbar-width: none;
+}
+
+.ai-quick::-webkit-scrollbar {
+  display: none;
+}
+
+.ai-chip {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #fff;
+  color: #3b4f63;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0 1px 4px rgba(20, 40, 70, 0.08);
+}
+
 /* ── 豆瓣：电影 / 读书 本地记录 ── */
 .db-tabs {
   display: flex;

@@ -33,6 +33,7 @@ export type IconId =
   | 'qa'
   | 'mixology'
   | 'douban'
+  | 'ai'
   // 应用市场可安装到桌面的其余应用（首次安装才出现在桌面）
   | 'phone'
   | 'sms'
@@ -62,7 +63,7 @@ export type IconMeta = {
   path?: string;
 };
 
-export const PAGE_1_DEFAULT: IconId[] = ['wechat', 'qq', 'moments', 'xiaohongshu', 'douban', 'appmarket', 'calendar'];
+export const PAGE_1_DEFAULT: IconId[] = ['wechat', 'qq', 'moments', 'xiaohongshu', 'douban', 'ai', 'appmarket', 'calendar'];
 
 /** 第二页：本地生活类应用（音乐/日记/阅读/纪念日/相册） */
 export const PAGE_DAILY_DEFAULT: IconId[] = ['music', 'diary', 'reading', 'anniversary', 'album'];
@@ -116,6 +117,7 @@ export const ICONS: Record<IconId, IconMeta> = {
   qa: { id: 'qa', label: '工坊', tone: 'var(--c-icon-qa, #4a505c99)', placeholder: false },
   mixology: { id: 'mixology', label: '角色库', tone: 'var(--c-icon-violet)', placeholder: false },
   douban: { id: 'douban', label: '豆瓣', tone: 'var(--c-icon-green)', placeholder: false },
+  ai: { id: 'ai', label: 'AI 助手', tone: 'var(--c-icon-blue)', placeholder: false },
   // 应用市场可安装的应用
   phone: { id: 'phone', label: '电话', tone: 'var(--c-icon-green)', placeholder: false },
   sms: { id: 'sms', label: '信息', tone: 'var(--c-icon-green)', placeholder: false },

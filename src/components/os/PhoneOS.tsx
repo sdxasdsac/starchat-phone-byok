@@ -7,6 +7,7 @@ import { PAGE_1_DEFAULT, PAGE_DAILY_DEFAULT, type IconId } from '@/components/ph
 import { PhoneProvider, usePhone } from './PhoneContext';
 import { AccessGate } from './AccessGate';
 import { isUnlocked } from '@/lib/access';
+import { applyThemePack, applyThemePackStyles, readActiveThemePack, DEFAULT_THEME_PACK } from '@/lib/phone-theme-pack';
 import { ChatApp, LineApp, WeChatApp } from './apps/ChatApps';
 import { PersonaApp } from './apps/PersonaApp';
 import { SettingsApp } from './apps/SettingsApp';
@@ -20,6 +21,7 @@ import { ReadingApp } from './apps/ReadingApp';
 import { AnniversaryApp } from './apps/AnniversaryApp';
 import { AlbumApp } from './apps/AlbumApp';
 import { DoubanApp } from './apps/DoubanApp';
+import { AiAssistantApp } from './apps/AiAssistantApp';
 import { PhoneCalendarApp } from '@/components/phone/apps/calendar/PhoneCalendarApp';
 import { ICONS, Mdi, Screen } from './ui';
 
@@ -40,6 +42,7 @@ type AppId =
   | 'anniversary'
   | 'album'
   | 'douban'
+  | 'ai'
   | 'unknown';
 
 const ICON_TO_APP: Partial<Record<IconId, AppId>> = {
@@ -59,6 +62,7 @@ const ICON_TO_APP: Partial<Record<IconId, AppId>> = {
   anniversary: 'anniversary',
   album: 'album',
   douban: 'douban',
+  ai: 'ai',
 };
 
 export function PhoneOS() {
@@ -78,6 +82,21 @@ function PhoneShell() {
 
   useEffect(() => {
     setUnlocked(isUnlocked());
+  }, []);
+
+  // 默认美化：黑白熊（首次打开自动应用一次，之后跟随用户在「主题」里的选择）
+  useEffect(() => {
+    const SEED_KEY = 'sp.themePack.bear.v1';
+    try {
+      if (!window.localStorage.getItem(SEED_KEY)) {
+        applyThemePack(DEFAULT_THEME_PACK);
+        window.localStorage.setItem(SEED_KEY, '1');
+      } else {
+        applyThemePackStyles(readActiveThemePack());
+      }
+    } catch {
+      // 隐私模式忽略
+    }
   }, []);
 
   const calendarOwners = useMemo(
@@ -181,6 +200,7 @@ function PhoneShell() {
               {app === 'anniversary' ? <AnniversaryApp onClose={close} /> : null}
               {app === 'album' ? <AlbumApp onClose={close} /> : null}
               {app === 'douban' ? <DoubanApp onClose={close} /> : null}
+              {app === 'ai' ? <AiAssistantApp onClose={close} /> : null}
               {app === 'calendar' ? (
                 <PhoneCalendarApp
                   onClose={close}
