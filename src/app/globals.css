@@ -4085,3 +4085,32 @@ select {
   gap: 4px;
   align-items: center;
 }
+
+.group-bubble.typing i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c2cad4;
+  animation: group-typing 1s ease-in-out infinite;
+}
+
+.group-bubble.typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.group-bubble.typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes group-typing {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
