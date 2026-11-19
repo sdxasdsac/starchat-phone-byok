@@ -7,7 +7,7 @@ import {
   useState,
   type ChangeEvent,
 } from 'react';
-import { mdiStickerEmoji, mdiPhone, mdiVideo, mdiGiftOutline, mdiMicrophone, mdiPlusCircleOutline } from '@mdi/js';
+import { mdiStickerEmoji, mdiPhone, mdiVideo, mdiGiftOutline, mdiMicrophone, mdiMicrophoneMessage } from '@mdi/js';
 import type { Channel, ChatMessage, MessageKind, MessagePayload, Persona } from '@/lib/types';
 import { usePhone } from './PhoneContext';
 import { chatComplete, generateImage, synthesizeSpeech, transcribe, browserSpeak } from '@/lib/api';
@@ -794,7 +794,7 @@ export function ChatRoom({
             aria-label="录语音条"
             title="录语音条"
           >
-            <Mdi path={mdiMicrophone} size={20} />
+            <Mdi path={mdiMicrophoneMessage} size={20} />
           </button>
           <button
             type="button"
@@ -812,7 +812,7 @@ export function ChatRoom({
             aria-label="语音输入"
             title="语音转文字"
           >
-            <Mdi path={mdiPlusCircleOutline} size={20} />
+            <Mdi path={mdiMicrophone} size={20} />
           </button>
           <button
             type="button"
