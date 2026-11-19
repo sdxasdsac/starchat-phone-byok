@@ -64,7 +64,7 @@ export type IconMeta = {
   path?: string;
 };
 
-export const PAGE_1_DEFAULT: IconId[] = ['wechat', 'qqapp', 'moments', 'xiaohongshu', 'douban', 'ai', 'appmarket', 'calendar'];
+export const PAGE_1_DEFAULT: IconId[] = ['wechat', 'qqapp', 'xiaohongshu', 'douban', 'ai', 'appmarket', 'resource_hub', 'calendar'];
 
 /** 第二页：本地生活类应用（音乐/日记/阅读/纪念日/相册） */
 export const PAGE_DAILY_DEFAULT: IconId[] = ['music', 'diary', 'reading', 'anniversary', 'album', 'group_chat'];

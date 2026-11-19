@@ -16,7 +16,9 @@ import type { Channel } from '@/lib/types';
 import { usePhone } from '../PhoneContext';
 import { ChatRoom } from '../ChatRoom';
 import { Avatar, EmptyState, ICONS, Mdi, Screen } from '../ui';
+import { readLocal, writeLocal } from '@/lib/local-data';
 import { MomentsApp } from './MomentsApp';
+import { ContactProfile, ContactSettings, MomentsAlbum } from './WeChatExtras';
 
 function lastPreview(text: string | undefined): string {
   if (!text) return '开始聊天吧';
@@ -94,11 +96,64 @@ export function WeChatApp({
   onOpenSettings: () => void;
   onOpenTheme: () => void;
 }) {
-  const { personas, messagesOf, settings } = usePhone();
+  const { personas, messagesOf, settings, moments, deletePersona } = usePhone();
   const [tab, setTab] = useState<'chats' | 'contacts' | 'discover' | 'me'>('chats');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [settingId, setSettingId] = useState<string | null>(null);
   const [showMoments, setShowMoments] = useState(false);
+  const [showAlbum, setShowAlbum] = useState(false);
+  const [flagBump, setFlagBump] = useState(0);
   const openPersona = personas.find((p) => p.id === openId) ?? null;
+  const profilePersona = personas.find((p) => p.id === profileId) ?? null;
+  const settingPersona = personas.find((p) => p.id === settingId) ?? null;
+
+  const flagsOf = (id: string) => {
+    void flagBump;
+    return readLocal(`sp.wx.contact.${id}.v1`, { starred: false, blocked: false });
+  };
+  const toggleFlag = (id: string, key: 'starred' | 'blocked') => {
+    const next = flagsOf(id);
+    writeLocal(`sp.wx.contact.${id}.v1`, { ...next, [key]: !next[key] });
+    setFlagBump((n) => n + 1);
+  };
+
+  if (settingPersona) {
+    const flags = flagsOf(settingPersona.id);
+    return (
+      <ContactSettings
+        persona={settingPersona}
+        starred={flags.starred}
+        blocked={flags.blocked}
+        onBack={() => setSettingId(null)}
+        onToggleStar={() => toggleFlag(settingPersona.id, 'starred')}
+        onToggleBlock={() => toggleFlag(settingPersona.id, 'blocked')}
+        onDelete={() => {
+          if (!window.confirm(`删除「${settingPersona.name}」？聊天记录也会一起删除。`)) return;
+          deletePersona(settingPersona.id);
+          setSettingId(null);
+          setProfileId(null);
+          setOpenId(null);
+        }}
+      />
+    );
+  }
+
+  if (profilePersona) {
+    const flags = flagsOf(profilePersona.id);
+    return (
+      <ContactProfile
+        persona={profilePersona}
+        starred={flags.starred}
+        onBack={() => setProfileId(null)}
+        onMessage={() => {
+          setProfileId(null);
+          setOpenId(profilePersona.id);
+        }}
+        onOpenSettings={() => setSettingId(profilePersona.id)}
+      />
+    );
+  }
 
   if (openPersona) {
     return (
@@ -108,6 +163,20 @@ export function WeChatApp({
         channel={'wechat' as Channel}
         variant="wechat"
         onBack={() => setOpenId(null)}
+      />
+    );
+  }
+
+  if (showAlbum) {
+    return (
+      <MomentsAlbum
+        posts={moments}
+        personaName={settings.user.name || '我'}
+        onBack={() => setShowAlbum(false)}
+        onOpenFeed={() => {
+          setShowAlbum(false);
+          setShowMoments(true);
+        }}
       />
     );
   }
@@ -178,7 +247,7 @@ export function WeChatApp({
               <Mdi path={mdiChevronRight} size={18} />
             </button>
             {personas.map((p) => (
-              <button key={p.id} type="button" className="wx-cell" onClick={() => setOpenId(p.id)}>
+              <button key={p.id} type="button" className="wx-cell" onClick={() => setProfileId(p.id)}>
                 <Avatar persona={p} size={36} />
                 <span className="wx-cell-text">{p.name}</span>
                 <Mdi path={mdiChevronRight} size={18} />
@@ -198,6 +267,13 @@ export function WeChatApp({
               </span>
               <span className="wx-cell-text">朋友圈</span>
               <span className="wx-cell-badge">{personas.length}</span>
+              <Mdi path={mdiChevronRight} size={18} />
+            </button>
+            <button type="button" className="wx-cell" onClick={() => setShowAlbum(true)}>
+              <span className="wx-cell-icon">
+                <Mdi path={mdiAccountMultipleOutline} size={20} />
+              </span>
+              <span className="wx-cell-text">朋友圈相册</span>
               <Mdi path={mdiChevronRight} size={18} />
             </button>
             <button type="button" className="wx-cell" onClick={onOpenPersonas}>

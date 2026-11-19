@@ -4114,3 +4114,556 @@ select {
     transform: translateY(-3px);
   }
 }
+
+/* ===== 微信：朋友资料 / 朋友设置 / 朋友圈相册 ===== */
+.wx-profile,
+.wx-setting,
+.wx-album {
+  background: #ededed;
+}
+
+.wx-profile-head,
+.wx-album-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #ededed;
+}
+
+.wx-profile-head-spacer,
+.wx-album-spacer,
+.wx-setting-spacer {
+  width: 30px;
+}
+
+.wx-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #191919;
+  cursor: pointer;
+}
+
+.wx-profile-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0 20px;
+}
+
+.wx-profile-card {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  background: #fff;
+}
+
+.wx-profile-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.wx-profile-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 19px;
+  font-weight: 600;
+  color: #191919;
+}
+
+.wx-star {
+  color: #f5b30b;
+  font-size: 15px;
+}
+
+.wx-profile-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #8a8a8a;
+}
+
+.wx-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px 16px;
+  border: none;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wx-profile-row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.wx-profile-row-title {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: #191919;
+}
+
+.wx-profile-row-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #9a9a9a;
+}
+
+.wx-profile-actions {
+  margin-top: 10px;
+  background: #fff;
+}
+
+.wx-profile-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 0;
+  border: none;
+  border-bottom: 1px solid #f0f0f0;
+  background: transparent;
+  color: #191919;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.wx-profile-action:last-child {
+  border-bottom: none;
+}
+
+/* 朋友设置 */
+.wx-setting-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  background: #ededed;
+}
+
+.wx-setting-head h1 {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #191919;
+}
+
+.wx-setting-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}
+
+.wx-cell-value {
+  margin-left: auto;
+  margin-right: 4px;
+  font-size: 13px;
+  color: #9a9a9a;
+}
+
+.wx-switch {
+  display: inline-flex;
+  align-items: center;
+  width: 44px;
+  height: 26px;
+  margin-left: auto;
+  padding: 2px;
+  border: none;
+  border-radius: 13px;
+  background: #e5e5e5;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.wx-switch i {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.wx-switch.on {
+  background: #07c160;
+}
+
+.wx-switch.on i {
+  transform: translateX(18px);
+}
+
+.wx-delete {
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px 0;
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+  color: #fa5151;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* 朋友圈相册 */
+.wx-album-head h1 {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #191919;
+}
+
+.wx-album-tabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #ededed;
+}
+
+.wx-album-tabs button {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  color: #5c5c5c;
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.wx-album-tabs button.on {
+  color: #07c160;
+  border-bottom-color: #07c160;
+  font-weight: 600;
+}
+
+.wx-album-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 16px 24px;
+}
+
+.wx-album-feed-link {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  width: 100%;
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  color: #576b95;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.wx-album-group {
+  margin-bottom: 18px;
+}
+
+.wx-album-year {
+  font-size: 20px;
+  font-weight: 700;
+  color: #191919;
+}
+
+.wx-album-month {
+  margin: 6px 0 8px;
+  font-size: 14px;
+  color: #7a7a7a;
+}
+
+.wx-album-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.wx-album-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: none;
+  border-radius: 4px;
+  padding: 0;
+  background: #dce8f5;
+  cursor: pointer;
+}
+
+.wx-album-cell.photo .chat-image,
+.wx-album-cell.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.wx-album-cell.emoji {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #ffe9f2, #eef4ff);
+  font-size: 30px;
+}
+
+.wx-album-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 60px 0;
+  color: #9a9a9a;
+  font-size: 13px;
+}
+
+/* ===== 素材仓库 ===== */
+.vault-app {
+  background: #f4f6f9;
+}
+
+.vault-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 0 12px;
+}
+
+.vault-tab {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 16px;
+  background: #e9edf3;
+  color: #5c6b7a;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.vault-tab.on {
+  background: #2a7fe4;
+  color: #fff;
+  font-weight: 600;
+}
+
+.vault-hint {
+  margin-bottom: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #eaf6ee;
+  color: #1f8a4c;
+  font-size: 12px;
+}
+
+.vault-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.vault-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 0;
+  border-radius: 14px;
+  background: #fff;
+}
+
+.vault-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: #22324a;
+}
+
+.vault-label {
+  font-size: 11px;
+  color: #8a97a5;
+}
+
+.vault-note {
+  margin-top: 12px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #93a0ad;
+}
+
+.vault-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vault-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #33465e;
+}
+
+.vault-sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: #9aa7b6;
+}
+
+.vault-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: #2a7fe4;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.vault-book {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.vault-book-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.vault-book-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #22324a;
+}
+
+.vault-book-text {
+  margin-top: 3px;
+  font-size: 11px;
+  color: #93a0ad;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vault-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #b6c0cb;
+  cursor: pointer;
+}
+
+.vault-pack {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.vault-pack-name {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #22324a;
+}
+
+.vault-pack-name span {
+  font-size: 11px;
+  font-weight: 400;
+  color: #9aa7b6;
+}
+
+.vault-pack-grid {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+.vault-pack-grid img {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.vault-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 14px;
+  color: #22324a;
+}
+
+.vault-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 12px;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  color: #22324a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.vault-action span {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vault-action b {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vault-action small {
+  font-size: 11px;
+  color: #9aa7b6;
+}
+
+.vault-danger {
+  margin-top: 6px;
+  padding: 13px 0;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  color: #fa5151;
+  font-size: 14px;
+  cursor: pointer;
+}

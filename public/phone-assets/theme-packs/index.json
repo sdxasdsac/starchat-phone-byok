@@ -1,0 +1,32 @@
+[
+  {
+    "slug": "bear",
+    "name": "黑白熊",
+    "desc": "全局美化 · 黑白灰玻璃",
+    "icons": 0,
+    "wallpaper": "/phone-assets/theme-packs/bear/01.jpg",
+    "skins": {},
+    "cssVars": {
+      "--desktop-global-shadow": "1",
+      "--app-text-scale": "0.85",
+      "--desktop-icon-effect": "glass",
+      "--desktop-outline-opacity": "1",
+      "--c-desktop-icon": "#ebebeb",
+      "--c-page-body-bg": "#f1f2f6",
+      "--c-input": "#f2f3f5",
+      "--c-header-bg": "#ffffff",
+      "--desktop-outline-width": "1.303",
+      "--c-desktop-icon-box": "rgba(0, 0, 0, 0.167)",
+      "--c-home-label": "#c2c2c2",
+      "--c-home-card": "rgba(0, 0, 0, 0)",
+      "--c-home-text": "rgba(255, 255, 255, 0.533)",
+      "--c-home-border": "rgba(71, 71, 71, 0.5)",
+      "--c-home-sub": "#c2c2c2",
+      "--c-home-pink": "#999999",
+      "--desktop-widget-effect": "glass"
+    },
+    "customCss": "",
+    "fontUrl": null,
+    "wallpaperScale": 100
+  }
+]

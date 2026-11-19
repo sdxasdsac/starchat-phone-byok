@@ -23,6 +23,7 @@ import { AlbumApp } from './apps/AlbumApp';
 import { DoubanApp } from './apps/DoubanApp';
 import { AiAssistantApp } from './apps/AiAssistantApp';
 import { GroupApp, QqApp } from './apps/QqApp';
+import { MaterialVaultApp } from './apps/MaterialVaultApp';
 import { PhoneCalendarApp } from '@/components/phone/apps/calendar/PhoneCalendarApp';
 import { ICONS, Mdi, Screen } from './ui';
 
@@ -46,6 +47,7 @@ type AppId =
   | 'album'
   | 'douban'
   | 'ai'
+  | 'materials'
   | 'unknown';
 
 const ICON_TO_APP: Partial<Record<IconId, AppId>> = {
@@ -68,6 +70,8 @@ const ICON_TO_APP: Partial<Record<IconId, AppId>> = {
   album: 'album',
   douban: 'douban',
   ai: 'ai',
+  resource_hub: 'materials',
+  resources: 'materials',
 };
 
 export function PhoneOS() {
@@ -94,7 +98,7 @@ function PhoneShell() {
     if (unlocked !== true) return;
     try {
       const target = new URLSearchParams(window.location.search).get('app');
-      const allowed: AppId[] = ['chat', 'wechat', 'line', 'qqapp', 'group', 'moments', 'xhs', 'calendar', 'ai'];
+      const allowed: AppId[] = ['chat', 'wechat', 'line', 'qqapp', 'group', 'moments', 'xhs', 'calendar', 'ai', 'materials'];
       if (target && (allowed as string[]).includes(target)) setApp(target as AppId);
     } catch {
       // 忽略非法 URL
@@ -224,6 +228,7 @@ function PhoneShell() {
               {app === 'album' ? <AlbumApp onClose={close} /> : null}
               {app === 'douban' ? <DoubanApp onClose={close} /> : null}
               {app === 'ai' ? <AiAssistantApp onClose={close} /> : null}
+              {app === 'materials' ? <MaterialVaultApp onClose={close} /> : null}
               {app === 'calendar' ? (
                 <PhoneCalendarApp
                   onClose={close}

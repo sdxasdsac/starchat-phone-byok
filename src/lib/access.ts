@@ -3,8 +3,14 @@
 import { claimKey, isClaimed } from './claim-db';
 import { getDeviceId } from './device-id';
 
-// 一次性密钥校验服务（部署在 starchat 服务器上的小接口）
-const ACCESS_API = process.env.NEXT_PUBLIC_ACCESS_API || 'https://www.xingnian.site/api/access-key';
+// 自托管模式（NEXT_PUBLIC_SELF_HOSTED_MODE=true）：完全跳过访问密钥，
+// 用户部署到自己的 Vercel 后打开即用，不依赖任何人的服务器。
+// 只有显式配置了 NEXT_PUBLIC_ACCESS_API 且未开启自托管时，才启用一次性密钥校验。
+const SELF_HOSTED = process.env.NEXT_PUBLIC_SELF_HOSTED_MODE === 'true';
+const ACCESS_API = process.env.NEXT_PUBLIC_ACCESS_API || '';
+const GATE_ENABLED = !SELF_HOSTED && Boolean(ACCESS_API);
+
+export const isSelfHosted = SELF_HOSTED || !GATE_ENABLED;
 
 // 每人一个专属访问密钥：XN-XXXX-XXXX-CCCC
 // 前两段随机，最后一段是校验码。密钥由 scripts/gen-keys.mjs 批量生成。
@@ -59,6 +65,7 @@ function keyHash(key: string): string {
 }
 
 export function isUnlocked(): boolean {
+  if (!GATE_ENABLED) return true;
   const key = getStoredKey();
   return Boolean(key && isValidKey(key));
 }
@@ -67,6 +74,7 @@ export type UnlockResult = { ok: true } | { ok: false; reason: 'invalid' | 'used
 
 /** 云端一次性校验 + 本机兜底：同一密钥被别的设备激活过就拒绝 */
 export async function tryUnlock(input: string): Promise<UnlockResult> {
+  if (!GATE_ENABLED) return { ok: true };
   const key = normalizeKey(input);
   if (!isValidKey(key)) return { ok: false, reason: 'invalid' };
 

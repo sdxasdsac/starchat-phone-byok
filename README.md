@@ -6,13 +6,11 @@
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/sdxasdsac/starchat-phone-byok&project-name=starchat-phone-byok)
 
-点上面的按钮：GitHub 登录 Vercel → 自动 fork 到你自己的账号 → 自动构建 → 拿到 `https://xxx.vercel.app`。打开网址输入密钥，进「设置」填 API Key 即可使用。
+点上面的按钮：GitHub 登录 Vercel → 自动 fork 到你自己的账号 → 自动构建 → 拿到 `https://xxx.vercel.app`。打开网址直接进桌面，进「设置」填 API Key 即可使用。
 
-首次打开需要输入专属访问密钥（格式 `XN-XXXX-XXXX-CCCC`，一人一个）。第一次激活会请求 `https://www.xingnian.site/api/access-key`，服务器把这个密钥标记为已用；第二台设备再用同一个密钥会被拒绝。激活成功后本机记住，之后打开不再询问。
+**默认就是自托管模式**：不需要访问密钥，不依赖任何人的服务器。想让自己的实例加一次性访问密钥时，才设置 `NEXT_PUBLIC_SELF_HOSTED_MODE=false` + `NEXT_PUBLIC_ACCESS_API`（可选，见下方环境变量）。
 
-校验接口可以用 `NEXT_PUBLIC_ACCESS_API` 覆盖；服务端代码在 `starchat-app/src/app/api/access-key/route.ts`，只把“密钥 → 已用设备”记在 `data/access-keys.json`，不依赖数据库。
-
-服务器不可用时，新设备首次激活会提示“密钥服务暂时不可用”；已经激活过的设备不受影响。
+服务器不可用时，加密钥的实例首次激活会提示“密钥服务暂时不可用”；已经激活过的设备不受影响。
 
 批量生成密钥：
 
@@ -40,7 +38,7 @@ npm run dev
 
 打开 <http://localhost:3000>。
 
-首次进入先输入访问密钥，再点桌面上的「设置」，填文字模型（Base URL + Key + 模型名），保存后即可聊天。语音和生图可以之后再配。
+首次进入直接进桌面，点「设置」填文字模型（Base URL + Key + 模型名），保存后即可聊天。语音和生图可以之后再配。（只有关闭自托管、启用密钥的实例才会先要求输入密钥。）
 
 ---
 
@@ -104,6 +102,7 @@ git push -u origin main
 | `NEXT_PUBLIC_APP_NAME` | 桌面图标下显示的名字，默认「小手机」 |
 | `NEXT_PUBLIC_API_MODE` | `proxy`（默认）或 `direct`；用户在设置里还能再改 |
 | `NEXT_PUBLIC_BASE_PATH` | 部署在子路径时填写，例如 `/phone`；Vercel 根目录留空 |
+| `NEXT_PUBLIC_SELF_HOSTED_MODE` | `true` 时跳过访问密钥（默认行为）；`false` 且配置 `NEXT_PUBLIC_ACCESS_API` 才启用密钥 |
 
 `proxy`：请求走当前这个 Vercel 项目的 Serverless Function，用来绕过第三方 API 的 CORS；Key 只在单次请求里透传，不写日志、不落盘。
 `direct`：浏览器直接请求第三方 API，完全不经过服务器，但部分中转站会被 CORS 拦。
@@ -151,8 +150,10 @@ pm2 save
 - 玻璃拟态手机外壳：状态栏、桌面网格、翻页、Dock、文件夹、时钟/日历组件、长按编辑、拖拽换位
 - 聊天：流式回复、上下文记忆（最近 40 条）、图片消息、生图并发送、TTS 朗读、语音输入
 - 人设：自定义字段、头像、开场白、示例对话、世界书、禁忌、音色；导入/导出
-- 微信 / LINE：独立会话通道与皮肤，会话列表 + 聊天
+- 微信 / QQ / LINE：独立会话通道与皮肤，会话列表 + 聊天
+- 微信通讯录：朋友资料 → 朋友设置（星标 / 黑名单 / 删除）、朋友圈相册（按年月九宫格）
 - 朋友圈：角色生成动态、点赞、评论、让角色评论
+- 素材仓库：世界书、表情包系列、预设、整机备份导入导出
 - 小红薯：生成主页资料与笔记、笔记详情、点赞
 - 设置：文字/图像/语音/语音识别四套 API、请求方式、我的人设、备份导入导出、清空数据
 - 主题：9 套壁纸、恢复默认主题、PWA 安装入口

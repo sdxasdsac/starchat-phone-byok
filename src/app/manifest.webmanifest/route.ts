@@ -40,7 +40,7 @@ export function GET() {
     shortcuts: [
       { name: '聊天', url: p('/?app=chat') },
       { name: '微信', url: p('/?app=wechat') },
-      { name: '朋友圈', url: p('/?app=moments') },
+      { name: '素材仓库', url: p('/?app=materials') },
     ],
   };
 
