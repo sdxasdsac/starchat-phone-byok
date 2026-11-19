@@ -74,7 +74,28 @@ git push -u origin main
 
 **整个运行过程不经过任何人的服务器**：页面和 API 路由都跑在用户自己刚创建的 Vercel 项目里。
 
-### 3. 环境变量
+### 3. Vercel 配置（已内置）
+
+仓库自带的 `vercel.json` 已经处理好：
+
+- `framework: nextjs`，Vercel 自动识别构建命令，无需手动填；
+- 部署区域 `hkg1`（香港），国内访问更快；
+- 四个 API 路由（`llm / image / tts / stt`）`maxDuration: 60`，流式回复不会被 10 秒超时掐断；
+- `sw.js` / `manifest.webmanifest` 不缓存，`/icons/*` 长缓存，PWA 更新能立刻生效。
+
+一键部署后如果想换区域或加自定义域名，在 Vercel 项目 Settings → Functions / Domains 里改即可。
+
+### 4. PWA 安装
+
+部署完成后：
+
+- **Android / 桌面 Chrome / Edge**：地址栏右侧「安装」图标，或菜单 → 安装「小手机」；应用内「主题 → 添加到主屏幕」也可以。
+- **iPhone**：Safari 分享 → 添加到主屏幕。
+- 安装后全屏运行、无浏览器地址栏，图标为 180/192/512 三档（iOS 用 `icon-180.png`，Android 用 maskable 图标）。
+- 长按图标有「聊天 / 微信 / 朋友圈」快捷方式（`/?app=chat` 等）。
+- Service Worker 缓存应用壳：无网也能打开桌面，聊天记录本来就在本地；API 请求不缓存。
+
+### 5. 环境变量
 
 默认一个都不需要。可选项：
 
@@ -110,7 +131,7 @@ git push -u origin main
 - 小红薯：生成主页资料与笔记、笔记详情、点赞
 - 设置：文字/图像/语音/语音识别四套 API、请求方式、我的人设、备份导入导出、清空数据
 - 主题：9 套壁纸、恢复默认主题、PWA 安装入口
-- PWA：manifest、Service Worker、离线壳缓存
+- PWA：manifest、Service Worker、离线壳缓存、一键安装、长按图标快捷方式
 
 ---
 

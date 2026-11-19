@@ -89,6 +89,18 @@ function PhoneShell() {
     setUnlocked(isUnlocked());
   }, []);
 
+  // PWA 桌面快捷方式：?app=chat / wechat / moments 直接打开对应 App
+  useEffect(() => {
+    if (unlocked !== true) return;
+    try {
+      const target = new URLSearchParams(window.location.search).get('app');
+      const allowed: AppId[] = ['chat', 'wechat', 'line', 'qqapp', 'group', 'moments', 'xhs', 'calendar', 'ai'];
+      if (target && (allowed as string[]).includes(target)) setApp(target as AppId);
+    } catch {
+      // 忽略非法 URL
+    }
+  }, [unlocked]);
+
   // 默认美化：黑白熊（首次打开自动应用一次，之后跟随用户在「主题」里的选择）
   useEffect(() => {
     const SEED_KEY = 'sp.themePack.bear.v1';

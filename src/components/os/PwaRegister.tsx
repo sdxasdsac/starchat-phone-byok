@@ -6,9 +6,15 @@ import { useEffect } from 'react';
 export function PwaRegister() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {
-        /* 本地 http 或旧浏览器可能不支持，静默失败即可 */
-      });
+      navigator.serviceWorker
+        .register('/sw.js', { updateViaCache: 'none' })
+        .then((reg) => {
+          // 部署新版本后自动检查更新，下次打开就是新壳
+          reg.update().catch(() => undefined);
+        })
+        .catch(() => {
+          /* 本地 http 或旧浏览器可能不支持，静默失败即可 */
+        });
     }
     const handler = (event: Event) => {
       event.preventDefault();
