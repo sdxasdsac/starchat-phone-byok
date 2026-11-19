@@ -97,6 +97,10 @@ export interface Settings {
   apiMode: 'proxy' | 'direct';
   /** 启用 starchat 的内置 MUFY 剧情预设（默认关闭） */
   presetEnabled?: boolean;
+  /** 用户自定义的剧情预设文本 */
+  presetText?: string;
+  /** 进入聊天时让角色主动先说话 */
+  proactive?: boolean;
   activePersonaId?: Id;
 }
 
@@ -114,6 +118,9 @@ export interface MomentPost {
   authorAvatar?: string;
   text: string;
   images: { emoji: string; color: string }[];
+  /** 相册/生图得到的真实配图 */
+  photoId?: Id;
+  photoUrl?: string;
   createdAt: number;
   likes: string[];
   comments: MomentComment[];

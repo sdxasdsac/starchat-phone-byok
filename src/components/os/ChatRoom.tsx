@@ -11,7 +11,7 @@ import { mdiStickerEmoji } from '@mdi/js';
 import type { Channel, ChatMessage, Persona } from '@/lib/types';
 import { usePhone } from './PhoneContext';
 import { chatComplete, generateImage, synthesizeSpeech, transcribe, browserSpeak } from '@/lib/api';
-import { greetingFor, toApiMessages } from '@/lib/prompt';
+import { greetingFor, proactivePrompt, toApiMessages } from '@/lib/prompt';
 import { saveMedia, readMedia } from '@/lib/media-db';
 import { fileToDataUrl } from '@/lib/image-utils';
 import { extractTranscript, getRecognitionCtor, stripForSpeech, type SpeechRecognitionLike } from '@/lib/speech';
@@ -122,6 +122,45 @@ export function ChatRoom({
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages.length, streamText]);
+
+  // 角色主动发消息：进来时如果很久没聊，让 TA 先开口
+  const proactiveTried = useRef(false);
+  useEffect(() => {
+    if (!ready || !settings.proactive || proactiveTried.current) return;
+    if (messages.length === 0) return;
+    const last = messages[messages.length - 1];
+    if (Date.now() - last.createdAt < 20 * 60 * 1000) return;
+    if (sending || !settings.text.apiKey.trim()) return;
+    proactiveTried.current = true;
+    void (async () => {
+      setSending(true);
+      setStreamText('');
+      try {
+        const full = await chatComplete(
+          settings,
+          [
+            ...toApiMessages(persona, settings, messages, channel),
+            { role: 'user', content: proactivePrompt(persona, settings) },
+          ],
+          (_delta, all) => setStreamText(all),
+        );
+        const text = full.trim();
+        if (text) {
+          appendMessage(channel, persona.id, {
+            id: uid('m_'),
+            role: 'assistant',
+            text,
+            createdAt: Date.now(),
+          });
+        }
+      } catch {
+        // 主动消息失败就静默，不打扰用户
+      } finally {
+        setSending(false);
+        setStreamText('');
+      }
+    })();
+  }, [ready, settings, messages, sending, channel, persona, appendMessage]);
 
   const stopAudio = useCallback(() => {
     audioRef.current?.pause();

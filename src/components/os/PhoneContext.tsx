@@ -50,7 +50,7 @@ type Ctx = {
   appendMessage: (channel: Channel, personaId: string, message: ChatMessage) => void;
   clearConversation: (channel: Channel, personaId: string) => void;
   moments: MomentPost[];
-  setMoments: (next: MomentPost[]) => void;
+  setMoments: (next: MomentPost[] | ((prev: MomentPost[]) => MomentPost[])) => void;
   xhs: XhsNote[];
   setXhs: (next: XhsNote[]) => void;
   xhsProfile: XhsProfile | null;
@@ -181,9 +181,12 @@ export function PhoneProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const setMoments = useCallback((next: MomentPost[]) => {
-    setMomentsState(next);
-    saveMoments(next);
+  const setMoments = useCallback((next: MomentPost[] | ((prev: MomentPost[]) => MomentPost[])) => {
+    setMomentsState((prev) => {
+      const value = typeof next === 'function' ? next(prev) : next;
+      saveMoments(value);
+      return value;
+    });
   }, []);
 
   const setXhs = useCallback((next: XhsNote[]) => {

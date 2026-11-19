@@ -1,12 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { MomentPost } from '@/lib/types';
 import { usePhone } from '../PhoneContext';
-import { chatComplete } from '@/lib/api';
+import { chatComplete, generateImage } from '@/lib/api';
 import { buildSystemPrompt, momentsPrompt } from '@/lib/prompt';
 import { parseLooseJson } from '@/lib/json';
 import { uid } from '@/lib/store';
+import { saveMedia } from '@/lib/media-db';
+import { fileToDataUrl } from '@/lib/image-utils';
+import { MediaImage } from '../ChatRoom';
 import { Avatar, EmptyState, ErrorNote, ICONS, Mdi, Screen, Spinner } from '../ui';
 
 type GeneratedPost = {
@@ -31,6 +34,11 @@ export function MomentsApp({ onClose }: { onClose: () => void }) {
   const [draft, setDraft] = useState('');
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [busyComment, setBusyComment] = useState<string | null>(null);
+  const [photoId, setPhotoId] = useState<string | undefined>(undefined);
+  const [photoUrl, setPhotoUrl] = useState<string | undefined>(undefined);
+  const [photoPrompt, setPhotoPrompt] = useState('');
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   const feed = useMemo(() => [...moments].sort((a, b) => b.createdAt - a.createdAt), [moments]);
 
@@ -78,13 +86,85 @@ export function MomentsApp({ onClose }: { onClose: () => void }) {
       authorAvatar: settings.user.avatar,
       text,
       images: [],
+      photoId,
+      photoUrl,
       createdAt: Date.now(),
       likes: [],
       comments: [],
     };
     setMoments([post, ...moments]);
     setDraft('');
+    setPhotoId(undefined);
+    setPhotoUrl(undefined);
     setComposing(false);
+    void autoInteract(post);
+  };
+
+  /** 角色主动点赞 + 评论你的动态 */
+  const autoInteract = async (post: MomentPost) => {
+    if (!activePersona || !settings.text.apiKey.trim()) return;
+    try {
+      const raw = await chatComplete(settings, [
+        { role: 'system', content: buildSystemPrompt(activePersona, settings) },
+        {
+          role: 'user',
+          content: `你刷到了「${post.authorName}」刚发的朋友圈：「${post.text}」。用${activePersona.name}的口吻留一条评论，20 字以内，只输出评论内容，不要引号。`,
+        },
+      ]);
+      const text = raw.trim().replace(/^["「]|["」]$/g, '');
+      if (!text) return;
+      setMoments((prev: MomentPost[]) =>
+        prev.map((p: MomentPost) =>
+          p.id === post.id
+            ? {
+                ...p,
+                likes: p.likes.includes(activePersona.name) ? p.likes : [...p.likes, activePersona.name],
+                comments: [
+                  ...p.comments,
+                  { id: uid('cm_'), author: activePersona.name, text, createdAt: Date.now() },
+                ],
+              }
+            : p,
+        ),
+      );
+    } catch {
+      // 互动失败就算了，不打扰
+    }
+  };
+
+  const makePhoto = async () => {
+    const prompt = photoPrompt.trim();
+    if (!prompt || photoBusy) return;
+    setPhotoBusy(true);
+    setError('');
+    try {
+      const result = await generateImage(settings, prompt);
+      if (result.dataUrl) {
+        const id = await saveMedia(result.dataUrl);
+        setPhotoId(id);
+        setPhotoUrl(undefined);
+      } else {
+        setPhotoId(undefined);
+        setPhotoUrl(result.url);
+      }
+      setPhotoPrompt('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '生图失败');
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const pickPhoto = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const id = await saveMedia(dataUrl);
+      setPhotoId(id);
+      setPhotoUrl(undefined);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '图片读取失败');
+    }
   };
 
   const toggleLike = (post: MomentPost) => {
@@ -191,6 +271,48 @@ export function MomentsApp({ onClose }: { onClose: () => void }) {
             onChange={(e) => setDraft(e.target.value)}
             placeholder="这一刻的想法…"
           />
+          <div className="compose-photo">
+            <div className="compose-photo-row">
+              <input
+                className="input"
+                value={photoPrompt}
+                onChange={(e) => setPhotoPrompt(e.target.value)}
+                placeholder="配图：描述画面让 AI 生成"
+              />
+              <button type="button" className="soft-btn" onClick={() => void makePhoto()} disabled={photoBusy || !photoPrompt.trim()}>
+                {photoBusy ? <Spinner size={14} /> : null}
+                生成
+              </button>
+              <button type="button" className="soft-btn" onClick={() => fileRef.current?.click()}>
+                上传
+              </button>
+            </div>
+            {photoId || photoUrl ? (
+              <div className="compose-photo-preview">
+                <MediaImage imageId={photoId} imageUrl={photoUrl} alt="配图" />
+                <button
+                  type="button"
+                  className="text-btn"
+                  onClick={() => {
+                    setPhotoId(undefined);
+                    setPhotoUrl(undefined);
+                  }}
+                >
+                  移除配图
+                </button>
+              </div>
+            ) : null}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                void pickPhoto(e.target.files?.[0]);
+                e.target.value = '';
+              }}
+            />
+          </div>
           <div className="compose-actions">
             <button type="button" className="text-btn" onClick={() => setComposing(false)}>
               取消
@@ -214,7 +336,11 @@ export function MomentsApp({ onClose }: { onClose: () => void }) {
                 <div className="moment-main">
                   <div className="moment-author">{post.authorName}</div>
                   <p className="moment-text">{post.text}</p>
-                  {post.images.length > 0 ? (
+                  {post.photoId || post.photoUrl ? (
+                    <div className="moment-photo">
+                      <MediaImage imageId={post.photoId} imageUrl={post.photoUrl} alt="配图" />
+                    </div>
+                  ) : post.images.length > 0 ? (
                     <div className="moment-images">
                       {post.images.map((img, index) => (
                         <span

@@ -155,6 +155,27 @@ export function SettingsApp({ onClose }: { onClose: () => void }) {
             {draft.presetEnabled ? '已启用（点击关闭）' : '启用预设'}
           </button>
         </Field>
+        <Field
+          label="我的预设"
+          hint="自己写的剧情/风格指令，每次请求都会附带；支持 {{char}} 和 {{user}} 占位符。"
+        >
+          <textarea
+            className="textarea"
+            rows={4}
+            value={draft.presetText ?? ''}
+            onChange={(e) => set({ presetText: e.target.value })}
+            placeholder="例如：回复要短，多用语气词，偶尔发emoji…"
+          />
+        </Field>
+        <Field label="角色主动发消息" hint="进入聊天时，如果很久没聊，角色会先给你发一条。">
+          <button
+            type="button"
+            className={draft.proactive ? 'primary-btn' : 'soft-btn'}
+            onClick={() => set({ proactive: !draft.proactive })}
+          >
+            {draft.proactive ? '已开启（点击关闭）' : '开启'}
+          </button>
+        </Field>
       </details>
 
       <details className="settings-group" open>

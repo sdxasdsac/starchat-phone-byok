@@ -14,6 +14,7 @@ export function buildSystemPrompt(persona: Persona, settings: Settings): string 
 
   const parts = [
     settings.presetEnabled ? MUFY_PRESET_SYSTEM : '',
+    settings.presetText?.trim() ? `【用户自定义预设】\n${replace(settings.presetText.trim())}` : '',
     `你现在扮演「${persona.name}」，正在和「${user.name || '我'}」用手机聊天。`,
     persona.tagline ? `一句话定位：${persona.tagline}` : '',
     persona.description ? `【角色设定】\n${replace(persona.description)}` : '',
@@ -64,6 +65,15 @@ export function toApiMessages(
 export function greetingFor(persona: Persona): string {
   if (persona.firstMes?.trim()) return persona.firstMes.trim();
   return `「${persona.name}在这里。想聊点什么？」`;
+}
+
+/** 主动消息：让角色先开口 */
+export function proactivePrompt(persona: Persona, settings: Settings): string {
+  return [
+    `现在由「${persona.name}」主动给「${settings.user.name || '我'}」发一条消息。`,
+    '结合你们刚才聊过的内容和关系，说一句自然的开场，像突然想起对方一样。',
+    '只输出要发送的那条消息，1~2 句，不要旁白、不要解释。',
+  ].join('\n');
 }
 
 /** 朋友圈：让模型按角色口吻生成 3 条动态 */

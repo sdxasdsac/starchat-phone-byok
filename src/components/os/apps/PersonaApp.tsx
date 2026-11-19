@@ -8,7 +8,11 @@ import { compressImage, dataUrlToBlob } from '@/lib/image-utils';
 import { VOICE_PRESETS } from '@/lib/defaults';
 import { BUILTIN_WORLDBOOKS } from '@/lib/builtin-worldbooks';
 import { uid } from '@/lib/store';
+import { localUid, readLocal, writeLocal } from '@/lib/local-data';
 import { Avatar, ErrorNote, Field, ICONS, Mdi, Screen, Spinner } from '../ui';
+
+type MineBook = { id: string; name: string; text: string };
+const MY_BOOKS_KEY = 'sp.worldbooks.mine.v1';
 
 function blankPersona(voiceId: string): Persona {
   const now = Date.now();
@@ -201,6 +205,20 @@ function PersonaEditor({
 }) {
   const set = (patch: Partial<Persona>) => onChange({ ...persona, ...patch });
   const [presetBooks, setPresetBooks] = useState<{ id: string; name: string; text: string }[]>([]);
+  const [myBooks, setMyBooks] = useState<MineBook[]>(() => readLocal<MineBook[]>(MY_BOOKS_KEY, []));
+
+  const saveMineBook = () => {
+    const text = persona.worldbook?.trim();
+    if (!text) {
+      window.alert('先在下面写点世界书内容，再保存');
+      return;
+    }
+    const name = window.prompt('给这本世界书起个名字', '我的世界书');
+    if (!name) return;
+    const next = [{ id: localUid('wb_'), name: name.trim(), text }, ...myBooks];
+    setMyBooks(next);
+    writeLocal(MY_BOOKS_KEY, next);
+  };
 
   // starchat 的 public/phone-assets/worldbooks*.json：运行时读取，避免把 200KB 打进入口包
   useEffect(() => {
@@ -312,6 +330,30 @@ function PersonaEditor({
               </option>
             ))}
           </select>
+          <div className="field-row" style={{ marginTop: 8 }}>
+            <button type="button" className="soft-btn" onClick={saveMineBook}>
+              存为我的世界书
+            </button>
+          </div>
+          {myBooks.length > 0 ? (
+            <select
+              className="input"
+              value=""
+              onChange={(e) => {
+                const book = myBooks.find((b) => b.id === e.target.value);
+                if (!book) return;
+                if (persona.worldbook?.trim() && !window.confirm('当前世界书会被覆盖，继续？')) return;
+                set({ worldbook: book.text });
+              }}
+            >
+              <option value="">我的世界书（{myBooks.length} 本）…</option>
+              {myBooks.map((book) => (
+                <option key={book.id} value={book.id}>
+                  {book.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
         </div>
       </Field>
       <Field label="世界书 / 背景">

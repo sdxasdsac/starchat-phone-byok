@@ -47,6 +47,8 @@ export const DEFAULT_SETTINGS: Settings = {
   autoRead: true,
   apiMode: 'proxy',
   presetEnabled: false,
+  presetText: '',
+  proactive: true,
 };
 
 export function createDefaultPersona(): Persona {
